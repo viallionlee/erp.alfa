@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container-fluid mt-3 px-1 px-md-3">
+  <div class="row">
+    <!-- KIRI: Tabel Pending & Completed -->
+    <div class="col-lg-8 col-12 mb-3">
+      <div class="mb-2">
+        <div class="fw-bold" style="font-size:1.1rem;">
+          <span class="bg-white px-2 py-1 rounded shadow-sm border" style="position:relative; top:1.2em; left:1em; z-index:2;">
+            Picklist: <b>{{ nama_picklist }}</b>
+          </span>
+        </div>
+      </div>
+      <div class="card shadow-sm mb-3">
+        <div class="card-body pb-2 pt-3 px-2">
+          <div class="fw-bold text-white px-3 py-2 mb-0 rounded-top" style="background:#1769aa;">PENDING ITEMS</div>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle mb-0" id="batchPickingTablePending" style="background: #fff;">
+              <thead class="align-middle text-center" style="background:#e3f0ff;">
+                <tr>
+                  <th>SKU</th>
+                  <th>Barcode</th>
+                  <th>Nama</th>
+                  <th>Variant</th>
+                  <th>Brand</th>
+                  <th>Rak</th>
+                  <th>Jumlah</th>
+                  <th>Ambil</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in details %}
+                {% if item.status_ambil != 'completed' %}
+                <tr data-barcode="{{ item.barcode }}">
+                  <td class="text-center fw-semibold">{{ item.sku }}</td>
+                  <td class="text-center text-primary">{{ item.barcode }}</td>
+                  <td>
+                    <a href="/fullfilment/batchitem/{{ item.id }}/detail/" class="text-decoration-underline text-primary" target="_blank">{{ item.nama_produk }}</a>
+                  </td>
+                  <td class="text-info">{{ item.variant_produk|default_if_none:'' }}</td>
+                  <td class="text-secondary">{{ item.brand|default_if_none:'' }}</td>
+                  <td>{% if item.rak %}<span class="badge bg-light text-dark border">{{ item.rak }}</span>{% else %}-{% endif %}</td>
+                  <td class="jumlah text-end">{{ item.jumlah }}</td>
+                  <td class="jumlah-ambil text-end">{{ item.jumlah_ambil }}</td>
+                  <td class="status-ambil text-center">
+                    {% if item.status_ambil == 'pending' %}
+                      <span class="badge bg-warning text-dark">Pending</span>
+                    {% elif item.status_ambil == 'completed' %}
+                      <span class="badge bg-success">Completed</span>
+                    {% else %}
+                      <span class="badge bg-secondary">{{ item.status_ambil }}</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endif %}
+                {% empty %}
+                <tr><td colspan="9" class="text-center text-muted">Tidak ada data.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card shadow-sm mb-3">
+        <div class="card-body pb-2 pt-3 px-2">
+          <div class="fw-bold text-white px-3 py-2 mb-0 rounded-top" style="background:#218838;">COMPLETED ITEMS</div>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered align-middle mb-0" id="batchPickingTableCompleted" style="background: #f8f9fa;">
+              <thead class="align-middle text-center" style="background:#d4f5dd;">
+                <tr>
+                  <th>SKU</th>
+                  <th>Barcode</th>
+                  <th>Nama</th>
+                  <th>Variant</th>
+                  <th>Brand</th>
+                  <th>Rak</th>
+                  <th>Jumlah</th>
+                  <th>Ambil</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in details %}
+                {% if item.status_ambil == 'completed' %}
+                <tr data-barcode="{{ item.barcode }}">
+                  <td class="text-center fw-semibold">{{ item.sku }}</td>
+                  <td class="text-center text-primary">{{ item.barcode }}</td>
+                  <td>
+                    <a href="/fullfilment/batchitem/{{ item.id }}/detail/" class="text-decoration-underline text-primary" target="_blank">{{ item.nama_produk }}</a>
+                  </td>
+                  <td class="text-info">{{ item.variant_produk }}</td>
+                  <td class="text-secondary">{{ item.brand }}</td>
+                  <td>{% if item.rak %}<span class="badge bg-light text-dark border">{{ item.rak }}</span>{% endif %}</td>
+                  <td class="jumlah text-end">{{ item.jumlah }}</td>
+                  <td class="jumlah-ambil text-end">{{ item.jumlah_ambil }}</td>
+                  <td class="status-ambil text-center">
+                    <span class="badge bg-success">Completed</span>
+                  </td>
+                </tr>
+                {% endif %}
+                {% empty %}
+                <tr><td colspan="9" class="text-center text-muted">Tidak ada data.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- KANAN: Panel Scan/Search/Summary -->
+    <div class="col-lg-4 col-12 mb-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Scan Barcode</label>
+            <input type="text" id="barcodeInput" class="form-control" placeholder="Scan barcode..." autofocus autocomplete="off">
+            <div id="barcodeFeedback" class="mt-2"></div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Manual Search</label>
+            <input type="text" id="updateManualInput" class="form-control" placeholder="Cari SKU / Barcode / Nama..." autocomplete="off">
+            <div id="updateManualDropdown" class="list-group position-absolute w-100" style="z-index:10; display:none;"></div>
+            <div id="updateManualQtyControl" class="d-flex align-items-center mt-2" style="display:none;">
+              <button type="button" class="btn btn-outline-secondary btn-sm me-2" id="qtyMinus">-</button>
+              <input type="number" id="qtyInput" class="form-control form-control-sm text-center" style="width:70px;" value="0" min="0">
+              <button type="button" class="btn btn-outline-secondary btn-sm ms-2" id="qtyPlus">+</button>
+              <button type="button" class="btn btn-primary btn-sm ms-3" id="qtySubmit">Update</button>
+            </div>
+            <div id="updateManualFeedback" class="mt-2"></div>
+          </div>
+          <div class="mb-3">
+            <div class="fw-bold mb-1">Summary Order</div>
+            <table class="table table-bordered table-sm mb-2" style="font-size:0.95em;">
+              <thead class="table-light">
+                <tr>
+                  <th>Order</th>
+                  <th>Pick</th>
+                  <th>SAT</th>
+                  <th>Brand</th>
+                  <th>Mix</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td id="summary-total-order" class="text-center">{{ total_order }}</td>
+                  <td id="summary-ready-to-pick" class="text-center">
+                    <a href="#" id="showReadyToPickModal" style="text-decoration: none; font-weight: bold;">{{ ready_to_pick }}</a>
+                  </td>
+                  <td id="summary-sat-btn" class="text-center">
+                    <button id="satBtn" type="button" style="background: none; border: none; color: #0d6efd; font-weight: bold; font-size: 1.1em; padding: 0; cursor: pointer;">{{ sat_count }}</button>
+                  </td>
+                  <td id="summary-brand-btn" class="text-center">
+                    <button id="brandBtn" type="button" style="background: none; border: none; color: #198754; font-weight: bold; font-size: 1.1em; padding: 0; cursor: pointer;">{{ brand_count }}</button>
+                  </td>
+                  <td id="summary-mix-btn" class="text-center">
+                    <button id="mixBtn" type="button" style="background: none; border: none; color: #dc3545; font-weight: bold; font-size: 1.2em; padding: 0; cursor: pointer;">
+                      <span id="mixCountBadge">{{ mix_count }}</span>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="mb-2">
+            <table class="table table-borderless table-sm mb-0" style="font-size:0.97em;">
+                <tbody>
+                    <tr>
+                        <td class="ps-0">SKU Pending</td>
+                        <td class="text-end pe-0"><b>{{ total_pending }}</b></td>
+                    </tr>
+                    <tr>
+                        <td class="ps-0">SKU Completed</td>
+                        <td class="text-end pe-0"><b>{{ total_completed }}</b></td>
+                    </tr>
+                    <tr>
+                        <td class="ps-0">SKU Not Found</td>
+                        <td class="text-end pe-0"><b>{{ sku_not_found_count }}</b></td>
+                    </tr>
+                    <tr>
+                        <td class="ps-0">NAMA BATCH</td>
+                        <td class="text-end pe-0"><b>{{ nama_picklist }}</b></td>
+                    </tr>
+                </tbody>
+            </table>
+            </div>
+            <div class="d-flex gap-2">
+              <a href="/fullfilment/" class="btn btn-outline-secondary flex-fill">&larr; Batchlist</a>
+              <a href="/fullfilment/readytoprint/?nama_batch={{ nama_picklist }}" class="btn btn-warning flex-fill">Ready to Print</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Ready to Pick IDs -->
+  <div class="modal fade" id="readyToPickModal" tabindex="-1" aria-labelledby="readyToPickModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="readyToPickModalLabel">ID Pesanan Ready to Pick</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          {% if ready_to_pick_ids %}
+          <ul style="padding-left:18px; font-size:1em;">
+            {% for idp in ready_to_pick_ids %}
+            <li>{{ idp }}</li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <div class="text-muted">Belum ada order yang ready.</div>
+          {% endif %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal SKU Not Found -->
+  <div class="modal fade" id="skuNotFoundModal" tabindex="-1" aria-labelledby="skuNotFoundModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="skuNotFoundModalLabel">Detail SKU Tidak Ditemukan</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <ul id="skuNotFoundList" class="mb-0"></ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.NAMA_PICKLIST = "{{ nama_picklist }}";
+  window.CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{% static 'datatables/batchpicking.js' %}"></script>
+{% endblock %}

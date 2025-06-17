@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h4 class="mb-3">Order Scan</h4>
+    <form method="post" class="mb-4">
+        {% csrf_token %}
+        <label for="orderScanInput" class="form-label fw-bold">Scan ID Pesanan</label>
+        <input type="text" id="orderScanInput" name="order_id" class="form-control" placeholder="Scan ID Pesanan..." autofocus autocomplete="off" value="{{ order_id|default:'' }}">
+        <button type="submit" class="btn btn-primary mt-2">Cari</button>
+    </form>
+    {% if table_rows == 'not_found' %}
+        <div class="alert alert-danger">Order ID tidak ditemukan.</div>
+    {% elif table_rows %}
+    <form id="barcodeForm" class="mb-3">
+        <label for="barcodeInput" class="form-label fw-bold">Scan Barcode Produk</label>
+        <input type="text" id="barcodeInput" class="form-control" placeholder="Scan barcode produk..." autocomplete="off">
+    </form>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover table-sm align-middle mb-0">
+            <thead class="table-primary">
+                <tr>
+                    <th>SKU</th>
+                    <th>Barcode</th>
+                    <th>Nama Produk</th>
+                    <th>Variant</th>
+                    <th>Brand</th>
+                    <th>Jumlah</th>
+                    <th>Jumlah Ambil</th>
+                    <th>Status Ambil</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in table_rows %}
+                <tr data-barcode="{{ row.barcode }}">
+                    <td>{{ row.sku }}</td>
+                    <td>{{ row.barcode }}</td>
+                    <td>{{ row.nama_produk }}</td>
+                    <td>{{ row.variant_produk }}</td>
+                    <td>{{ row.brand }}</td>
+                    <td>{{ row.jumlah }}</td>
+                    <td class="jumlah-ambil">{{ row.jumlah_ambil }}</td>
+                    <td>{{ row.status_ambil }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var orderScanInput = document.getElementById('orderScanInput');
+    var barcodeForm = document.getElementById('barcodeForm');
+    var barcodeInput = document.getElementById('barcodeInput');
+    // Barcode input hanya aktif jika ada hasil table_rows
+    if (barcodeForm && barcodeInput) {
+        barcodeForm.style.display = '';
+        barcodeInput.focus();
+        barcodeForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var barcode = barcodeInput.value.trim();
+            if (!barcode) return;
+            // Cari baris di tabel yang barcode-nya sama
+            var row = document.querySelector('tr[data-barcode="' + barcode + '"]');
+            if (row) {
+                // Kirim AJAX ke backend untuk update jumlah_ambil
+                fetch('{% url "orders_scan_scan_barcode" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    body: JSON.stringify({ order_id: '{{ order_id }}', barcode: barcode })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update jumlah_ambil di tabel
+                        var jumlahAmbilCell = row.querySelector('.jumlah-ambil');
+                        if (jumlahAmbilCell) jumlahAmbilCell.textContent = data.jumlah_ambil;
+                        showMessage('Jumlah ambil berhasil diupdate.', 'success');
+                    } else {
+                        showMessage(data.error || 'Gagal update.', 'danger');
+                    }
+                    barcodeInput.value = '';
+                    barcodeInput.focus();
+                })
+                .catch(() => {
+                    showMessage('Terjadi error koneksi.', 'danger');
+                    barcodeInput.value = '';
+                    barcodeInput.focus();
+                });
+            } else {
+                showMessage('Barcode tidak ditemukan di tabel.', 'danger');
+                barcodeInput.value = '';
+                barcodeInput.focus();
+            }
+        });
+    } else if (barcodeForm) {
+        barcodeForm.style.display = 'none';
+    }
+    if (orderScanInput) orderScanInput.focus();
+    function showMessage(msg, type) {
+        var alert = document.createElement('div');
+        alert.className = 'alert alert-' + (type || 'info') + ' mt-2';
+        alert.textContent = msg;
+        var container = document.querySelector('.container');
+        container.insertBefore(alert, container.firstChild);
+        setTimeout(function() { alert.remove(); }, 2500);
+    }
+});
+</script>
+{% endblock %}

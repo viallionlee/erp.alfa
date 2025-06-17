@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}ERP Alfa{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+    {% block extra_head %}{% endblock %}
+    <style>
+        body { background: #f7f8fa; }
+        .navbar { min-height: 60px; }
+        .btn-group .btn { min-width: 110px; }
+        .container { max-width: 1500px; }
+        @media (max-width: 600px) {
+            .container, .container-fluid {
+                padding-left: 4px !important;
+                padding-right: 4px !important;
+            }
+            .form-control, .form-label, .btn, .badge, .list-group-item {
+                font-size: 1em !important;
+            }
+            h3, h4, h5 { font-size: 1.1em !important; }
+            .navbar { min-height: 48px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <button id="backBtn" class="btn btn-outline-secondary me-2 position-relative" onclick="window.history.back()" accesskey="s" title="Alt+S untuk kembali">
+                    Back
+                    <span class="ms-2 badge bg-primary-subtle text-primary fw-normal" style="font-size:0.8em; background-color:#e7f1ff !important; color:#1976d2 !important;">Alt+S</span>
+                </button>
+            </div>
+            <div class="mx-auto">
+                <div class="btn-group" role="group" aria-label="Main navigation">
+                    <a class="btn btn-outline-primary {% if request.path == '/' %}active{% endif %}" href="/">Home</a>
+                    <a class="btn btn-outline-success {% if '/products' in request.path %}active{% endif %}" href="/products/">Products</a>
+                    <a class="btn btn-outline-info {% if '/inventory' in request.path %}active{% endif %}" href="/inventory/">Inventory</a>
+                    <a class="btn btn-outline-warning {% if '/orders' in request.path %}active{% endif %}" href="/orders/">Orders</a>
+                    <a class="btn btn-outline-secondary {% if '/fullfilment' in request.path and not '/orders_checking' in request.path %}active{% endif %}" href="/fullfilment/">Fullfilment</a>
+                    <a class="btn btn-outline-dark {% if '/fullfilment/orders_checking' in request.path %}active{% endif %}" href="/fullfilment/orders_checking/all/">Order Checking</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- JS Dependencies -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_script %}{% endblock %}
+    <script>
+    // Shortcut Alt+S untuk tombol back
+    document.addEventListener('keydown', function(e) {
+        if ((e.altKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+            const btn = document.getElementById('backBtn');
+            if (btn) btn.click();
+        }
+    });
+    </script>
+</body>
+</html>

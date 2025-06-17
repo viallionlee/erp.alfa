@@ -1,0 +1,177 @@
+{% extends 'base_mobile.html' %}
+{% block content %}
+<div class="container-fluid py-3" style="max-width:460px; margin:auto;">
+  <div class="d-flex align-items-center mb-2">
+    <h4 class="fw-bold mb-0 flex-grow-1 text-center" style="letter-spacing:0.5px; font-size:1.2rem;">DETAIL PRODUK</h4>
+  </div>
+  <div class="card shadow-sm rounded-3 mb-3">
+    <div class="card-body text-center px-3 py-3">
+      {% if product.photo %}
+        <img src="{{ product.photo.url }}" alt="Photo" class="rounded mb-3" style="width:120px; height:120px; object-fit:contain; background:#fafafa;">
+      {% else %}
+        <div class="rounded-circle d-flex align-items-center justify-content-center mb-3" style="width:120px; height:120px; background:#f0f0f0; font-size:3rem; color:#bbb;">📦</div>
+      {% endif %}
+
+      <div class="text-uppercase fw-bold mb-1" style="font-size:1.1rem;">{{ product.nama_produk }}</div>
+      <div class="text-primary mb-3" style="font-size:1.05rem;">{{ product.variant_produk }}</div>
+
+      <div class="mb-3">
+        <div class="row mb-2">
+          <div class="col-6 text-start small text-muted">SKU</div>
+          <div class="col-6 text-end text-monospace fw-semibold">{{ product.sku }}</div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-6 text-start small text-muted">Barcode</div>
+          <div class="col-6 text-end text-monospace fw-semibold" id="currentBarcode">{{ product.barcode }}</div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-6 text-start small text-muted">Brand</div>
+          <div class="col-6 text-end fw-semibold">{{ product.brand }}</div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-center gap-4">
+        <div class="border rounded px-3 py-2 bg-light">
+          <div class="small text-muted">Jumlah</div>
+          <div class="fs-5 fw-bold">{{ jumlah }}</div>
+        </div>
+        <div class="border rounded px-3 py-2 bg-light">
+          <div class="small text-muted">Ambil</div>
+          <div class="d-flex align-items-center justify-content-center gap-2">
+            <button class="btn btn-outline-secondary btn-sm" id="btnMinus">-</button>
+            <input type="number" id="jumlahAmbilInput" class="form-control form-control-sm text-center" style="width:60px;" value="{{ jumlah_ambil }}" min="0" max="{{ jumlah }}">
+            <button class="btn btn-outline-secondary btn-sm" id="btnPlus">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal gagal -->
+<div class="modal fade" id="failModal" tabindex="-1" aria-labelledby="failModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-sm">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="failModalLabel">Barcode Tidak Sesuai</h5>
+      </div>
+      <div class="modal-body text-center">
+        <p>Barcode yang discan tidak sesuai dengan produk ini.</p>
+        <button type="button" class="btn btn-secondary mt-2" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tombol Back di bawah, sticky -->
+<!-- Tombol Back di bawah, sticky -->
+<div style="position:fixed; left:0; right:0; bottom:0; z-index:1000; background:#fff; box-shadow:0 -2px 8px rgba(0,0,0,0.04); padding:10px 0;">
+  <div class="container-fluid" style="max-width:460px; margin:auto;">
+    <button class="btn btn-outline-secondary btn-lg w-100" id="backBtnBottom">&larr; Kembali ke Daftar</button>
+  </div>
+</div>
+<!-- Audio -->
+<audio id="successSound" src="/static/sounds/completedsound.mp3"></audio>
+<audio id="failSound" src="/static/sounds/wrong_barcode.mp3"></audio>
+
+<script>
+  const input = document.getElementById('jumlahAmbilInput');
+  const btnMinus = document.getElementById('btnMinus');
+  const btnPlus = document.getElementById('btnPlus');
+  const maxJumlah = parseInt(input.max);
+  // Ambil batchitemId dari URL (pk)
+  const pathParts = window.location.pathname.split('/');
+  const batchitemId = pathParts[pathParts.indexOf('batchitem') + 1];
+  // Ambil nama_batch dari referrer jika ada, atau dari localStorage jika ingin lebih advance
+  let namaBatch = '';
+  const ref = document.referrer;
+  if(ref && ref.includes('/fullfilment/batchpicking/')) {
+    namaBatch = ref.split('/fullfilment/batchpicking/')[1].replace(/\/$/, '');
+  }
+
+  const urlUpdate = `/fullfilment/batchitem/${batchitemId}/update_jumlah_ambil/`;
+
+  function autoSaveJumlahAmbil() {
+    const val = parseInt(input.value)||0;
+    fetch(urlUpdate, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      body: JSON.stringify({ jumlah_ambil: val })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        input.classList.add('border-success');
+        setTimeout(() => input.classList.remove('border-success'), 300);
+        if (data.completed) {
+          // Play sound before redirect
+          const successSound = document.getElementById('successSound');
+          if (successSound) successSound.play();
+          setTimeout(() => {
+            window.location.href = `/fullfilment/batchpicking/${namaBatch}`;
+          }, 800); // beri jeda agar suara terdengar
+        }
+      } else {
+        input.classList.add('border-danger');
+        setTimeout(() => input.classList.remove('border-danger'), 600);
+      }
+    });
+  }
+
+  btnMinus.onclick = () => {
+    let val = parseInt(input.value)||0;
+    if(val > 0) {
+      input.value = val-1;
+      autoSaveJumlahAmbil();
+    }
+  };
+  btnPlus.onclick = () => {
+    let val = parseInt(input.value)||0;
+    if(val < maxJumlah) {
+      input.value = val+1;
+      autoSaveJumlahAmbil();
+    }
+  };
+  input.oninput = () => {
+    let val = parseInt(input.value)||0;
+    if(val > maxJumlah) input.value = maxJumlah;
+    if(val < 0) input.value = 0;
+    autoSaveJumlahAmbil();
+  };
+
+  // Quick scan logic
+  let scanBuffer = '';
+  let scanTimeout = null;
+
+  document.addEventListener('keypress', function(e) {
+    if (scanTimeout) clearTimeout(scanTimeout);
+    scanBuffer += e.key;
+
+    scanTimeout = setTimeout(() => {
+      const scanned = scanBuffer.trim();
+      scanBuffer = '';
+
+      if (scanned === currentBarcode) {
+        let val = parseInt(input.value)||0;
+        if(val < maxJumlah) {
+          input.value = val + 1;
+          successSound.play();
+          input.classList.add("border-success");
+          setTimeout(() => input.classList.remove("border-success"), 300);
+        }
+      } else {
+        failSound.play();
+        failModal.show();
+      }
+    }, 50);
+  });
+
+  document.getElementById('backBtnBottom').onclick = function() {
+    window.location.href = '/fullfilment/batchpicking/' + namaBatch;
+  };
+</script>
+
+{% endblock %}

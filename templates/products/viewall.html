@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}View All Produk{% endblock %}
+{% block extra_head %}
+<style>
+    #products-table, #products-table th, #products-table td, .dataTables_wrapper {
+        font-size: 90% !important;
+    }
+    td.editable {
+        cursor: pointer;
+        background: #f8f9fa;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<h2 class="text-center mb-4">View All Produk</h2>
+<div class="card shadow-sm">
+    <div class="card-body">
+        <input type="text" id="searchbox" class="form-control mb-3" placeholder="Cari produk (SKU, Barcode, Nama, Variant, Brand, Rak)">
+        <table id="products-table" class="table table-striped table-bordered w-100">
+            <thead class="table-primary">
+                <tr>
+                    <th>ID</th>
+                    <th>SKU</th>
+                    <th>Barcode</th>
+                    <th>Nama Produk</th>
+                    <th>Variant</th>
+                    <th>Brand</th>
+                    <th>Rak</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in products %}
+                <tr data-id="{{ p.id }}">
+                    <td>{{ p.id }}</td>
+                    <td class="editable" data-field="sku">{{ p.sku }}</td>
+                    <td class="editable" data-field="barcode">{{ p.barcode }}</td>
+                    <td class="editable" data-field="nama_produk">{{ p.nama_produk }}</td>
+                    <td class="editable" data-field="variant_produk">{{ p.variant_produk }}</td>
+                    <td class="editable" data-field="brand">{{ p.brand }}</td>
+                    <td class="editable" data-field="rak">{{ p.rak }}</td>
+                    <td><button class="btn btn-danger btn-sm btn-delete">Delete</button></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+{% block extra_script %}
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script>
+$(document).ready(function() {
+    var table = $('#products-table').DataTable({
+        paging: false,
+        scrollX: true,
+        dom: 'rt',
+    });
+    $('#searchbox').on('keyup', function() {
+        table.search(this.value).draw();
+    });
+
+    // Inline editing
+    $('#products-table').on('click', 'td.editable', function() {
+        var td = $(this);
+        if (td.find('input').length) return;
+        var oldVal = td.text();
+        var field = td.data('field');
+        var tr = td.closest('tr');
+        var id = tr.data('id');
+        var input = $('<input type="text" class="form-control form-control-sm" style="min-width:80px;max-width:200px;">').val(oldVal);
+        td.html(input);
+        input.focus();
+        input.on('blur keydown', function(e) {
+            if (e.type === 'blur' || (e.type === 'keydown' && e.key === 'Enter')) {
+                var newVal = input.val();
+                if (newVal !== oldVal) {
+                    $.post('/products/update/' + id + '/', { field: field, value: newVal, csrfmiddlewaretoken: '{{ csrf_token }}' }, function(resp) {
+                        if (resp.status === 'ok') {
+                            td.text(newVal);
+                        } else {
+                            alert('Gagal update: ' + (resp.msg || 'Unknown error'));
+                            td.text(oldVal);
+                        }
+                    }).fail(function() {
+                        alert('Gagal update data!');
+                        td.text(oldVal);
+                    });
+                } else {
+                    td.text(oldVal);
+                }
+            }
+        });
+    });
+
+    // Delete row
+    $('#products-table').on('click', '.btn-delete', function() {
+        var tr = $(this).closest('tr');
+        var id = tr.data('id');
+        if (confirm('Yakin hapus produk ini?')) {
+            $.post('/products/delete/' + id + '/', { csrfmiddlewaretoken: '{{ csrf_token }}' }, function() {
+                table.row(tr).remove().draw();
+            }).fail(function() {
+                alert('Gagal menghapus produk!');
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Status Import Produk{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+    <div class="progress mb-3" style="height: 2rem; max-width: 400px; margin: 0 auto;">
+        <div id="importProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; font-size: 1.2rem;">0%</div>
+    </div>
+    <h4 id="importStatus">Sedang mengimpor data...</h4>
+    <p class="mt-3">Anda dapat menutup halaman ini. Riwayat import dapat dilihat di menu <b>History</b>.</p>
+    <a href="/products/" class="btn btn-secondary mt-3">Kembali ke Daftar Produk</a>
+</div>
+{% endblock %}
+{% block extra_script %}
+<script>
+function pollProgress() {
+    fetch('/products/import-progress/')
+        .then(resp => resp.json())
+        .then(data => {
+            let progress = data.progress || 0;
+            let bar = document.getElementById('importProgressBar');
+            bar.style.width = progress + '%';
+            bar.textContent = progress + '%';
+            if(progress < 100) {
+                setTimeout(pollProgress, 500);
+            } else {
+                document.getElementById('importStatus').textContent = 'Import selesai. Semua data telah diimpor.';
+            }
+        });
+}
+document.addEventListener('DOMContentLoaded', pollProgress);
+</script>
+{% endblock %}

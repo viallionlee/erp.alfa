@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Outbound List{% endblock %}
+{% block content %}
+<h2 class="text-center mb-4">Daftar Outbound</h2>
+<div class="d-flex justify-content-center mb-4 gap-2">
+    <a href="#" class="btn btn-secondary">Impor Massal</a>
+    <a href="#" class="btn btn-danger">Tambah</a>
+</div>
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <table id="outbound-table" class="table table-bordered table-striped w-100">
+            <thead class="table-primary">
+                <tr>
+                    <th>ID</th>
+                    <th>Nomor Outbound</th>
+                    <th>Tanggal</th>
+                    <th>Keterangan</th>
+                </tr>
+                <tr id="filter-row">
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari ID" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari Nomor" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari Tanggal" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari Keterangan" /></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for outbound in outbound_list %}
+                <tr>
+                    <td>{{ outbound.id }}</td>
+                    <td>{{ outbound.nomor_outbound }}</td>
+                    <td>{{ outbound.tanggal }}</td>
+                    <td>{{ outbound.keterangan }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center">No outbound data available.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+{% block extra_script %}
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+<script>
+$(document).ready(function() {
+    var table = $('#outbound-table').DataTable({
+        orderCellsTop: true,
+        fixedHeader: true,
+        pageLength: 100,
+        lengthMenu: [[100, 500, 1000, -1], ['100', '500', '1000', 'All']],
+        dom: 'lfrtip',
+        scrollX: true
+    });
+    // Per-column filter
+    $('#filter-row th, #filter-row td').each(function(i) {
+        var input = $(this).find('input');
+        if (input.length) {
+            input.on('keyup change clear', function() {
+                if (table.column(i).search() !== this.value) {
+                    table.column(i).search(this.value).draw();
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

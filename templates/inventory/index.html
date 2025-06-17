@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}Inventory Stock{% endblock %}
+{% block content %}
+<h2 class="text-center mb-4">Inventory Stock</h2>
+<div class="d-flex justify-content-center mb-4 gap-2">
+    <a href="{% url 'inventory:inbound' %}" class="btn btn-success">Inbound</a>
+    <a href="{% url 'inventory:outbound' %}" class="btn btn-danger">Outbound</a>
+</div>
+<button id="exportAllBtn" class="btn btn-info mb-2">Download Semua Data</button>
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <table id="stock-table" class="table table-bordered table-striped w-100">
+            <thead class="table-primary">
+                <tr>
+                    <th>SKU</th>
+                    <th>Barcode</th>
+                    <th>Nama Produk</th>
+                    <th>Variant</th>
+                    <th>Brand</th>
+                    <th>Quantity</th>
+                    <th>Quantity Locked</th>
+                    <th>Quantity Ready</th>
+                </tr>
+                <tr id="filter-row">
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari SKU" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari Barcode" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari Nama" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari Variant" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari Brand" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Qty" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Locked" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Ready" /></th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- DataTables server-side: tbody will be filled by AJAX -->
+            </tbody>
+        </table>
+    </div>
+</div>
+<!-- Modal Import, Export, History (akan diisi JS/HTML berikutnya) -->
+<div id="importModal" class="modal" tabindex="-1"></div>
+<div id="historyModal" class="modal" tabindex="-1"></div>
+{% endblock %}
+{% block extra_script %}
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+<script>
+$(document).ready(function() {
+    var table = $('#stock-table').DataTable({
+        serverSide: true,
+        processing: true,
+        ajax: {
+            url: '/inventory/data/',
+            type: 'GET',
+            data: function(d) {
+                // Per-column filter
+                $('#filter-row th').each(function(i) {
+                    var input = $(this).find('input');
+                    if (input.length) {
+                        d['columns['+i+'][search][value]'] = input.val();
+                    }
+                });
+            }
+        },
+        columns: [
+            { data: 'sku' },
+            { data: 'barcode' },
+            { data: 'nama_produk' },
+            { data: 'variant_produk' },
+            { data: 'brand' },
+            { data: 'quantity' },
+            { data: 'quantity_locked' },
+            { data: 'quantity_ready' }
+        ],
+        orderCellsTop: true,
+        fixedHeader: true,
+        pageLength: 100,
+        lengthMenu: [[100, 500, 1000, -1], ['100', '500', '1000', 'All']],
+        dom: 'lfrtip',
+        scrollX: true
+    });
+    // Per-column filter event
+    $('#filter-row th, #filter-row td').each(function(i) {
+        var input = $(this).find('input');
+        if (input.length) {
+            input.on('keyup change clear', function() {
+                table.draw();
+            });
+        }
+    });
+    $('#exportAllBtn').on('click', function() {
+        window.location.href = '/inventory/export/';
+    });
+});
+// Placeholder: tombol import/export/history
+$('#importBtn').on('click', function() {
+    // Tampilkan modal import
+});
+$('#exportBtn').on('click', function() {
+    window.location.href = '/inventory/export/';
+});
+$('#historyBtn').on('click', function() {
+    // Tampilkan modal history
+});
+</script>
+{% endblock %}

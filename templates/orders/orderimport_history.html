@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Order Import History{% endblock %}
+
+{% block content %}
+<h2>Order Import History</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Import Time</th>
+            <th>File Name</th>
+            <th>Imported By</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in history %}
+        <tr>
+            <td>{{ entry.import_time }}</td>
+            <td>{{ entry.file_name }}</td>
+            <td>{% if entry.imported_by %}{{ entry.imported_by.username }}{% else %}Unknown{% endif %}</td>
+            <td>{{ entry.notes }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">No import history found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

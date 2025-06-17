@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Daftar Order{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4 text-center">Daftar Order</h2>
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <a href="{% url 'orders_add' %}" class="btn btn-primary">Add Order</a>
+        <div class="dropdown">
+            <button class="btn btn-success dropdown-toggle" type="button" id="downloadDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Download Orders
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="downloadDropdown">
+                <li><a class="dropdown-item" href="/orders/download-orders/?limit=1000">Download 1000 Terbaru</a></li>
+                <li><a class="dropdown-item" href="/orders/download-orders/?limit=5000">Download 5000 Terbaru</a></li>
+                <li><a class="dropdown-item" href="/orders/download-orders/?limit=10000">Download 10000 Terbaru</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>ID Pesanan</th>
+                    <th>Tanggal</th>
+                    <th>Customer</th>
+                    <th>Keterangan</th>
+                    <th>Total Item</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order.id_pesanan }}</td>
+                    <td>{{ order.tanggal_pembuatan|date:'d-m-Y H:i' }}</td>
+                    <td>{{ order.nama_customer }}</td>
+                    <td>{{ order.keterangan|default:'-' }}</td>
+                    <td><span class="badge bg-info">{{ order.total_item }} item</span></td>
+                    <td>
+                        <a href="{% url 'orders_listdetail' id_pesanan=order.id_pesanan|urlencode %}" class="btn btn-sm btn-info">Detail</a>
+                        <a href="{% url 'orders_listedit' id_pesanan=order.id_pesanan|urlencode %}" class="btn btn-sm btn-warning">Edit</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center">Belum ada order</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

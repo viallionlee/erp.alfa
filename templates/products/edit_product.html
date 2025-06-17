@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4" style="max-width:480px;">
+    <h4 class="mb-3">Edit Produk</h4>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-2">
+            <label class="form-label">SKU</label>
+            <input type="text" name="sku" class="form-control" value="{{ product.sku }}" required>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Barcode</label>
+            <input type="text" name="barcode" class="form-control" value="{{ product.barcode }}" required>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Nama Produk</label>
+            <input type="text" name="nama_produk" class="form-control" value="{{ product.nama_produk }}" required>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Variant</label>
+            <input type="text" name="variant_produk" class="form-control" value="{{ product.variant_produk }}">
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Brand</label>
+            <input type="text" name="brand" class="form-control" value="{{ product.brand }}">
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Rak</label>
+            <input type="text" name="rak" class="form-control" value="{{ product.rak }}">
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Photo Produk</label><br>
+            {% if product.photo %}
+                <img src="{{ product.photo.url }}" alt="Photo" style="max-width:80px; max-height:80px; object-fit:contain; border-radius:6px; margin-bottom:8px;">
+                <br>
+            {% endif %}
+            <input type="file" name="photo" class="form-control" accept="image/*">
+        </div>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+        <a href="{% url 'products:index' %}" class="btn btn-secondary">Batal</a>
+    </form>
+</div>
+{% endblock %}

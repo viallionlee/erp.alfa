@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Extract History</h2>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Waktu Extract</th>
+                <th>File Name</th>
+                <th>Catatan</th>
+                <th>Extracted By</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in history %}
+            <tr>
+                <td>{{ h.extract_time }}</td>
+                <td>{{ h.file_name }}</td>
+                <td>{{ h.notes }}</td>
+                <td>{{ h.extracted_by }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center">Belum ada history extract</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

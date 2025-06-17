@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>{% block title %}ERP Mobile{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+    {% block extra_head %}{% endblock %}
+    <style>
+        body { background: #f6f8fa; font-size: 1.08em; }
+        .navbar { border-radius: 0 0 12px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); min-height: 48px; }
+        .container-fluid { padding-bottom: 60px; }
+        .btn, .form-control, .badge, .list-group-item { font-size: 1em; }
+        h3, h4, h5 { font-size: 1.1em; }
+        .navbar-brand { font-weight: bold; font-size: 1.1em; }
+        .nav-mobile {
+            display: flex;
+            justify-content: space-around;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            margin: 0 0 16px 0;
+            padding: 8px 0;
+        }
+        .nav-mobile a {
+            flex: 1;
+            text-align: center;
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 0;
+            border-radius: 8px;
+        }
+        .nav-mobile a.active, .nav-mobile a:active {
+            background: #e9ecef;
+            color: #0d6efd;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-mobile mb-2">
+        <a href="/mobile/" class="{% if request.path == '/mobile/' %}active{% endif %}">Home</a>
+        <a href="/fullfilment/mobile/" class="{% if '/fullfilment/mobile/' in request.path %}active{% endif %}">Batch</a>
+        <a href="/fullfilment/orders_checking/all/" class="{% if '/orders_checking' in request.path %}active{% endif %}">Check</a>
+    </div>
+    {% block content %}{% endblock %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_script %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+{% block title %}AG Grid Table - Batchlist{% endblock %}
+{% block content %}
+<h2 class="text-center mb-4">AG Grid Table - Batchlist</h2>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <label for="orderTypeSelect">Filter by Order Type:</label>
+    <select id="orderTypeSelect" class="form-select" style="width: 200px; display: inline-block;">
+      <option value="">All</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+    </select>
+    <label for="namaTokoSelect" class="ms-3">Filter by Nama Toko:</label>
+    <select id="namaTokoSelect" class="form-select" multiple style="width: 300px; display: inline-block; vertical-align: middle;">
+      <option value="AILIN KOSMETIK">AILIN KOSMETIK</option>
+      <option value="Azzura Cosmetics Store">Azzura Cosmetics Store</option>
+      <option value="Distributor Wardah Bogor">Distributor Wardah Bogor</option>
+      <option value="AILIN KOSMETIK JAKARTA">AILIN KOSMETIK JAKARTA</option>
+      <option value="BeautyPall">BeautyPall</option>
+      <option value="COSME MURAH">COSME MURAH</option>
+      <option value="Ayomichan Official Shop">Ayomichan Official Shop</option>
+      <option value="Ailin Kosmetik.Selection">Ailin Kosmetik.Selection</option>
+      <option value="Natural Organic">Natural Organic</option>
+      <option value="Ailin Kosmetik">Ailin Kosmetik</option>
+      <option value="LIONA MART">LIONA MART</option>
+      <option value="Cosme Murah">Cosme Murah</option>
+      <option value="DISTRIBUTOR EMINA BOGOR">DISTRIBUTOR EMINA BOGOR</option>
+      <option value="PIXY COOSMETICS INDONESIA">PIXY COOSMETICS INDONESIA</option>
+      <option value="MAKEOVER.INDONESIA">MAKEOVER.INDONESIA</option>
+      <option value="Ayomishoes">Ayomishoes</option>
+      <option value="makeovercosmetics.id">makeovercosmetics.id</option>
+      <option value="WARDAH SKIN CARE">WARDAH SKIN CARE</option>
+      <option value="Ailin Kosmetik JKT">Ailin Kosmetik JKT</option>
+    </select>
+    <label for="brandSelect" class="ms-3">Brand:</label>
+    <select id="brandSelect" class="form-select" multiple style="width: 200px; display: inline-block; vertical-align: middle;"></select>
+    <button id="filterBtn" class="btn btn-primary ms-2">Filter</button>
+    <button id="goToExportedOrdersBtn" class="btn btn-info ms-2">Exported Data</button>
+  </div>
+  <div class="input-group" style="max-width: 350px;">
+    <input type="text" id="agGridSearch" class="form-control" placeholder="Cari di semua kolom...">
+    <span class="input-group-text"><i class="bi bi-search"></i></span>
+  </div>
+</div>
+<div id="agGridContainer" class="ag-theme-alpine"></div>
+{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css" />
+<style>
+    #agGridContainer {
+        height: 80vh;
+        min-height: 600px;
+        width: 100%;
+        border-radius: 18px;
+        box-shadow: 0 4px 24px 0 rgba(0,0,0,0.08);
+        background: #fff;
+        margin-bottom: 2rem;
+        transition: box-shadow 0.2s;
+    }
+    .ag-theme-alpine {
+        --ag-header-background-color: #f8fafc;
+        --ag-header-foreground-color: #222;
+        --ag-row-hover-color: #e0f2fe;
+        --ag-odd-row-background-color: #f6fafd;
+        --ag-border-radius: 18px;
+        font-size: 1rem;
+    }
+    .ag-floating-filter-input {
+        border-radius: 8px !important;
+        padding: 4px 8px !important;
+    }
+    .ag-root-wrapper {
+        border-radius: 18px !important;
+    }
+    .ag-header-cell-label .ag-header-cell-text {
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    .ag-theme-alpine .ag-row-selected {
+        background: #dbeafe !important;
+    }
+    @media (max-width: 900px) {
+        #agGridContainer { min-width: 0; }
+        .ag-theme-alpine { font-size: 0.95rem; }
+    }
+</style>
+{% endblock %}
+{% block extra_script %}
+<!-- AG Grid CSS & JS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css" />
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
+<script>
+function fetchTableAG(orderType, namaTokoList, brand) {
+    let url = '/fullfilment/tableag_data/';
+    let params = [];
+    if (orderType) {
+        params.push('order_type=' + encodeURIComponent(orderType));
+    }
+    if (namaTokoList && namaTokoList.length > 0) {
+        params.push('nama_toko=' + encodeURIComponent(namaTokoList.join(',')));
+    }
+    if (brand) {
+        params.push('brand=' + encodeURIComponent(brand));
+    }
+    if (params.length > 0) {
+        url += '?' + params.join('&');
+    }
+    return fetch(url)
+        .then(response => response.json());
+}
+
+let gridOptions;
+function loadGrid(orderType, namaTokoList, brand) {
+    fetchTableAG(orderType, namaTokoList, brand).then(function(data) {
+        data.forEach(row => { row.tes_virtual = row.tes_virtual || ''; });
+        const columnDefs = [
+            { headerName: 'Status Stock', field: 'status_stock', filter: true, editable: true },
+            { headerName: 'Product ID', field: 'product_id', filter: true },
+            { headerName: 'Tanggal Pembuatan', field: 'tanggal_pembuatan', filter: true },
+            { headerName: 'Channel', field: 'channel', filter: true },
+            { headerName: 'Nama Toko', field: 'nama_toko', filter: true },
+            { headerName: 'ID Pesanan', field: 'id_pesanan', filter: true },
+            { headerName: 'SKU', field: 'sku', filter: true },
+            { headerName: 'Nama Produk', field: 'nama_produk', filter: true },
+            { headerName: 'Variant Produk', field: 'variant_produk', filter: true },
+            { headerName: 'Brand', field: 'brand', filter: true },
+            { headerName: 'Jumlah', field: 'jumlah', filter: true },
+            { headerName: 'Order Type', field: 'order_type', filter: true },
+            { headerName: 'Aksi', field: 'aksi', cellRenderer: aksiCellRenderer, filter: false, sortable: false, width: 140 }
+        ];
+        gridOptions = {
+            columnDefs: columnDefs,
+            rowData: data,
+            pagination: true,
+            paginationPageSize: 100,
+            defaultColDef: {
+                sortable: true,
+                filter: true,
+                resizable: true,
+                floatingFilter: true,
+                editable: true
+            },
+            animateRows: true,
+            domLayout: 'autoHeight',
+            getRowId: params => {
+                const idPesanan = params.data.id_pesanan || 'NO_IDPESANAN';
+                const productId = params.data.product_id || 'NO_PRODUCTID';
+                return idPesanan + '_' + productId;
+            },
+            onCellValueChanged: function(event) {
+                if (event.colDef.field === 'status_stock') {
+                    fetch('/fullfilment/update_status_stock/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                            updates: [{
+                                id_pesanan: event.data.id_pesanan,
+                                product_id: event.data.product_id,
+                                status_stock: event.data.status_stock
+                            }]
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (!result.success) {
+                            alert('Gagal menyimpan perubahan ke server!');
+                        }
+                    })
+                    .catch(() => alert('Gagal menyimpan perubahan ke server!'));
+                }
+            }
+        };
+        agGrid.createGrid(document.getElementById('agGridContainer'), gridOptions);
+        // AG Grid global search
+        const searchInput = document.getElementById('agGridSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                gridOptions.api.setQuickFilter(this.value);
+            });
+        }
+    });
+}
+
+function aksiCellRenderer(params) {
+    return `
+        <button class="btn btn-sm btn-warning edit-btn" data-id="${params.data.id_pesanan}" data-product="${params.data.product_id}">Edit</button>
+        <button class="btn btn-sm btn-danger delete-btn" data-id="${params.data.id_pesanan}" data-product="${params.data.product_id}">Delete</button>
+    `;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Fetch unique brands and populate the dropdown
+    fetch('/fullfilment/unique_brands/')
+        .then(response => response.json())
+        .then(data => {
+            const brandSelect = document.getElementById('brandSelect');
+            brandSelect.innerHTML = '<option value="">All</option>';
+            data.brands.forEach(brand => {
+                const option = document.createElement('option');
+                option.value = brand;
+                option.textContent = brand;
+                brandSelect.appendChild(option);
+            });
+        });
+    loadGrid('', []);
+    document.getElementById('filterBtn').addEventListener('click', function() {
+        const orderType = document.getElementById('orderTypeSelect').value;
+        const namaTokoSelect = document.getElementById('namaTokoSelect');
+        const selectedToko = Array.from(namaTokoSelect.selectedOptions).map(opt => opt.value);
+        const brandSelect = document.getElementById('brandSelect');
+        const selectedBrands = Array.from(brandSelect.selectedOptions).map(opt => opt.value).filter(Boolean);
+        const brandParam = selectedBrands.join(',');
+        document.getElementById('agGridContainer').innerHTML = '';
+        loadGrid(orderType, selectedToko, brandParam);
+    });
+    document.getElementById('goToExportedOrdersBtn').addEventListener('click', function() {
+        window.location.href = '/fullfilment/exportedorders/';
+    });
+    // Delegasi event untuk tombol edit dan delete
+    document.getElementById('agGridContainer').addEventListener('click', function(e) {
+        if (e.target.classList.contains('edit-btn')) {
+            const id_pesanan = e.target.getAttribute('data-id');
+            const product_id = e.target.getAttribute('data-product');
+            // Contoh: edit jumlah (bisa dikembangkan ke modal/form)
+            const newJumlah = prompt('Edit jumlah:', '');
+            if (newJumlah !== null && newJumlah !== '') {
+                fetch('/fullfilment/edit_row/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ id_pesanan, product_id, jumlah: newJumlah })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if(result.success) {
+                        alert('Data berhasil diupdate!');
+                        // Refresh grid
+                        document.getElementById('filterBtn').click();
+                    } else {
+                        alert('Gagal update data!');
+                    }
+                })
+                .catch(() => alert('Gagal update data!'));
+            }
+        }
+        if (e.target.classList.contains('delete-btn')) {
+            const id_pesanan = e.target.getAttribute('data-id');
+            const product_id = e.target.getAttribute('data-product');
+            if (confirm('Yakin ingin menghapus data ini?')) {
+                fetch('/fullfilment/delete_row/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ id_pesanan, product_id })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if(result.success) {
+                        alert('Data berhasil dihapus!');
+                        // Refresh grid
+                        document.getElementById('filterBtn').click();
+                    } else {
+                        alert('Gagal menghapus data!');
+                    }
+                })
+                .catch(() => alert('Gagal menghapus data!'));
+            }
+        }
+    });
+});
+// Fungsi untuk ambil CSRF token dari cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

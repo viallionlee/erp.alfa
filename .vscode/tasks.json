@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "Run Django server for order checking validation",
+			"command": "python manage.py runserver",
+			"group": "build",
+			"isBackground": true
+		}
+	]
+}

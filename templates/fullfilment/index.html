@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+{% block title %}Daftar Batchlist Fulfillment{% endblock %}
+{% block content %}
+<style>
+  /* Hilangkan underline pada link nama batch di tabel */
+  .batch-link {
+    text-decoration: none !important;
+    color: #1976d2 !important;
+    font-weight: bold;
+  }
+
+  .batch-link:hover {
+    color: #1251a3 !important;
+    text-decoration: underline;
+  }
+</style>
+<div class="container py-4">
+  <div class="row mb-3">
+    <div class="col-md-4 mb-2">
+      <div class="card text-center shadow-sm">
+        <div class="card-body">
+          <div class="fw-bold">Total Order</div>
+          <div class="display-6">{{ total_order }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-2">
+      <div class="card text-center shadow-sm">
+        <div class="card-body">
+          <div class="fw-bold">Ready to Pick</div>
+          <div class="display-6">{{ ready_to_pick }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-2">
+      <div class="card text-center shadow-sm">
+        <div class="card-body">
+          <div class="fw-bold">Ready to Print</div>
+          <div class="display-6">{{ mix_count }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="/fullfilment/generatebatch/" class="btn btn-outline-primary d-flex align-items-center"
+      style="font-weight:bold;">
+      <i class="bi bi-plus-circle me-2"></i> Generate Batch
+    </a>
+    <a href="{% url 'orders_checking' 'all' %}" class="btn btn-outline-info d-flex align-items-center"
+      style="font-weight:bold;">
+      <i class="bi bi-qr-code-scan me-2"></i> Order Checking
+    </a>
+  </div>
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white fw-bold">Daftar Batchlist</div>
+        <div class="table-responsive" style="max-height:1000px; overflow-y:auto;">
+          <table class="table table-bordered table-striped mb-0" style="vertical-align:middle;">
+            <thead class="table-primary" style="position:sticky;top:0;z-index:1;">
+              <tr>
+                <th>ID</th>
+                <th>Nama Batch</th>
+                <th>Tanggal Dibuat</th>
+                <th>Tanggal Selesai</th>
+                <th>Status Batch</th>
+                <th>Total Sku</th>
+                <th>SKU Pending</th>
+                <th>SKU Completed</th>
+                <th>Action</th>
+                <th class="text-center">SKU Not Found</th>
+              </tr>
+            </thead>
+            <tbody style="max-height:900px;">
+              {% for batch in batchlists|slice:"0:20" %}
+              <tr>
+                <td>{{ batch.id }}</td>
+                <td>
+                  <a href="/fullfilment/batchpicking/{{ batch.nama_batch }}" class="batch-link">{{ batch.nama_batch }}</a>
+                </td>
+                <td>{{ batch.created_at }}</td>
+                <td>{{ batch.completed_at }}</td>
+                <td>
+                  <span
+                    class="badge {% if batch.status_batch == 'completed' %}bg-success{% elif batch.status_batch == 'pending' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                    {{ batch.status_batch|title }}
+                  </span>
+                </td>
+                <td style="font-weight:bold;">
+                  {% if batch.total_sku > 0 %}
+                  <span style="color:#1976d2;">{{ batch.total_sku }}</span>
+                  {% else %}
+                  <span style="color:#888;">{{ batch.total_sku }}</span>
+                  {% endif %}
+                </td>
+                <td style="font-weight:bold;">
+                  {% if batch.sku_pending > 0 %}
+                  <span style="color:#ffc107;">{{ batch.sku_pending }}</span>
+                  {% else %}
+                  <span style="color:#28a745;">{{ batch.sku_pending }}</span>
+                  {% endif %}
+                </td>
+                <td style="font-weight:bold;">
+                  {% if batch.sku_completed == batch.total_sku and batch.total_sku > 0 %}
+                  <span style="color:#28a745;">{{ batch.sku_completed }}</span>
+                  {% elif batch.sku_completed > 0 %}
+                  <span style="color:#0dcaf0;">{{ batch.sku_completed }}</span>
+                  {% else %}
+                  <span style="color:#888;">{{ batch.sku_completed }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="/fullfilment/batchpicking/{{ batch.nama_batch }}/" class="btn btn-primary btn-sm">Open</a>
+                  <button type="button" class="btn btn-info btn-sm show-idpesanan-btn"
+                    data-batch="{{ batch.nama_batch }}">Show ID</button>
+                  <form method="post" action="{% url 'batchlist_delete' batch_id=batch.id %}" style="display:inline;"
+                    onsubmit="return confirm('Yakin hapus batchlist ini?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                  </form>
+                </td>
+                <td class="text-center fw-bold">
+                  {% if batch.sku_not_found_count > 0 %}
+                  <span style="color:#dc3545; font-weight:bold;">{{ batch.sku_not_found_count }}</span>
+                  <button type="button" class="btn btn-link btn-sm p-0 ms-1 text-primary sku-detail-btn"
+                    data-sku-list="{{ batch.sku_not_found_list|join:', ' }}" data-batch="{{ batch.nama_batch }}"
+                    title="Lihat detail SKU"><i class="bi bi-search"></i> Detail</button>
+                  {% else %}
+                  <span style="color:#28a745; font-weight:bold;">0</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Modal for SKU Not Found Detail -->
+<div class="modal fade" id="skuNotFoundModal" tabindex="-1" aria-labelledby="skuNotFoundModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="skuNotFoundModalLabel">Detail SKU Tidak Ditemukan</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="skuNotFoundModalBody" style="white-space:pre-line;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Modal for ID Pesanan in Batch -->
+<div class="modal fade" id="idPesananModal" tabindex="-1" aria-labelledby="idPesananModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="idPesananModalLabel">Daftar ID Pesanan</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="max-height:60vh; overflow-y:auto;">
+        <ul id="idPesananList" class="list-group"></ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // Handle SKU Not Found Modal
+  const skuDetailButtons = document.querySelectorAll('.sku-detail-btn');
+  skuDetailButtons.forEach(button => {
+    button.addEventListener('click', function () {
+      const skuList = this.dataset.skuList;
+      const batchName = this.dataset.batch;
+      const modalLabel = document.getElementById('skuNotFoundModalLabel');
+      const modalBody = document.getElementById('skuNotFoundModalBody');
+      
+      modalLabel.textContent = `Detail SKU Tidak Ditemukan - ${batchName}`;
+      
+      if (skuList && skuList.trim()) {
+        const skus = skuList.split(',').map(s => s.trim()).filter(Boolean);
+        modalBody.innerHTML = '<ul>' + skus.map(sku => `<li>${sku}</li>`).join('') + '</ul>';
+      } else {
+        modalBody.textContent = 'Tidak ada SKU yang bermasalah.';
+      }
+
+      const modal = new bootstrap.Modal(document.getElementById('skuNotFoundModal'));
+      modal.show();
+    });
+  });
+
+  // Handle ID Pesanan Modal (with pagination)
+  const idPesananButtons = document.querySelectorAll('.show-idpesanan-btn');
+  idPesananButtons.forEach(button => {
+    button.addEventListener('click', function () {
+      const batchName = this.dataset.batch;
+      let currentPage = 1;
+
+      const loadPage = (pageNum) => {
+        fetch(`/fullfilment/api/idpesanan_in_batch/?nama_batch=${encodeURIComponent(batchName)}&page=${pageNum}&per_page=25`)
+          .then(resp => resp.json())
+          .then data => {
+            const idList = data.idpesanan_list || [];
+            const ul = document.getElementById('idPesananList');
+            ul.innerHTML = '';
+
+            if (idList.length === 0) {
+              ul.innerHTML = '<li class="list-group-item text-muted">Tidak ada ID Pesanan.</li>';
+            } else {
+              idList.forEach(idp => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.textContent = idp;
+                ul.appendChild(li);
+              });
+            }
+
+            // Handle Pagination Buttons
+            const footer = document.querySelector('#idPesananModal .modal-footer');
+            footer.querySelectorAll('.pagination-btn').forEach(el => el.remove());
+
+            if (data.page > 1) {
+              const prevBtn = createPaginationButton('Prev', () => loadPage(data.page - 1));
+              footer.insertBefore(prevBtn, footer.firstChild);
+            }
+            if (data.has_next) {
+              const nextBtn = createPaginationButton('Next', () => loadPage(data.page + 1));
+              footer.appendChild(nextBtn);
+            }
+          });
+      };
+
+      const createPaginationButton = (text, onClick) => {
+        const btn = document.createElement('button');
+        btn.className = `btn btn-outline-${text === 'Prev' ? 'secondary' : 'primary'} pagination-btn me-2`;
+        btn.textContent = text;
+        btn.onclick = onClick;
+        return btn;
+      };
+
+      loadPage(currentPage);
+      const modal = new bootstrap.Modal(document.getElementById('idPesananModal'));
+      modal.show();
+    });
+  });
+
+});
+</script>
+{% endblock %}

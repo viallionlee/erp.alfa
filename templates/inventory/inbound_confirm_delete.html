@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Hapus Inbound{% endblock %}
+{% block content %}
+<h2 class="mb-4">Konfirmasi Hapus Inbound</h2>
+<div class="alert alert-warning">Yakin ingin menghapus inbound <strong>{{ inbound.nomor_inbound }}</strong>?</div>
+<form method="post">
+  {% csrf_token %}
+  <a href="{% url 'inventory:inbound' %}" class="btn btn-secondary">Batal</a>
+  <button type="submit" class="btn btn-danger">Hapus</button>
+</form>
+{% endblock %}
