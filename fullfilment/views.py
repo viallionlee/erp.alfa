@@ -44,6 +44,13 @@ def index(request):
         if batch.total_sku > 0 and batch.total_sku == batch.sku_completed and batch.status_batch != 'completed':
             batch.status_batch = 'completed'
             batch.save(update_fields=['status_batch'])
+    # --- Tambahan: deteksi mobile ---
+    user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+    is_mobile = any(x in user_agent for x in ['android', 'iphone', 'ipad', 'ipod', 'blackberry', 'iemobile', 'opera mini'])
+    if is_mobile:
+        return render(request, 'fullfilment/mobile_index.html', {
+            'batchlists': batchlists,
+        })
     return render(request, 'fullfilment/index.html', {
         'batchlists': batchlists,
     })
@@ -271,6 +278,17 @@ def batchpicking(request, nama_batch):
     items = BatchItem.objects.filter(batchlist=batch).select_related('product')
     for item in items:
         product = item.product
+        # Hitung jumlah id_pesanan unik dengan order_type 1 (SAT) dan 4 (MIX) untuk product_id ini
+        sat_table_count = Order.objects.filter(
+            nama_batch=batch.nama_batch,
+            product_id=product.id,
+            order_type='1'
+        ).values('id_pesanan').distinct().count()
+        mix_table_count = Order.objects.filter(
+            nama_batch=batch.nama_batch,
+            product_id=product.id,
+            order_type='4'
+        ).values('id_pesanan').distinct().count()
         table_data.append({
             'id': item.id,  # Tambahkan ID BatchItem untuk kebutuhan data-product-id
             'sku': product.sku if product else '',
@@ -278,10 +296,13 @@ def batchpicking(request, nama_batch):
             'nama_produk': product.nama_produk if product else '',
             'variant_produk': product.variant_produk if product else '',
             'brand': product.brand if product else '',
-            'rack': product.rak if product else '',
+            'rak': product.rak if product else '',
             'jumlah': item.jumlah,
             'jumlah_ambil': item.jumlah_ambil,
             'status_ambil': item.status_ambil,
+            'photo_url': product.photo.url if product and product.photo else '',
+            'sat_table_count': sat_table_count,
+            'mix_table_count': mix_table_count,
         })
 
     total_pending = sum(1 for item in table_data if item['status_ambil'] != 'completed')
@@ -352,6 +373,9 @@ def batchpicking(request, nama_batch):
         template = 'fullfilment/mobilebatchpicking.html'
     else:
         template = 'fullfilment/batchpicking.html'
+    # Hitung total SAT dan MIX dari virtual kolom (jumlah id_pesanan unik per order_type per batch)
+    total_sat_table = Order.objects.filter(nama_batch=batch.nama_batch, order_type='1').values('id_pesanan').distinct().count()
+    total_mix_table = Order.objects.filter(nama_batch=batch.nama_batch, order_type='4').values('id_pesanan').distinct().count()
     return render(request, template, {
         'nama_picklist': batch.nama_batch,
         'details': table_data,
@@ -365,6 +389,8 @@ def batchpicking(request, nama_batch):
         'brand_count': brand_count,
         'sku_not_found_count': sku_not_found_count,
         'sku_not_found_list': sku_not_found_list,
+        'total_sat_table': total_sat_table,
+        'total_mix_table': total_mix_table,
     })
 
 
@@ -401,7 +427,7 @@ def update_barcode_picklist(request, nama_batch):
             if order:
                 brand = order.product.brand if order.product else ''
                 ReadyToPrint.objects.filter(id_pesanan=order.id_pesanan).update(brand=brand, order_type=order.order_type)
-            return JsonResponse({'success': True, 'jumlah_ambil': batchitem.jumlah_ambil, 'status_ambil': batchitem.status_ambil})
+            return JsonResponse({'success': True, 'jumlah_ambil': batchitem.jumlah_ambil, 'jumlah': batchitem.jumlah, 'status_ambil': batchitem.status_ambil})
         else:
             return JsonResponse({'success': False, 'error': 'Jumlah ambil sudah cukup.'})
     except Exception as e:
@@ -555,7 +581,7 @@ def batchpicking_view(request, batch_name):
             'nama_produk': product.nama_produk if product else '',
             'variant_produk': product.variant_produk if product else '',
             'brand': product.brand if product else '',
-            'rack': product.rak if product else '',
+            'rak': product.rak if product else '',
             'jumlah': item.jumlah,
             'jumlah_ambil': item.jumlah_ambil,
             'status_ambil': item.status_ambil,
@@ -673,13 +699,19 @@ def print_sat_brand(request):
                 rtp_ids_to_update.append(rtp.id)
     # Buat DataFrame dan export ke Excel
     df = pd.DataFrame({'ID Pesanan': list(idpesanan_set)})
-    file_path = f'static/print_sat_{brand}.xlsx'
+    from django.conf import settings
+    import uuid
+    export_dir = getattr(settings, 'EXPORT_DIR', 'media/exports')
+    if not os.path.exists(export_dir):
+        os.makedirs(export_dir)
+    file_name = f'print_sat_{brand}_{uuid.uuid4().hex[:8]}.xlsx'
+    file_path = os.path.join(export_dir, file_name)
     df.to_excel(file_path, index=False)
     # Update status_print dan printed_at di ReadyToPrint
     jakarta_tz = pytz.timezone('Asia/Jakarta')
     now_jakarta = timezone.now().astimezone(jakarta_tz)
     ReadyToPrint.objects.filter(id__in=rtp_ids_to_update).update(status_print='printed', printed_at=now_jakarta)
-    return JsonResponse({'success': True, 'file_path': '/' + file_path})
+    return JsonResponse({'success': True, 'file_path': '/' + file_path.replace('\\', '/')})
 
 def print_all_sat_brands(request):
     nama_batch = request.GET.get('nama_batch')
@@ -706,7 +738,13 @@ def print_all_sat_brands(request):
 
     # Buat DataFrame dan export ke Excel
     df = pd.DataFrame({'ID Pesanan': list(idpesanan_set)})
-    file_path = f'static/print_sat_all.xlsx'
+    from django.conf import settings
+    import uuid
+    export_dir = getattr(settings, 'EXPORT_DIR', 'media/exports')
+    if not os.path.exists(export_dir):
+        os.makedirs(export_dir)
+    file_name = f'print_sat_all_{uuid.uuid4().hex[:8]}.xlsx'
+    file_path = os.path.join(export_dir, file_name)
     df.to_excel(file_path, index=False)
 
     # Update status_print dan printed_at di ReadyToPrint
@@ -714,7 +752,7 @@ def print_all_sat_brands(request):
     now_jakarta = timezone.now().astimezone(jakarta_tz)
     ReadyToPrint.objects.filter(id__in=rtp_ids_to_update).update(status_print='printed', printed_at=now_jakarta)
 
-    return JsonResponse({'success': True, 'file_path': '/' + file_path})
+    return JsonResponse({'success': True, 'file_path': '/' + file_path.replace('\\', '/')})
 
 def get_brand_data(request):
     nama_batch = request.GET.get('nama_batch')
@@ -776,7 +814,13 @@ def print_all_brands(request):
 
     # Buat DataFrame dan export ke Excel
     df = pd.DataFrame({'ID Pesanan': list(idpesanan_set)})
-    file_path = f'static/print_all_brands.xlsx'
+    from django.conf import settings
+    import uuid
+    export_dir = getattr(settings, 'EXPORT_DIR', 'media/exports')
+    if not os.path.exists(export_dir):
+        os.makedirs(export_dir)
+    file_name = f'print_all_brands_{uuid.uuid4().hex[:8]}.xlsx'
+    file_path = os.path.join(export_dir, file_name)
     df.to_excel(file_path, index=False)
 
     # Update status_print dan printed_at di ReadyToPrint
@@ -784,7 +828,7 @@ def print_all_brands(request):
     now_jakarta = timezone.now().astimezone(jakarta_tz)
     ReadyToPrint.objects.filter(id__in=rtp_ids_to_update).update(status_print='printed', printed_at=now_jakarta)
 
-    return JsonResponse({'success': True, 'file_path': '/' + file_path})
+    return JsonResponse({'success': True, 'file_path': '/' + file_path.replace('\\', '/')})
 
 def print_brand(request):
     brand = request.GET.get('brand')
@@ -820,7 +864,13 @@ def print_brand(request):
 
     # Buat DataFrame dan export ke Excel
     df = pd.DataFrame({'ID Pesanan': list(idpesanan_set)})
-    file_path = f'static/print_brand_{brand}.xlsx'
+    from django.conf import settings
+    import uuid
+    export_dir = getattr(settings, 'EXPORT_DIR', 'media/exports')
+    if not os.path.exists(export_dir):
+        os.makedirs(export_dir)
+    file_name = f'print_brand_{brand}_{uuid.uuid4().hex[:8]}.xlsx'
+    file_path = os.path.join(export_dir, file_name)
     df.to_excel(file_path, index=False)
 
     # Update status_print dan printed_at di ReadyToPrint
@@ -828,7 +878,7 @@ def print_brand(request):
     now_jakarta = timezone.now().astimezone(jakarta_tz)
     ReadyToPrint.objects.filter(id__in=rtp_ids_to_update).update(status_print='printed', printed_at=now_jakarta)
 
-    return JsonResponse({'success': True, 'file_path': '/' + file_path})
+    return JsonResponse({'success': True, 'file_path': '/' + file_path.replace('\\', '/')})
 
 @csrf_exempt
 @require_POST
@@ -860,10 +910,26 @@ def print_mix(request, nama_batch):
 def batchitem_detail_view(request, pk):
     batchitem = get_object_or_404(BatchItem, pk=pk)
     product = batchitem.product
-    return render(request, 'fullfilment/batchitem_detail.html', {
+    user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+    if 'mobile' in user_agent or 'android' in user_agent or 'iphone' in user_agent:
+        template = 'fullfilment/mobile_batchitem_detail.html'
+    else:
+        template = 'fullfilment/batchitem_detail.html'
+    return render(request, template, {
         'product': product,
         'jumlah': batchitem.jumlah,
-        'jumlah_ambil': batchitem.jumlah_ambil
+        'jumlah_ambil': batchitem.jumlah_ambil,
+        'batchitem': batchitem,
+    })
+
+def mobile_batchitem_detail(request, pk):
+    batchitem = get_object_or_404(BatchItem, pk=pk)
+    product = batchitem.product
+    return render(request, 'fullfilment/mobile_batchitem_detail.html', {
+        'product': product,
+        'jumlah': batchitem.jumlah,
+        'jumlah_ambil': batchitem.jumlah_ambil,
+        'batchitem': batchitem,
     })
 
 @require_POST
@@ -934,4 +1000,61 @@ def batchitem_update_jumlah_ambil(request, pk):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid method'})
+
+from django.http import JsonResponse
+from orders.models import Order
+
+def ajax_filter_options(request):
+    filters = {
+        'nama_toko': request.GET.getlist('nama_toko[]'),
+        'brand': request.GET.getlist('brand[]'),
+        'order_type': request.GET.getlist('order_type[]'),
+        'kirim_sebelum': request.GET.getlist('kirim_sebelum[]'),
+        'kurir': request.GET.getlist('kurir[]'),
+        'id_pesanan': request.GET.getlist('id_pesanan[]'),
+    }
+    queryset = Order.objects.filter(status__iexact='Lunas')
+    if filters['nama_toko']:
+        queryset = queryset.filter(nama_toko__in=filters['nama_toko'])
+    if filters['brand']:
+        queryset = queryset.filter(product__brand__in=filters['brand'])
+    if filters['order_type']:
+        queryset = queryset.filter(order_type__in=filters['order_type'])
+    if filters['kirim_sebelum']:
+        queryset = queryset.filter(kirim_sebelum__in=filters['kirim_sebelum'])
+    if filters['kurir']:
+        queryset = queryset.filter(kurir__in=filters['kurir'])
+    if filters['id_pesanan']:
+        queryset = queryset.filter(id_pesanan__in=filters['id_pesanan'])
+    options = {
+        'nama_toko': sorted(set(queryset.exclude(nama_toko__isnull=True).exclude(nama_toko='').values_list('nama_toko', flat=True))),
+        'brand': sorted(set(queryset.exclude(product__brand__isnull=True).exclude(product__brand='').values_list('product__brand', flat=True))),
+        'order_type': sorted(set(queryset.exclude(order_type__isnull=True).exclude(order_type='').values_list('order_type', flat=True))),
+        'kirim_sebelum': sorted(set(queryset.exclude(kirim_sebelum__isnull=True).exclude(kirim_sebelum='').values_list('kirim_sebelum', flat=True))),
+        'kurir': sorted(set(queryset.exclude(kurir__isnull=True).exclude(kurir='').values_list('kurir', flat=True))),
+        'id_pesanan': sorted(set(queryset.exclude(id_pesanan__isnull=True).exclude(id_pesanan='').values_list('id_pesanan', flat=True))),
+    }
+    return JsonResponse(options)
+
+def batchorder_view(request, nama_batch):
+    from orders.models import Order
+    from products.models import Product
+    orders = Order.objects.filter(nama_batch=nama_batch)
+    order_list = []
+    for o in orders:
+        product = Product.objects.filter(sku=o.sku).first()
+        order_list.append({
+            'id_pesanan': o.id_pesanan,
+            'sku': o.sku,
+            'barcode': product.barcode if product else '',
+            'nama_produk': product.nama_produk if product else '',
+            'variant_produk': product.variant_produk if product else '',
+            'brand': product.brand if product else '',
+            'jumlah': o.jumlah,
+            'order_type': o.order_type,
+        })
+    return render(request, 'fullfilment/batchorder.html', {
+        'orders': order_list,
+        'nama_batch': nama_batch,
+    })
 

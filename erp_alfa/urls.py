@@ -21,6 +21,8 @@ from django.http import JsonResponse
 from orders.models import Order
 from products.models import Product
 from django.db.models import Q
+from django.conf import settings
+from django.conf.urls.static import static
 
 from .views import home
 from .mobile_views import mobile_home
@@ -35,3 +37,7 @@ urlpatterns = [
     path('demo/', include('demo.urls')),
     path('mobile/', mobile_home, name='mobile_home'),
 ]
+
+# Serve media files during development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

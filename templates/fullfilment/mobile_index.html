@@ -43,10 +43,36 @@
   .batch-card .badge-status.completed { background: #22c55e; color: #fff; }
   .batch-card .badge-status.pending { background: #6366f1; color: #fff; }
   .batch-card .badge-status.other { background: #a5b4fc; color: #3730a3; }
+
+  /* Floating Action Button (FAB) Reload di kiri bawah */
+  .fab-reload {
+    position: fixed;
+    bottom: 80px;
+    left: 24px;
+    z-index: 1050;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #1976d2;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    font-size: 2rem;
+    border: none;
+    outline: none;
+    transition: background 0.2s;
+  }
+  .fab-reload:active {
+    background: #1565c0;
+  }
 </style>
 <div class="container-fluid px-2 py-3" style="max-width:480px; margin:auto;">
+  {# Pending batches #}
   {% for batch in batchlists %}
-    <div class="batch-card {% if batch.status_batch == 'completed' %}completed{% elif batch.status_batch == 'pending' %}pending{% else %}other{% endif %}" onclick="window.location.href='/fullfilment/batchpicking/{{ batch.nama_batch }}/'" style="cursor:pointer;">
+    {% if batch.status_batch == 'pending' %}
+    <div class="batch-card pending" onclick="window.location.href='/fullfilment/batchpicking/{{ batch.nama_batch }}/'" style="cursor:pointer;">
       <div class="row">
         <div class="col-6 header">Nama Batch</div>
         <div class="col-6 value">{{ batch.nama_batch }}</div>
@@ -58,9 +84,7 @@
       <div class="row">
         <div class="col-6 header">Status</div>
         <div class="col-6 value">
-          <span class="badge-status {% if batch.status_batch == 'completed' %}completed{% elif batch.status_batch == 'pending' %}pending{% else %}other{% endif %}">
-            {{ batch.status_batch|title }}
-          </span>
+          <span class="badge-status pending">Pending</span>
         </div>
       </div>
       <div class="row">
@@ -76,8 +100,90 @@
         <div class="col-6 value">{{ batch.sku_completed|default:'-' }}</div>
       </div>
     </div>
-  {% empty %}
-    <div class="text-muted text-center">Tidak ada batch.</div>
+    {% endif %}
   {% endfor %}
+  {# Other batches (not pending or completed) #}
+  {% for batch in batchlists %}
+    {% if batch.status_batch != 'pending' and batch.status_batch != 'completed' %}
+    <div class="batch-card other" onclick="window.location.href='/fullfilment/batchpicking/{{ batch.nama_batch }}/'" style="cursor:pointer;">
+      <div class="row">
+        <div class="col-6 header">Nama Batch</div>
+        <div class="col-6 value">{{ batch.nama_batch }}</div>
+      </div>
+      <div class="row">
+        <div class="col-6 header">Dibuat</div>
+        <div class="col-6 value">{{ batch.created_at|date:'Y-m-d H:i' }}</div>
+      </div>
+      <div class="row">
+        <div class="col-6 header">Status</div>
+        <div class="col-6 value">
+          <span class="badge-status other">{{ batch.status_batch|title }}</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-6 header">Total SKU</div>
+        <div class="col-6 value">{{ batch.total_sku|default:'-' }}</div>
+      </div>
+      <div class="row">
+        <div class="col-6 header">Total Pending</div>
+        <div class="col-6 value">{{ batch.sku_pending|default:'-' }}</div>
+      </div>
+      <div class="row">
+        <div class="col-6 header">Total Completed</div>
+        <div class="col-6 value">{{ batch.sku_completed|default:'-' }}</div>
+      </div>
+    </div>
+    {% endif %}
+  {% endfor %}
+  {# Completed batches #}
+  {% for batch in batchlists %}
+    {% if batch.status_batch == 'completed' %}
+    <div class="batch-card completed" onclick="window.location.href='/fullfilment/batchpicking/{{ batch.nama_batch }}/'" style="cursor:pointer;">
+      <div class="row">
+        <div class="col-6 header">Nama Batch</div>
+        <div class="col-6 value">{{ batch.nama_batch }}</div>
+      </div>
+      <div class="row">
+        <div class="col-6 header">Dibuat</div>
+        <div class="col-6 value">{{ batch.created_at|date:'Y-m-d H:i' }}</div>
+      </div>
+      <div class="row">
+        <div class="col-6 header">Status</div>
+        <div class="col-6 value">
+          <span class="badge-status completed">Completed</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-6 header">Total SKU</div>
+        <div class="col-6 value">{{ batch.total_sku|default:'-' }}</div>
+      </div>
+      <div class="row">
+        <div class="col-6 header">Total Pending</div>
+        <div class="col-6 value">{{ batch.sku_pending|default:'-' }}</div>
+      </div>
+      <div class="row">
+        <div class="col-6 header">Total Completed</div>
+        <div class="col-6 value">{{ batch.sku_completed|default:'-' }}</div>
+      </div>
+    </div>
+    {% endif %}
+  {% endfor %}
+  {% if batchlists|length == 0 %}
+    <div class="text-muted text-center">Tidak ada batch.</div>
+  {% endif %}
 </div>
+
+<!-- Floating Action Button (FAB) Reload di kiri bawah -->
+<button class="fab-reload" id="fabReloadBtn" title="Reload">
+  <i class="bi bi-arrow-clockwise"></i>
+</button>
+
+{% block extra_script %}
+{{ block.super }}
+<script>
+document.getElementById('fabReloadBtn').onclick = function() {
+  window.location.reload();
+};
+</script>
+{% endblock %}
 {% endblock %}

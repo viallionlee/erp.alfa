@@ -6,18 +6,34 @@ function playSound(type) {
     if (type === 'completed') {
         const audio = new Audio('/static/sounds/completedsound.mp3');
         audio.play();
+    } else if (type === 'success') {
+        const audio = new Audio('/static/sounds/ding.mp3');
+        audio.play();
+    } else if (type === 'error' || type === 'fail') {
+        const audio = new Audio('/static/sounds/wrong_barcode.mp3');
+        audio.play();
     } else {
-        const audio = new Audio(type === 'success' ? 'https://cdn.jsdelivr.net/gh/ttskch/audio-sample/success.mp3' : 'https://cdn.jsdelivr.net/gh/ttskch/audio-sample/error.mp3');
+        // fallback
+        const audio = new Audio('/static/sounds/over_scan.mp3');
         audio.play();
     }
 }
 
-function showFeedback(message, type, status_ambil) {
+function showFeedback(message, type, status_ambil, sku) {
     const feedback = document.getElementById('barcodeFeedback');
     feedback.innerHTML = message;
     feedback.className = type === 'success' ? 'alert alert-success' : 'alert alert-danger';
     if (status_ambil === 'completed') {
         playSound('completed');
+        // Tampilkan modal modern jika scan completed, auto close 0.5 detik
+        Swal.fire({
+            icon: 'success',
+            title: 'SKU Selesai!',
+            html: `<b>SKU <span style='color:#1769aa;'>${sku || ''}</span> sudah semua di scan.</b>`,
+            showConfirmButton: false,
+            timer: 500,
+            customClass: { title: 'fw-bold' }
+        });
     } else {
         playSound(type);
     }
@@ -43,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(data => {
                     if (data.success) {
                         // Cari baris di tabel pending
-                        const row = document.querySelector(`#batchPickingTablePending tr[data-barcode='${barcode}']`);
+                        const row = document.querySelector(`#pendingTable tr[data-barcode='${barcode}']`);
                         if (row) {
                             row.querySelector('.jumlah-ambil').textContent = data.jumlah_ambil;
                             row.querySelector('.status-ambil').textContent = data.status_ambil;
@@ -51,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             setTimeout(() => row.classList.remove('table-success'), 1000);
                             // Jika status_ambil sudah completed, pindahkan ke tabel completed
                             if (data.status_ambil === 'completed') {
-                                const completedTable = document.querySelector('#batchPickingTableCompleted tbody');
+                                const completedTable = document.querySelector('#completedTable tbody');
                                 completedTable.appendChild(row);
                                 // Remove from pendingItems
                                 const idx = pendingItems.findIndex(item => item.barcode === barcode);
@@ -59,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             }
                         } else {
                             // Jika sudah completed, update di tabel completed jika ada
-                            const rowCompleted = document.querySelector(`#batchPickingTableCompleted tr[data-barcode='${barcode}']`);
+                            const rowCompleted = document.querySelector(`#completedTable tr[data-barcode='${barcode}']`);
                             if (rowCompleted) {
                                 rowCompleted.querySelector('.jumlah-ambil').textContent = data.jumlah_ambil;
                                 rowCompleted.querySelector('.status-ambil').textContent = data.status_ambil;
@@ -104,9 +120,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(data => {
                     if (data.success) {
                         const brands = data.brands;
+                        const sat_count = brands.reduce((a, b) => a + b.totalOrders, 0); // Sama dengan TOTAL ORDER SAT
                         let html = '<div class="modal fade" id="satBrandModal" tabindex="-1" aria-labelledby="satBrandModalLabel" aria-hidden="true">';
                         html += '<div class="modal-dialog"><div class="modal-content">';
-                        html += '<div class="modal-header"><h5 class="modal-title" id="satBrandModalLabel">Brand SAT (order_type 1) <span class="text-primary" style="font-size:1rem; font-weight:normal;">TOTAL ORDER SAT: ' + brands.reduce((a, b) => a + b.totalOrders, 0) + '</span></h5>';
+                        html += '<div class="modal-header"><h5 class="modal-title" id="satBrandModalLabel">Brand SAT (order_type 1) <span class="text-primary" style="font-size:1rem; font-weight:normal;">TOTAL ORDER SAT: ' + sat_count + '</span></h5>';
                         html += '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>';
                         html += '<div class="modal-body">';
                         if (brands.length > 0) {
@@ -133,13 +150,16 @@ document.addEventListener('DOMContentLoaded', function () {
                             btn.addEventListener('click', function () {
                                 const brand = decodeURIComponent(this.getAttribute('data-brand'));
                                 fetch(`/fullfilment/print_sat_brand/?brand=${encodeURIComponent(brand)}&nama_batch=${window.NAMA_PICKLIST}`)
-                                    .then(resp => resp.json())
-                                    .then(data => {
-                                        if (data.success && data.file_path) {
-                                            window.open(data.file_path, '_blank');
-                                        } else {
-                                            alert('Gagal generate file Excel!');
-                                        }
+                                    .then(resp => resp.blob())
+                                    .then(blob => {
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `print_sat_${brand}.xlsx`;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        a.remove();
+                                        window.URL.revokeObjectURL(url);
                                     });
                             });
                         });
@@ -149,13 +169,16 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (printAllSatBrandsBtn) {
                             printAllSatBrandsBtn.addEventListener('click', function () {
                                 fetch(`/fullfilment/print_all_sat_brands/?nama_batch=${window.NAMA_PICKLIST}`)
-                                    .then(resp => resp.json())
-                                    .then(data => {
-                                        if (data.success && data.file_path) {
-                                            window.open(data.file_path, '_blank');
-                                        } else {
-                                            alert('Gagal generate file Excel untuk semua brand SAT!');
-                                        }
+                                    .then(resp => resp.blob())
+                                    .then(blob => {
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = 'print_sat_all.xlsx';
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        a.remove();
+                                        window.URL.revokeObjectURL(url);
                                     });
                             });
                         }
@@ -175,9 +198,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(data => {
                     if (data.success) {
                         const brands = data.brands;
+                        const brand_count = brands.reduce((a, b) => a + b.totalOrders, 0); // Sama dengan TOTAL ORDER BRAND
                         let html = '<div class="modal fade" id="brandModal" tabindex="-1" aria-labelledby="brandModalLabel" aria-hidden="true">';
                         html += '<div class="modal-dialog"><div class="modal-content">';
-                        html += '<div class="modal-header"><h5 class="modal-title" id="brandModalLabel">Brand (order_type 1 & 4) <span class="text-primary" style="font-size:1rem; font-weight:normal;">TOTAL ORDER BRAND: ' + brands.reduce((a, b) => a + b.totalOrders, 0) + '</span></h5>';
+                        html += '<div class="modal-header"><h5 class="modal-title" id="brandModalLabel">Brand (order_type 1 & 4) <span class="text-primary" style="font-size:1rem; font-weight:normal;">TOTAL ORDER BRAND: ' + brand_count + '</span></h5>';
                         html += '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>';
                         html += '<div class="modal-body">';
                         if (brands.length > 0) {
@@ -204,13 +228,16 @@ document.addEventListener('DOMContentLoaded', function () {
                             btn.addEventListener('click', function () {
                                 const brand = decodeURIComponent(this.getAttribute('data-brand'));
                                 fetch(`/fullfilment/print_brand/?brand=${encodeURIComponent(brand)}&nama_batch=${window.NAMA_PICKLIST}`)
-                                    .then(resp => resp.json())
-                                    .then(data => {
-                                        if (data.success && data.file_path) {
-                                            window.open(data.file_path, '_blank');
-                                        } else {
-                                            alert('Gagal generate file Excel!');
-                                        }
+                                    .then(resp => resp.blob())
+                                    .then(blob => {
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `print_brand_${brand}.xlsx`;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        a.remove();
+                                        window.URL.revokeObjectURL(url);
                                     });
                             });
                         });
@@ -219,13 +246,16 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (printAllBrandsBtn) {
                             printAllBrandsBtn.addEventListener('click', function () {
                                 fetch(`/fullfilment/print_all_brands/?nama_batch=${window.NAMA_PICKLIST}`)
-                                    .then(resp => resp.json())
-                                    .then(data => {
-                                        if (data.success && data.file_path) {
-                                            window.open(data.file_path, '_blank');
-                                        } else {
-                                            alert('Gagal generate file Excel untuk semua brand!');
-                                        }
+                                    .then(resp => resp.blob())
+                                    .then(blob => {
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = 'print_all_brands.xlsx';
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        a.remove();
+                                        window.URL.revokeObjectURL(url);
                                     });
                             });
                         }
@@ -268,14 +298,16 @@ document.addEventListener('DOMContentLoaded', function () {
                             'X-CSRFToken': window.CSRF_TOKEN,
                         },
                     })
-                        .then(r => r.json())
-                        .then(data => {
-                            if (data.success && data.file_path) {
-                                Swal.fire('Berhasil', 'File Excel berhasil diunduh dan status diupdate!', 'success');
-                                window.open(data.file_path, '_blank');
-                            } else {
-                                Swal.fire('Gagal', 'Gagal print order MIX!', 'error');
-                            }
+                        .then(resp => resp.blob())
+                        .then(blob => {
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `print_mix_${window.NAMA_PICKLIST}.xlsx`;
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            window.URL.revokeObjectURL(url);
                         });
                 }
             });
@@ -305,10 +337,70 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
         });
     }
+
+    // --- Download Pending Table as PDF ---
+    const downloadBtn = document.getElementById('downloadPendingPDF');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', function () {
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                alert('jsPDF belum dimuat. Pastikan CDN jsPDF & autotable sudah di-include di HTML.');
+                return;
+            }
+            const doc = new window.jspdf.jsPDF({orientation: 'landscape'});
+            doc.autoTable({ html: '#pendingTable', styles: { fontSize: 8 }, headStyles: { fillColor: [23, 105, 170] } });
+            doc.save('pending_table.pdf');
+        });
+    }
+
+    // Update summary SAT & Brand saat halaman pertama kali dimuat
+    function updateSatSummary() {
+        fetch(`/fullfilment/get_sat_brands/?nama_batch=${window.NAMA_PICKLIST}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const brands = data.brands;
+                    const sat_count = brands.reduce((a, b) => a + b.totalOrders, 0);
+                    const satBtnSummary = document.getElementById('satBtn');
+                    if (satBtnSummary) satBtnSummary.textContent = sat_count;
+                }
+            });
+    }
+    function updateBrandSummary() {
+        fetch(`/fullfilment/get_brand_data/?nama_batch=${window.NAMA_PICKLIST}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const brands = data.brands;
+                    const brand_count = brands.reduce((a, b) => a + b.totalOrders, 0);
+                    const brandBtnSummary = document.getElementById('brandBtn');
+                    if (brandBtnSummary) brandBtnSummary.textContent = brand_count;
+                }
+            });
+    }
+    updateSatSummary();
+    updateBrandSummary();
+
+    // Inisialisasi DataTables jika jQuery tersedia
+    if (window.jQuery) {
+        $('#pendingTable').DataTable();
+        $('#completedTable').DataTable();
+    }
+    // Fungsi sort manual (fallback jika tidak pakai DataTables)
+    window.sortTable = function(tableId, col, asc = true) {
+        const table = document.getElementById(tableId);
+        const tbody = table.tBodies[0];
+        Array.from(tbody.querySelectorAll("tr"))
+            .sort((a, b) => {
+                const aText = a.children[col].textContent.trim();
+                const bText = b.children[col].textContent.trim();
+                return (asc ? 1 : -1) * aText.localeCompare(bText, undefined, {numeric: true});
+            })
+            .forEach(tr => tbody.appendChild(tr));
+    }
 });
 
 // --- Manual Search Autocomplete & Qty Control ---
-let pendingItems = Array.from(document.querySelectorAll('#batchPickingTablePending tbody tr')).map(row => ({
+let pendingItems = Array.from(document.querySelectorAll('#pendingTable tbody tr')).map(row => ({
     sku: row.children[0].textContent.trim(),
     barcode: row.children[1].textContent.trim(),
     nama_produk: row.children[2].textContent.trim(),
@@ -486,7 +578,7 @@ function submitQty() {
                 setTimeout(() => row.classList.remove('table-success'), 1000);
                 // If completed, move to completed table
                 if (data.status_ambil === 'completed') {
-                    const completedTable = document.querySelector('#batchPickingTableCompleted tbody');
+                    const completedTable = document.querySelector('#completedTable tbody');
                     completedTable.appendChild(row);
                     // Remove from pendingItems
                     const idx = pendingItems.findIndex(item => item.barcode === selectedItem.barcode);
@@ -510,28 +602,37 @@ function submitQty() {
 }
 
 // Sorting functionality
+// Perbaikan: sort numerik benar, toggle per kolom
 function sortTable(tableId, columnIndex) {
     const table = document.getElementById(tableId);
-    const rows = Array.from(table.querySelector('tbody').rows);
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.rows).filter(row => !row.classList.contains('summary-row'));
 
-    const isNumeric = rows.every(row => !isNaN(parseFloat(row.cells[columnIndex].innerText.trim())));
-    const isAscending = table.dataset.sortOrder !== 'asc';
+    // Data attribute per kolom
+    const headers = table.querySelectorAll('th');
+    headers.forEach((th, idx) => {
+        if (idx !== columnIndex) th.removeAttribute('data-sort-order');
+    });
+    const header = headers[columnIndex];
+    let sortOrder = header.getAttribute('data-sort-order') || 'none';
+    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    header.setAttribute('data-sort-order', sortOrder);
+
+    // Cek numerik: minimal 1 baris numerik
+    const isNumeric = rows.some(row => !isNaN(parseFloat(row.cells[columnIndex].innerText.trim())));
 
     rows.sort((a, b) => {
-        const cellA = a.cells[columnIndex].innerText.trim();
-        const cellB = b.cells[columnIndex].innerText.trim();
-
+        let aText = a.cells[columnIndex].innerText.trim();
+        let bText = b.cells[columnIndex].innerText.trim();
         if (isNumeric) {
-            return isAscending ? parseFloat(cellB) - parseFloat(cellA) : parseFloat(cellA) - parseFloat(cellB);
+            let aNum = parseFloat(aText.replace(/[^\d.-]/g, '')) || 0;
+            let bNum = parseFloat(bText.replace(/[^\d.-]/g, '')) || 0;
+            return sortOrder === 'asc' ? aNum - bNum : bNum - aNum;
         } else {
-            return isAscending ? cellB.localeCompare(cellA) : cellA.localeCompare(cellB);
+            return sortOrder === 'asc' ? aText.localeCompare(bText, undefined, {numeric: true}) : bText.localeCompare(aText, undefined, {numeric: true});
         }
     });
-
-    const tbody = table.querySelector('tbody');
     rows.forEach(row => tbody.appendChild(row));
-
-    table.dataset.sortOrder = isAscending ? 'asc' : 'desc';
 }
 
 document.querySelectorAll('th.sortable').forEach((header, index) => {
@@ -601,14 +702,14 @@ function handleBarcodeScan(barcode) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            const row = document.querySelector(`#batchPickingTablePending tr[data-barcode='${barcode}']`);
+            const row = document.querySelector(`#pendingTable tr[data-barcode='${barcode}']`);
             if (row) {
                 row.querySelector('.jumlah-ambil').textContent = data.jumlah_ambil;
                 row.querySelector('.status-ambil').textContent = data.status_ambil;
                 row.classList.add('table-success');
                 setTimeout(() => row.classList.remove('table-success'), 1000);
                 if (data.status_ambil === 'completed') {
-                    const completedTable = document.querySelector('#batchPickingTableCompleted tbody');
+                    const completedTable = document.querySelector('#completedTable tbody');
                     completedTable.appendChild(row);
                 }
             }
@@ -622,5 +723,30 @@ function handleBarcodeScan(barcode) {
     });
 }
 // === Hapus semua event handler dan kode inline editing jumlah_ambil ===
+
+// === Scan Barcode History ===
+const scanHistory = [];
+const maxHistory = 50;
+function addScanHistory(barcode, status) {
+  scanHistory.unshift({ barcode, status, time: new Date().toLocaleTimeString() });
+  if (scanHistory.length > maxHistory) scanHistory.pop();
+  renderScanHistory();
+}
+function renderScanHistory() {
+  const el = document.getElementById('scanHistory');
+  if (!el) return;
+  el.innerHTML = '<div class="fw-bold mb-1">History Scan</div>' +
+    '<ul class="list-group">' +
+    scanHistory.map(item =>
+      `<li class="list-group-item py-1 d-flex justify-content-between align-items-center">
+        <span>${item.barcode}</span>
+        <span class="badge ${item.status === 'success' ? 'bg-success' : 'bg-danger'}">${item.status === 'success' ? 'Berhasil' : 'Gagal'}</span>
+        <span class="text-muted" style="font-size:0.8em;">${item.time}</span>
+      </li>`
+    ).join('') + '</ul>';
+}
+// Integrasi dengan proses scan barcode:
+window.addScanHistory = addScanHistory;
+window.renderScanHistory = renderScanHistory;
 
 

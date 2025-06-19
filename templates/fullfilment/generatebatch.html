@@ -45,6 +45,12 @@
                     {{ filter.form.order_type }}
                 </div>
             </div>
+            <div class="col-md-2">
+                <label class="form-label mb-1">{{ filter.form.id_pesanan.label }}</label>
+                <div class="d-flex align-items-stretch">
+                    {{ filter.form.id_pesanan }}
+                </div>
+            </div>
             <div class="col-md-2 d-flex flex-column gap-2">
                 <button type="submit" class="btn btn-outline-primary mb-1">Filter</button>
                 <a href="/fullfilment/generatebatch/" class="btn btn-outline-secondary">Clear</a>
@@ -230,6 +236,30 @@ $(function() {
             } else {
                 Swal.fire('Gagal', 'Gagal ambil data dari server', 'error');
             }
+        });
+    });
+    // Dynamic AJAX filter for all dropdowns
+    const filterFields = [
+        'nama_toko', 'brand', 'order_type', 'kirim_sebelum', 'kurir', 'id_pesanan'
+    ];
+    filterFields.forEach(function(field) {
+        $('#id_' + field).on('change', function() {
+            let data = {};
+            filterFields.forEach(function(f) {
+                data[f + '[]'] = $('#id_' + f).val();
+            });
+            $.get('/fullfilment/ajax/filter-options/', data, function(resp) {
+                filterFields.forEach(function(f) {
+                    if (f !== field) { // Jangan update dropdown yang sedang diubah user
+                        let $el = $('#id_' + f);
+                        let current = $el.val() || [];
+                        $el.empty();
+                        $.each(resp[f], function(i, val) {
+                            $el.append($('<option>', { value: val, text: val, selected: current.includes(val) }));
+                        });
+                    }
+                });
+            });
         });
     });
 });

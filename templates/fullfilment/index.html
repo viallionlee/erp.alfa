@@ -110,11 +110,10 @@
                   {% endif %}
                 </td>
                 <td>
-                  <a href="/fullfilment/batchpicking/{{ batch.nama_batch }}/" class="btn btn-primary btn-sm">Open</a>
-                  <button type="button" class="btn btn-info btn-sm show-idpesanan-btn"
-                    data-batch="{{ batch.nama_batch }}">Show ID</button>
-                  <form method="post" action="{% url 'batchlist_delete' batch_id=batch.id %}" style="display:inline;"
-                    onsubmit="return confirm('Yakin hapus batchlist ini?');">
+                  <a href="/fullfilment/batchpicking_v2/{{ batch.nama_batch }}/" class="btn btn-primary btn-sm">Open</a>
+                  <button type="button" class="btn btn-info btn-sm show-idpesanan-btn" data-batch="{{ batch.nama_batch }}">Show ID</button>
+                  <a href="/fullfilment/batchorder/{{ batch.nama_batch }}/" class="btn btn-secondary btn-sm">Detail</a>
+                  <form method="post" action="{% url 'batchlist_delete' batch_id=batch.id %}" style="display:inline;" onsubmit="return confirm('Yakin hapus batchlist ini?');">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                   </form>
@@ -216,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (idList.length === 0) {
               ul.innerHTML = '<li class="list-group-item text-muted">Tidak ada ID Pesanan.</li>';
             } else {
-              idList.forEach(idp => {
+              idList.forEach idp => {
                 const li = document.createElement('li');
                 li.className = 'list-group-item';
                 li.textContent = idp;

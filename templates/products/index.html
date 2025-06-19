@@ -178,7 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
         { data: 'rak' },
         { data: 'photo', orderable: false, searchable: false, render: function(data, type, row) {
             if (row.photo) {
-              return `<img src="${row.photo}" alt="photo" style="max-width:40px;max-height:40px;">`;
+              return `<img src="${row.photo.startsWith('/media/') ? row.photo : '/media/' + row.photo}" alt="photo" style="max-width:40px;max-height:40px;">`;
             } else {
               return '—';
             }

@@ -40,8 +40,8 @@
 </head>
 <body>
     <div class="nav-mobile mb-2">
-        <a href="/mobile/" class="{% if request.path == '/mobile/' %}active{% endif %}">Home</a>
-        <a href="/fullfilment/mobile/" class="{% if '/fullfilment/mobile/' in request.path %}active{% endif %}">Batch</a>
+        <a href="/" class="{% if request.path == '/' %}active{% endif %}">Home</a>
+        <a href="/fullfilment/" class="{% if '/fullfilment/' in request.path %}active{% endif %}">Batch</a>
         <a href="/fullfilment/orders_checking/all/" class="{% if '/orders_checking' in request.path %}active{% endif %}">Check</a>
     </div>
     {% block content %}{% endblock %}

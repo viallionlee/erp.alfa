@@ -3,7 +3,6 @@ from . import views
 from . import viewdemo
 from . import generatebatch_views
 from . import orderschecking
-from . import mobile_views
 
 urlpatterns = [
     path('', views.index, name='fullfilment_index'),
@@ -38,6 +37,11 @@ urlpatterns = [
     path('batchpicking/<str:nama_batch>/sku_not_found_details/', views.batchpicking_sku_not_found_details, name='batchpicking_sku_not_found_details'),
     path('batchpicking/<str:nama_batch>/mix_count/', views.mix_count_api, name='batchpicking_mix_count'),
     path('api/idpesanan_in_batch/', views.api_idpesanan_in_batch, name='api_idpesanan_in_batch'),
-    path('mobile/', mobile_views.mobile_batch_index, name='mobile_batch_index'),
     path('batchitem/<int:pk>/update_jumlah_ambil/', views.batchitem_update_jumlah_ambil, name='batchitem_update_jumlah_ambil'),
+    path('generatebatch/filter_selected/', generatebatch_views.filter_selected, name='filter_selected'),
+    path('ajax/filter-options/', views.ajax_filter_options, name='ajax_filter_options'),
+    path('batchorder/<str:nama_batch>/', views.batchorder_view, name='batchorder_view'),
+    path('batchpicking_v2/<str:nama_batch>/', views.batchpicking, name='batchpicking'),
+    path('batchpicking_v2/<str:nama_batch>/update_barcode/', views.update_barcode_picklist, name='update_barcode_picklist'),
+    path('batchpicking_v2/<str:nama_batch>/update_manual/', views.update_manual, name='update_manual'),
 ]

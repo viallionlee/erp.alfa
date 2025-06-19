@@ -39,6 +39,11 @@ class GenerateBatchOrderFilter(django_filters.FilterSet):
         label='Kirim Sebelum',
         conjoined=False
     )
+    id_pesanan = django_filters.MultipleChoiceFilter(
+        choices=lambda: sorted(filtered_order_queryset().exclude(id_pesanan__isnull=True).exclude(id_pesanan='').values_list('id_pesanan', 'id_pesanan').distinct(), key=lambda x: (x[0] or '')),
+        label='ID Pesanan',
+        conjoined=False
+    )
 
     def filter_queryset(self, queryset):
         qs = super().filter_queryset(queryset)
@@ -49,4 +54,4 @@ class GenerateBatchOrderFilter(django_filters.FilterSet):
 
     class Meta:
         model = Order
-        fields = ['nama_toko', 'brand', 'order_type', 'tanggal_pembuatan', 'kurir', 'kirim_sebelum']
+        fields = ['nama_toko', 'brand', 'order_type', 'tanggal_pembuatan', 'kurir', 'kirim_sebelum', 'id_pesanan']

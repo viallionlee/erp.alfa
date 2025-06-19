@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container mt-4">
+  <h4 class="mb-3">Daftar Order pada Batch: <b>{{ nama_batch }}</b></h4>
+  <div class="card">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-bordered table-sm align-middle">
+          <thead class="table-light text-center">
+            <tr>
+              <th>ID Pesanan</th>
+              <th>SKU</th>
+              <th>Barcode</th>
+              <th>Nama Produk</th>
+              <th>Variant Produk</th>
+              <th>Brand</th>
+              <th>Jumlah</th>
+              <th>Order Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+            <tr>
+              <td class="text-center">{{ order.id_pesanan }}</td>
+              <td class="text-center">{{ order.sku }}</td>
+              <td class="text-center">{{ order.barcode }}</td>
+              <td>{{ order.nama_produk }}</td>
+              <td>{{ order.variant_produk }}</td>
+              <td>{{ order.brand }}</td>
+              <td class="text-end">{{ order.jumlah }}</td>
+              <td class="text-center">{{ order.order_type }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" class="text-center text-muted">Tidak ada data order untuk batch ini.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <a href="/fullfilment/" class="btn btn-secondary mt-2">&larr; Kembali ke Batchlist</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

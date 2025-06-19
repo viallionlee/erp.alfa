@@ -227,3 +227,30 @@ def generatebatch_update_batchlist(request):
         except Exception as log_exc:
             pass  # Avoid recursive logging errors
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+@csrf_exempt
+def filter_selected(request):
+    if request.method == 'POST':
+        selected_ids = request.POST.getlist('selected_ids')
+        orders = Order.objects.filter(pk__in=selected_ids)
+        total_order_valid = orders.values('id_pesanan').distinct().count()
+        f = GenerateBatchOrderFilter(request.GET, queryset=orders)
+        filtered_order_count = f.qs.values('id_pesanan').distinct().count()
+        table = GenerateBatchOrderTable(f.qs)
+        RequestConfig(request, paginate={'per_page': 50}).configure(table)
+        # SKU Not Found
+        order_skus = set(orders.exclude(status_bundle='Y').values_list('sku', flat=True))
+        from products.models import Product
+        master_skus = set(Product.objects.values_list('sku', flat=True))
+        sku_not_found_list = sorted(order_skus - master_skus)
+        sku_not_found_count = len(sku_not_found_list)
+        return render(request, 'fullfilment/generatebatch.html', {
+            'table': table,
+            'filter': f,
+            'total_order_valid': total_order_valid,
+            'total_order_filter': filtered_order_count,
+            'sku_not_found_count': sku_not_found_count,
+            'sku_not_found_list': sku_not_found_list,
+            'selected_ids': selected_ids,
+        })
+    return redirect('fullfilment-generatebatch')
