@@ -1,0 +1,504 @@
+{% extends 'base_mobile.html' %}
+{% block content %}
+<style>
+</style>
+
+<!-- Header untuk menandai template CHECK BY SCAN -->
+<div class="container-fluid px-2 py-1" style="max-width:480px; margin:auto; background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%); border-radius: 0 0 12px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div class="text-center py-2">
+        <h4 class="mb-0 fw-bold" style="font-size: 1.1rem; letter-spacing: 0.5px; color: #e91e63;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-upc-scan me-2" viewBox="0 0 16 16">
+                <path d="M1.5 1a.5.5 0 0 0-.5.5v3a.5.5 0 0 1-1 0v-3A1.5 1.5 0 0 1 1.5 0h3a.5.5 0 0 1 0 1h-3zM11 .5a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 1 16 1.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 1-.5-.5zM.5 11a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 1 0 1h-3A1.5 1.5 0 0 1 0 14.5v-3a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a.5.5 0 0 1 0-1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 .5-.5zM3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0v-7z"/>
+            </svg>
+            CHECK BY SCAN
+        </h4>
+    </div>
+</div>
+
+<div class="container-fluid px-2 py-2" style="max-width:480px; margin:auto; padding-bottom:130px;">
+
+    <!-- Step 1: Input Order ID -->
+    <div id="orderIdSection" {% if show_tables %}style="display:none;"{% endif %}>
+        <form method="get" id="orderIdForm">
+            <label for="orderidinput" class="form-label fw-bold" style="font-size:1em;">Input Order ID</label>
+            <div class="input-group mb-2 flex-nowrap">
+                <input type="text" id="orderidinput" name="order_id" class="form-control form-control-sm rounded-start" style="font-size:1em; min-width:0;" placeholder="Order ID..." autofocus autocomplete="off">
+                <button type="submit" class="btn btn-primary btn-sm">Cari</button>
+            </div>
+        </form>
+        {% if error %}
+        <div class="alert alert-danger py-2">{{ error }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Step 2: Barcode Scan & Table, only if show_tables -->
+    {% if show_tables %}
+    <div id="barcodeSection"></div>
+        <label for="barcodeInput" class="form-label fw-bold" style="font-size:1em;">Scan Barcode</label>
+        <div class="input-group mb-2 flex-nowrap">
+            <input type="text" id="barcodeInput" class="form-control form-control-sm rounded-start" style="font-size:1em; min-width:0;" placeholder="Scan barcode..." autofocus autocomplete="off">
+        </div>
+    </div>
+
+    <!-- Order Information -->
+    {% if order_id %}
+    <div class="mb-3">
+        <div class="alert alert-info py-2" style="font-size:0.9rem;">
+            <strong>Order ID:</strong> {{ order_id }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Pending Items -->
+    <div class="mb-4">
+        <h5 class="mb-2" style="font-size:1em;">Pending Items</h5>
+        <ul class="list-group" id="pendingList">
+            {% for item in pending_orders %}
+            <li class="list-group-item px-2 py-2 mb-3" style="border-radius:14px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #f0f0f0; min-height:auto; height:auto;">
+                <div class="d-flex align-items-center gap-2">
+                    <img src="{{ item.photo_url|default:'/static/icons/alfaicon.png' }}" alt="Photo"
+                         style="height:120px; width:auto; max-width:100%; object-fit:contain; border-radius:10px; border:1px solid #eee; background:#fafafa;">
+                    <div class="flex-grow-1 ms-2">
+                        <div class="fw-bold" style="font-size:0.8rem;">{{ item.nama_produk }}</div>
+                        <div class="mt-1 mb-1">
+                            <span class="badge bg-info" style="font-size:0.7rem;">{{ item.variant_produk }}</span>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between" style="font-size:0.8rem;">
+                            <span class="badge bg-success" style="font-size:0.7rem;">{{ item.brand }}</span>
+                            <span class="badge bg-primary" style="font-size:0.7rem;">{{ item.jumlah_ambil }}/{{ item.jumlah }}</span>
+                        </div>
+                        <div class="mt-1" style="font-size:0.8rem;">
+                            <span class="text-muted">Barcode: {{ item.barcode }}</span>
+                        </div>
+                        <div class="mt-1" style="font-size:0.8rem;">
+                            <span class="text-muted">SKU: {{ item.sku }}</span>
+                        </div>
+                    </div>
+                </div>
+            </li>
+            {% empty %}
+            <li class="list-group-item text-center text-muted">Tidak ada data pending.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <!-- Completed Items -->
+    <!-- This section has been removed to match clickpicking behavior -->
+    {% endif %}
+</div>
+
+<!-- Modal for Completed Items (Copied from clickpicking) -->
+<div class="modal fade" id="completedItemsModal" tabindex="-1" aria-labelledby="completedItemsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="completedItemsModalLabel">Completed Items</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="list-group" id="completedListModal">
+                    <!-- Completed items will be injected here by JavaScript -->
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Button Ubah ke By Click - positioned above sticky bar -->
+<div style="position:fixed;bottom:70px;left:0;width:100vw;z-index:999;padding:0 1rem;">
+    <a href="{% if order_id %}{% url 'mobile_clickpicking_order' order_id=order_id %}{% else %}{% url 'mobile_clickpicking' %}{% endif %}" 
+       class="btn btn-success w-100" 
+       style="padding:0.75rem;font-size:1rem;font-weight:600;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+        Ubah ke By Click
+    </a>
+</div>
+
+<!-- Sticky Bar Bottom -->
+<div id="sticky-bar" style="position:fixed;bottom:0;left:0;width:100vw;z-index:1000;background:#fff;border-top:1px solid #eee;box-shadow:0 -2px 8px rgba(0,0,0,0.04);padding:0.5rem 1rem;display:flex;gap:1rem;justify-content:center;">
+    <!-- Focus Scan Button untuk Order ID (muncul ketika form Order ID terlihat) -->
+    <button id="refresh-order-btn" class="btn btn-outline-primary flex-fill" style="max-width:180px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-crosshair" viewBox="0 0 16 16">
+          <path d="M8.5.5a.5.5 0 0 0-1 0v.518A7.001 7.001 0 0 0 1.018 7.5H.5a.5.5 0 0 0 0 1h.518A7.001 7.001 0 0 0 7.5 14.982v.518a.5.5 0 0 0 1 0v-.518A7.001 7.001 0 0 0 14.982 8.5h.518a.5.5 0 0 0 0-1h-.518A7.001 7.001 0 0 0 8.5 1.018V.5zm-2 1.068A6.001 6.001 0 0 1 2.068 6.5H1.5a.5.5 0 0 1 0-1h.568A6.001 6.001 0 0 1 6.5 1.068V.5a.5.5 0 0 1 1 0v.568zM1.568 8.5A6.001 6.001 0 0 1 6.5 14.932V15.5a.5.5 0 0 1-1 0v-.568A6.001 6.001 0 0 1 1.068 8.5H.5a.5.5 0 0 1 0-1h.568zM8.5 14.932A6.001 6.001 0 0 1 14.932 9.5H15.5a.5.5 0 0 1 0 1h-.568A6.001 6.001 0 0 1 9.5 14.932V15.5a.5.5 0 0 1-1 0v-.568zM14.932 6.5A6.001 6.001 0 0 1 9.5 1.068V.5a.5.5 0 0 1 1 0v.568A6.001 6.001 0 0 1 14.932 6.5H15.5a.5.5 0 0 1 0 1h-.568zM8 9a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+        </svg>
+        Focus Scan
+    </button>
+    <!-- Focus Scan Button untuk Barcode (muncul ketika halaman scan) -->
+    <button id="refresh-barcode-btn" class="btn btn-outline-primary flex-fill" style="max-width:180px; display: none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-crosshair" viewBox="0 0 16 16">
+          <path d="M8.5.5a.5.5 0 0 0-1 0v.518A7.001 7.001 0 0 0 1.018 7.5H.5a.5.5 0 0 0 0 1h.518A7.001 7.001 0 0 0 7.5 14.982v.518a.5.5 0 0 0 1 0v-.518A7.001 7.001 0 0 0 14.982 8.5h.518a.5.5 0 0 0 0-1h-.518A7.001 7.001 0 0 0 8.5 1.018V.5zm-2 1.068A6.001 6.001 0 0 1 2.068 6.5H1.5a.5.5 0 0 1 0-1h.568A6.001 6.001 0 0 1 6.5 1.068V.5a.5.5 0 0 1 1 0v.568zM1.568 8.5A6.001 6.001 0 0 1 6.5 14.932V15.5a.5.5 0 0 1-1 0v-.568A6.001 6.001 0 0 1 1.068 8.5H.5a.5.5 0 0 1 0-1h.568zM8.5 14.932A6.001 6.001 0 0 1 14.932 9.5H15.5a.5.5 0 0 1 0 1h-.568A6.001 6.001 0 0 1 9.5 14.932V15.5a.5.5 0 0 1-1 0v-.568zM14.932 6.5A6.001 6.001 0 0 1 9.5 1.068V.5a.5.5 0 0 1 1 0v.568A6.001 6.001 0 0 1 14.932 6.5H15.5a.5.5 0 0 1 0 1h-.568zM8 9a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+        </svg>
+        Focus Scan
+    </button>
+    <button type="button" class="btn btn-success flex-fill" data-bs-toggle="modal" data-bs-target="#completedItemsModal" style="max-width:180px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
+          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+          <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+        </svg>
+        Completed
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://unpkg.com/@zxing/library@latest"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<!-- 1. TAMBAHKAN SWEETALERT2 SAMA SEPERTI CLICKPICKING -->
+<script>
+// --- 1. TAMBAHKAN FUNGSI playSound DARI CLICKPICKING ---
+function playSound(type) {
+    if (type === 'completed') {
+        new Audio('/static/sounds/completedsound.mp3').play();
+    } else if (type === 'success') {
+        new Audio('/static/sounds/ding.mp3').play();
+    } else if (type === 'error' || type === 'fail') {
+        new Audio('/static/sounds/wrong_barcode.mp3').play();
+    } else { // For over_scan or other specific cases
+        new Audio('/static/sounds/over_scan.mp3').play();
+    }
+}
+
+// Submit order ID form
+document.addEventListener('DOMContentLoaded', function() {
+    const orderIdForm = document.getElementById('orderIdForm');
+    const orderIdInput = document.getElementById('orderidinput');
+    
+    if (orderIdForm && orderIdInput) {
+        
+        // Event listener untuk form submit (Enter key)
+        orderIdForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const orderId = orderIdInput.value.trim();
+            
+            if (orderId) {
+                const redirectUrl = `/fullfilment/scanpicking/${encodeURIComponent(orderId)}/`;
+                
+                // Tambahkan loading indicator
+                const submitBtn = orderIdForm.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Loading...';
+                }
+                
+                window.location.href = redirectUrl;
+            } else {
+                alert('Silakan masukkan Order ID');
+            }
+        });
+        
+        // Event listener untuk tombol Cari (click)
+        const searchBtn = orderIdForm.querySelector('button[type="submit"]');
+        if (searchBtn) {
+            searchBtn.addEventListener('click', function(e) {
+                // Form submit event akan dipicu otomatis, jadi tidak perlu duplicate logic
+            });
+        }
+        
+        // Event listener untuk input Enter key (backup)
+        orderIdInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                orderIdForm.dispatchEvent(new Event('submit'));
+            }
+        });
+        
+    }
+    
+    // Update refresh buttons saat DOM loaded
+    updateRefreshButtons();
+    
+    // Juga update setelah 100ms untuk memastikan semua elemen sudah ter-render
+    setTimeout(updateRefreshButtons, 100);
+    
+    // Hide "Ubah ke By Click" button when order ID form is scanned (show_tables is true)
+    {% if show_tables %}
+    const ubahButton = document.querySelector('a[href*="mobile_clickpicking"]');
+    if (ubahButton) {
+        ubahButton.style.display = 'none';
+    }
+    {% endif %}
+});
+
+// Barcode scan logic (hanya aktif jika show_tables)
+{% if show_tables %}
+document.getElementById('barcodeInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const barcode = this.value.trim();
+        if (barcode) {
+            processScan(barcode);
+            this.value = '';
+        }
+    }
+});
+
+// --- 2. UBAH FUNGSI processScan AGAR MENGGUNAKAN AJAX ---
+function processScan(barcode) {
+    const orderId = '{% if order_id %}{{ order_id }}{% else %}null{% endif %}';
+    if (!orderId || orderId === 'null') {
+        console.error('Order ID not available for scanning');
+        showFeedback('danger', 'Order ID tidak tersedia');
+        return;
+    }
+    
+    fetch("/fullfilment/scanpicking/" + orderId + "/scan-barcode/", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ barcode: barcode, order_id: orderId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showFeedback('success', 'Item berhasil di-scan!');
+            playSound('success'); // Panggil suara sukses
+
+            // 1. Update table dengan data baru dari server
+            updateTables(data.pending_orders, data.completed_orders);
+
+            // 2. Cek di frontend apakah pending list sudah kosong
+            const pendingList = document.getElementById('pendingList');
+            // Cek elemen 'li' yang BUKAN placeholder 'Tidak ada data pending'
+            const pendingItemsCount = pendingList.querySelectorAll('li.list-group-item:not(.text-muted)').length;
+
+            if (pendingItemsCount === 0 && data.completed_orders.length > 0) {
+                playSound('completed');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Order ini sudah completed',
+                    text: 'Semua item sudah selesai diproses.',
+                    showConfirmButton: false, // Hilangkan tombol "OK"
+                    timer: 1500, // Atur timer 1.5 detik
+                    allowOutsideClick: false
+                }).then(() => {
+                    // Redirect ke halaman scanpicking awal
+                    window.location.href = window.location.origin + "/fullfilment/scanpicking/";
+                });
+            }
+        } else {
+            showFeedback('danger', data.error || 'Barcode tidak ditemukan');
+            playSound('error'); // Panggil suara error
+        }
+    })
+    .catch(error => {
+        showFeedback('danger', 'Terjadi kesalahan saat memproses barcode');
+        playSound('error'); // Panggil suara error koneksi
+    });
+}
+
+function showFeedback(type, message) {
+    const feedback = document.getElementById('barcodeFeedback');
+    if (!feedback) {
+        const barcodeSection = document.getElementById('barcodeSection');
+        if (barcodeSection) {
+            const newFeedback = document.createElement('div');
+            newFeedback.id = 'barcodeFeedback';
+            barcodeSection.prepend(newFeedback);
+        }
+    }
+    document.getElementById('barcodeFeedback').innerHTML = `<div class="alert alert-${type} alert-dismissible fade show py-2" role="alert">
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>`;
+    setTimeout(() => {
+        const alert = document.getElementById('barcodeFeedback').querySelector('.alert');
+        if (alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }
+    }, 3000);
+}
+
+// --- 3. TAMBAHKAN FUNGSI updateTables DARI CLICKPICKING ---
+function updateTables(pendingOrders, completedOrders) {
+    const pendingList = document.getElementById('pendingList');
+    
+    // Fungsi internal untuk render list
+    function renderList(ulElement, orders) {
+        ulElement.innerHTML = '';
+        if (orders.length === 0) {
+            const li = document.createElement('li');
+            li.className = 'list-group-item text-center text-muted';
+            li.textContent = 'Tidak ada data pending.';
+            ulElement.appendChild(li);
+            return;
+        }
+
+        orders.forEach(function(item) {
+            const li = document.createElement('li');
+            li.className = 'list-group-item px-2 py-2 mb-3';
+            li.style = 'border-radius:14px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #f0f0f0; min-height:auto; height:auto;';
+            
+            const badgeClass = item.status_ambil === 'completed' ? 'bg-success' :
+                               (item.status_ambil === 'partial' ? 'bg-info' : 'bg-primary');
+
+            li.innerHTML = `
+                <div class="d-flex align-items-center gap-2">
+                    <img src="${item.photo_url || '/static/icons/alfaicon.png'}" alt="Photo"
+                         style="height:120px; width:auto; max-width:100%; object-fit:contain; border-radius:10px; border:1px solid #eee; background:#fafafa;">
+                    <div class="flex-grow-1 ms-2">
+                        <div class="fw-bold" style="font-size:0.8rem;">${item.nama_produk}</div>
+                        <div class="mt-1 mb-1">
+                            <span class="badge bg-info" style="font-size:0.7rem;">${item.variant_produk || ''}</span>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between" style="font-size:0.8rem;">
+                            <span class="badge bg-success" style="font-size:0.7rem;">${item.brand || ''}</span>
+                            <span class="badge ${badgeClass}" style="font-size:0.7rem;">${item.jumlah_ambil}/${item.jumlah}</span>
+                        </div>
+                        <div class="mt-1" style="font-size:0.93em;">
+                            <span class="me-1" style="vertical-align:middle;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-upc" viewBox="0 0 16 16">
+                                    <path d="M1.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5zm2 0A.5.5 0 0 1 4 1.5v13a.5.5 0 0 1-1 0v-13A.5.5 0 0 1 3.5 1zm2 0a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5zm2 0a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5zm2 0a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5zm2 0a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+                                </svg>
+                            </span>
+                            <span class="text-muted">Barcode: ${item.barcode}</span>
+                        </div>
+                        <div class="mt-1" style="font-size:0.8rem;">
+                            <span class="text-muted">SKU: ${item.sku || ''}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            ulElement.appendChild(li);
+        });
+    }
+
+    renderList(pendingList, pendingOrders);
+    
+    // 2. PERBAIKI PEMANGGILAN populateAndShowCompletedModal
+    populateAndShowCompletedModal(completedOrders);
+}
+{% endif %}
+
+// Pastikan kode untuk modal completed sudah ada
+// (Ini sudah ada dari permintaan sebelumnya, jadi tidak perlu diubah)
+
+// Fungsi untuk mengatur tampilan tombol refresh berdasarkan kondisi halaman
+function updateRefreshButtons() {
+    const orderIdSection = document.getElementById('orderIdSection');
+    const refreshOrderBtn = document.getElementById('refresh-order-btn');
+    const refreshBarcodeBtn = document.getElementById('refresh-barcode-btn');
+    
+    // Cek apakah orderIdSection terlihat (bukan display:none dan bukan tersembunyi)
+    const isOrderIdVisible = orderIdSection && 
+                           orderIdSection.style.display !== 'none' && 
+                           getComputedStyle(orderIdSection).display !== 'none' &&
+                           orderIdSection.offsetParent !== null;
+    
+    if (isOrderIdVisible) {
+        // Form Order ID terlihat - tampilkan Refresh Order
+        if (refreshOrderBtn) refreshOrderBtn.style.display = 'block';
+        if (refreshBarcodeBtn) refreshBarcodeBtn.style.display = 'none';
+    } else {
+        // Form Order ID tersembunyi - tampilkan Refresh Scan
+        if (refreshOrderBtn) refreshOrderBtn.style.display = 'none';
+        if (refreshBarcodeBtn) refreshBarcodeBtn.style.display = 'block';
+    }
+}
+
+// Event listener untuk Refresh Order (focus ke input Order ID)
+document.getElementById('refresh-order-btn')?.addEventListener('click', function() {
+    setTimeout(function() {
+        const orderIdInput = document.getElementById('orderidinput');
+        if (orderIdInput) {
+            orderIdInput.focus();
+        }
+    }, 100);
+});
+
+// Event listener untuk Refresh Scan (focus ke input barcode)
+document.getElementById('refresh-barcode-btn')?.addEventListener('click', function() {
+    setTimeout(function() {
+        const barcodeInput = document.getElementById('barcodeInput');
+        if (barcodeInput) {
+            barcodeInput.focus();
+        }
+    }, 100);
+});
+
+// Panggil fungsi update saat halaman dimuat  
+// NOTE: Sudah dipindahkan ke DOMContentLoaded event listener utama di atas
+
+// Panggil fungsi update saat ada perubahan di orderIdSection
+const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+            updateRefreshButtons();
+        }
+    });
+});
+
+const orderIdSection = document.getElementById('orderIdSection');
+if (orderIdSection) {
+    observer.observe(orderIdSection, { 
+        attributes: true, 
+        attributeFilter: ['style'],
+        subtree: true,
+        childList: true
+    });
+}
+
+// Tambahkan event listener untuk window resize (kadang mempengaruhi visibility)
+window.addEventListener('resize', function() {
+    setTimeout(updateRefreshButtons, 50);
+});
+
+// Tambahkan interval check sebagai backup (setiap 1 detik)
+setInterval(function() {
+    updateRefreshButtons();
+}, 1000);
+
+// ========================================================
+// 3. PASTIKAN FUNGSI populateAndShowCompletedModal SUDAH ADA
+// ========================================================
+function populateAndShowCompletedModal(completedOrdersData) {
+    const completedList = document.getElementById('completedListModal');
+    completedList.innerHTML = ''; 
+    
+    // Gunakan argumen jika ada, jika tidak, ambil dari konteks Django
+    const completedOrders = completedOrdersData || {% if completed_orders %}{{ completed_orders|safe }}{% else %}[]{% endif %};
+
+    if (completedOrders.length === 0) {
+        completedList.innerHTML = '<li class="list-group-item">No completed items yet.</li>';
+    } else {
+        completedOrders.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item px-2 py-2 mb-3';
+            li.style = 'border-radius:14px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #f0f0f0; min-height:auto; height:auto;';
+            li.innerHTML = `
+                <div class="d-flex align-items-center gap-2">
+                    <img src="${item.photo_url || '/static/icons/alfaicon.png'}" alt="Photo" style="height:120px; width:auto; max-width:100%; object-fit:contain; border-radius:10px; border:1px solid #eee; background:#fafafa;">
+                    <div class="flex-grow-1 ms-2">
+                        <div class="fw-bold" style="font-size:1.05em;">${item.nama_produk}</div>
+                        <div class="text-muted" style="font-size:0.95em;">${item.variant_produk}</div>
+                        <div class="d-flex align-items-center justify-content-between" style="font-size:0.93em;">
+                            <span class="text-secondary">${item.brand}</span>
+                            <span class="badge bg-success jumlah-badge" style="font-size:0.93em;">${item.jumlah_ambil}/${item.jumlah}</span>
+                        </div>
+                        <div class="mt-1" style="font-size:0.93em;">
+                            <span class="me-1" style="vertical-align:middle;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-upc" viewBox="0 0 16 16">
+                                  <path d="M1.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5zm2 0A.5.5 0 0 1 4 1.5v13a.5.5 0 0 1-1 0v-13A.5.5 0 0 1 3.5 1zm2 0a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5zm2 0a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5zm2 0a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5zm2 0a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+                                </svg>
+                            </span>
+                            <span class="text-muted">Barcode: ${item.barcode}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            completedList.appendChild(li);
+        });
+    }
+}
+
+// Event listener awal untuk modal (saat halaman pertama kali dimuat)
+const completedItemsModal = document.getElementById('completedItemsModal');
+if (completedItemsModal) {
+    completedItemsModal.addEventListener('show.bs.modal', function (event) {
+        // Panggil tanpa argumen agar mengambil data dari konteks Django
+        populateAndShowCompletedModal();
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,996 @@
+/* Mobile Batch Picking V1 - Optimized CSS */
+
+/* Menyembunyikan bilah navigasi dari base_mobile.html hanya untuk halaman ini */
+.navbar-expand-lg, .fixed-top, nav {
+    display: none !important;
+}
+
+/* General layout adjustments for a more compact and modern feel */
+.container-fluid {
+    max-width: 480px;
+    margin: auto;
+    padding: 8px !important; /* Reverted to 8px */
+}
+
+/* Scan Barcode Input - SWEET & MODERN REDESIGN */
+#barcodeInput {
+    font-size: 0.9em; /* Keep same size */
+    padding: 0.4rem 0.6rem; /* Keep same padding */
+    min-width: 0;
+    border: 2px solid #e9ecef; /* Soft border */
+    border-radius: 12px; /* More rounded corners */
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); /* Subtle gradient */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* Soft shadow */
+    transition: all 0.3s ease; /* Smooth transitions */
+    font-weight: 500; /* Slightly bolder text */
+}
+
+/* Focus state - Beautiful focus effect */
+#barcodeInput:focus {
+    border-color: #667eea; /* Purple-blue border on focus */
+    background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%); /* Light blue gradient on focus */
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2); /* Purple shadow on focus */
+    outline: none; /* Remove default outline */
+}
+
+/* Placeholder styling */
+#barcodeInput::placeholder {
+    color: #adb5bd; /* Soft gray placeholder */
+    font-weight: 400; /* Normal weight for placeholder */
+}
+
+.input-group-modern .form-control {
+    padding: 0.4rem 0.6rem; /* Keep same padding */
+}
+
+.input-group-modern .btn {
+    padding: 0.6rem 1rem; /* Keep same padding */
+    font-size: 1.1em; /* Keep same font size */
+    border-radius: 12px; /* Match input border radius */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Beautiful gradient */
+    border: none; /* Remove border */
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); /* Matching shadow */
+    transition: all 0.3s ease; /* Smooth transitions */
+}
+
+/* Button hover effect */
+.input-group-modern .btn:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%); /* Darker gradient on hover */
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); /* Stronger shadow on hover */
+    transform: translateY(-1px); /* Slight lift effect */
+}
+
+/* Button active effect */
+.input-group-modern .btn:active {
+    transform: translateY(0); /* Reset transform on click */
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3); /* Reduced shadow on click */
+}
+
+/* Sticky Reload Bar - SWEET & MODERN REDESIGN */
+#stickyReloadBar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    z-index: 1000;
+    background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%);
+    backdrop-filter: blur(20px); /* Glass effect */
+    border-top: 1px solid rgba(226, 232, 240, 0.8);
+    padding: 12px 0 8px 0; /* Increased padding for better spacing */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.1), 0 -1px 3px rgba(0,0,0,0.05);
+    border-radius: 16px 16px 0 0; /* Rounded top corners */
+}
+
+#stickyButtonsContainer {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px; /* Increased gap for better spacing */
+    position: relative;
+    padding: 0 12px; /* Increased padding */
+}
+
+#stickyButtonsContainer .btn {
+    padding: 0.5em 0.8em; /* Increased padding for better touch targets */
+    font-size: 0.9em;
+    border-radius: 12px; /* More rounded corners */
+    border: 2px solid transparent; /* Transparent border for smooth transitions */
+    font-weight: 500; /* Slightly bolder text */
+    transition: all 0.3s ease; /* Smooth transitions */
+    position: relative;
+    overflow: hidden;
+    min-width: 44px; /* Ensure consistent button size */
+    height: 44px; /* Fixed height for consistency */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#stickyButtonsContainer .btn i {
+    font-size: 1.3em; /* Slightly larger icons */
+    transition: all 0.3s ease; /* Smooth icon transitions */
+}
+
+/* Special styling for buttons with labels (Brand and Rak) */
+#stickyButtonsContainer .btn .d-flex.flex-column {
+    gap: 2px; /* Small gap between icon and label */
+}
+
+#stickyButtonsContainer .filter-label {
+    font-size: 0.6em; /* Very small text */
+    font-weight: 600; /* Bold small text */
+    line-height: 1; /* Tight line height */
+    margin: 0; /* Remove default margin */
+    color: inherit; /* Inherit color from button */
+}
+
+/* Adjust icon size for buttons with labels */
+#stickyButtonsContainer .btn .filter-icon,
+#stickyButtonsContainer .btn .rak-icon {
+    width: 16px; /* Fixed width for consistency */
+    height: 16px; /* Fixed height for consistency */
+}
+
+/* Button Hover Effects */
+#stickyButtonsContainer .btn:hover {
+    transform: translateY(-2px); /* Lift effect on hover */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* Enhanced shadow on hover */
+}
+
+/* Button Active Effects */
+#stickyButtonsContainer .btn:active {
+    transform: translateY(0); /* Reset transform on click */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* Reduced shadow on click */
+}
+
+/* Individual Button Styling */
+#stickyButtonsContainer .btn-outline-primary {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-color: #2196f3;
+    color: #1976d2;
+}
+
+#stickyButtonsContainer .btn-outline-primary:hover {
+    background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+    border-color: #1976d2;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(33, 150, 243, 0.3);
+}
+
+#stickyButtonsContainer .btn-outline-secondary {
+    background: linear-gradient(135deg, #f5f5f5 0%, #eeeeee 100%);
+    border-color: #757575;
+    color: #616161;
+}
+
+#stickyButtonsContainer .btn-outline-secondary:hover {
+    background: linear-gradient(135deg, #757575 0%, #616161 100%);
+    border-color: #616161;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(117, 117, 117, 0.3);
+}
+
+#stickyButtonsContainer .btn-outline-info {
+    background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+    border-color: #00bcd4;
+    color: #0097a7;
+}
+
+#stickyButtonsContainer .btn-outline-info:hover {
+    background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+    border-color: #0097a7;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 188, 212, 0.3);
+}
+
+#stickyButtonsContainer .btn-outline-warning {
+    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+    border-color: #ff9800;
+    color: #f57c00;
+}
+
+#stickyButtonsContainer .btn-outline-warning:hover {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    border-color: #f57c00;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 152, 0, 0.3);
+}
+
+/* Sort Button Special Styling */
+#stickyButtonsContainer #stickySortBtn.ms-2 {
+    margin-left: 8px !important; /* Increased margin */
+    height: 44px !important;
+    width: 44px !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+#stickyButtonsContainer #stickySortBtn.ms-2 i {
+    font-size: 1.3em !important; /* Match other icons */
+    margin: 0 !important;
+}
+
+#stickyButtonsContainer #stickySortBtn.ms-2 span {
+    display: none !important;
+}
+
+#stickySearchContainer {
+    display: none; /* Controlled by JS */
+    width: 100%;
+    max-width: 480px;
+    padding: 0 8px; /* Reverted to 0 8px */
+}
+
+#stickySearchInput {
+    font-size: 0.85em; /* Reverted to 0.85em */
+    padding: 0.3rem 0.6rem; /* Reverted to 0.3rem 0.6rem */
+}
+
+#closeSearchBtn {
+    padding: 0.3rem 0.6rem; /* Reverted to 0.3rem 0.6rem */
+    font-size: 0.85em; /* Reverted to 0.85em */
+}
+
+/* Filter Buttons (All, Pending, etc.) - SWEET & MODERN REDESIGN */
+#statusFilterButtons {
+    gap: 4px !important; /* Add small gap between buttons */
+}
+
+#statusFilterButtons .btn {
+    font-size: 0.75em; /* Keep same size */
+    padding: 0.25rem 0.4rem; /* Keep same padding */
+    border-radius: 12px; /* More rounded corners */
+    border: none; /* Remove border */
+    font-weight: 500; /* Slightly bolder text */
+    transition: all 0.3s ease; /* Smooth transitions */
+    position: relative;
+    overflow: hidden;
+    margin: 0 !important; /* Remove any default margins */
+}
+
+/* Active/Selected Button - Sweet Gradient */
+#statusFilterButtons .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    transform: translateY(-1px);
+}
+
+/* Inactive Buttons - Soft & Elegant */
+#statusFilterButtons .btn-outline-primary {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #6c757d;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(108, 117, 125, 0.2);
+}
+
+/* Hover Effects */
+#statusFilterButtons .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+#statusFilterButtons .btn-outline-primary:hover {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    color: #1976d2;
+    border-color: #1976d2;
+}
+
+/* Active Button Hover */
+#statusFilterButtons .btn-primary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+/* Sweet Badge Styling */
+#statusFilterButtons .badge {
+    font-size: 0.85em; /* Increased from 0.7em to 0.85em for bigger numbers */
+    padding: 0.25em 0.6em; /* Increased padding for better proportion */
+    border-radius: 10px; /* More rounded */
+    font-weight: 600; /* Bolder badge text */
+    backdrop-filter: blur(10px); /* Glass effect */
+}
+
+/* Badge Colors for Active Button */
+#statusFilterButtons .btn-primary .badge {
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Badge Colors for Inactive Buttons */
+#statusFilterButtons .btn-outline-primary .badge {
+    background: rgba(108, 117, 125, 0.15) !important;
+    color: #6c757d !important;
+    border: 1px solid rgba(108, 117, 125, 0.2);
+}
+
+/* Current Filter Display */
+#currentFilterDisplay {
+    font-size: 0.7em;
+    color: #6c757d;
+    background: rgba(108, 117, 125, 0.1);
+    padding: 0.2em 0.5em;
+    border-radius: 8px;
+    margin-top: 4px;
+    display: none;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* NEW: Modern filter button styles */
+.filter-btn-modern {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px solid #dee2e6;
+    color: #6c757d;
+    border-radius: 12px;
+    padding: 0.5em 0.8em;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    min-width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* NEW: Modern icon styles */
+.filter-icon, .rak-icon {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* NEW: Specific icon styles */
+.filter-icon {
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* NEW: Active state for filter buttons */
+.filter-btn-modern.active {
+    background: linear-gradient(145deg, #007bff, #0056b3);
+    border-color: #007bff;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+}
+
+.filter-btn-modern.active .filter-icon,
+.filter-btn-modern.active .rak-icon {
+    stroke: white;
+    fill: white;
+}
+
+/* Card and List Items - MINIMALIS & MODERN */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 8px;
+}
+
+.list-group-item {
+    font-size: 1.2em; /* Reverted to 0.9em */
+    border-radius: 16px; /* Increased from 8px to 16px for more modern look */
+    margin-bottom: 8px; /* Increased from 2px to 8px for better separation */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05); /* Enhanced shadow with multiple layers */
+    border: none; /* Remove border for cleaner look */
+    backdrop-filter: blur(10px); /* Glass effect */
+    transition: all 0.3s ease; /* Smooth transitions */
+    position: relative;
+    overflow: hidden;
+    padding: 12px 16px; /* Increased padding for better spacing */
+    align-items: flex-start;
+    min-height: 125px; /* Default minimum height 125px */
+}
+
+/* Card Hover Effects */
+.list-group-item:hover {
+    transform: translateY(-2px); /* Lift effect on hover */
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12), 0 3px 8px rgba(0,0,0,0.08); /* Enhanced shadow on hover */
+}
+
+/* Card Active/Pressed Effect */
+.list-group-item:active {
+    transform: translateY(0); /* Reset transform on click */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Reduced shadow on click */
+}
+
+/* Subtle gradient overlay for depth */
+.list-group-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    pointer-events: none;
+    border-radius: 16px; /* Match card border radius */
+}
+
+/* Enhanced styling for completed items */
+.list-group-item[style*="#bfdbfe"] {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
+    border-left: 4px solid #3b82f6; /* Blue accent border */
+}
+
+/* Enhanced styling for pending items */
+.list-group-item[style*="#c6f6d5"] {
+    background: linear-gradient(135deg, #dcfce7 0%, #c6f6d5 100%) !important;
+    border-left: 4px solid #22c55e; /* Green accent border */
+}
+
+/* Status indicator dot */
+.list-group-item::after {
+    content: '';
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e; /* Default green for pending */
+}
+
+/* Status indicator for completed items */
+.list-group-item[style*="#bfdbfe"]::after {
+    background: #3b82f6; /* Blue for completed */
+}
+
+/* Product Detail Modal Redesign */
+.product-detail-modal {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.product-detail-modal .modal-body {
+    background: transparent;
+}
+
+/* Product Photo Wrapper Redesign */
+.product-detail-modal .product-photo-wrapper {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%) !important;
+    border: 2px solid rgba(226, 232, 240, 0.8);
+    border-radius: 16px !important;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.06);
+    position: relative;
+    overflow: hidden;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Ensure only one element is visible at a time */
+.product-detail-modal #detailModalProductPhoto {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    background: transparent !important;
+    margin: 0 !important;
+    max-height: none !important;
+    min-height: none !important;
+    z-index: 2;
+}
+
+.product-detail-modal #detailModalProductPlaceholder {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    min-height: none !important;
+    z-index: 1;
+}
+
+/* Photo Overlay Buttons in Modal */
+.product-detail-modal .photo-overlay-btn {
+    z-index: 20;
+    background-color: rgba(255, 255, 255, 0.95);
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.product-detail-modal .photo-overlay-btn:hover {
+    background-color: rgba(255, 255, 255, 1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+/* Ensure proper display states - Force visibility control */
+.product-detail-modal #detailModalProductPhoto[style*="display: none"],
+.product-detail-modal #detailModalProductPhoto:not([style*="display: block"]) {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+.product-detail-modal #detailModalProductPlaceholder[style*="display: none"],
+.product-detail-modal #detailModalProductPlaceholder:not([style*="display: flex"]) {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* When photo is shown, ensure placeholder is completely hidden */
+.product-detail-modal #detailModalProductPhoto[style*="display: block"] {
+    display: block !important;
+    visibility: visible !important;
+}
+
+.product-detail-modal #detailModalProductPhoto[style*="display: block"] ~ #detailModalProductPlaceholder {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* When placeholder is shown, ensure photo is completely hidden */
+.product-detail-modal #detailModalProductPlaceholder[style*="display: flex"] {
+    display: flex !important;
+    visibility: visible !important;
+}
+
+.product-detail-modal #detailModalProductPlaceholder[style*="display: flex"] ~ #detailModalProductPhoto {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+.product-detail-modal .product-photo-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    pointer-events: none;
+    border-radius: 16px;
+}
+
+/* Product Info Styling */
+.product-detail-modal #detailModalNamaProduk {
+    font-size: 1rem !important;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+.product-detail-modal #detailModalVariantProduk {
+    font-size: 1.1rem !important;
+    font-weight: 500;
+    color: #3b82f6;
+}
+
+.product-detail-modal #detailModalBrand {
+    font-size: 1.1rem !important;
+    font-weight: 600;
+    color: #059669;
+}
+
+.product-detail-modal .text-secondary {
+    color: #64748b !important;
+    font-weight: 500;
+}
+
+/* Barcode Input Redesign */
+.product-detail-modal #detailModalScanBarcodeInput {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.product-detail-modal #detailModalScanBarcodeInput:focus {
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
+    outline: none;
+}
+
+.product-detail-modal #detailModalEnterBarcodeBtn {
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    transition: all 0.3s ease;
+}
+
+.product-detail-modal #detailModalEnterBarcodeBtn:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    transform: translateY(-1px);
+}
+
+/* Quantity Section Redesign */
+.product-detail-modal .border.rounded {
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.product-detail-modal .btn-outline-secondary:not(.btn-lg) {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    color: #64748b;
+    transition: all 0.3s ease;
+}
+
+.product-detail-modal .btn-outline-secondary:not(.btn-lg):hover {
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.product-detail-modal .btn-outline-primary {
+    border: 2px solid #3b82f6;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);
+    color: #3b82f6;
+    transition: all 0.3s ease;
+}
+
+.product-detail-modal .btn-outline-primary:hover {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.product-detail-modal .btn-success {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    transition: all 0.3s ease;
+}
+
+.product-detail-modal .btn-success:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    transform: translateY(-1px);
+}
+
+/* Error Message Styling */
+.product-detail-modal .text-danger {
+    color: #dc2626 !important;
+    font-weight: 500;
+}
+
+/* Rak Info Styling */
+.product-detail-modal .text-success {
+    color: #059669 !important;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    line-height: 1.4;
+}
+
+/* Rak Info Badge-like Styling */
+.product-detail-modal .text-success {
+    background: linear-gradient(135deg, rgba(5, 150, 105, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
+    padding: 4px 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(5, 150, 105, 0.2);
+    display: inline-block;
+    margin-top: 2px;
+}
+
+/* Rak Info Icon Styling */
+.product-detail-modal .text-success i {
+    color: #059669;
+    font-size: 0.9em;
+    margin-right: 6px;
+}
+
+/* Rak Info Styling for Card List */
+.list-group-item .text-success {
+    color: #059669 !important;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    line-height: 1.4;
+    background: linear-gradient(135deg, rgba(5, 150, 105, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
+    padding: 3px 6px;
+    border-radius: 6px;
+    border: 1px solid rgba(5, 150, 105, 0.2);
+    display: inline-block;
+    margin-top: 1px;
+}
+
+.list-group-item .text-success i {
+    color: #059669;
+    font-size: 0.8em;
+    margin-right: 4px;
+}
+
+/* Close Button at Bottom Redesign */
+.product-detail-modal .btn-outline-secondary {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    color: #64748b;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    padding: 12px 24px;
+}
+
+.product-detail-modal .btn-outline-secondary:hover {
+    border-color: #64748b;
+    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+}
+
+/* NEW: Hide itemListActual initially to prevent FOUC */
+#itemListActual {
+    display: none;
+}
+
+/* Specific font sizes within list item */
+.list-group-item > div:first-child > div:first-child { /* Product Name */
+    font-size: 0.9em; /* Reverted to 0.9em */
+    font-weight: 600; /* Reverted to 600 */
+    margin-bottom: 2px !important; /* NEW: Minimal spacing after product name */
+    height: auto; /* Reverted to auto */
+    display: block; /* Reverted to block */
+    align-items: unset; /* Reverted to unset */
+}
+
+/* Dynamic height based on product name length - Responsive */
+.list-group-item.product-name-2-rows {
+    min-height: 140px; /* Increased height for 2-row product names */
+}
+
+.list-group-item.product-name-3-rows {
+    min-height: 155px; /* Increased height for 3-row product names */
+}
+
+/* Rak Info - Compact 25px height */
+.list-group-item .mt-1 {
+    margin-top: 1px !important; /* NEW: Minimal spacing before rak info */
+}
+
+/* Brand Info - Compact 20px height */
+.list-group-item > div:first-child > div:nth-child(2) { /* Brand */
+    font-size: 0.75em; /* Reverted to 0.75em */
+    margin-bottom: 0px !important; /* NEW: Remove spacing after brand */
+    height: 20px !important; /* Part 2: Brand height 20px */
+    display: flex;
+    align-items: center;
+}
+
+/* Info Jumlah - Compact 20px height */
+.list-group-item > div:first-child > div:nth-child(3) { /* Info Jumlah container */
+    margin-top: 2px !important; /* NEW: Minimal spacing before barcode section */
+    height: 20px !important; /* Part 3: Info jumlah height 20px */
+    display: flex;
+    align-items: center;
+}
+
+/* Rak Badge - Compact 20px height */
+.list-group-item > div:first-child > span { /* Rak badge */
+    font-size: 0.7em; /* Reverted to 0.7em */
+    margin-top: 1px !important; /* NEW: Minimal spacing before rak badge */
+    padding: 0.2em 0.4em; /* Reverted to 0.2em 0.4em */
+    height: 20px !important; /* Part 4: Rak info height 20px */
+    display: flex;
+    align-items: center;
+}
+
+/* Product Photo */
+.product-photo-zoomable {
+    width: 100px !important; /* Changed to 100px */
+    height: 100px !important; /* Changed to 100px */
+    object-fit: cover;
+    border-radius: 6px; /* Reverted to 6px */
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.product-photo-zoomable:hover {
+    transform: scale(1.05);
+}
+
+/* Placeholder for missing image - Combined and fixed centering */
+.list-group-item > div:last-child > .rounded-circle {
+    width: 100px !important; /* Changed to 100px */
+    height: 100px !important; /* Changed to 100px */
+    background: #f0f0f0;
+    font-size: 3em !important; /* Increased for better proportion */
+    color: #bbb;
+    border-radius: 6px; /* Reverted to 6px */
+    display: flex !important; /* Ensure flex display */
+    align-items: center !important; /* Center vertically */
+    justify-content: center !important; /* Center horizontally */
+    line-height: 1 !important; /* Remove extra line height */
+    margin: 0 !important; /* Remove any margin that could affect centering */
+    padding: 0 !important; /* Remove any padding that could affect centering */
+}
+
+/* Remove unused FAB CSS from earlier iterations */
+.fab-reload, .fab-v1, .fab-v2, .fab-v3, .fab-v4, .fab-history {
+    display: none !important;
+}
+
+/* NEW: Add padding-bottom to prevent content from being obscured by sticky bar */
+#product-details-container {
+    padding-bottom: 50px; /* Added to prevent content from being obscured by sticky bottom bar */
+}
+
+/* FAB Close Modal */
+.fab-close-modal {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1060;
+    width: 56px; /* Reverted to 56px */
+    height: 56px; /* Reverted to 56px */
+    border-radius: 50%;
+    background-color: #6c757d;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    font-size: 2.2rem; /* Reverted to 2.2rem */
+    line-height: 1;
+    border: none;
+    outline: none;
+    transition: background-color 0.2s;
+}
+
+.fab-close-modal:active {
+    background-color: #5a6268;
+}
+
+/* Photo Overlay Buttons */
+.product-photo-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.photo-overlay-btn {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    z-index: 15;
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+.photo-overlay-btn .btn {
+    padding: 0;
+    font-size: 1.2em;
+    border-radius: 50%;
+    background-color: transparent;
+    color: #333;
+    border: none;
+    box-shadow: none;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.photo-overlay-change {
+    bottom: 10px;
+    right: 10px;
+}
+
+.photo-overlay-delete {
+    bottom: 10px;
+    left: 10px;
+}
+
+/* Photo Overlay Button Hover Effects */
+.photo-overlay-btn:hover {
+    background-color: rgba(255, 255, 255, 1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.photo-overlay-change:hover {
+    background-color: rgba(255, 193, 7, 0.9);
+    border-color: rgba(255, 193, 7, 0.8);
+}
+
+.photo-overlay-change:hover .btn {
+    color: #fff;
+}
+
+.photo-overlay-delete:hover {
+    background-color: rgba(220, 53, 69, 0.9);
+    border-color: rgba(220, 53, 69, 0.8);
+}
+
+.photo-overlay-delete:hover .btn {
+    color: #fff;
+}
+
+/* Brand and Rak Filter Modal Styles */
+#brandListForFilter .list-group-item {
+    border: none;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+#brandListForFilter .list-group-item:hover {
+    background: #e9ecef;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+#brandListForFilter .badge.bg-primary {
+    background: linear-gradient(145deg, #007bff, #0056b3) !important;
+    box-shadow: 0 1px 3px rgba(0,123,255,0.3);
+    color: white;
+}
+
+#rakListForFilter .list-group-item {
+    border: none;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+#rakListForFilter .list-group-item:hover {
+    background: #e9ecef;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+#rakListForFilter .badge.bg-info {
+    background: linear-gradient(145deg, #17a2b8, #138496) !important;
+    box-shadow: 0 1px 3px rgba(23,162,184,0.3);
+    color: white;
+}
+
+

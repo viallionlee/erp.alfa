@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4" style="max-width:500px;">
+    <h3 class="mb-3">Konfirmasi Hapus SKU Bundling</h3>
+    <div class="alert alert-danger">Yakin ingin menghapus bundling <b>{{ bundling.sku_bundling }}</b>?</div>
+    <form method="post">
+        {% csrf_token %}
+        <a href="/products/sku_bundling/" class="btn btn-secondary">Batal</a>
+        <button type="submit" class="btn btn-danger">Hapus</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Chart of Accounts{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Chart of Accounts</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            {% for acc_type, accounts in accounts_by_type.items %}
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{ acc_type.code }} - {{ acc_type.name }} ({{ acc_type.get_type_display }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Account Name</th>
+                                    <th>Balance Type</th>
+                                    <th class="text-right">Current Balance</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for account in accounts %}
+                                <tr>
+                                    <td><strong>{{ account.code }}</strong></td>
+                                    <td>{{ account.name }}</td>
+                                    <td>
+                                        <span class="badge {% if account.balance_type == 'DEBIT' %}badge-success{% else %}badge-danger{% endif %}">
+                                            {{ account.balance_type }}
+                                        </span>
+                                    </td>
+                                    <td class="text-right">
+                                        {% if account.current_balance >= 0 %}
+                                        <span class="text-success font-weight-bold">
+                                            Rp {{ account.current_balance|floatformat:0|intcomma }}
+                                        </span>
+                                        {% else %}
+                                        <span class="text-danger font-weight-bold">
+                                            Rp {{ account.current_balance|floatformat:0|intcomma }}
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'finance:account_detail' account.id %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">No accounts found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="alert alert-info">
+                <h4>No Account Types Found</h4>
+                <p>Please create account types first in the admin panel.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <a href="{% url 'finance:dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

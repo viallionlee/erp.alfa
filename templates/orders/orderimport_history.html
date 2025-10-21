@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Order Import History{% endblock %}
+
+{% block content %}
+<h2>Order Import History</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Import Time</th>
+            <th>File Name</th>
+            <th>Imported By</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in history_records %}
+        <tr>
+            <td>{{ entry.import_time|date:'d-m-Y H:i:s' }}</td>
+            <td>{{ entry.file_name }}</td>
+            <td>{% if entry.imported_by %}{{ entry.imported_by.username }}{% else %}N/A{% endif %}</td>
+            <td>{{ entry.notes|default:'-' }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center">Belum ada riwayat import.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

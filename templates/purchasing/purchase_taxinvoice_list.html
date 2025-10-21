@@ -1,0 +1,640 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Purchase Tax Invoice{% endblock %}
+{% block extra_head %}
+<style>
+    .filter-box {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .filter-box .form-control {
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .filter-box .form-control:focus {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    
+    .table-container {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .table thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .table thead th {
+        border: none;
+        padding: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .table tbody tr:hover {
+        background: #f8f9fa;
+        transform: scale(1.005);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .table tbody td {
+        padding: 12px;
+        font-size: 13px;
+        vertical-align: middle;
+    }
+    
+    .badge-status {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    
+    .badge-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .badge-received {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .badge-verified {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .badge-rejected {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .pagination-wrapper {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .page-link {
+        color: #667eea;
+        border-color: #e0e0e0;
+    }
+    
+    .page-link:hover {
+        color: #764ba2;
+        background-color: #f8f9fa;
+        border-color: #667eea;
+    }
+    
+    .page-item.active .page-link {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>Purchase Tax Invoice</h4>
+        <div>
+            <button class="btn btn-sm btn-success me-2" id="btn-upload-taxinvoice" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                <i class="bi bi-upload"></i> Upload Massal
+            </button>
+            <button class="btn btn-sm btn-info me-2" id="btn-download-template">
+                <i class="bi bi-download"></i> Download Template
+            </button>
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-file-earmark-excel"></i> Download Excel
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" id="btn-download-all"><i class="bi bi-download"></i> Semua Data</a></li>
+                    <li><a class="dropdown-item" href="#" id="btn-download-by-date"><i class="bi bi-calendar"></i> By Date</a></li>
+                    <li><a class="dropdown-item" href="#" id="btn-download-by-status"><i class="bi bi-tag"></i> By Status</a></li>
+                </ul>
+            </div>
+            <a href="{% url 'purchasing:purchase_list' %}" class="btn btn-sm btn-secondary">
+                <i class="bi bi-arrow-left"></i> Kembali
+            </a>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row g-3 mb-4">
+        <!-- Row 1: Overall Summary -->
+        <div class="col-md-3">
+            <div class="card bg-primary text-white h-100" style="max-height: 100px;">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <h6 class="card-title mb-1" style="font-size: 0.85rem; font-weight: 600;">Total Tax Invoice</h6>
+                    <h3 class="mb-0" id="total-invoice" style="font-size: 1.8rem; font-weight: 700;">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white h-100" style="max-height: 100px;">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <h6 class="card-title mb-1" style="font-size: 0.85rem; font-weight: 600;">Total Input VAT (PPN)</h6>
+                    <h3 class="mb-0" id="total-ppn" style="font-size: 1.5rem; font-weight: 700;">Rp 0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white h-100" style="max-height: 100px;">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <h6 class="card-title mb-1" style="font-size: 0.85rem; font-weight: 600;">Total Invoice Amount</h6>
+                    <h3 class="mb-0" id="total-invoice-amount" style="font-size: 1.5rem; font-weight: 700;">Rp 0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white h-100" style="max-height: 100px;">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <h6 class="card-title mb-1" style="font-size: 0.85rem; font-weight: 600;">Total DPP (Subtotal)</h6>
+                    <h3 class="mb-0" id="total-subtotal" style="font-size: 1.5rem; font-weight: 700;">Rp 0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Row 2: Status Breakdown -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark h-100" style="max-height: 100px;">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <h6 class="card-title mb-1" style="font-size: 0.85rem; font-weight: 600;">Pending Tax Invoice</h6>
+                    <h3 class="mb-0" id="total-pending-invoice" style="font-size: 1.8rem; font-weight: 700;">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark h-100" style="max-height: 100px;">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <h6 class="card-title mb-1" style="font-size: 0.85rem; font-weight: 600;">Pending Input VAT</h6>
+                    <h3 class="mb-0" id="total-pending-ppn" style="font-size: 1.5rem; font-weight: 700;">Rp 0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-dark h-100" style="max-height: 100px;">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <h6 class="card-title mb-1" style="font-size: 0.85rem; font-weight: 600;">Received Tax Invoice</h6>
+                    <h3 class="mb-0" id="total-received-invoice" style="font-size: 1.8rem; font-weight: 700;">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-dark h-100" style="max-height: 100px;">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <h6 class="card-title mb-1" style="font-size: 0.85rem; font-weight: 600;">Received Input VAT</h6>
+                    <h3 class="mb-0" id="total-received-ppn" style="font-size: 1.5rem; font-weight: 700;">Rp 0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filter -->
+    <div class="filter-box">
+        <div class="row g-2">
+            <div class="col-md-2">
+                <input type="date" id="filter-date-from" class="form-control form-control-sm" placeholder="Dari Tanggal">
+            </div>
+            <div class="col-md-2">
+                <input type="date" id="filter-date-to" class="form-control form-control-sm" placeholder="Sampai Tanggal">
+            </div>
+            <div class="col-md-2">
+                <select id="filter-status" class="form-control form-control-sm">
+                    <option value="">Semua Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="received">Received</option>
+                    <option value="verified">Verified</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="text" id="filter-supplier" class="form-control form-control-sm" placeholder="Cari Supplier...">
+            </div>
+            <div class="col-md-3">
+                <input type="text" id="filter-purchase" class="form-control form-control-sm" placeholder="Cari Nomor Purchase...">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Table -->
+    <div class="table-container">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Purchase Number</th>
+                    <th>Supplier</th>
+                    <th>Tax Invoice Number</th>
+                    <th>Invoice Date</th>
+                    <th class="text-end">DPP</th>
+                    <th class="text-end">PPN (11%)</th>
+                    <th class="text-end">Total Amount</th>
+                    <th>Status</th>
+                    <th>Received At</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <!-- Data akan di-load via API -->
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    <div class="pagination-wrapper">
+        <nav aria-label="Page navigation">
+            <ul class="pagination pagination-sm mb-0" id="pagination">
+                <!-- Pagination akan di-generate via JavaScript -->
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Invoice Modal -->
+<div class="modal fade" id="invoiceModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-receipt"></i> Add Tax Invoice Number
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="invoiceForm" method="POST" novalidate>
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Read-only Information (as text) -->
+                    <div class="info-section mb-3 p-3 bg-light rounded">
+                        <div class="row">
+                            <div class="col-6 mb-2">
+                                <small class="text-muted d-block">Purchase Number</small>
+                                <strong id="modal-purchase-number">-</strong>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <small class="text-muted d-block">Supplier</small>
+                                <strong id="modal-supplier">-</strong>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <small class="text-muted d-block">DPP (Subtotal)</small>
+                                <strong id="modal-subtotal">-</strong>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <small class="text-muted d-block">PPN (11%)</small>
+                                <strong id="modal-ppn">-</strong>
+                            </div>
+                            <div class="col-12">
+                                <small class="text-muted d-block">Total Amount (DPP + PPN)</small>
+                                <strong id="modal-total-amount" style="font-size:1.2rem;">-</strong>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-3">
+                    
+                    <!-- Editable Fields -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-hash"></i> Tax Invoice Number <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control form-control-lg" id="modal-invoice-number" name="invoice_number" placeholder="Enter tax invoice number" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-calendar"></i> Tax Invoice Date
+                        </label>
+                        <input type="date" class="form-control" id="modal-invoice-date" name="invoice_date">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-cash-stack"></i> Total Amount (DPP + PPN) <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control form-control-lg text-end" id="modal-total-amount-input" name="total_amount" placeholder="0" inputmode="numeric" autocomplete="off" required>
+                        <small class="text-muted">Masukkan total amount sesuai dengan invoice fisik (DPP + PPN)</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-pencil"></i> Notes
+                        </label>
+                        <textarea class="form-control" id="modal-notes" name="notes" rows="3" placeholder="Additional notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Save Invoice
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_script %}
+<script>
+let currentPage = 1;
+let totalPages = 1;
+let currentFilters = {};
+
+$(document).ready(function() {
+    loadData();
+    
+    // Filter functionality
+    $('#filter-date-from, #filter-date-to, #filter-status, #filter-supplier, #filter-purchase').on('change keyup', function() {
+        currentFilters = {
+            date_from: $('#filter-date-from').val(),
+            date_to: $('#filter-date-to').val(),
+            status: $('#filter-status').val(),
+            supplier: $('#filter-supplier').val(),
+            purchase: $('#filter-purchase').val()
+        };
+        currentPage = 1;
+        loadData();
+    });
+    
+    // Invoice modal
+    $(document).on('click', '.btn-invoice', function() {
+        const invoiceId = $(this).data('invoice-id');
+        const purchaseNumber = $(this).data('purchase-number');
+        const supplier = $(this).data('supplier');
+        const totalAmount = $(this).data('total-amount');
+        const subtotal = $(this).data('subtotal');
+        const ppn = $(this).data('ppn');
+        
+        $('#invoiceForm').attr('action', `/purchaseorder/purchase-taxinvoice/${invoiceId}/update/`);
+        $('#modal-purchase-number').text(purchaseNumber);
+        $('#modal-supplier').text(supplier);
+        $('#modal-subtotal').text('Rp ' + parseFloat(subtotal).toLocaleString('id-ID'));
+        $('#modal-ppn').text('Rp ' + parseFloat(ppn).toLocaleString('id-ID'));
+        $('#modal-total-amount').text('Rp ' + parseFloat(totalAmount).toLocaleString('id-ID'));
+        $('#modal-total-amount-input').val(parseFloat(totalAmount).toLocaleString('id-ID'));
+        $('#modal-invoice-number').val('');
+        $('#modal-invoice-date').val('');
+        $('#modal-notes').val('');
+        
+        $('#invoiceModal').modal('show');
+    });
+    
+    // Format input total amount dengan thousand separator
+    $('#modal-total-amount-input').on('input', function() {
+        const el = this;
+        const raw = el.value;
+        const caret = el.selectionStart || 0;
+        
+        // Berapa digit di kiri kursor sebelum diformat
+        const digitsLeftOfCaret = raw.slice(0, caret).replace(/[^\d]/g, '').length;
+        
+        // Ambil hanya digit
+        const digits = raw.replace(/[^\d]/g, '');
+        
+        // Set nilai terformat
+        el.value = digits ? new Intl.NumberFormat('id-ID').format(parseInt(digits, 10)) : '';
+        
+        // Hitung ulang posisi kursor
+        let newCaret = 0, seen = 0;
+        for (let i = 0; i < el.value.length; i++) {
+            if (/\d/.test(el.value[i])) seen++;
+            if (seen >= digitsLeftOfCaret) { 
+                newCaret = i + 1; 
+                break; 
+            }
+        }
+        if (!digitsLeftOfCaret) newCaret = 0;
+        
+        // Terapkan posisi kursor baru
+        try { 
+            el.setSelectionRange(newCaret, newCaret); 
+        } catch (e) {}
+    });
+});
+
+function loadData() {
+    $.ajax({
+        url: '/purchaseorder/purchase-taxinvoice/api/',
+        method: 'GET',
+        data: {
+            page: currentPage,
+            page_size: 50,
+            ...currentFilters
+        },
+        success: function(response) {
+            renderTable(response.data);
+            renderPagination(response.total_pages);
+            updateStatistics(response.stats);
+        },
+        error: function(xhr) {
+            console.error('Error loading data:', xhr);
+            $('#table-body').html('<tr><td colspan="10" class="text-center text-danger">Error loading data</td></tr>');
+        }
+    });
+}
+
+function renderTable(data) {
+    let html = '';
+    if (data.length === 0) {
+        html = '<tr><td colspan="10" class="text-center">Tidak ada data</td></tr>';
+    } else {
+        data.forEach(function(invoice) {
+            let statusClass = 'badge-' + invoice.status;
+            html += `
+                <tr>
+                    <td><strong>${invoice.purchase_number}</strong></td>
+                    <td>${invoice.supplier}</td>
+                    <td>${invoice.invoice_number}</td>
+                    <td>${invoice.invoice_date}</td>
+                    <td class="text-end">Rp ${invoice.subtotal_formatted}</td>
+                    <td class="text-end">Rp ${invoice.tax_amount_formatted}</td>
+                    <td class="text-end"><strong>Rp ${invoice.invoice_amount_formatted}</strong></td>
+                    <td><span class="badge-status ${statusClass}">${invoice.status_display}</span></td>
+                    <td>${invoice.received_at}</td>
+                    <td class="text-center">
+                        ${invoice.status === 'pending' ? `<button class="btn btn-sm btn-primary btn-invoice" data-invoice-id="${invoice.id}" data-purchase-number="${invoice.purchase_number}" data-supplier="${invoice.supplier}" data-total-amount="${invoice.invoice_amount}" data-subtotal="${invoice.subtotal}" data-ppn="${invoice.tax_amount}">
+                            <i class="bi bi-file-earmark-text"></i> Add Tax Invoice
+                        </button>` : '-'}
+                    </td>
+                </tr>
+            `;
+        });
+    }
+    $('#table-body').html(html);
+}
+
+function renderPagination(totalPages) {
+    let html = '';
+    if (totalPages <= 1) {
+        $('#pagination').html('');
+        return;
+    }
+    
+    // Previous button
+    html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">Previous</a>
+    </li>`;
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+            html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+            </li>`;
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+            html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        }
+    }
+    
+    // Next button
+    html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">Next</a>
+    </li>`;
+    
+    $('#pagination').html(html);
+}
+
+function changePage(page) {
+    currentPage = page;
+    loadData();
+    $('html, body').animate({ scrollTop: 0 }, 300);
+}
+
+function updateStatistics(stats) {
+    // Row 1: Overall Summary
+    $('#total-invoice').text(stats.total_taxinvoice || 0);
+    $('#total-ppn').text('Rp ' + (stats.total_ppn || 0).toLocaleString('id-ID'));
+    $('#total-invoice-amount').text('Rp ' + (stats.total_invoice_amount || 0).toLocaleString('id-ID'));
+    $('#total-subtotal').text('Rp ' + (stats.total_subtotal || 0).toLocaleString('id-ID'));
+    
+    // Row 2: Status Breakdown
+    $('#total-pending-invoice').text(stats.total_pending_invoice || 0);
+    $('#total-pending-ppn').text('Rp ' + (stats.total_pending_ppn || 0).toLocaleString('id-ID'));
+    $('#total-received-invoice').text(stats.total_received_invoice || 0);
+    $('#total-received-ppn').text('Rp ' + (stats.total_received_ppn || 0).toLocaleString('id-ID'));
+}
+
+// Download Template
+$('#btn-download-template').on('click', function() {
+    window.location.href = '{% url "purchasing:purchase_taxinvoice_download_template" %}';
+});
+
+// Download All Data
+$('#btn-download-all').on('click', function() {
+    window.location.href = '{% url "purchasing:purchase_taxinvoice_download_excel" %}';
+});
+
+// Download By Date
+$('#btn-download-by-date').on('click', function() {
+    const dateFrom = $('#filter-date-from').val();
+    const dateTo = $('#filter-date-to').val();
+    
+    if (!dateFrom || !dateTo) {
+        alert('Silakan pilih Date From dan Date To terlebih dahulu!');
+        return;
+    }
+    
+    let url = '{% url "purchasing:purchase_taxinvoice_download_excel" %}?date_from=' + dateFrom + '&date_to=' + dateTo;
+    window.location.href = url;
+});
+
+// Download By Status
+$('#btn-download-by-status').on('click', function() {
+    const status = $('#filter-status').val();
+    
+    if (!status) {
+        alert('Silakan pilih Status terlebih dahulu!');
+        return;
+    }
+    
+    let url = '{% url "purchasing:purchase_taxinvoice_download_excel" %}?status=' + status;
+    window.location.href = url;
+});
+
+// Upload file
+$('#uploadForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const $btn = $('#btn-submit-upload');
+    
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Uploading...');
+    
+    $.ajax({
+        url: '{% url "purchasing:purchase_taxinvoice_upload" %}',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            $btn.prop('disabled', false).html('Upload');
+            $('#uploadModal').modal('hide');
+            $('#uploadForm')[0].reset();
+            loadData(); // Reload data
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false).html('Upload');
+            alert('Error uploading file');
+        }
+    });
+});
+</script>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="uploadModalLabel">
+                    <i class="bi bi-upload"></i> Upload Tax Invoice Massal
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="uploadForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> <strong>Instruksi:</strong>
+                        <ol class="mb-0 mt-2">
+                            <li>Download template terlebih dahulu</li>
+                            <li>Isi data sesuai template</li>
+                            <li>Upload file Excel (.xlsx)</li>
+                        </ol>
+                    </div>
+                    <div class="mb-3">
+                        <label for="excel_file" class="form-label">Pilih File Excel</label>
+                        <input type="file" class="form-control" id="excel_file" name="excel_file" accept=".xlsx,.xls" required>
+                        <small class="text-muted">Format: .xlsx atau .xls</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-success" id="btn-submit-upload">
+                        <i class="bi bi-upload"></i> Upload
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

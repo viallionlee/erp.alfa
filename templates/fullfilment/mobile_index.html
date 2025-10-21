@@ -1,0 +1,602 @@
+{% extends 'base_mobile.html' %}
+{% load humanize %}
+
+{% block title %}Fulfillment Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* Modern Mobile Design */
+  .content-wrapper {
+    padding-bottom: 100px;
+    background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+  }
+  
+  /* Header */
+  .mobile-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 0 0 20px 20px;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    position: relative;
+    overflow: hidden;
+    height: 70px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .mobile-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+  }
+  
+  .mobile-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .batch-count {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-shadow: none;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .mobile-header p {
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+  }
+  
+  .header-content h1 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .header-content p {
+    margin: 0.3rem 0 0 0;
+    opacity: 0.9;
+    font-size: 0.8rem;
+    position: relative;
+    z-index: 1;
+  }
+  
+  /* Stats Grid */
+  .stats-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.25rem;
+  }
+  
+  .stat-card {
+    background: white;
+    border-radius: 8px;
+    padding: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    border: 1px solid #e2e8f0;
+  }
+  
+  .stat-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.25rem;
+    font-size: 0.8rem;
+  }
+  
+  .stat-value {
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 1;
+    margin-bottom: 0.1rem;
+  }
+  
+  .stat-label {
+    color: #64748b;
+    font-size: 0.6rem;
+    line-height: 1;
+    font-weight: 500;
+  }
+  
+  .stat-primary .stat-icon { background: #3b82f6; color: white; }
+  .stat-primary .stat-value { color: #3b82f6; }
+  
+  .stat-success .stat-icon { background: #10b981; color: white; }
+  .stat-success .stat-value { color: #10b981; }
+  
+  .stat-warning .stat-icon { background: #f59e0b; color: white; }
+  .stat-warning .stat-value { color: #f59e0b; }
+  
+  .stat-danger .stat-icon { background: #ef4444; color: white; }
+  .stat-danger .stat-value { color: #ef4444; }
+  
+  .stat-info .stat-icon { background: #06b6d4; color: white; }
+  .stat-info .stat-value { color: #06b6d4; }
+  
+  /* Batch Cards */
+  .batch-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 0.75rem;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    max-height: 200px;
+    cursor: pointer;
+  }
+  
+  .batch-card.open {
+    background: #f0f8f0; /* Hijau muda untuk card open */
+  }
+  
+  .batch-card.closed {
+    background: #e3f2fd; /* Biru muda untuk card closed */
+  }
+  
+  .batch-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  }
+  
+  .batch-card.open::before {
+    background: linear-gradient(90deg, #10b981, #059669);
+  }
+  
+  .batch-card.closed::before {
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+  }
+  
+  .batch-card:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  }
+  
+  .batch-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+  }
+  
+  .batch-title-section {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .batch-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1e293b;
+    line-height: 1.2;
+  }
+  
+  .batch-date {
+    font-size: 0.7rem;
+    color: #64748b;
+  }
+  
+  .batch-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .status-open {
+    background: #dcfce7;
+    color: #166534;
+  }
+  
+  .status-closed {
+    background: #f3f4f6;
+    color: #374151;
+  }
+  
+  /* Batch Stats */
+  .batch-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .batch-stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+  }
+  
+  .batch-stat {
+    background: #f8fafc;
+    border-radius: 6px;
+    padding: 0.4rem;
+    text-align: center;
+  }
+  
+  .batch-stat.has-issue {
+    background: #fce4ec; /* Merah muda untuk card yang ada masalah */
+  }
+  
+  .batch-stat-value {
+    font-weight: 700;
+    font-size: 0.9rem;
+    line-height: 1;
+    margin-bottom: 0.1rem;
+  }
+  
+  .batch-stat-label {
+    font-size: 0.55rem;
+    color: #64748b;
+    font-weight: 500;
+  }
+  
+  .stat-total { color: #3b82f6; }
+  .stat-completed { color: #10b981; }
+  .stat-pending { color: #f59e0b; }
+  .stat-gantung { color: #ef4444; }
+  .stat-overstock { color: #dc2626; }
+  
+  /* Progress Bar */
+  .progress-container {
+    margin-top: 0.5rem;
+  }
+  
+  .progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #059669);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+  }
+  
+  .progress-text {
+    font-size: 0.6rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+    text-align: center;
+  }
+  
+
+  
+
+  
+
+  
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #64748b;
+  }
+  
+  .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+  
+  /* Pagination */
+  .pagination-container {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .pagination {
+    margin: 0;
+    justify-content: center;
+  }
+  
+  .page-link {
+    border: none;
+    color: #3b82f6;
+    padding: 0.5rem 0.75rem;
+    margin: 0 0.1rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+  }
+  
+  .page-link:hover {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+  
+  .page-item.active .page-link {
+    background: #3b82f6;
+    color: white;
+  }
+  
+  .page-item.disabled .page-link {
+    color: #9ca3af;
+    background: transparent;
+  }
+  
+  /* Floating Action Button */
+  .fab {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 1000;
+  }
+  
+  .fab:active {
+    transform: scale(0.9);
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.6);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="container-fluid px-3 py-2">
+    <!-- Header -->
+    <div class="mobile-header">
+      <div class="header-content">
+        <h1>📦 Fulfillment Dashboard <span class="batch-count">{{ summary_open_batches.total_batches|default:0 }} Open</span></h1>
+        <p>Kelola batch dan monitoring progress</p>
+      </div>
+    </div>
+    
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <!-- SKU Row -->
+      <div class="stats-row">
+        <div class="stat-card stat-primary">
+          <div class="stat-icon">
+            <i class="bi bi-box"></i>
+          </div>
+          <div class="stat-value">{{ summary_open_batches.total_sku|default:0 }}</div>
+          <div class="stat-label">Total SKU</div>
+        </div>
+        
+        <div class="stat-card stat-success">
+          <div class="stat-icon">
+            <i class="bi bi-check-circle"></i>
+          </div>
+          <div class="stat-value">{{ summary_open_batches.total_sku_completed|default:0 }}</div>
+          <div class="stat-label">SKU Selesai</div>
+        </div>
+        
+        <div class="stat-card stat-warning">
+          <div class="stat-icon">
+            <i class="bi bi-exclamation-triangle"></i>
+          </div>
+          <div class="stat-value">{{ summary_open_batches.total_unallocated_sku|default:0 }}</div>
+          <div class="stat-label">SKU Gantung</div>
+        </div>
+        
+        <div class="stat-card stat-danger">
+          <div class="stat-icon">
+            <i class="bi bi-x-circle"></i>
+          </div>
+          <div class="stat-value">{{ summary_open_batches.total_over_stock|default:0 }}</div>
+          <div class="stat-label">Over Stock</div>
+        </div>
+      </div>
+      
+      <!-- Order Row -->
+      <div class="stats-row">
+        <div class="stat-card stat-primary">
+          <div class="stat-icon">
+            <i class="bi bi-cart"></i>
+          </div>
+          <div class="stat-value">{{ summary_open_batches.total_orders|default:0 }}</div>
+          <div class="stat-label">Total Order</div>
+        </div>
+        
+        <div class="stat-card stat-success">
+          <div class="stat-icon">
+            <i class="bi bi-hand-index"></i>
+          </div>
+          <div class="stat-value">{{ summary_open_batches.total_orders_to_pick|default:0 }}</div>
+          <div class="stat-label">Order to Pick</div>
+        </div>
+        
+        <div class="stat-card stat-info">
+          <div class="stat-icon">
+            <i class="bi bi-printer"></i>
+          </div>
+          <div class="stat-value">{{ summary_open_batches.total_orders_printed|default:0 }}</div>
+          <div class="stat-label">Order Printed</div>
+        </div>
+        
+        <div class="stat-card stat-warning">
+          <div class="stat-icon">
+            <i class="bi bi-clock"></i>
+          </div>
+          <div class="stat-value">{{ summary_open_batches.total_orders_gantung|default:0 }}</div>
+          <div class="stat-label">Order Gantung</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Batch Cards -->
+    {% for batch in page_obj %}
+      <div class="batch-card {% if batch.status_batch == 'open' %}open{% else %}closed{% endif %}" 
+           onclick="window.location.href='{% url 'batchpicking' batch.nama_batch %}'">
+        
+        <div class="batch-header">
+          <div class="batch-title-section">
+            <div class="batch-name">{{ batch.nama_batch }}</div>
+            <div class="batch-date">{{ batch.created_at|date:"d M Y, H:i" }}</div>
+          </div>
+          <span class="batch-status {% if batch.status_batch == 'open' %}status-open{% else %}status-closed{% endif %}">
+            {{ batch.get_status_batch_display }}
+          </span>
+        </div>
+        
+        <div class="batch-stats">
+          <!-- SKU Row -->
+          <div class="batch-stat-row">
+            <div class="batch-stat">
+              <div class="batch-stat-value stat-total">{{ batch.total_sku|default:0 }}</div>
+              <div class="batch-stat-label">Total SKU</div>
+            </div>
+            <div class="batch-stat">
+              <div class="batch-stat-value stat-completed">{{ batch.sku_completed|default:0 }}</div>
+              <div class="batch-stat-label">SKU Selesai</div>
+            </div>
+            <div class="batch-stat {% if batch.unallocated_sku > 0 %}has-issue{% endif %}">
+              <div class="batch-stat-value stat-gantung">{{ batch.unallocated_sku|default:0 }}</div>
+              <div class="batch-stat-label">SKU Gantung</div>
+            </div>
+            <div class="batch-stat {% if batch.over_stock_count > 0 %}has-issue{% endif %}">
+              <div class="batch-stat-value stat-overstock">{{ batch.over_stock_count|default:0 }}</div>
+              <div class="batch-stat-label">Over Stock</div>
+            </div>
+          </div>
+          
+          <!-- Order Row -->
+          <div class="batch-stat-row">
+            <div class="batch-stat">
+              <div class="batch-stat-value stat-total">{{ batch.total_orders_in_batch|default:0 }}</div>
+              <div class="batch-stat-label">Total Order</div>
+            </div>
+            <div class="batch-stat">
+              <div class="batch-stat-value stat-completed">{{ batch.orders_to_pick|default:0 }}</div>
+              <div class="batch-stat-label">Order to Pick</div>
+            </div>
+            <div class="batch-stat">
+              <div class="batch-stat-value stat-completed">{{ batch.orders_printed|default:0 }}</div>
+              <div class="batch-stat-label">Order Printed</div>
+            </div>
+            <div class="batch-stat {% if batch.orders_gantung > 0 %}has-issue{% endif %}">
+              <div class="batch-stat-value stat-gantung">{{ batch.orders_gantung|default:0 }}</div>
+              <div class="batch-stat-label">Order Gantung</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Progress Bar -->
+        {% if batch.total_sku > 0 %}
+          <div class="progress-container">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: {% widthratio batch.sku_completed batch.total_sku 100 %}%"></div>
+            </div>
+            <div class="progress-text">
+              {{ batch.sku_completed|default:0 }} dari {{ batch.total_sku|default:0 }} SKU selesai
+            </div>
+          </div>
+        {% endif %}
+        
+
+      </div>
+    {% empty %}
+      <div class="empty-state">
+        <div class="empty-icon">
+          <i class="bi bi-inbox"></i>
+        </div>
+        <h4>Tidak ada batch</h4>
+        <p>Belum ada batch yang tersedia untuk diproses.</p>
+      </div>
+    {% endfor %}
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+      <div class="pagination-container">
+        <nav aria-label="Page navigation">
+          <ul class="pagination">
+            {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page=1">
+                  <i class="bi bi-chevron-double-left"></i>
+                </a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                  <i class="bi bi-chevron-left"></i>
+                </a>
+              </li>
+            {% endif %}
+            
+            <li class="page-item disabled">
+              <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            </li>
+            
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                  <i class="bi bi-chevron-right"></i>
+                </a>
+              </li>
+              <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+                  <i class="bi bi-chevron-double-right"></i>
+                </a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Floating Action Button -->
+<button class="fab" onclick="window.location.reload()" title="Refresh">
+  <i class="bi bi-arrow-clockwise"></i>
+</button>
+{% endblock %}

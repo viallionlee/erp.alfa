@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4" style="max-width:900px;">
+  <h3 class="mb-3">{% if bundling %}Edit{% else %}Tambah{% endif %} SKU Bundling</h3>
+  {% if error %}
+  <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label">SKU Bundling</label>
+      <input type="text" name="sku_bundling" class="form-control" value="{{ bundling.sku_bundling|default:'' }}"
+        required>
+    </div>
+    <div class="mb-3" style="position:relative;">
+      <label class="form-label">Cari Produk</label>
+      <div class="input-group mb-1">
+        <input type="text" id="produk_search" class="form-control"
+          placeholder="Cari SKU / Barcode / Nama / Brand / Variant" autocomplete="off" aria-label="Cari Produk">
+        <button class="btn btn-outline-secondary" type="button" id="produk_search_btn"
+          aria-label="Cari Produk">Cari</button>
+      </div>
+      <div id="search-result-box" class="border rounded mt-1 bg-white shadow-sm"
+        style="display:none; position:absolute; z-index:10; min-width:100%; max-width:100vw; overflow-x:auto; max-height:70vh; overflow-y:auto;">
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr style="background:#f8f9fa;">
+              <th>SKU</th>
+              <th>Barcode</th>
+              <th>Nama</th>
+              <th>Variant</th>
+              <th>Brand</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <table class="table table-bordered align-middle" id="bundling-table">
+      <thead>
+        <tr>
+          <th>SKU</th>
+          <th>Barcode</th>
+          <th>Nama Produk</th>
+          <th>Variant</th>
+          <th>Brand</th>
+          <th>Jumlah</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Baris produk bundling akan di-generate JS -->
+      </tbody>
+    </table>
+    <input type="hidden" name="sku_items_json" id="sku_items_json">
+    <div class="d-flex justify-content-between">
+      <a href="{% url 'products:sku_bundling_list' %}" class="btn btn-secondary">Batal</a> {# Menggunakan URL name #}
+      <button type="submit" class="btn btn-primary">Simpan</button>
+    </div>
+  </form>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Pre-populate for edit
+    let bundlingItems = [];
+    try {
+      bundlingItems = JSON.parse('{{ sku_items_json|default:"[]"|escapejs }}');
+    } catch (e) { bundlingItems = []; }
+
+    // AJAX lookup for product details by SKU (for edit mode)
+    function fetchProductDetail(sku, cb) {
+      fetch('/products/autocomplete/?q=' + encodeURIComponent(sku))
+        .then(r => r.json())
+        .then(list => {
+          let found = list.find(p => p.sku === sku);
+          cb(found || { sku: sku, barcode: '', nama: '', variant: '', brand: '' });
+        });
+    }
+    function renderBundlingTable() {
+      const tbody = document.querySelector('#bundling-table tbody');
+      tbody.innerHTML = '';
+      let pending = bundlingItems.length;
+      if (!pending) {
+        document.getElementById('sku_items_json').value = JSON.stringify(bundlingItems);
+        return;
+      }
+      bundlingItems.forEach((item, idx) => {
+        if (!item.barcode) {
+          fetchProductDetail(item.sku, function (detail) {
+            bundlingItems[idx] = {
+              ...item, ...{
+                barcode: detail.barcode,
+                nama_produk: detail.nama,
+                variant_produk: detail.variant,
+                brand: detail.brand
+              }
+            };
+            pending--;
+            if (pending === 0) renderBundlingTable();
+          });
+        } else {
+          pending--;
+        }
+      });
+      if (pending > 0) return;
+      bundlingItems.forEach((item, idx) => {
+        tbody.innerHTML += `
+                <tr>
+                    <td>${item.sku}</td>
+                    <td>${item.barcode || ''}</td>
+                    <td>${item.nama_produk || ''}</td>
+                    <td>${item.variant_produk || ''}</td>
+                    <td>${item.brand || ''}</td>
+                    <td><input type="number" min="1" value="${item.jumlah}" class="form-control form-control-sm" style="width:70px" onchange="updateJumlah(${idx}, this.value)"></td>
+                    <td><button type="button" class="btn btn-danger btn-sm" onclick="removeBundlingItem(${idx})">Hapus</button></td>
+                </tr>
+            `;
+      });
+      document.getElementById('sku_items_json').value = JSON.stringify(bundlingItems);
+    }
+    function updateJumlah(idx, val) {
+      bundlingItems[idx].jumlah = parseInt(val) || 1;
+      document.getElementById('sku_items_json').value = JSON.stringify(bundlingItems);
+    }
+    window.removeBundlingItem = function(idx) {
+      bundlingItems.splice(idx, 1);
+      renderBundlingTable();
+    }
+    // --- Autocomplete logic identik addorder, endpoint /products/autocomplete/ ---
+    let selectedIdx = -1;
+    let currentRows = [];
+    // Infinite scroll variables
+    let produkSearchPage = 1;
+    let produkSearchHasMore = false;
+    let produkSearchLoading = false;
+    let produkSearchQuery = '';
+
+    function renderSearchResultBox(list, append = false) {
+      const tbody = document.querySelector('#search-result-box tbody');
+      if (!append) tbody.innerHTML = '';
+      if (!list.length && !append) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Produk tidak ditemukan!</td></tr>';
+      } else {
+        tbody.innerHTML += list.map(produk => `
+      <tr class="pilih-produk" style="cursor:pointer;"
+        data-sku="${produk.sku}"
+        data-barcode="${produk.barcode}"
+        data-nama_produk="${produk.nama_produk}"
+        data-variant_produk="${produk.variant_produk}"
+        data-brand="${produk.brand}">
+        <td>${produk.sku}</td>
+        <td>${produk.barcode}</td>
+        <td>${produk.nama_produk}</td>
+        <td>${produk.variant_produk}</td>
+        <td>${produk.brand}</td>
+      </tr>`).join('');
+      }
+      document.getElementById('search-result-box').style.display = 'block';
+      currentRows = Array.from(tbody.querySelectorAll('tr.pilih-produk'));
+      selectedIdx = -1;
+      updateSearchResultHighlight();
+    }
+
+    function fetchProdukSearch(q, page = 1, append = false) {
+      produkSearchLoading = true;
+      fetch(`/products/autocomplete/?q=${encodeURIComponent(q)}&page=${page}`)
+        .then(r => r.json())
+        .then(resp => {
+          let data = resp.results || resp;
+          produkSearchHasMore = resp.has_more !== undefined ? resp.has_more : (Array.isArray(data) && data.length === 20);
+          renderSearchResultBox(data, append);
+          produkSearchLoading = false;
+        });
+    }
+
+    document.getElementById('produk_search_btn').onclick = function () {
+      let keyword = document.getElementById('produk_search').value.trim();
+      if (!keyword) return;
+      produkSearchQuery = keyword;
+      produkSearchPage = 1;
+      fetchProdukSearch(keyword, 1, false);
+    };
+    document.getElementById('produk_search').addEventListener('input', function () {
+      let keyword = this.value.trim();
+      if (!keyword) {
+        document.getElementById('search-result-box').style.display = 'none';
+        return;
+      }
+      produkSearchQuery = keyword;
+      produkSearchPage = 1;
+      fetchProdukSearch(keyword, 1, false);
+    });
+    // Infinite scroll on search-result-box
+    document.getElementById('search-result-box').addEventListener('scroll', function () {
+      if (produkSearchLoading || !produkSearchHasMore) return;
+      const box = this;
+      if (box.scrollTop + box.clientHeight >= box.scrollHeight - 10) {
+        produkSearchPage += 1;
+        fetchProdukSearch(produkSearchQuery, produkSearchPage, true);
+      }
+    });
+    document.getElementById('produk_search').addEventListener('keydown', function (e) {
+      if (document.getElementById('search-result-box').style.display === 'none') return;
+      if (currentRows.length === 0) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIdx = (selectedIdx + 1) % currentRows.length;
+        updateSearchResultHighlight();
+        currentRows[selectedIdx].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIdx = (selectedIdx - 1 + currentRows.length) % currentRows.length;
+        updateSearchResultHighlight();
+        currentRows[selectedIdx].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (selectedIdx >= 0) {
+          currentRows[selectedIdx].click();
+          document.getElementById('search-result-box').style.display = 'none';
+        }
+      } else if (e.key === 'Escape') {
+        document.getElementById('search-result-box').style.display = 'none';
+      }
+    });
+    document.getElementById('search-result-box').addEventListener('mousedown', function (e) {
+      e.stopPropagation();
+    });
+    document.getElementById('search-result-box').addEventListener('click', function (e) {
+      let tr = e.target.closest('tr.pilih-produk');
+      if (!tr) return;
+      let produk = {
+        sku: tr.getAttribute('data-sku'),
+        barcode: tr.getAttribute('data-barcode'),
+        nama_produk: tr.getAttribute('data-nama_produk'),
+        variant_produk: tr.getAttribute('data-variant_produk'),
+        brand: tr.getAttribute('data-brand'),
+        jumlah: 1
+      };
+      if (bundlingItems.some(x => x.sku === produk.sku)) return;
+      bundlingItems.push(produk);
+      renderBundlingTable();
+      document.getElementById('produk_search').value = '';
+      document.getElementById('search-result-box').style.display = 'none';
+      document.getElementById('produk_search').focus();
+    });
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('#search-result-box') && !e.target.closest('#produk_search') && !e.target.closest('#produk_search_btn')) {
+        document.getElementById('search-result-box').style.display = 'none';
+      }
+    });
+    document.querySelector('form').addEventListener('submit', function (event) {
+      // Update bundlingItems with current quantities from the table
+      document.querySelectorAll('#bundling-table tbody tr').forEach((row, idx) => {
+        const quantityInput = row.querySelector('input[type="number"]');
+        if (quantityInput && bundlingItems[idx]) {
+          bundlingItems[idx].jumlah = parseInt(quantityInput.value) || 1;
+        }
+      });
+      document.getElementById('sku_items_json').value = JSON.stringify(bundlingItems);
+    });
+    function updateSearchResultHighlight() {
+      currentRows.forEach(r => r.classList.remove('table-active'));
+      if (selectedIdx >= 0 && selectedIdx < currentRows.length) {
+        currentRows[selectedIdx].classList.add('table-active');
+      }
+    }
+    renderBundlingTable();
+  });
+</script>
+{% endblock %}

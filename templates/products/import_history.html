@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Riwayat Import Produk{% endblock %}
+{% block content %}
+    <h2 class="text-center mb-4">Riwayat Import Produk</h2>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <table id="import-history-table" class="table table-striped table-bordered w-100">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Waktu Import</th>
+                        <th>Oleh</th>
+                        <th>Nama File</th>
+                        <th>Sukses</th>
+                        <th>Gagal</th>
+                        <th>Catatan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in import_history %}
+                    <tr>
+                        <td>{{ h.import_time|date:'d-m-Y H:i:s' }}</td>
+                        <td>{{ h.imported_by }}</td>
+                        <td>{{ h.file_name }}</td>
+                        <td>{{ h.success_count }}</td>
+                        <td>{{ h.failed_count }}</td>
+                        <td>
+                            <span class="note-preview" data-fullnote="{{ h.notes|escapejs }}" style="cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:inline-block; max-width:180px; vertical-align:middle;">
+                                {{ h.notes|truncatechars:40 }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Modal untuk catatan -->
+    <div class="modal fade" id="noteModal" tabindex="-1" aria-labelledby="noteModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="noteModalLabel">Catatan Import</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" style="max-height:300px; overflow-y:auto; white-space:pre-line;" id="noteModalBody">
+          </div>
+        </div>
+      </div>
+    </div>
+{% endblock %}
+{% block extra_script %}
+<link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css">
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#import-history-table').DataTable({
+            order: [[0, 'desc']]
+        });
+        $(document).on('click', '.note-preview', function() {
+            var note = $(this).data('fullnote');
+            $('#noteModalBody').text(note);
+            var modal = new bootstrap.Modal(document.getElementById('noteModal'));
+            modal.show();
+        });
+    });
+</script>
+{% endblock %}

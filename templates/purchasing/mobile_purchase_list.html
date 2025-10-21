@@ -1,0 +1,361 @@
+{% extends 'base_mobile.html' %}
+{% block title %}Purchase List{% endblock %}
+{% block content %}
+<style>
+    .mobile-container {
+        max-width: 100%;
+        padding: 10px;
+    }
+    
+    .mobile-header {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .mobile-header h2 {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin: 0;
+        color: #333;
+    }
+    
+    
+    .purchase-card {
+        background: white;
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        max-height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    
+    .purchase-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 5px;
+    }
+    
+    .purchase-card-header h6 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--bs-primary);
+        margin: 0;
+    }
+    
+    .purchase-card-meta {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+    
+    .status-badge {
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+    
+    .badge-primary { background: #007bff; color: white; }
+    .badge-dark { background: #343a40; color: white; }
+    .badge-warning { background: #ffc107; color: #333; }
+    .badge-success { background: #28a745; color: white; }
+    .badge-info { background: #17a2b8; color: white; }
+    .badge-danger { background: #dc3545; color: white; }
+    
+    .purchase-card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 5px;
+        padding-top: 5px;
+        border-top: 1px solid #f0f0f0;
+    }
+    
+    .purchase-total {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .purchase-actions {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .purchase-actions button,
+    .purchase-actions a {
+        padding: 4px 8px;
+        border: none;
+        border-radius: 5px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        text-align: center;
+        text-decoration: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+    }
+    
+    .btn-success { background: #28a745; color: white; }
+    .btn-info { background: #17a2b8; color: white; }
+    .btn-primary { background: #007bff; color: white; }
+    .btn-danger { background: #dc3545; color: white; }
+    
+    .purchase-actions i {
+        font-size: 0.7rem;
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #999;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 10px;
+        opacity: 0.3;
+    }
+</style>
+
+<div class="mobile-container">
+    <!-- Header -->
+    <div class="mobile-header">
+        <h2><i class="bi bi-cart-check"></i> Purchase List</h2>
+        {% if perms.purchasing.purchase_warehouse %}
+        <a href="{% url 'purchasing:purchase_create' %}" class="btn btn-success" style="padding: 8px 15px; font-size: 0.85rem;">
+            <i class="bi bi-plus-circle"></i> Buat
+        </a>
+        {% endif %}
+    </div>
+    
+    <!-- Purchase List -->
+    <div id="purchase-list">
+        <div class="loading">
+            <i class="bi bi-hourglass-split"></i><br>
+            Loading...
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+let totalPages = 1;
+
+// Wait for jQuery to be loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('[Mobile Purchase List] DOM ready');
+    console.log('[Mobile Purchase List] jQuery available:', typeof $ !== 'undefined');
+    console.log('[Mobile Purchase List] Permissions:', window.PERMISSIONS);
+    
+    // Wait for jQuery
+    if (typeof $ !== 'undefined') {
+        loadData();
+    } else {
+        console.error('[Mobile Purchase List] jQuery not loaded!');
+        // Retry after a short delay
+        setTimeout(function() {
+            if (typeof $ !== 'undefined') {
+                loadData();
+            } else {
+                console.error('[Mobile Purchase List] jQuery still not loaded after retry!');
+                $('#purchase-list').html('<div class="empty-state"><i class="bi bi-exclamation-circle"></i><br>Error: jQuery not loaded</div>');
+            }
+        }, 500);
+    }
+});
+
+function loadData() {
+    let url = '{% url "purchasing:purchase_list_api" %}?page=' + currentPage + '&page_size=25';
+    
+    console.log('[Mobile Purchase List] Loading data from:', url);
+    
+    // Update loading state
+    const purchaseListEl = document.getElementById('purchase-list');
+    if (purchaseListEl) {
+        purchaseListEl.innerHTML = '<div class="loading"><i class="bi bi-hourglass-split"></i><br>Loading...</div>';
+    }
+    
+    // Use fetch instead of jQuery AJAX for better compatibility
+    fetch(url)
+        .then(response => {
+            console.log('[Mobile Purchase List] Fetch response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('[Mobile Purchase List] Response received:', data);
+            console.log('[Mobile Purchase List] Response success:', data.success);
+            console.log('[Mobile Purchase List] Response data:', data.data);
+            console.log('[Mobile Purchase List] Data length:', data.data ? data.data.length : 0);
+            
+            if (data.success) {
+                if (data.data && data.data.length > 0) {
+                    console.log('[Mobile Purchase List] Rendering', data.data.length, 'items');
+                    renderList(data.data);
+                    totalPages = data.pagination.total_pages;
+                } else {
+                    console.log('[Mobile Purchase List] No data in response');
+                    if (purchaseListEl) {
+                        purchaseListEl.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><br>No data available</div>';
+                    }
+                }
+            } else {
+                console.error('[Mobile Purchase List] Response success=false:', data);
+                if (purchaseListEl) {
+                    purchaseListEl.innerHTML = '<div class="empty-state"><i class="bi bi-exclamation-circle"></i><br>Error: ' + (data.error || 'Unknown error') + '</div>';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('[Mobile Purchase List] Fetch Error:', error);
+            if (purchaseListEl) {
+                purchaseListEl.innerHTML = '<div class="empty-state"><i class="bi bi-exclamation-circle"></i><br>Error loading data: ' + error.message + '</div>';
+            }
+        });
+}
+
+function renderList(data) {
+    console.log('[Mobile Purchase List] renderList called with data:', data);
+    console.log('[Mobile Purchase List] Data type:', typeof data);
+    console.log('[Mobile Purchase List] Is array:', Array.isArray(data));
+    console.log('[Mobile Purchase List] Data length:', data ? data.length : 'data is null/undefined');
+    
+    if (!data) {
+        console.error('[Mobile Purchase List] Data is null or undefined');
+        $('#purchase-list').html('<div class="empty-state"><i class="bi bi-exclamation-circle"></i><br>Error: No data received</div>');
+        return;
+    }
+    
+    if (data.length === 0) {
+        console.log('[Mobile Purchase List] Data array is empty');
+        $('#purchase-list').html('<div class="empty-state"><i class="bi bi-inbox"></i><br>No data available</div>');
+        return;
+    }
+    
+    console.log('[Mobile Purchase List] Processing', data.length, 'purchases');
+    
+    let html = '';
+    
+    data.forEach(function(purchase, index) {
+        console.log('[Mobile Purchase List] Processing purchase #' + index + ':', purchase);
+        
+        // Status badge
+        let badgeClass = 'secondary';
+        if (purchase.status_value === 'draft') badgeClass = 'dark';
+        if (purchase.status_value === 'pending') badgeClass = 'warning';
+        if (purchase.status_value === 'received') badgeClass = 'success';
+        if (purchase.status_value === 'verified') badgeClass = 'info';
+        if (purchase.status_value === 'cancelled') badgeClass = 'danger';
+        
+        html += '<div class="purchase-card">';
+        html += '<div class="purchase-card-header">';
+        html += '<h6>' + (purchase.nomor_purchase || 'DRAFT') + '</h6>';
+        html += '<span class="status-badge badge-' + badgeClass + '">' + purchase.status + '</span>';
+        html += '</div>';
+        
+        html += '<div class="purchase-card-meta">';
+        html += '<div>Tanggal: ' + purchase.tanggal_purchase + ' | Supplier: ' + purchase.supplier + '</div>';
+        html += '</div>';
+        
+        html += '<div class="purchase-card-footer">';
+        html += '<div class="purchase-total">Rp ' + purchase.total_amount_formatted + '</div>';
+        html += '<div class="purchase-actions">';
+        
+        // Receive button (Warehouse) - only for verified status
+        if (purchase.status_value === 'verified' && window.PERMISSIONS.warehouse) {
+            html += '<a href="/purchaseorder/purchase/' + purchase.id + '/receive/" class="btn-success" title="Receive"><i class="bi bi-box-arrow-in-down"></i></a>';
+        }
+        
+        // Detail button - always show
+        html += '<a href="/purchaseorder/purchase/' + purchase.id + '/" class="btn-info" title="Detail"><i class="bi bi-eye"></i></a>';
+        
+        // Edit button (Warehouse)
+        if ((purchase.status_value === 'draft' || purchase.status_value === 'pending') && window.PERMISSIONS.warehouse) {
+            html += '<a href="/purchaseorder/purchase/' + purchase.id + '/edit/" class="btn-primary" title="Edit"><i class="bi bi-pencil"></i></a>';
+        }
+        
+        // Delete button (Warehouse)
+        if ((purchase.status_value === 'draft' || purchase.status_value === 'pending') && window.PERMISSIONS.warehouse) {
+            html += '<button class="btn-danger btn-delete-purchase" data-id="' + purchase.id + '" title="Hapus"><i class="bi bi-trash"></i></button>';
+        }
+        
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+    });
+    
+    console.log('[Mobile Purchase List] Generated HTML length:', html.length);
+    console.log('[Mobile Purchase List] HTML preview:', html.substring(0, 200));
+    
+    // Update DOM using vanilla JavaScript
+    const purchaseListEl = document.getElementById('purchase-list');
+    if (purchaseListEl) {
+        purchaseListEl.innerHTML = html;
+        console.log('[Mobile Purchase List] HTML rendered successfully');
+    } else {
+        console.error('[Mobile Purchase List] purchase-list element not found!');
+    }
+}
+
+// Delete handler using vanilla JavaScript
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.btn-delete-purchase')) {
+        const btn = e.target.closest('.btn-delete-purchase');
+        const purchaseId = btn.getAttribute('data-id');
+        
+        if (confirm('Apakah Anda yakin ingin menghapus purchase ini?')) {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            fetch('/purchaseorder/purchase/' + purchaseId + '/delete/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: 'csrfmiddlewaretoken=' + csrfToken
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('[Mobile Purchase List] Delete response:', data);
+                if (data.success) {
+                    alert(data.message || 'Purchase berhasil dihapus');
+                    loadData();
+                } else {
+                    alert('Error: ' + (data.error || 'Gagal menghapus purchase'));
+                }
+            })
+            .catch(error => {
+                console.error('[Mobile Purchase List] Delete error:', error);
+                alert('Error deleting purchase');
+            });
+        }
+    }
+});
+</script>
+
+<script>
+    // Pass permissions to JavaScript
+    window.PERMISSIONS = {
+        finance: {% if perms.purchasing.purchase_finance %}true{% else %}false{% endif %},
+        warehouse: {% if perms.purchasing.purchase_warehouse %}true{% else %}false{% endif %}
+    };
+</script>
+{% endblock %}
+

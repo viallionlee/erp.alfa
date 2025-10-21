@@ -1,0 +1,505 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Daftar Sesi Transfer Rak{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css"/>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css"/>
+<style>
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+    .summary-card {
+        transition: transform 0.2s;
+    }
+    .summary-card:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-1">
+                <i class="bi bi-arrow-left-right text-primary"></i>
+                Daftar Sesi Transfer Rak
+            </h4>
+            <p class="text-muted mb-0">Kelola semua sesi transfer produk antar rak dalam sistem</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap justify-content-end">
+            <a href="{% url 'inventory:rak_stock' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Kembali ke Stok Rak
+            </a>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTransferModal">
+                <i class="bi bi-plus-circle"></i> Buat Sesi Transfer
+            </button>
+            <a href="{% url 'inventory:putaway_history' %}" class="btn btn-info">
+                <i class="bi bi-clock-history"></i> History Putaway
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card summary-card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Sesi Draft</h6>
+                            <h3 id="sesiDraft">-</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-pencil-square fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card summary-card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Sesi Berlangsung</h6>
+                            <h3 id="sesiBerlangsung">-</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-play-circle fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card summary-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Sesi Selesai</h6>
+                            <h3 id="sesiSelesai">-</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-check-circle fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card summary-card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Transfer</h6>
+                            <h3 id="totalTransfer">-</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-arrow-left-right fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sessions Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-list-ul"></i> Daftar Sesi Transfer
+            </h5>
+        </div>
+        <div class="card-body">
+            <!-- Filter Controls -->
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label for="filterRakAsal" class="form-label">
+                        <i class="bi bi-funnel me-1"></i>Rak Asal
+                    </label>
+                    <select id="filterRakAsal" class="form-select form-select-sm">
+                        <option value="">Semua Rak Asal</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="filterRakTujuan" class="form-label">
+                        <i class="bi bi-funnel me-1"></i>Rak Tujuan
+                    </label>
+                    <select id="filterRakTujuan" class="form-select form-select-sm">
+                        <option value="">Semua Rak Tujuan</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="filterStatus" class="form-label">
+                        <i class="bi bi-funnel me-1"></i>Status
+                    </label>
+                    <select id="filterStatus" class="form-select form-select-sm">
+                        <option value="">Semua Status</option>
+                        <option value="draft">Draft</option>
+                        <option value="berlangsung">Berlangsung</option>
+                        <option value="ready_for_putaway">Siap Putaway</option>
+                        <option value="selesai">Selesai</option>
+                        <option value="dibatalkan">Dibatalkan</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="button" id="btnClearFilters" class="btn btn-outline-secondary btn-sm me-2">
+                        <i class="bi bi-x-circle me-1"></i>Clear
+                    </button>
+                    <button type="button" id="btnApplyFilters" class="btn btn-primary btn-sm">
+                        <i class="bi bi-search me-1"></i>Filter
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table id="transferSessionsTable" class="table table-striped table-hover" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Kode Sesi</th>
+                            <th>Rak Asal</th>
+                            <th>Rak Tujuan</th>
+                            <th>Status</th>
+                            <th>Total Items</th>
+                            <th>Total Qty</th>
+                            <th>Dibuat Oleh</th>
+                            <th>Tanggal Transfer</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data akan dimuat oleh DataTables -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Transfer Modal -->
+    <div class="modal fade" id="createTransferModal" tabindex="-1" aria-labelledby="createTransferModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="createTransferModalLabel">
+                        <i class="bi bi-arrow-left-right me-2"></i>
+                        Buat Sesi Transfer Rak Baru
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createTransferForm">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="modal_rak_asal_id" class="form-label">
+                                    <strong>Rak Asal <span class="text-danger">*</span></strong>
+                                </label>
+                                <select name="rak_asal_id" id="modal_rak_asal_id" class="form-select" required>
+                                    <option value="">-- Pilih Rak Asal --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="modal_rak_tujuan_id" class="form-label">
+                                    <strong>Rak Tujuan <span class="text-danger">*</span></strong>
+                                </label>
+                                <select name="rak_tujuan_id" id="modal_rak_tujuan_id" class="form-select" required>
+                                    <option value="">-- Pilih Rak Tujuan --</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="modal_catatan" class="form-label">
+                                <strong>Catatan (Opsional)</strong>
+                            </label>
+                            <textarea name="catatan" id="modal_catatan" class="form-control" rows="3" 
+                                      placeholder="Catatan tambahan untuk sesi transfer ini..."></textarea>
+                        </div>
+
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" value="1" id="chkTransferPutaway">
+                            <label class="form-check-label" for="chkTransferPutaway">
+                                Transfer Putaway (kurangi stok rak asal sekarang, lanjutkan penerimaan via Putaway)
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>
+                        Batal
+                    </button>
+                    <button type="submit" form="createTransferForm" class="btn btn-primary" id="createTransferBtn">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Buat Sesi Transfer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script type="text/javascript" src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script type="text/javascript" src=""></script>
+
+<script>
+    let transferSessionsTable;
+
+    $(document).ready(function() {
+        loadSummary();
+        loadRakOptions();
+        initializeDataTable();
+        
+        $('#createTransferForm').on('submit', function(e) {
+            e.preventDefault();
+            createNewTransfer();
+        });
+    });
+
+    function loadRakOptions() {
+        $.ajax({
+            url: '{% url "inventory:rak_data" %}',
+            method: 'GET',
+            data: { get_rak_options: true },
+            success: function(response) {
+                if (response.rak_options) {
+                    var selectAsal = $('#modal_rak_asal_id');
+                    var selectTujuan = $('#modal_rak_tujuan_id');
+                    
+                    selectAsal.empty();
+                    selectTujuan.empty();
+                    
+                    selectAsal.append('<option value="">-- Pilih Rak Asal --</option>');
+                    selectTujuan.append('<option value="">-- Pilih Rak Tujuan --</option>');
+                    
+                    response.rak_options.forEach(function(rak) {
+                        var option = '<option value="' + rak.id + '">' + rak.lokasi + ' (' + rak.kode_rak + ')</option>';
+                        selectAsal.append(option);
+                        selectTujuan.append(option);
+                    });
+                    
+                    // Populate filter dropdowns
+                    populateFilterDropdowns(response.rak_options);
+                }
+            }
+        });
+    }
+
+    function populateFilterDropdowns(rakOptions) {
+        var filterRakAsal = $('#filterRakAsal');
+        var filterRakTujuan = $('#filterRakTujuan');
+        
+        filterRakAsal.empty();
+        filterRakTujuan.empty();
+        
+        filterRakAsal.append('<option value="">Semua Rak Asal</option>');
+        filterRakTujuan.append('<option value="">Semua Rak Tujuan</option>');
+        
+        rakOptions.forEach(function(rak) {
+            var option = '<option value="' + rak.id + '">' + rak.lokasi + ' (' + rak.kode_rak + ')</option>';
+            filterRakAsal.append(option);
+            filterRakTujuan.append(option);
+        });
+    }
+
+    // Filter event handlers
+    $('#btnApplyFilters').on('click', function() {
+        applyFilters();
+    });
+
+    $('#btnClearFilters').on('click', function() {
+        clearFilters();
+    });
+
+    function applyFilters() {
+        if (transferSessionsTable) {
+            transferSessionsTable.ajax.reload();
+        }
+    }
+
+    function clearFilters() {
+        $('#filterRakAsal').val('');
+        $('#filterRakTujuan').val('');
+        $('#filterStatus').val('');
+        applyFilters();
+    }
+
+    function createNewTransfer() {
+        var rakAsalId = $('#modal_rak_asal_id').val();
+        var rakTujuanId = $('#modal_rak_tujuan_id').val();
+        var catatan = $('#modal_catatan').val();
+        var transferPutaway = $('#chkTransferPutaway').is(':checked');
+        
+        if (!rakAsalId || !rakTujuanId) {
+            alert('Silakan pilih rak asal dan rak tujuan terlebih dahulu');
+            return;
+        }
+        
+        if (rakAsalId === rakTujuanId) {
+            alert('Rak asal dan rak tujuan tidak boleh sama');
+            return;
+        }
+
+        $('#createTransferBtn').prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i>Membuat Sesi...');
+
+        $.ajax({
+            url: '{% url "inventory:transfer_rak_create" %}',
+            method: 'POST',
+            data: {
+                rak_asal_id: rakAsalId,
+                rak_tujuan_id: rakTujuanId,
+                catatan: catatan,
+                csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val(),
+                mode: transferPutaway ? 'transfer_putaway' : 'direct'
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('Berhasil membuat sesi transfer');
+                    $('#createTransferModal').modal('hide');
+                    $('#createTransferForm')[0].reset();
+                    transferSessionsTable.ajax.reload();
+                    loadSummary();
+                    
+                    if (response.redirect_url) {
+                        setTimeout(function() {
+                            window.location.href = response.redirect_url;
+                        }, 1500);
+                    }
+                } else {
+                    alert('Gagal: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                alert('Terjadi kesalahan saat membuat sesi transfer');
+            },
+            complete: function() {
+                $('#createTransferBtn').prop('disabled', false).html('<i class="bi bi-check-circle me-1"></i>Buat Sesi Transfer');
+            }
+        });
+    }
+
+    function loadSummary() {
+        $.ajax({
+            url: '{% url "inventory:transfer_rak_summary" %}',
+            method: 'GET',
+            success: function(data) {
+                $('#sesiDraft').text(data.sesi_draft || 0);
+                $('#sesiBerlangsung').text(data.sesi_berlangsung || 0);
+                $('#sesiSelesai').text(data.sesi_selesai || 0);
+                $('#totalTransfer').text(data.total_transfer || 0);
+            }
+        });
+    }
+
+    function initializeDataTable() {
+        transferSessionsTable = $('#transferSessionsTable').DataTable({
+            "processing": true,
+            "serverSide": true,
+            "ajax": {
+                "url": "{% url 'inventory:transfer_rak_list' %}",
+                "type": "GET",
+                "data": function(d) {
+                    // Add filter parameters
+                    d.rak_asal = $('#filterRakAsal').val();
+                    d.rak_tujuan = $('#filterRakTujuan').val();
+                    d.status = $('#filterStatus').val();
+                }
+            },
+            "columns": [
+                { "data": "session_code" },
+                { "data": "rak_asal_lokasi" },
+                { "data": "rak_tujuan_lokasi" },
+                { 
+                    "data": "status",
+                    "render": function(data, type, row) {
+                        if (type === 'display') {
+                            var statusClass = '';
+                            var statusText = '';
+                            switch(data) {
+                                case 'draft':
+                                    statusClass = 'bg-warning';
+                                    statusText = 'Draft';
+                                    break;
+                                case 'in_progress':
+                                    statusClass = 'bg-info';
+                                    statusText = 'Sedang Berlangsung';
+                                    break;
+                                case 'ready_for_putaway':
+                                    statusClass = 'bg-primary';
+                                    statusText = 'Siap Putaway';
+                                    break;
+                                case 'selesai':
+                                    statusClass = 'bg-success';
+                                    statusText = 'Selesai';
+                                    break;
+                                case 'dibatalkan':
+                                    statusClass = 'bg-danger';
+                                    statusText = 'Dibatalkan';
+                                    break;
+                                default:
+                                    statusClass = 'bg-secondary';
+                                    statusText = data;
+                            }
+                            return '<span class="badge ' + statusClass + ' status-badge">' + statusText + '</span>';
+                        }
+                        return data;
+                    }
+                },
+                { "data": "total_items" },
+                { "data": "total_qty" },
+                { "data": "created_by_username" },
+                { "data": "tanggal_transfer" },
+                { 
+                    "data": null,
+                    "render": function(data, type, row) {
+                        if (type === 'display') {
+                            var buttons = '<div class="d-flex gap-1 flex-nowrap">';
+                            
+                            if (row.status === 'draft') {
+                                buttons += '<a href="/inventory/transfer-rak/' + row.id + '/work/" class="btn btn-sm btn-primary" title="Kerja">';
+                                buttons += '<i class="bi bi-pencil"></i></a>';
+                                buttons += '<a href="/inventory/transfer-rak/' + row.id + '/cancel/" class="btn btn-sm btn-danger" title="Batal">';
+                                buttons += '<i class="bi bi-x-circle"></i></a>';
+                            } else if (row.status === 'ready_for_putaway') {
+                                buttons += '<a href="/inventory/transfer-rak/' + row.id + '/putaway/" class="btn btn-sm btn-success" title="Putaway">';
+                                buttons += '<i class="bi bi-box-arrow-in-down"></i></a>';
+                                buttons += '<a href="/inventory/transfer-rak/' + row.id + '/detail/" class="btn btn-sm btn-info" title="Detail">';
+                                buttons += '<i class="bi bi-eye"></i></a>';
+                            } else if (row.status === 'selesai') {
+                                buttons += '<a href="/inventory/transfer-rak/' + row.id + '/detail/" class="btn btn-sm btn-info" title="Detail">';
+                                buttons += '<i class="bi bi-eye"></i></a>';
+                            }
+                            
+                            buttons += '</div>';
+                            return buttons;
+                        }
+                        return '';
+                    }
+                }
+            ],
+            "language": {
+                "lengthMenu": "Tampilkan _MENU_ entri",
+                "zeroRecords": "Tidak ada data yang ditemukan",
+                "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
+                "search": "Cari:",
+                "paginate": {
+                    "first": "Pertama",
+                    "last": "Terakhir",
+                    "next": "Selanjutnya",
+                    "previous": "Sebelumnya"
+                },
+                "processing": "Memproses..."
+            },
+            "order": [[7, "desc"]],
+            "pageLength": 25
+        });
+    }
+</script>
+{% endblock %}

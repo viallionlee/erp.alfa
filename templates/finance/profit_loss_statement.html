@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Profit & Loss Statement{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Profit & Loss Statement</h1>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row">
+                        <div class="col-md-3">
+                            <label>Date From</label>
+                            <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label>Date To</label>
+                            <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label>&nbsp;</label><br>
+                            <button type="submit" class="btn btn-primary">Generate Report</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- P&L Statement -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Profit & Loss Statement - {{ date_from }} to {{ date_to }}</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Revenue Section -->
+                    <div class="mb-4">
+                        <h5 class="text-success">REVENUE</h5>
+                        <table class="table table-sm">
+                            <tbody>
+                                {% for item in revenue_details %}
+                                <tr>
+                                    <td class="pl-4">{{ item.account.code }} - {{ item.account.name }}</td>
+                                    <td class="text-right text-success">Rp {{ item.amount|floatformat:0|intcomma }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td class="pl-4 text-muted">No revenue recorded</td>
+                                    <td class="text-right">-</td>
+                                </tr>
+                                {% endfor %}
+                                <tr class="font-weight-bold border-top">
+                                    <td class="pl-2">TOTAL REVENUE</td>
+                                    <td class="text-right text-success">Rp {{ revenue_total|floatformat:0|intcomma }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Cost of Sales Section -->
+                    <div class="mb-4">
+                        <h5 class="text-warning">COST OF SALES</h5>
+                        <table class="table table-sm">
+                            <tbody>
+                                {% for item in cos_details %}
+                                <tr>
+                                    <td class="pl-4">{{ item.account.code }} - {{ item.account.name }}</td>
+                                    <td class="text-right text-danger">Rp {{ item.amount|floatformat:0|intcomma }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td class="pl-4 text-muted">No cost of sales recorded</td>
+                                    <td class="text-right">-</td>
+                                </tr>
+                                {% endfor %}
+                                <tr class="font-weight-bold border-top">
+                                    <td class="pl-2">TOTAL COST OF SALES</td>
+                                    <td class="text-right text-danger">Rp {{ cos_total|floatformat:0|intcomma }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Gross Profit -->
+                    <div class="mb-4 border-top pt-3">
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr class="font-weight-bold">
+                                    <td>GROSS PROFIT</td>
+                                    <td class="text-right {% if gross_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        Rp {{ gross_profit|floatformat:0|intcomma }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Expenses Section -->
+                    <div class="mb-4">
+                        <h5 class="text-danger">EXPENSES</h5>
+                        <table class="table table-sm">
+                            <tbody>
+                                {% for item in expense_details %}
+                                <tr>
+                                    <td class="pl-4">{{ item.account.code }} - {{ item.account.name }}</td>
+                                    <td class="text-right text-danger">Rp {{ item.amount|floatformat:0|intcomma }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td class="pl-4 text-muted">No expenses recorded</td>
+                                    <td class="text-right">-</td>
+                                </tr>
+                                {% endfor %}
+                                <tr class="font-weight-bold border-top">
+                                    <td class="pl-2">TOTAL EXPENSES</td>
+                                    <td class="text-right text-danger">Rp {{ expense_total|floatformat:0|intcomma }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Net Income -->
+                    <div class="mb-4 border-top pt-3">
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr class="font-weight-bold h4">
+                                    <td>NET INCOME</td>
+                                    <td class="text-right {% if net_income >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        Rp {{ net_income|floatformat:0|intcomma }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <a href="{% url 'finance:dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

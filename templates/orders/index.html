@@ -1,0 +1,340 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Daftar Orders{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+    /* Font utama untuk seluruh halaman */
+    #ordersTable th, #ordersTable td {
+        font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
+        font-size: 0.9rem; /* Diperkecil dari 1.05rem menjadi 0.9rem */
+        line-height: 1.6;
+        color: #222;
+    }
+    #ordersTable th {
+        font-weight: 600;
+        background: #f8f9fa;
+        color: #333;
+        padding: 12px 8px;
+        border-bottom: 2px solid #dee2e6;
+    }
+    #ordersTable td {
+        font-weight: 400;
+        padding: 10px 8px;
+        vertical-align: middle;
+        background: #fff;
+        border-bottom: 1px solid #f1f1f1;
+    }
+    /* Teks sekunder */
+    #ordersTable td small,
+    #ordersTable td .text-muted {
+        color: #6c757d !important;
+        font-size: 0.97em;
+    }
+    /* Kode dan badge */
+    #ordersTable code {
+        background: #f1f3f5;
+        color: #b02a37;
+        font-size: 0.98em;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+    /* Responsive image */
+    .clickable-photo img {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        border: 1px solid #e9ecef;
+    }
+    body, #ordersTable th, #ordersTable td {
+        font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
+        font-size: 0.9rem; /* Diperkecil dari 1.05rem menjadi 0.9rem */
+        line-height: 1.6;
+        color: #222;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+    <!-- Baris Judul dan Tombol -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Daftar Orders</h2>
+        <div class="d-flex gap-2">
+            <a href="/fullfilment/generatebatch/" class="btn btn-primary d-flex align-items-center" style="font-weight:bold;">
+                GENERATE BATCH <i class="bi bi-arrow-right-circle-fill ms-2"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Baris Info dan Tombol Aksi -->
+    <div class="row g-2 mb-4">
+        <div class="col-lg-auto d-flex align-items-center gap-2">
+            <span class="badge bg-primary fs-6">Total order = {{ valid_order }}</span>
+            <span class="badge bg-danger fs-6">
+              SKU Not Found = {{ sku_not_found_count }}
+              {% if sku_not_found_count > 0 %}
+                <a href="#" id="showSkuNotFound" class="ms-1 text-white text-decoration-underline" style="cursor:pointer;">detail</a>
+              {% endif %}
+            </span>
+            <span class="badge bg-info text-dark fs-6">
+                SKU No Name = {{ no_product_skus_in_orders_count|default:0 }}
+                {% if no_product_skus_in_orders_count|default:0 > 0 %}
+                    <a href="#" id="showSkuNoProduct" class="ms-1 text-dark text-decoration-underline" style="cursor:pointer;">detail</a>
+                {% endif %}
+            </span>
+        </div>
+        <div class="col-lg d-flex justify-content-lg-end align-items-center gap-2 flex-wrap">
+            <a href="{% url 'orders_list' %}" class="btn btn-success btn-sm shadow-sm">Order List</a>
+            <a href="{% url 'orders_all' %}" class="btn btn-outline-primary btn-sm">VIEW SEMUA</a>
+            <div class="dropdown">
+                <button class="btn btn-success btn-sm dropdown-toggle" type="button" id="downloadDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    Download Orders
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="downloadDropdown">
+                    <li><a class="dropdown-item" href="/orders/download-orders/?limit=1000">Download 1000 Terbaru</a></li>
+                    <li><a class="dropdown-item" href="/orders/download-orders/?limit=5000">Download 5000 Terbaru</a></li>
+                    <li><a class="dropdown-item" href="/orders/download-orders/?limit=10000">Download 10000 Terbaru</a></li>
+                </ul>
+            </div>
+            <form method="post" action="/orders/extract-bundling/" class="m-0">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm shadow-sm">Extract Bundling</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Kontainer Tabel -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+              <table id="ordersTable" class="display" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>Info Order</th>
+                                <th>Info Toko</th>
+                                <th>Info Produk</th>
+                                <th>Detail Kuantitas</th>
+                                <th>Catatan Pembeli</th>
+                                <th>Info Logistik</th>
+                                <th>Nama Batch</th>
+                                <th>Status Proses</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in data %}
+                            <tr>
+                                <!-- 1. tanggal pembuatan / status / jenis pesanan -->
+                                <td>
+                                    <span class="d-block">{{ row.0|date:"d M Y, H:i" }}</span>
+                                    <span class="badge bg-success">{{ row.1 }}</span>
+                                    <small class="d-block text-muted">{{ row.2 }}</small>
+                                </td>
+                                <!-- 2. channel / nama toko / id pesanan -->
+                                <td>
+                                    <strong>{{ row.4 }}</strong>
+                                    <small class="d-block text-muted">{{ row.3 }}</small>
+                                    <code class="d-block">{{ row.5 }}</code>
+                                </td>
+                                <!-- 3. sku/nama produk/variant produk/brand/product id -->
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if row.26 %}
+                                            <a href="{{ row.26 }}" class="clickable-photo">
+                                                {% if row.26 %}
+                                                    <img src="{{ row.26 }}" alt="Product photo" class="me-3" style="width: 120px; height: 120px; object-fit: cover; border-radius: 4px; cursor: pointer;">
+                                                {% else %}
+                                                    <img src="/static/path/to/placeholder.png" alt="No image" width="50">
+                                                {% endif %}
+                                            </a>
+                                        {% endif %}
+                                        <div>
+                                            <strong>{{ row.7 }}</strong>
+                                            <div class="d-block text-muted">var : <strong>{{ row.8 }}</strong></div>
+                                            <div><code>SKU: {{ row.6 }}</code></div>
+                                            <small class="text-muted">Brand: {{ row.9 }} | ID: {{ row.10 }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <!-- 4. jumlah / harga / order type / jumlah ambil -->
+                                <td>
+                                        <div class="me-2">Jml: <strong>{{ row.11 }}</strong></div>
+                                        <div class="me-2">Diambil: <strong>{{ row.20 }}</strong></div>
+                                        <div class="text-muted">Harga: Rp {{ row.12|floatformat:0|intcomma }}</div>
+                                        <div class="text-muted">Order Type: {{ row.18 }}</div>
+                                </td>
+                                <!-- 5. catatan pembeli -->
+                                <td style="min-width: 150px;">
+                                    <small>{{ row.13 }}</small>
+                                </td>
+                                <!-- 6. kurir / awb.no tracking / metode pengiriman / kirim sebelum -->
+                                <td>
+                                    <strong>{{ row.14 }}</strong>
+                                    <div class="text-muted">{{ row.16 }}</div>
+                                    <code class="d-block">{{ row.15 }}</code>
+                                    <small class="text-danger">Kirim sblm: {{ row.17|date:"d M Y" }}</small>
+                                </td>
+                                <!-- 7. nama batch -->
+                                <td>
+                                    <span class="badge bg-secondary">{{ row.19|default:"-" }}</span>
+                                </td>
+                                <!-- 8. status = status ambil/status order/ status cancel/ status retur / status bundle -->
+                                <td>
+                                    <small class="d-block">Ambil: <strong>{{ row.21|default:"-" }}</strong></small>
+                                    <small class="d-block">Order: <strong>{{ row.22|default:"-" }}</strong></small>
+                                    <small class="d-block">Cancel: <strong>{{ row.23|default:"-" }}</strong></small>
+                                    <small class="d-block">Retur: <strong>{{ row.24|default:"-" }}</strong></small>
+                                    <small class="d-block">Bundle: <strong>{{ row.25|default:"-" }}</strong></small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+        </div>
+    </div>
+
+</div> <!-- Penutup .container-fluid -->
+
+<!-- Modal untuk Menampilkan Foto Besar -->
+<div class="modal fade" id="photoModal" tabindex="-1" aria-labelledby="photoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="photoModalLabel">Foto Produk</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img src="" id="modalImage" class="img-fluid" alt="Large product photo" style="max-height: 80vh;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal SKU Not Found -->
+<div class="modal fade" id="skuNotFoundModal" tabindex="-1" aria-labelledby="skuNotFoundModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="skuNotFoundModalLabel">SKU Not Found List</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul style="word-break:break-all;">
+          {% for sku in sku_not_found_list %}
+            <li>{{ sku }}</li>
+          {% empty %}
+            <li>Tidak ada SKU Not Found</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal SKU No Product -->
+<div class="modal fade" id="skuNoProductModal" tabindex="-1" aria-labelledby="skuNoProductModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="skuNoProductModalLabel">SKU No Name (Belum Terhubung Product)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul style="word-break:break-all;">
+          {% for sku in no_product_skus_in_orders %}
+            <li>{{ sku }}</li>
+          {% empty %}
+            <li>Tidak ada SKU yang perlu diperbaiki.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Inisialisasi DataTables
+    $('#ordersTable').DataTable({
+        pageLength: 100,
+        order: [[0, 'desc']],
+        searching: true,
+        info: true,
+        lengthChange: false,
+        paging: false
+        // Tidak perlu columnDefs atau autoWidth lagi karena struktur HTML sudah diubah
+    });
+
+    // Menampilkan foto di modal saat diklik
+    $('#ordersTable').on('click', '.clickable-photo', function(e) {
+        e.preventDefault(); // Mencegah link membuka tab baru
+
+        const imageUrl = $(this).attr('href'); // Ambil URL dari link
+        $('#modalImage').attr('src', imageUrl); // Set URL ke gambar di dalam modal
+
+        const photoModal = new bootstrap.Modal(document.getElementById('photoModal'));
+        photoModal.show(); // Tampilkan modal
+    });
+
+    // Notifikasi setelah extract-bundling
+    const bundlingForm = $('form[action="/orders/extract-bundling/"]');
+    bundlingForm.on('submit', function(e) {
+        e.preventDefault();
+        const btn = bundlingForm.find('button[type="submit"]');
+        const txt = btn.html();
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Memproses...');
+        fetch('/orders/extract-bundling/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': bundlingForm.find('[name=csrfmiddlewaretoken]').val() }
+        })
+        .then(async res => {
+            btn.prop('disabled', false).html(txt);
+            let data = {};
+            try { data = await res.json(); } catch {}
+            if (res.ok && data.success) {
+                let html = `<b>${data.extracted_count}</b> SKU yang berhasil diextract!`;
+                if (data.failed && data.failed.length > 0) {
+                    html += `<br><br><b>SKU Not Found:</b><br><code style='word-break:break-all;'>${data.failed.join(', ')}</code>`;
+                }
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Extract Bundling Berhasil',
+                    html: html,
+                    showConfirmButton: true
+                }).then(() => location.reload());
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Extract Bundling Gagal',
+                    text: data.error || 'Terjadi kesalahan',
+                    confirmButtonText: 'OK'
+                });
+            }
+        })
+        .catch(() => {
+            btn.prop('disabled', false).html(txt);
+            Swal.fire({ icon: 'error', title: 'Extract Bundling gagal', confirmButtonText: 'OK' });
+        });
+    });
+
+    // Modal detail SKU Not Found
+    $('#showSkuNotFound').on('click', function(e) {
+        e.preventDefault();
+        var modal = new bootstrap.Modal(document.getElementById('skuNotFoundModal'));
+        modal.show();
+    });
+
+    // BARU: Modal detail SKU No Product
+    $('#showSkuNoProduct').on('click', function(e) {
+        e.preventDefault();
+        var modal = new bootstrap.Modal(document.getElementById('skuNoProductModal'));
+        modal.show();
+    });
+});
+</script>
+{% endblock %}

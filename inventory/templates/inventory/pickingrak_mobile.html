@@ -1,0 +1,467 @@
+{% extends 'base_mobile.html' %} {# Assume you have a base_mobile.html for mobile-specific layout #}
+{% load static %}
+
+{% block title %}Scan Picking Mobile{% endblock %}
+
+{% block extra_head %}
+    <!-- SweetAlert2 CSS for toast messages -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.0/dist/sweetalert2.min.css">
+    <style>
+        /* Add mobile-specific styles here if needed */
+        .form-control-lg {
+            height: calc(3.5rem + 2px); /* Larger input for mobile */
+            font-size: 1.25rem;
+        }
+        .btn-lg {
+            padding: 1rem 1rem;
+            font-size: 1.25rem;
+        }
+        .input-group > .form-control, .input-group > .btn {
+            height: calc(3.5rem + 2px);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+<input type="hidden" id="csrf_token_input" value="{{ csrf_token }}">
+
+<div class="container py-3">
+    <h2 class="mb-3 text-center"><i class="bi bi-box-arrow-down"></i> Scan Picking</h2>
+
+    <!-- Step 1: Scan Rak Asal -->
+    <div class="card mb-3" id="step-rak">
+        <div class="card-header bg-primary text-white text-center">
+            <strong>1. Scan atau Pilih Rak Asal</strong>
+        </div>
+        <div class="card-body">
+            <div class="input-group mb-3">
+                <input type="text" id="kode-rak-input" class="form-control form-control-lg" placeholder="Scan atau ketik kode rak..." autofocus>
+                <button class="btn btn-primary btn-lg" type="button" id="scanRakBtn"><i class="bi bi-qr-code-scan"></i></button>
+            </div>
+            <div id="rak-result" class="mt-2 text-center"></div>
+            <select id="rak-select" class="form-select form-select-lg d-none mt-2">
+                <option value="">-- Pilih Rak --</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Step 2: Scan Produk -->
+    <div class="card mb-3" id="step-produk" style="display: none;">
+        <div class="card-header bg-success text-white text-center">
+            <strong>2. Scan Produk</strong>
+        </div>
+        <div class="card-body">
+            <h5 id="current-rak-info" class="mb-3 text-muted text-center"></h5>
+            <div class="input-group mb-3">
+                <input type="text" id="barcode-input" class="form-control form-control-lg" placeholder="Scan atau ketik barcode produk...">
+                <button class="btn btn-success btn-lg" type="button" id="scanProductBtn"><i class="bi bi-upc-scan"></i></button>
+            </div>
+            <div id="product-scan-result" class="mt-2 text-center"></div>
+        </div>
+    </div>
+
+    <!-- Step 3: Daftar Produk yang Akan Di-pick -->
+    <div class="card mb-3" id="step-daftar-produk" style="display: none;">
+        <div class="card-header bg-info text-white text-center">
+            <strong>3. Daftar Produk Akan Di-pick</strong>
+        </div>
+        <div class="card-body">
+            <div id="picked-items-list" class="list-group mb-3">
+                <!-- Items will be added here by JavaScript -->
+            </div>
+            <div class="d-grid gap-2 mt-3">
+                <button class="btn btn-primary btn-lg" id="savePickingBtn"><i class="bi bi-save"></i> Simpan Picking</button>
+                <button class="btn btn-warning btn-lg mt-2" id="changeRakBtn"><i class="bi bi-arrow-left-right"></i> Ganti Rak</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal (Same as desktop) -->
+<div class="modal fade" id="pickingSuccessModal" tabindex="-1" aria-labelledby="pickingSuccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="pickingSuccessModalLabel">Picking Berhasil!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                <h4 class="mt-3">Produk berhasil diambil dari rak.</h4>
+                <p>Siap untuk transaksi picking berikutnya.</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.0/dist/sweetalert2.all.min.js"></script>
+    <script>
+        const dingSound = new Audio("{% static 'sounds/ding.mp3' %}");
+        const errorSound = new Audio("{% static 'sounds/errorsound.mp3' %}");
+        const completedSound = new Audio("{% static 'sounds/completedsound.mp3' %}");
+
+        let currentRak = null;
+        let pickedItems = []; // Array to store {product_id, sku, barcode, nama_produk, qty_picked}
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const csrfToken = document.querySelector('#csrf_token_input').value;
+            const kodeRakInput = document.getElementById('kode-rak-input');
+            const rakSelect = document.getElementById('rak-select');
+            const scanRakBtn = document.getElementById('scanRakBtn');
+            const rakResultDiv = document.getElementById('rak-result');
+            const stepRak = document.getElementById('step-rak');
+            const stepProduk = document.getElementById('step-produk');
+            const stepDaftarProduk = document.getElementById('step-daftar-produk');
+            const barcodeInput = document.getElementById('barcode-input');
+            const scanProductBtn = document.getElementById('scanProductBtn');
+            const productScanResultDiv = document.getElementById('product-scan-result');
+            const pickedItemsListDiv = document.getElementById('picked-items-list'); // Changed for mobile list
+            const savePickingBtn = document.getElementById('savePickingBtn');
+            const changeRakBtn = document.getElementById('changeRakBtn');
+            const currentRakInfo = document.getElementById('current-rak-info');
+
+            // --- Fetch Rak List for Select ---
+            fetchRaksForSelect();
+
+            async function fetchRaksForSelect() {
+                try {
+                    const response = await fetch('/products/rak/data/');
+                    const data = await response.json();
+                    if (data.data) {
+                        rakSelect.innerHTML = '<option value="">-- Pilih Rak --</option>';
+                        data.data.forEach(rak => {
+                            const option = document.createElement('option');
+                            option.value = rak.id;
+                            option.textContent = rak.kode_rak + ' (' + rak.nama_rak + ')';
+                            rakSelect.appendChild(option);
+                        });
+                        rakSelect.classList.remove('d-none');
+                    }
+                } catch (error) {
+                    console.error('Error fetching rak list:', error);
+                }
+            }
+
+            // --- Event Listeners ---
+            scanRakBtn.addEventListener('click', () => {
+                const kodeRak = kodeRakInput.value.trim();
+                if (kodeRak) {
+                    scanRak(kodeRak);
+                } else {
+                    showToast('error', 'Kode rak tidak boleh kosong.');
+                }
+            });
+
+            rakSelect.addEventListener('change', () => {
+                const rakId = rakSelect.value;
+                if (rakId) {
+                    const kodeRak = rakSelect.options[rakSelect.selectedIndex].textContent.split(' ')[0];
+                    scanRak(kodeRak, rakId);
+                } else {
+                    resetPickingProcess();
+                }
+            });
+
+            kodeRakInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    scanRakBtn.click();
+                }
+            });
+
+            scanProductBtn.addEventListener('click', () => {
+                const barcode = barcodeInput.value.trim();
+                if (barcode && currentRak) {
+                    scanProduct(barcode);
+                } else if (!currentRak) {
+                    showToast('error', 'Silakan scan atau pilih rak terlebih dahulu.');
+                } else {
+                    showToast('error', 'Barcode produk tidak boleh kosong.');
+                }
+            });
+
+            barcodeInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    scanProductBtn.click();
+                }
+            });
+
+            savePickingBtn.addEventListener('click', savePicking);
+            changeRakBtn.addEventListener('click', resetPickingProcess);
+
+            // --- Functions ---
+            async function scanRak(kodeRak, rakId = null) {
+                try {
+                    rakResultDiv.innerHTML = '<p class="text-info">Mencari rak...</p>';
+                    let url = `/inventory/api/picking/scan_rak/?kode_rak=${kodeRak}`;
+                    if (rakId) {
+                        url += `&rak_id=${rakId}`;
+                    }
+
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        dingSound.play();
+                        currentRak = data.rak;
+                        rakResultDiv.innerHTML = `<p class="text-success">Rak ditemukan: <strong>${currentRak.kode_rak} - ${currentRak.nama_rak}</strong></p>`;
+                        currentRakInfo.textContent = `Produk akan diambil dari Rak: ${currentRak.kode_rak} (${currentRak.nama_rak})`;
+                        
+                        stepRak.style.display = 'none';
+                        stepProduk.style.display = 'block';
+                        stepDaftarProduk.style.display = 'block';
+                        barcodeInput.focus();
+                    } else {
+                        errorSound.play();
+                        rakResultDiv.innerHTML = `<p class="text-danger">Error: ${data.error}</p>`;
+                        showToast('error', data.error);
+                        currentRak = null;
+                        kodeRakInput.focus();
+                    }
+                } catch (error) {
+                    errorSound.play();
+                    rakResultDiv.innerHTML = `<p class="text-danger">Terjadi kesalahan jaringan atau server.</p>`;
+                    showToast('error', 'Terjadi kesalahan jaringan atau server.');
+                    currentRak = null;
+                    console.error('Error scanning rak:', error);
+                    kodeRakInput.focus();
+                }
+            }
+
+            async function scanProduct(barcode) {
+                if (!currentRak) {
+                    showToast('error', 'Silakan scan atau pilih rak terlebih dahulu.');
+                    return;
+                }
+
+                try {
+                    productScanResultDiv.innerHTML = '<p class="text-info">Mencari produk...</p>';
+                    const response = await fetch(`/inventory/api/picking/scan_product/?barcode=${barcode}&rak_id=${currentRak.id}`);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        dingSound.play();
+                        productScanResultDiv.innerHTML = `<p class="text-success">Produk ditemukan: <strong>${data.product.nama_produk} (${data.product.sku})</strong></p>`;
+                        addProductToPickedList(data.product, data.stock_in_rak);
+                        barcodeInput.value = '';
+                        barcodeInput.focus();
+                    } else {
+                        errorSound.play();
+                        productScanResultDiv.innerHTML = `<p class="text-danger">Error: ${data.error}</p>`;
+                        showToast('error', data.error);
+                        barcodeInput.focus();
+                    }
+                } catch (error) {
+                    errorSound.play();
+                    productScanResultDiv.innerHTML = `<p class="text-danger">Terjadi kesalahan jaringan atau server.</p>`;
+                    showToast('error', 'Terjadi kesalahan jaringan atau server.');
+                    console.error('Error scanning product:', error);
+                    barcodeInput.focus();
+                }
+            }
+
+            function addProductToPickedList(product, stock_in_rak) {
+                const existingItemIndex = pickedItems.findIndex(item => item.product_id === product.id);
+
+                if (existingItemIndex > -1) {
+                    pickedItems[existingItemIndex].qty_picked += 1;
+                    showToast('success', `Kuantitas ${product.sku} di-update menjadi ${pickedItems[existingItemIndex].qty_picked}.`);
+                } else {
+                    pickedItems.push({
+                        product_id: product.id,
+                        sku: product.sku,
+                        barcode: product.barcode,
+                        nama_produk: product.nama_produk,
+                        qty_picked: 1,
+                        stock_in_rak: stock_in_rak
+                    });
+                    showToast('success', `${product.sku} ditambahkan ke daftar.`);
+                }
+                renderPickedItemsList();
+            }
+
+            function renderPickedItemsList() {
+                pickedItemsListDiv.innerHTML = '';
+                if (pickedItems.length === 0) {
+                    pickedItemsListDiv.innerHTML = '<div class="alert alert-info text-center">Belum ada produk yang di-scan.</div>';
+                    return;
+                }
+
+                pickedItems.forEach((item, index) => {
+                    const listItem = document.createElement('div');
+                    listItem.className = 'list-group-item';
+                    listItem.innerHTML = `
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">${item.nama_produk}</h5>
+                            <small class="text-muted">SKU: ${item.sku}</small>
+                        </div>
+                        <p class="mb-1">Barcode: ${item.barcode}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="input-group input-group-sm w-auto">
+                                <button class="btn btn-outline-danger btn-qty-minus" data-index="${index}">-</button>
+                                <input type="number" class="form-control text-center qty-input" value="${item.qty_picked}" min="1" data-index="${index}" style="width: 70px;">
+                                <button class="btn btn-outline-success btn-qty-plus" data-index="${index}">+</button>
+                            </div>
+                            <small class="text-muted ms-2">Max: ${item.stock_in_rak}</small>
+                            <button class="btn btn-danger btn-sm ms-auto btn-remove-item" data-index="${index}">Hapus</button>
+                        </div>
+                    `;
+                    pickedItemsListDiv.appendChild(listItem);
+                });
+
+                // Add event listeners for quantity buttons and remove button
+                pickedItemsListDiv.querySelectorAll('.btn-qty-minus').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const index = event.target.dataset.index;
+                        adjustQuantity(index, -1);
+                    });
+                });
+                pickedItemsListDiv.querySelectorAll('.btn-qty-plus').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const index = event.target.dataset.index;
+                        adjustQuantity(index, 1);
+                    });
+                });
+                pickedItemsListDiv.querySelectorAll('.qty-input').forEach(input => {
+                    input.addEventListener('change', (event) => {
+                        const index = event.target.dataset.index;
+                        const newQty = parseInt(event.target.value);
+                        if (!isNaN(newQty) && newQty >= 1) {
+                            adjustQuantity(index, 0, newQty);
+                        } else {
+                            event.target.value = pickedItems[index].qty_picked;
+                        }
+                    });
+                });
+                pickedItemsListDiv.querySelectorAll('.btn-remove-item').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const index = event.target.dataset.index;
+                        removeProductFromPickedList(index);
+                    });
+                });
+            }
+
+            function adjustQuantity(index, delta, newQty = null) {
+                let item = pickedItems[index];
+                if (newQty !== null) {
+                    item.qty_picked = newQty;
+                } else {
+                    item.qty_picked += delta;
+                }
+
+                item.qty_picked = Math.max(1, item.qty_picked);
+                item.qty_picked = Math.min(item.stock_in_rak, item.qty_picked);
+
+                renderPickedItemsList();
+            }
+
+            function removeProductFromPickedList(index) {
+                pickedItems.splice(index, 1);
+                showToast('info', 'Produk berhasil dihapus dari daftar.');
+                renderPickedItemsList();
+            }
+
+            async function savePicking() {
+                if (!currentRak) {
+                    showToast('error', 'Rak belum dipilih.');
+                    return;
+                }
+                if (pickedItems.length === 0) {
+                    showToast('error', 'Belum ada produk yang di-scan untuk di-pick.');
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Konfirmasi Picking',
+                    text: `Apakah Anda yakin ingin menyimpan ${pickedItems.length} item dari Rak ${currentRak.kode_rak}?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Ya, Simpan!',
+                    cancelButtonText: 'Batal'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        savePickingBtn.disabled = true;
+                        savePickingBtn.textContent = 'Menyimpan...';
+                        try {
+                            const response = await fetch('/inventory/api/picking/save_transaction/', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrfToken
+                                },
+                                body: JSON.stringify({
+                                    rak_id: currentRak.id,
+                                    items: pickedItems.map(item => ({
+                                        product_id: item.product_id,
+                                        qty_picked: item.qty_picked
+                                    }))
+                                })
+                            });
+
+                            const data = await response.json();
+
+                            if (data.success) {
+                                completedSound.play();
+                                const successModal = new bootstrap.Modal(document.getElementById('pickingSuccessModal'));
+                                successModal.show();
+                                document.getElementById('pickingSuccessModal').addEventListener('hidden.bs.modal', function () {
+                                    resetPickingProcess();
+                                }, { once: true });
+                            } else {
+                                errorSound.play();
+                                showToast('error', data.error);
+                            }
+                        } catch (error) {
+                            errorSound.play();
+                            showToast('error', 'Terjadi kesalahan jaringan atau server saat menyimpan.');
+                            console.error('Error saving picking:', error);
+                        } finally {
+                            savePickingBtn.disabled = false;
+                            savePickingBtn.innerHTML = '<i class="bi bi-save"></i> Simpan Picking';
+                        }
+                    }
+                });
+            }
+
+            function resetPickingProcess() {
+                currentRak = null;
+                pickedItems = [];
+                kodeRakInput.value = '';
+                barcodeInput.value = '';
+                rakResultDiv.innerHTML = '';
+                productScanResultDiv.innerHTML = '';
+                pickedItemsListDiv.innerHTML = ''; // Changed for mobile list
+                currentRakInfo.textContent = '';
+
+                stepRak.style.display = 'block';
+                stepProduk.style.display = 'none';
+                stepDaftarProduk.style.display = 'none';
+                kodeRakInput.focus();
+
+                rakSelect.value = '';
+            }
+
+            function showToast(icon, title) {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    icon: icon,
+                    title: title
+                });
+            }
+        });
+    </script>
+{% endblock %} 

@@ -1,0 +1,629 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Putaway History{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+<style>
+    /* Modern Card Design */
+    .modern-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .modern-card:hover {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    }
+    
+    /* Modern Header Design */
+    .page-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        color: #495057;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e9ecef;
+    }
+    
+    .page-header h2 {
+        color: #495057;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .page-header p {
+        color: #6c757d;
+        margin-bottom: 0;
+    }
+    
+    /* Modern Filter Section */
+    .filter-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .filter-section h5 {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+        color: #495057;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        color: #495057;
+    }
+    
+    /* Modern Button Design */
+    .btn-modern {
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .btn-modern-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #ffffff;
+    }
+    
+    .btn-modern-primary:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        color: #ffffff;
+    }
+    
+    .btn-modern-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: #ffffff;
+    }
+    
+    .btn-modern-secondary:hover {
+        background: linear-gradient(135deg, #5a6268 0%, #343a40 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+        color: #ffffff;
+    }
+    
+    .btn-modern-outline {
+        background: transparent;
+        border: 2px solid #6c757d;
+        color: #6c757d;
+    }
+    
+    .btn-modern-outline:hover {
+        background: #6c757d;
+        color: #ffffff;
+        transform: translateY(-2px);
+    }
+
+    /* Modern Table Design */
+    .table-container {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+    
+    .table-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #dee2e6;
+        color: #495057;
+        font-weight: 600;
+    }
+    
+    /* Text Design dengan Warna Berbeda (Tanpa Badge) */
+    .text-source-stockcard {
+        color: #0d6efd;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    
+    .text-source-inventory {
+        color: #198754;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    
+    .text-tipe-regular {
+        color: #28a745;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    
+    .text-tipe-transfer {
+        color: #fd7e14;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    
+    /* Column Width Customization */
+    .table th:nth-child(5),  /* Nama Produk column */
+    .table td:nth-child(5) {
+        min-width: 400px !important;
+        max-width: 500px !important;
+        width: 400px !important;
+    }
+    
+    /* Text truncation for long product names */
+    .table td:nth-child(5) {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .text-rak {
+        color: #17a2b8;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    
+    .text-quantity {
+        color: #28a745;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    /* Override Bootstrap CSS Variables */
+    .badge {
+        --bs-badge-color: #000000 !important;
+        color: #000000 !important;
+    }
+    
+    .badge-source-stockcard {
+        --bs-badge-color: #000000 !important;
+        color: #000000 !important;
+    }
+    
+    .badge-source-inventory {
+        --bs-badge-color: #000000 !important;
+        color: #000000 !important;
+    }
+    
+    .badge-tipe-regular {
+        --bs-badge-color: #000000 !important;
+        color: #000000 !important;
+    }
+    
+    .badge-tipe-transfer {
+        --bs-badge-color: #000000 !important;
+        color: #000000 !important;
+    }
+    
+    /* Modern Table Styling */
+    .table {
+        margin-bottom: 0;
+    }
+    
+    .table thead th {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: none;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #495057;
+        padding: 1rem 0.75rem;
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    .table tbody td {
+        padding: 1rem 0.75rem;
+        border-bottom: 1px solid #f8f9fa;
+        vertical-align: middle;
+        color: #495057;
+        font-weight: 500;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        transition: all 0.2s ease;
+    }
+    
+    /* DataTables Customization */
+    .dataTables_wrapper .dataTables_length select {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        padding: 0.5rem;
+        color: #495057;
+    }
+    
+    .dataTables_wrapper .dataTables_filter input {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        padding: 0.5rem 1rem;
+        color: #495057;
+    }
+    
+    .dataTables_wrapper .dataTables_filter input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+        color: #495057 !important;
+        background: #ffffff;
+        margin: 0 2px;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #ffffff !important;
+        border-color: #667eea;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        color: #ffffff !important;
+        border-color: #5a6fd8;
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    
+    .btn-action {
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .btn-export {
+        background: #28a745;
+        color: #ffffff;
+    }
+    
+    .btn-export:hover {
+        background: #1e7e34;
+        transform: translateY(-1px);
+        color: #ffffff;
+    }
+    
+    .btn-print {
+        background: #6c757d;
+        color: #ffffff;
+    }
+    
+    .btn-print:hover {
+        background: #5a6268;
+        transform: translateY(-1px);
+        color: #ffffff;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 1.5rem;
+        }
+        
+        .filter-section {
+            padding: 1rem;
+        }
+        
+        .table-header {
+            padding: 1rem;
+        }
+        
+        .col-md-3 {
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Modern Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-1">
+                    <i class="bi bi-clock-history"></i> Putaway History
+                </h2>
+                <p class="mb-0">Riwayat aktivitas putaway dari StockCardEntry dan InventoryRakStockLog</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'inventory:putaway' %}" class="btn btn-modern btn-modern-outline">
+                    <i class="bi bi-arrow-left"></i> Kembali ke Putaway
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modern Filter Section -->
+    <div class="filter-section">
+        <h5 class="mb-3">
+            <i class="bi bi-funnel-fill text-primary"></i> Filter & Pencarian
+        </h5>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label for="dateFrom" class="form-label">
+                    <i class="bi bi-calendar3"></i> Tanggal Dari
+                </label>
+                <input type="date" id="dateFrom" class="form-control" placeholder="Pilih tanggal awal">
+            </div>
+            <div class="col-md-3">
+                <label for="dateTo" class="form-label">
+                    <i class="bi bi-calendar3"></i> Tanggal Sampai
+                </label>
+                <input type="date" id="dateTo" class="form-control" placeholder="Pilih tanggal akhir">
+            </div>
+            <div class="col-md-3">
+                <label for="tipeFilter" class="form-label">
+                    <i class="bi bi-tags"></i> Tipe Putaway
+                </label>
+                <select id="tipeFilter" class="form-select">
+                    <option value="all">Semua Tipe</option>
+                    <option value="regular">Regular Putaway</option>
+                    <option value="transfer">Transfer Putaway</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-modern btn-modern-primary flex-fill" onclick="applyFilters()">
+                        <i class="bi bi-search"></i> Filter
+                    </button>
+                    <button type="button" class="btn btn-modern btn-modern-secondary" onclick="resetFilters()">
+                        <i class="bi bi-arrow-clockwise"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modern Data Table -->
+    <div class="modern-card">
+        <div class="table-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-table text-primary"></i> Data Putaway History
+                </h5>
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-action btn-export" onclick="exportToExcel()">
+                        <i class="bi bi-file-earmark-excel"></i> Export Excel
+                    </button>
+                    <button type="button" class="btn btn-action btn-print" onclick="printTable()">
+                        <i class="bi bi-printer"></i> Print
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table id="putawayHistoryTable" class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Waktu</th>
+                        <th>Sumber</th>
+                        <th>SKU</th>
+                        <th>Barcode</th>
+                        <th>Nama Produk</th>
+                        <th>Variant</th>
+                        <th>Quantity</th>
+                        <th>Rak</th>
+                        <th>User</th>
+                        <th>Tipe</th>
+                        <th>Catatan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data will be loaded via DataTables -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- jQuery first, then DataTables -->
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script src=""></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+
+<script>
+let putawayTable;
+
+$(document).ready(function() {
+    // Initialize DataTable with modern styling
+    putawayTable = $('#putawayHistoryTable').DataTable({
+        processing: true,
+        serverSide: false,
+        ajax: {
+            url: '{% url "inventory:putaway_history_data" %}',
+            type: 'GET',
+            data: function(d) {
+                d.date_from = $('#dateFrom').val();
+                d.date_to = $('#dateTo').val();
+                d.tipe_filter = $('#tipeFilter').val();
+            }
+        },
+        columns: [
+            { 
+                data: 'timestamp',
+                width: '120px',
+                render: function(data) {
+                    if (data) {
+                        return `<div>
+                            <div class="fw-bold">${data}</div>
+                        </div>`;
+                    }
+                    return '<span class="text-muted">-</span>';
+                }
+            },
+            { 
+                data: 'source',
+                width: '100px',
+                render: function(data) {
+                    console.log('Source data:', data);
+                    if (data === 'StockCardEntry') {
+                        return `<span class="text-source-stockcard">StockCard</span>`;
+                    } else if (data === 'InventoryRakStockLog') {
+                        return `<span class="text-source-inventory">Inventory</span>`;
+                    } else {
+                        return `<span class="text-muted">${data || '-'}</span>`;
+                    }
+                }
+            },
+            { 
+                data: 'product_sku',
+                render: function(data) {
+                    return `<span class="fw-bold text-primary">${data || '-'}</span>`;
+                }
+            },
+            { 
+                data: 'product_barcode',
+                render: function(data) {
+                    return `<code class="text-secondary">${data || '-'}</code>`;
+                }
+            },
+            { 
+                data: 'product_name',
+                render: function(data) {
+                    return data || '<span class="text-muted">-</span>';
+                }
+            },
+            { 
+                data: 'product_variant',
+                render: function(data) {
+                    if (data && data.trim() !== '') {
+                        return `<span class="text-info">${data}</span>`;
+                    }
+                    return '<span class="text-muted">-</span>';
+                }
+            },
+            { 
+                data: 'quantity',
+                render: function(data) {
+                    return `<span class="text-quantity">${data || 0} pcs</span>`;
+                }
+            },
+            { 
+                data: 'rak_kode',
+                render: function(data) {
+                    if (data && data !== '-') {
+                        return `<span class="text-rak">${data}</span>`;
+                    }
+                    return '<span class="text-muted">-</span>';
+                }
+            },
+            { 
+                data: 'user',
+                render: function(data) {
+                    return data || '<span class="text-muted">-</span>';
+                }
+            },
+            { 
+                data: 'tipe',
+                render: function(data) {
+                    console.log('Tipe data:', data);
+                    if (data === 'Transfer Putaway') {
+                        return '<span class="text-tipe-transfer"><i class="bi bi-arrow-left-right"></i> Transfer</span>';
+                    } else {
+                        return '<span class="text-tipe-regular"><i class="bi bi-box"></i> Regular</span>';
+                    }
+                }
+            },
+            { 
+                data: 'notes',
+                render: function(data) {
+                    if (data && data.trim()) {
+                        return `<div class="text-truncate" title="${data}" style="max-width: 200px;">${data}</div>`;
+                    }
+                    return '<span class="text-muted">-</span>';
+                }
+            }
+        ],
+        order: [[0, 'desc']],
+        pageLength: 25,
+        language: {
+            url: '/static/datatables/Indonesian.json'
+        },
+        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+             '<"row"<"col-sm-12"tr>>' +
+             '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+        responsive: true,
+        drawCallback: function() {
+            // Add modern styling to DataTable elements
+            $('.dataTables_wrapper .dataTables_length select').addClass('form-select');
+            $('.dataTables_wrapper .dataTables_filter input').addClass('form-control');
+            
+            // Debug: Log data to console
+            console.log('DataTable data:', this.api().data().toArray());
+            
+            // Debug: Check specific columns
+            this.api().columns().every(function() {
+                console.log('Column ' + this.index() + ':', this.header().textContent);
+            });
+        },
+        initComplete: function() {
+            console.log('DataTable initialized successfully');
+            console.log('Total records:', this.api().data().count());
+        }
+    });
+});
+
+function applyFilters() {
+    putawayTable.ajax.reload();
+}
+
+function resetFilters() {
+    $('#dateFrom').val('');
+    $('#dateTo').val('');
+    $('#tipeFilter').val('all');
+    putawayTable.ajax.reload();
+}
+
+function exportToExcel() {
+    // Implementation for Excel export
+    alert('Export to Excel functionality will be implemented here');
+}
+
+function printTable() {
+    // Implementation for print functionality
+    window.print();
+}
+
+// Set default date range (last 30 days)
+$(document).ready(function() {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+    
+    $('#dateFrom').val(thirtyDaysAgo.toISOString().split('T')[0]);
+    $('#dateTo').val(today.toISOString().split('T')[0]);
+});
+</script>
+{% endblock %}
+

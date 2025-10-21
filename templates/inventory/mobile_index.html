@@ -1,0 +1,557 @@
+{% extends 'base_mobile.html' %}
+{% load static %}
+
+{% block title %}ERP Mobile - Stock Overview{% endblock %}
+
+{% block content %}
+<!-- Minimalist Header -->
+<div class="header-minimal">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h6 class="mb-0 fw-bold text-dark">📊 Stock</h6>
+            <small class="text-muted">{{ user.get_full_name|default:user.username }}</small>
+        </div>
+        <div class="d-flex gap-1">
+            <a href="{% url 'inventory:mobile_inventory' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid px-2">
+    <!-- Compact Search -->
+    <div class="search-compact mb-3">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" id="search-input" placeholder="Cari SKU/nama..." class="form-control">
+            <select id="brand-filter" class="form-select" style="max-width: 120px;">
+                <option value="">Brand</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- Compact Stock List -->
+    <div class="stock-list-compact" id="stock-list">
+        <!-- Stock items will be loaded here -->
+        <div class="loading-compact">
+            <div class="spinner-border spinner-border-sm text-primary"></div>
+            <span class="ms-2">Loading...</span>
+        </div>
+    </div>
+    
+    <!-- Compact Pagination -->
+    <div class="pagination-compact mt-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+                <span id="current-page">1</span>/<span id="total-pages">1</span> 
+                (<span id="total-products">0</span> items)
+            </small>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary" id="prev-page" disabled>
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <button class="btn btn-outline-secondary" id="next-page" disabled>
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stock Detail Modal -->
+<div class="modal fade" id="stockModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detail Stock</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="stock-detail-content">
+                <!-- Stock detail will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --glass-bg: rgba(255, 255, 255, 0.95);
+    --glass-blur: blur(10px);
+}
+
+body {
+    background: var(--primary-gradient);
+    min-height: 100vh;
+}
+
+/* Minimalist Header */
+.header-minimal {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border-radius: 0 0 15px 15px;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* Compact Search */
+.search-compact {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border-radius: 10px;
+    padding: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.search-compact .input-group-text {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #6c757d;
+}
+
+.search-compact .form-control,
+.search-compact .form-select {
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 0.875rem;
+}
+
+/* Compact Stock List */
+.stock-list-compact {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.stock-item-compact {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid rgba(255,255,255,0.3);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.stock-top-section {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.stock-item-compact:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.stock-photo {
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.5);
+    flex-shrink: 0;
+}
+
+.stock-photo-placeholder {
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.5);
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stock-photo-placeholder i {
+    font-size: 2rem;
+    color: #6c757d;
+}
+
+.stock-content {
+    flex: 1;
+    min-width: 0;
+    padding-left: 0.75rem;
+}
+
+.stock-row {
+    margin-bottom: 0.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stock-sku-barcode {
+    font-weight: 700;
+    color: #2d3748;
+    font-size: 0.85rem;
+}
+
+.stock-name {
+    color: #4a5568;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+}
+
+.stock-brand-variant {
+    color: #718096;
+    font-size: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stock-quantities {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+    width: 100%;
+}
+
+.quantity-badge {
+    flex: 1;
+    padding: 0.3rem 0.2rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-align: center;
+    min-width: 0;
+}
+
+.quantity-badge-compact {
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.quantity-total { background: #e3f2fd; color: #1976d2; }
+.quantity-putaway { background: #fff3cd; color: #856404; }
+.quantity-locked { background: #f8d7da; color: #721c24; }
+.quantity-ready { background: #d1edff; color: #0c5460; }
+
+.loading-compact {
+    text-align: center;
+    padding: 1rem;
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+/* Compact Pagination */
+.pagination-compact {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    padding: 0.75rem;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.pagination-compact .btn {
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .header-minimal {
+        padding: 0.75rem;
+    }
+    .search-compact {
+        padding: 0.5rem;
+    }
+    .stock-item-compact {
+        padding: 0.6rem;
+        gap: 0.4rem;
+    }
+    .stock-top-section {
+        gap: 0.5rem;
+    }
+    .stock-photo, .stock-photo-placeholder {
+        width: 80px;
+        height: 80px;
+    }
+    .stock-photo-placeholder i {
+        font-size: 1.5rem;
+    }
+    .stock-content {
+        padding-left: 0.5rem;
+    }
+}
+
+@media (min-width: 577px) {
+    .stock-photo, .stock-photo-placeholder {
+        width: 100px;
+        height: 100px;
+    }
+    .stock-photo-placeholder i {
+        font-size: 2rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentPage = 1;
+    let totalPages = 1;
+    let searchTerm = '';
+    let brandFilter = '';
+    
+    // Load stock data
+    function loadStockData(page = 1) {
+        const stockList = document.getElementById('stock-list');
+        stockList.innerHTML = `
+            <div class="loading-compact">
+                <div class="spinner-border spinner-border-sm text-primary"></div>
+                <span class="ms-2">Loading...</span>
+            </div>
+        `;
+        
+        // Build URL with parameters
+        const url = new URL('{% url "inventory:stock_data" %}', window.location.origin);
+        url.searchParams.append('draw', '1');
+        url.searchParams.append('start', (page - 1) * 10);
+        url.searchParams.append('length', '10');
+        
+        // Global search parameter
+        if (searchTerm) {
+            url.searchParams.append('search[value]', searchTerm);
+        }
+        
+        // Brand filter parameter (brand is column index 4)
+        if (brandFilter) {
+            url.searchParams.append('columns[4][search][value]', brandFilter);
+        }
+        
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                displayStockData(data);
+            })
+            .catch(error => {
+                console.error('Error loading stock data:', error);
+                stockList.innerHTML = `
+                    <div class="loading-compact text-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span class="ms-2">Gagal memuat data stock</span>
+                    </div>
+                `;
+            });
+    }
+    
+    function displayStockData(response) {
+        let html = '';
+        
+        if (response.data && response.data.length > 0) {
+            response.data.forEach(function(item) {
+                // Get product photo URL
+                const photoUrl = item.foto_produk ? 
+                    `/media/product_photos/${item.foto_produk}` : 
+                    null;
+                
+                html += `
+                    <div class="stock-item-compact" onclick="showStockDetail('${item.sku}')">
+                        <!-- SEGMEN 1 & 2: FOTO + INFO PRODUK -->
+                        <div class="stock-top-section">
+                            ${photoUrl ? 
+                                `<img src="${photoUrl}" alt="${item.sku}" class="stock-photo" 
+                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                      loading="lazy">` : 
+                                ''
+                            }
+                            <div class="stock-photo-placeholder" style="display: ${photoUrl ? 'none' : 'flex'}">
+                                <i class="bi bi-box"></i>
+                            </div>
+                            <div class="stock-content">
+                                <div class="stock-row">
+                                    <span class="stock-sku-barcode">${item.sku}</span>
+                                    <span class="stock-sku-barcode">${item.barcode || ''}</span>
+                                </div>
+                                <div class="stock-name">${item.nama_produk}</div>
+                                <div class="stock-brand-variant">
+                                    <span>${item.brand || ''}</span>
+                                    <span>${item.variant || ''}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- SEGMEN 3: QUANTITY INFO -->
+                        <div class="stock-quantities">
+                            <span class="quantity-badge quantity-total">Qty: ${item.quantity || 0}</span>
+                            <span class="quantity-badge quantity-putaway">Put: ${item.quantity_putaway || 0}</span>
+                            <span class="quantity-badge quantity-locked">Lock: ${item.quantity_locked || 0}</span>
+                            <span class="quantity-badge quantity-ready">Ready: ${item.quantity_ready || 0}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('total-products').textContent = response.recordsTotal || 0;
+            currentPage = response.current_page || 1;
+            totalPages = response.total_pages || 1;
+            
+            updatePagination();
+        } else {
+            html = `
+                <div class="loading-compact">
+                    <i class="bi bi-inbox"></i>
+                    <span class="ms-2">Tidak ada data stock ditemukan</span>
+                </div>
+            `;
+        }
+        
+        document.getElementById('stock-list').innerHTML = html;
+    }
+    
+    function updatePagination() {
+        document.getElementById('current-page').textContent = currentPage;
+        document.getElementById('total-pages').textContent = totalPages;
+        document.getElementById('prev-page').disabled = currentPage <= 1;
+        document.getElementById('next-page').disabled = currentPage >= totalPages;
+    }
+    
+    // Search functionality with debounce
+    let searchTimeout;
+    const searchInput = document.getElementById('search-input');
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            searchTerm = this.value;
+            currentPage = 1;
+            loadStockData(1);
+        }, 500); // 500ms delay
+    });
+    
+    // Brand filter
+    const brandFilterSelect = document.getElementById('brand-filter');
+    brandFilterSelect.addEventListener('change', function() {
+        brandFilter = this.value;
+        currentPage = 1;
+        loadStockData(1);
+    });
+    
+    // Pagination
+    document.getElementById('prev-page').addEventListener('click', function() {
+        if (currentPage > 1) {
+            currentPage--;
+            loadStockData(currentPage);
+        }
+    });
+    
+    document.getElementById('next-page').addEventListener('click', function() {
+        if (currentPage < totalPages) {
+            currentPage++;
+            loadStockData(currentPage);
+        }
+    });
+    
+    // Load brands for filter from all products
+    function loadBrands() {
+        // Fetch all products to get complete brand list
+        fetch('{% url "inventory:stock_data" %}?draw=1&start=0&length=10000')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Brand data:', data); // Debug log
+                
+                // Get all unique brands from all products
+                const brands = new Set();
+                if (data.data && data.data.length > 0) {
+                    data.data.forEach(function(item) {
+                        if (item.brand && item.brand.trim()) {
+                            brands.add(item.brand.trim());
+                        }
+                    });
+                }
+                
+                populateBrandSelect(brands);
+            })
+            .catch(error => {
+                console.error('Error loading brands:', error);
+                // Fallback: try with smaller batch
+                fetch('{% url "inventory:stock_data" %}?draw=1&start=0&length=1000')
+                    .then(response => response.json())
+                    .then(data => {
+                        const brands = new Set();
+                        if (data.data && data.data.length > 0) {
+                            data.data.forEach(function(item) {
+                                if (item.brand && item.brand.trim()) {
+                                    brands.add(item.brand.trim());
+                                }
+                            });
+                        }
+                        populateBrandSelect(brands);
+                    })
+                    .catch(error2 => {
+                        console.error('Error loading brands fallback:', error2);
+                    });
+            });
+    }
+    
+    function populateBrandSelect(brands) {
+        // Clear existing options except first one
+        brandFilterSelect.innerHTML = '<option value="">Brand</option>';
+        
+        // Add unique brands sorted alphabetically
+        const uniqueBrands = Array.from(brands).sort();
+        uniqueBrands.forEach(function(brand) {
+            const option = document.createElement('option');
+            option.value = brand;
+            option.textContent = brand;
+            brandFilterSelect.appendChild(option);
+        });
+        
+        console.log('Loaded brands:', uniqueBrands); // Debug log
+    }
+    
+    // Load brands initially
+    loadBrands();
+    
+    // Initial load
+    loadStockData(1);
+});
+
+function showStockDetail(sku) {
+    // Show stock detail modal
+    const modal = new bootstrap.Modal(document.getElementById('stockModal'));
+    document.getElementById('stock-detail-content').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Memuat detail stock...</p>
+        </div>
+    `;
+    modal.show();
+    
+    // Load stock detail via AJAX (implement as needed)
+    setTimeout(function() {
+        document.getElementById('stock-detail-content').innerHTML = `
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                Detail stock untuk SKU: <strong>${sku}</strong>
+            </div>
+            <p>Fitur detail stock akan dikembangkan lebih lanjut.</p>
+        `;
+    }, 1000);
+}
+</script>
+{% endblock %}

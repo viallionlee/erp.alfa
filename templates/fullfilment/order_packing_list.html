@@ -1,0 +1,327 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order Packing List{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" />
+<style>
+    .table-container {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .btn-scan-packing {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-scan-packing:hover {
+        background: linear-gradient(135deg, #ff5252 0%, #e74c3c 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        color: white;
+    }
+    
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+    
+    .status-packed {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+    
+    .order-id {
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+        color: #495057;
+        background: #f8f9fa;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    
+    .batch-badge {
+        background: #e8f5e8;
+        color: #2d5a2d;
+        border: 1px solid #c8e6c9;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .status-order-badge {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Order Packing List</h2>
+            <p class="text-muted mb-0">Daftar order yang sudah di-packing dengan pagination server-side</p>
+        </div>
+        <a href="/fullfilment/scanpacking/" class="btn btn-scan-packing">
+            <i class="bi bi-box-seam me-2"></i>
+            Scan Packing
+        </a>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title mb-1">Total Packed</h6>
+                            <h4 class="mb-0" id="totalPacked">-</h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-box-seam fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title mb-1">Today's Packed</h6>
+                            <h4 class="mb-0" id="todayPacked">-</h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-calendar-check fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title mb-1">Active Packers</h6>
+                            <h4 class="mb-0" id="activePackers">-</h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-people fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title mb-1">Avg Per Hour</h6>
+                            <h4 class="mb-0" id="avgPerHour">-</h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-speedometer2 fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DataTable Container -->
+    <div class="card table-container">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="orderPackingTable" class="table table-hover w-100">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Waktu Pack</th>
+                            <th>Order ID</th>
+                            <th>Nama Toko</th>
+                            <th>User</th>
+                            <th>Status Order</th>
+                            <th>Nama Batch</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be loaded via AJAX -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Initialize DataTable with server-side processing
+    var table = $('#orderPackingTable').DataTable({
+        processing: true,
+        serverSide: true,
+        pageLength: 25,
+        ajax: {
+            url: '/fullfilment/api/order-packing-list/',
+            type: 'GET',
+            data: function(d) {
+                return d;
+            }
+        },
+        columns: [
+            { 
+                data: 'id',
+                visible: false
+            },
+            { 
+                data: 'waktu_pack',
+                title: 'Waktu Pack',
+                className: 'text-nowrap'
+            },
+            { 
+                data: 'order_id_pesanan',
+                title: 'Order ID',
+                render: function(data) {
+                    return '<span class="order-id">' + data + '</span>';
+                }
+            },
+            { 
+                data: 'nama_toko',
+                title: 'Nama Toko'
+            },
+            { 
+                data: 'user',
+                title: 'User',
+                render: function(data) {
+                    return '<div class="user-info">' +
+                           '<div class="user-avatar">' + data.charAt(0).toUpperCase() + '</div>' +
+                           '<span>' + data + '</span>' +
+                           '</div>';
+                }
+            },
+            { 
+                data: 'status_order',
+                title: 'Status Order',
+                render: function(data) {
+                    return '<span class="status-order-badge">' + data + '</span>';
+                }
+            },
+            { 
+                data: 'nama_batch',
+                title: 'Nama Batch',
+                render: function(data) {
+                    return data !== 'N/A' ? '<span class="batch-badge">' + data + '</span>' : '<span class="text-muted">-</span>';
+                }
+            },
+            { 
+                data: null,
+                title: 'Status',
+                render: function(data, type, row) {
+                    return '<span class="status-badge status-packed">Packed</span>';
+                }
+            }
+        ],
+        order: [[1, 'desc']], // Sort by waktu_pack descending
+        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+             '<"row"<"col-sm-12"tr>>' +
+             '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+        language: {
+            processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
+            search: "Cari:",
+            lengthMenu: "Tampilkan _MENU_ data per halaman",
+            zeroRecords: "Tidak ada data yang ditemukan",
+            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+            infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
+            infoFiltered: "(difilter dari _MAX_ total data)",
+            paginate: {
+                first: "Pertama",
+                last: "Terakhir",
+                next: "Selanjutnya",
+                previous: "Sebelumnya"
+            }
+        },
+        drawCallback: function(settings) {
+            // Update statistics after data is loaded
+            updateStatistics();
+        }
+    });
+
+    // Function to update statistics
+    function updateStatistics() {
+        // Get total records from DataTable
+        var totalRecords = table.page.info().recordsTotal;
+        $('#totalPacked').text(totalRecords.toLocaleString());
+        
+        // Calculate today's packed (you might want to get this from API)
+        var today = new Date().toISOString().split('T')[0];
+        var todayCount = 0;
+        
+        // This is a simple calculation - you might want to get this from API
+        table.rows().every(function() {
+            var data = this.data();
+            if (data.waktu_pack && data.waktu_pack.includes(today.split('-')[2])) {
+                todayCount++;
+            }
+        });
+        
+        $('#todayPacked').text(todayCount);
+        $('#activePackers').text('-'); // You can calculate this from API
+        $('#avgPerHour').text('-'); // You can calculate this from API
+    }
+
+    // Refresh table every 30 seconds
+    setInterval(function() {
+        table.ajax.reload(null, false);
+    }, 30000);
+});
+</script>
+{% endblock %}
+

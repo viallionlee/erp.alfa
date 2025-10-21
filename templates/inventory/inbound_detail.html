@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Detail Inbound{% endblock %}
+{% block content %}
+<h2 class="mb-4">Detail Inbound</h2>
+<div class="mb-3">
+  <strong>Nomor Inbound:</strong> {{ inbound.nomor_inbound }}<br>
+  <strong>Tanggal:</strong> {{ inbound.tanggal|date:'d-m-Y H:i' }}<br>
+  <strong>Keterangan:</strong> {{ inbound.keterangan|default:'-' }}
+</div>
+<div class="mb-2">
+  <strong>Total SKU:</strong> {{ items|length }}
+</div>
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="mb-3">Daftar Produk</h5>
+    <table class="table table-bordered">
+      <thead class="table-light">
+        <tr>
+          <th>SKU</th>
+          <th>Barcode</th>
+          <th>Nama Produk</th>
+          <th>Variant</th>
+          <th>Brand</th>
+          <th>Jumlah</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td>{{ item.product.sku }}</td>
+          <td>{{ item.product.barcode }}</td>
+          <td>{{ item.product.nama_produk }}</td>
+          <td>{{ item.product.variant_produk }}</td>
+          <td>{{ item.product.brand }}</td>
+          <td>{{ item.quantity }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center">Tidak ada produk.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="mt-3">
+      <a href="{% url 'inventory:inbound_edit' inbound.id %}" class="btn btn-primary">Edit Inbound</a>
+      <a href="{% url 'inventory:inbound' %}" class="btn btn-secondary">Kembali</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

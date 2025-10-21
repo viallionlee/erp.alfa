@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid py-3" style="max-width:600px; margin:auto;">
+  <div id="scanBarcodeFeedback" class="text-danger small mb-2"></div>
+  <div class="card shadow-sm rounded-3 mb-3">
+    <div class="card-body text-center px-3 py-3">
+      {% if product.photo %}
+        <img src="{{ product.photo.url }}" alt="Foto Produk" class="rounded mb-3" style="height:300px; width:auto; max-width:100%; object-fit:contain; background:#fafafa;">
+      {% else %}
+        <div class="rounded-circle d-flex align-items-center justify-content-center mb-3" style="width:120px; height:120px; background:#f0f0f0; font-size:3rem; color:#bbb;">📦</div>
+      {% endif %}
+      <div class="text-uppercase fw-bold mb-1" style="font-size:1.1rem;">{{ product.nama_produk }}</div>
+      <div class="text-primary mb-3" style="font-size:1.05rem;">{{ product.variant_produk }}</div>
+      <div class="mb-3">
+        <div class="row mb-2">
+          <div class="col-6 text-start small text-muted">SKU</div>
+          <div class="col-6 text-end text-monospace fw-semibold">{{ product.sku }}</div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-6 text-start small text-muted">Barcode</div>
+          <div class="col-6 text-end text-monospace fw-semibold" id="currentBarcode">{{ product.barcode }}</div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-6 text-start small text-muted">Brand</div>
+          <div class="col-6 text-end fw-semibold">{{ product.brand }}</div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-center gap-4">
+        <div class="border rounded px-3 py-2 bg-light">
+          <div class="small text-muted">Jumlah</div>
+          <div class="fs-5 fw-bold" id="jumlahTotal">{{ jumlah }}</div>
+        </div>
+        <div class="border rounded px-3 py-2 bg-light">
+          <div class="small text-muted">Ambil</div>
+          <div class="d-flex align-items-center justify-content-center gap-2">
+            <button class="btn btn-outline-secondary btn-sm" id="btnMinus">-</button>
+            <input type="number" id="jumlahAmbilInput" class="form-control form-control-sm text-center" style="width:60px;" value="{{ jumlah_ambil }}" min="0" max="{{ jumlah }}">
+            <button class="btn btn-outline-secondary btn-sm" id="btnPlus">+</button>
+            <button class="btn btn-outline-primary btn-sm" id="btnMax">Max</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mb-3 d-flex align-items-center gap-2">
+    <input type="text" id="scanBarcodeInput" class="form-control form-control-lg text-center" placeholder="Scan barcode..." autocomplete="off" autofocus>
+  </div>
+  <div class="modal fade" id="failModal" tabindex="-1" aria-labelledby="failModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-sm">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="failModalLabel">Barcode Tidak Sesuai</h5>
+        </div>
+        <div class="modal-body text-center">
+          <p>Barcode yang discan tidak sesuai dengan produk ini.</p>
+          <button type="button" class="btn btn-secondary mt-2" data-bs-dismiss="modal">Tutup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="completedModal" tabindex="-1" aria-labelledby="completedModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-sm text-center p-4">
+        <div class="modal-body">
+          <div class="mb-3">
+            <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 rounded-circle mb-2" style="width:64px; height:64px;">
+              <i class="bi bi-check2" style="font-size:2.5rem; color:#198754;"></i>
+            </div>
+          </div>
+          <h5 class="mb-2 text-success">Scan Completed</h5>
+          <div class="mb-3">Barang sudah selesai diambil.</div>
+          <div class="small text-muted">Anda akan kembali ke daftar dalam 1 detik...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <style>
+  body, .container-fluid { padding-bottom: 0 !important; }
+  </style>
+  <div style="position:fixed; left:0; right:0; bottom:0; width:100vw; z-index:1000; background:#fff; box-shadow:0 -2px 8px rgba(0,0,0,0.04); padding:10px 0 0 0;">
+    <div class="container-fluid" style="max-width:600px; margin:auto;">
+      <div class="mb-2 px-2 d-flex align-items-center gap-2">
+        <button class="btn btn-outline-secondary btn-lg w-50 mb-1" id="reloadPageBtn"><i class="bi bi-arrow-clockwise"></i> Reload</button>
+        <button class="btn btn-danger btn-lg w-50 mb-1" id="closeTabBtn">Tutup Tab</button>
+      </div>
+    </div>
+  </div>
+</div>
+<audio id="successSound" src="/static/sounds/completedsound.mp3"></audio>
+<audio id="failSound" src="/static/sounds/wrong_barcode.mp3"></audio>
+{% endblock %}
+{% block extra_script %}
+<script>
+  const input = document.getElementById('jumlahAmbilInput');
+  const btnMinus = document.getElementById('btnMinus');
+  const btnPlus = document.getElementById('btnPlus');
+  const btnMax = document.getElementById('btnMax');
+  const scanBarcodeInput = document.getElementById('scanBarcodeInput');
+  const scanBarcodeFeedback = document.getElementById('scanBarcodeFeedback');
+  const reloadPageBtn = document.getElementById('reloadPageBtn');
+  const currentBarcode = document.getElementById('currentBarcode').textContent.trim();
+  const maxJumlah = parseInt(document.getElementById('jumlahTotal').textContent.trim());
+  // Ambil batchitemId dari URL (pk)
+  const pathParts = window.location.pathname.split('/');
+  const batchitemId = pathParts[pathParts.indexOf('batchitem') + 1];
+  const namaBatch = '{{ nama_batch|urlencode }}';
+  const urlUpdate = `/fullfilment/batchpicking/${namaBatch}/batchitem/${batchitemId}/update_jumlah_ambil/`;
+  // Fungsi update jumlah ambil ke backend
+  function autoSaveJumlahAmbil(val) {
+    fetch(urlUpdate, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      body: JSON.stringify({ jumlah_ambil: val })
+    })
+    .then(r => r.json())
+    .then(function(data) {
+      if (data.success) {
+        input.classList.add('border-success');
+        setTimeout(() => input.classList.remove('border-success'), 300);
+        if (data.completed) {
+          const successSound = document.getElementById('successSound');
+          if (successSound) successSound.play();
+          setTimeout(() => {
+            window.location.reload();
+          }, 800);
+        }
+      } else {
+        input.classList.add('border-danger');
+        setTimeout(() => input.classList.remove('border-danger'), 600);
+      }
+    });
+  }
+  // Tombol reload di sticky bar
+  reloadPageBtn.onclick = function() {
+    window.location.reload();
+    setTimeout(() => {
+      if (scanBarcodeInput) scanBarcodeInput.focus();
+    }, 200);
+  };
+  // Tombol + - manual
+  btnMinus.onclick = () => {
+    let val = parseInt(input.value)||0;
+    if(val > 0) {
+      input.value = val-1;
+      autoSaveJumlahAmbil(input.value);
+    }
+  };
+  btnPlus.onclick = () => {
+    let val = parseInt(input.value)||0;
+    if(val < maxJumlah) {
+      input.value = val+1;
+      autoSaveJumlahAmbil(input.value);
+    }
+  };
+  btnMax.onclick = () => {
+    input.value = maxJumlah;
+    autoSaveJumlahAmbil(input.value);
+  };
+  input.oninput = () => {
+    let val = parseInt(input.value)||0;
+    if(val > maxJumlah) input.value = maxJumlah;
+    if(val < 0) input.value = 0;
+    autoSaveJumlahAmbil(input.value);
+  };
+  // Disable controls by default (juga tabindex -1 agar tidak bisa di-tab)
+  function setControlsEnabled(enabled) {
+    input.disabled = !enabled;
+    btnMinus.disabled = !enabled;
+    btnPlus.disabled = !enabled;
+    btnMax.disabled = !enabled;
+    input.tabIndex = enabled ? 0 : -1;
+    btnMinus.tabIndex = enabled ? 0 : -1;
+    btnPlus.tabIndex = enabled ? 0 : -1;
+    btnMax.tabIndex = enabled ? 0 : -1;
+  }
+  window.addEventListener('DOMContentLoaded', function() {
+    scanBarcodeInput.focus();
+    setControlsEnabled(false);
+  });
+  // SCAN BARCODE ATAS: jika benar, enable controls
+  scanBarcodeInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      const val = scanBarcodeInput.value.trim();
+      if(val === currentBarcode) {
+        scanBarcodeFeedback.textContent = '';
+        let jumlahNow = parseInt(input.value)||0;
+        if(jumlahNow < maxJumlah) {
+          input.value = jumlahNow + 1;
+          autoSaveJumlahAmbil(input.value);
+        }
+        scanBarcodeInput.value = '';
+        // Enable controls setelah scan benar
+        setControlsEnabled(true);
+      } else {
+        scanBarcodeFeedback.textContent = 'Barcode tidak sesuai produk ini.';
+        document.getElementById('failSound').play();
+        scanBarcodeInput.classList.add('is-invalid');
+        setTimeout(() => {
+          scanBarcodeInput.classList.remove('is-invalid');
+          scanBarcodeInput.value = '';
+        }, 600);
+      }
+    }
+  });
+  // Lock manual input sebelum scan barcode pertama kali
+  let barcodeScanned = false;
+  input.disabled = true;
+  btnMinus.disabled = true;
+  btnPlus.disabled = true;
+  btnMax.disabled = true;
+
+  scanBarcodeInput.addEventListener('keydown', function(e) {
+    if (!barcodeScanned && e.key === 'Enter' && scanBarcodeInput.value.trim() === document.getElementById('currentBarcode').textContent.trim()) {
+      barcodeScanned = true;
+      input.disabled = false;
+      btnMinus.disabled = false;
+      btnPlus.disabled = false;
+      btnMax.disabled = false;
+    }
+  });
+
+  // Tombol reload: reload page dan autofocus ke scan barcode
+  // Alt+R keyboard shortcut
+  document.addEventListener('keydown', function(e) {
+    if (e.altKey && (e.key === 'r' || e.key === 'R')) {
+      reloadPageBtn.click();
+    }
+  });
+  // Tombol Tutup Tab
+  document.getElementById('closeTabBtn').addEventListener('click', function() {
+    window.close();
+  });
+</script>
+{% endblock %}

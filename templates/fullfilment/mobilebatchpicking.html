@@ -1,0 +1,3042 @@
+{% extends 'base_mobile.html' %}
+{% block content %}
+<style>
+    /* Menyembunyikan bilah navigasi dari base_mobile.html hanya untuk halaman ini */
+    .navbar-expand-lg, .fixed-top, nav {
+        display: none !important;
+    }
+
+    /* General layout adjustments for a more compact and modern feel */
+    .container-fluid {
+        max-width: 480px;
+        margin: auto;
+        padding: 8px !important; /* Reverted to 8px */
+    }
+
+    /* Scan Barcode Input - SWEET & MODERN REDESIGN */
+    #barcodeInput {
+        font-size: 0.9em; /* Keep same size */
+        padding: 0.4rem 0.6rem; /* Keep same padding */
+        min-width: 0;
+        border: 2px solid #e9ecef; /* Soft border */
+        border-radius: 12px; /* More rounded corners */
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); /* Subtle gradient */
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* Soft shadow */
+        transition: all 0.3s ease; /* Smooth transitions */
+        font-weight: 500; /* Slightly bolder text */
+    }
+    
+    /* Focus state - Beautiful focus effect */
+    #barcodeInput:focus {
+        border-color: #667eea; /* Purple-blue border on focus */
+        background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%); /* Light blue gradient on focus */
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2); /* Purple shadow on focus */
+        outline: none; /* Remove default outline */
+    }
+    
+    /* Placeholder styling */
+    #barcodeInput::placeholder {
+        color: #adb5bd; /* Soft gray placeholder */
+        font-weight: 400; /* Normal weight for placeholder */
+    }
+    
+    .input-group-modern .form-control {
+        padding: 0.4rem 0.6rem; /* Keep same padding */
+    }
+    
+    .input-group-modern .btn {
+        padding: 0.6rem 1rem; /* Keep same padding */
+        font-size: 1.1em; /* Keep same font size */
+        border-radius: 12px; /* Match input border radius */
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Beautiful gradient */
+        border: none; /* Remove border */
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); /* Matching shadow */
+        transition: all 0.3s ease; /* Smooth transitions */
+    }
+    
+    /* Button hover effect */
+    .input-group-modern .btn:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%); /* Darker gradient on hover */
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); /* Stronger shadow on hover */
+        transform: translateY(-1px); /* Slight lift effect */
+    }
+    
+    /* Button active effect */
+    .input-group-modern .btn:active {
+        transform: translateY(0); /* Reset transform on click */
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3); /* Reduced shadow on click */
+    }
+
+    /* Sticky Reload Bar - SWEET & MODERN REDESIGN */
+    #stickyReloadBar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        z-index: 1000;
+        background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%);
+        backdrop-filter: blur(20px); /* Glass effect */
+        border-top: 1px solid rgba(226, 232, 240, 0.8);
+        padding: 12px 0 8px 0; /* Increased padding for better spacing */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.1), 0 -1px 3px rgba(0,0,0,0.05);
+        border-radius: 16px 16px 0 0; /* Rounded top corners */
+    }
+
+    #stickyButtonsContainer {
+        width: 100%;
+        max-width: 480px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px; /* Increased gap for better spacing */
+        position: relative;
+        padding: 0 12px; /* Increased padding */
+    }
+
+    #stickyButtonsContainer .btn {
+        padding: 0.5em 0.8em; /* Increased padding for better touch targets */
+        font-size: 0.9em;
+        border-radius: 12px; /* More rounded corners */
+        border: 2px solid transparent; /* Transparent border for smooth transitions */
+        font-weight: 500; /* Slightly bolder text */
+        transition: all 0.3s ease; /* Smooth transitions */
+        position: relative;
+        overflow: hidden;
+        min-width: 44px; /* Ensure consistent button size */
+        height: 44px; /* Fixed height for consistency */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Special styling for buttons with labels (Brand and Rak) */
+    #stickyButtonsContainer .btn .d-flex.flex-column {
+        gap: 2px; /* Small gap between icon and label */
+    }
+    
+    #stickyButtonsContainer .filter-label {
+        font-size: 0.6em; /* Very small text */
+        font-weight: 600; /* Bold small text */
+        line-height: 1; /* Tight line height */
+        margin: 0; /* Remove default margin */
+        color: inherit; /* Inherit color from button */
+    }
+    
+    /* Adjust icon size for buttons with labels */
+    #stickyButtonsContainer .btn .filter-icon,
+    #stickyButtonsContainer .btn .rak-icon {
+        width: 16px; /* Fixed width for consistency */
+        height: 16px; /* Fixed height for consistency */
+    }
+    
+    #stickyButtonsContainer .btn i {
+        font-size: 1.3em; /* Slightly larger icons */
+        transition: all 0.3s ease; /* Smooth icon transitions */
+    }
+    
+    /* Button Hover Effects */
+    #stickyButtonsContainer .btn:hover {
+        transform: translateY(-2px); /* Lift effect on hover */
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* Enhanced shadow on hover */
+    }
+    
+    /* Button Active Effects */
+    #stickyButtonsContainer .btn:active {
+        transform: translateY(0); /* Reset transform on click */
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* Reduced shadow on click */
+    }
+    /* Individual Button Styling */
+    #stickyButtonsContainer .btn-outline-primary {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border-color: #2196f3;
+        color: #1976d2;
+    }
+    
+    #stickyButtonsContainer .btn-outline-primary:hover {
+        background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+        border-color: #1976d2;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(33, 150, 243, 0.3);
+    }
+    
+    #stickyButtonsContainer .btn-outline-secondary {
+        background: linear-gradient(135deg, #f5f5f5 0%, #eeeeee 100%);
+        border-color: #757575;
+        color: #616161;
+    }
+    
+    #stickyButtonsContainer .btn-outline-secondary:hover {
+        background: linear-gradient(135deg, #757575 0%, #616161 100%);
+        border-color: #616161;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(117, 117, 117, 0.3);
+    }
+    
+    #stickyButtonsContainer .btn-outline-info {
+        background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+        border-color: #00bcd4;
+        color: #0097a7;
+    }
+    
+    #stickyButtonsContainer .btn-outline-info:hover {
+        background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+        border-color: #0097a7;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 188, 212, 0.3);
+    }
+    
+    #stickyButtonsContainer .btn-outline-warning {
+        background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+        border-color: #ff9800;
+        color: #f57c00;
+    }
+    
+    #stickyButtonsContainer .btn-outline-warning:hover {
+        background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        border-color: #f57c00;
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(255, 152, 0, 0.3);
+    }
+    
+    /* Sort Button Special Styling */
+    #stickyButtonsContainer #stickySortBtn.ms-2 {
+        margin-left: 8px !important; /* Increased margin */
+        height: 44px !important;
+        width: 44px !important;
+        border-radius: 50% !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    #stickyButtonsContainer #stickySortBtn.ms-2 i {
+        font-size: 1.3em !important; /* Match other icons */
+        margin: 0 !important;
+    }
+    
+    #stickyButtonsContainer #stickySortBtn.ms-2 span {
+        display: none !important;
+    }
+
+
+    #stickySearchContainer {
+        display: none; /* Controlled by JS */
+        width: 100%;
+        max-width: 480px;
+        padding: 0 8px; /* Reverted to 0 8px */
+    }
+    #stickySearchInput {
+        font-size: 0.85em; /* Reverted to 0.85em */
+        padding: 0.3rem 0.6rem; /* Reverted to 0.3rem 0.6rem */
+    }
+    #closeSearchBtn {
+        padding: 0.3rem 0.6rem; /* Reverted to 0.3rem 0.6rem */
+        font-size: 0.85em; /* Reverted to 0.85em */
+    }
+
+
+    /* Filter Buttons (All, Pending, etc.) - SWEET & MODERN REDESIGN */
+    #statusFilterButtons {
+        gap: 4px !important; /* Add small gap between buttons */
+    }
+    
+    #statusFilterButtons .btn {
+        font-size: 0.75em; /* Keep same size */
+        padding: 0.25rem 0.4rem; /* Keep same padding */
+        border-radius: 12px; /* More rounded corners */
+        border: none; /* Remove border */
+        font-weight: 500; /* Slightly bolder text */
+        transition: all 0.3s ease; /* Smooth transitions */
+        position: relative;
+        overflow: hidden;
+        margin: 0 !important; /* Remove any default margins */
+    }
+    
+    /* Active/Selected Button - Sweet Gradient */
+    #statusFilterButtons .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        transform: translateY(-1px);
+    }
+    
+    /* Inactive Buttons - Soft & Elegant */
+    #statusFilterButtons .btn-outline-primary {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        color: #6c757d;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(108, 117, 125, 0.2);
+    }
+    
+    /* Hover Effects */
+    #statusFilterButtons .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    #statusFilterButtons .btn-outline-primary:hover {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        color: #1976d2;
+        border-color: #1976d2;
+    }
+    
+    /* Active Button Hover */
+    #statusFilterButtons .btn-primary:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+
+    /* Sweet Badge Styling */
+    #statusFilterButtons .badge {
+        font-size: 0.85em; /* Increased from 0.7em to 0.85em for bigger numbers */
+        padding: 0.25em 0.6em; /* Increased padding for better proportion */
+        border-radius: 10px; /* More rounded */
+        font-weight: 600; /* Bolder badge text */
+        backdrop-filter: blur(10px); /* Glass effect */
+    }
+    
+    /* Badge Colors for Active Button */
+    #statusFilterButtons .btn-primary .badge {
+        background: rgba(255, 255, 255, 0.25) !important;
+        color: #fff !important;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    /* Badge Colors for Inactive Buttons */
+    #statusFilterButtons .btn-outline-primary .badge {
+        background: rgba(108, 117, 125, 0.15) !important;
+        color: #6c757d !important;
+        border: 1px solid rgba(108, 117, 125, 0.2);
+    }
+
+    /* Current Filter Display */
+    #currentFilterDisplay {
+        margin-bottom: 8px; /* Reverted to 8px */
+    }
+    #currentFilterDisplay .badge {
+        font-size: 0.85em; /* Reverted to 0.85em */
+        padding: 0.4em 0.6em; /* Reverted to 0.4em 0.6em */
+        border-radius: 0.5rem;
+    }
+    #clearFilterBtn {
+        font-size: 0.5em !important; /* Reverted to 0.5em */
+        vertical-align: middle;
+    }
+
+    /* NEW: Modern filter button styles */
+    .filter-btn-modern {
+        position: relative;
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        padding: 8px 12px;
+        min-width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #e0e0e0;
+        background: linear-gradient(145deg, #ffffff, #f8f9fa);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .filter-btn-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-color: #007bff;
+        background: linear-gradient(145deg, #f8f9fa, #ffffff);
+    }
+
+    .filter-btn-modern:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* NEW: Modern icon styles */
+    .filter-icon, .rak-icon {
+        width: 20px;
+        height: 20px;
+        transition: all 0.3s ease;
+        stroke: currentColor;
+        stroke-width: 1.5;
+        fill: none;
+    }
+
+    .filter-btn-modern:hover .filter-icon,
+    .filter-btn-modern:hover .rak-icon {
+        transform: scale(1.1);
+        stroke: #007bff;
+    }
+
+    /* NEW: Specific icon styles */
+    .filter-icon {
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .rak-icon {
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    /* NEW: Active state for filter buttons */
+    .filter-btn-modern.active {
+        background: linear-gradient(145deg, #007bff, #0056b3);
+        border-color: #007bff;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+    }
+
+    .filter-btn-modern.active .filter-icon,
+    .filter-btn-modern.active .rak-icon {
+        stroke: white;
+        fill: white;
+    }
+
+    /* Card and List Items - MINIMALIS & MODERN */
+    .card {
+        border-radius: 8px; /* Reverted to 8px */
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06); /* Reverted to 0 1px 3px */
+        border: none;
+    }
+
+    .list-group-item {
+        font-size: 1.2em; /* Reverted to 0.9em */
+        border-radius: 16px; /* Increased from 8px to 16px for more modern look */
+        margin-bottom: 8px; /* Increased from 2px to 8px for better separation */
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05); /* Enhanced shadow with multiple layers */
+        border: none; /* Remove border for cleaner look */
+        backdrop-filter: blur(10px); /* Glass effect */
+        transition: all 0.3s ease; /* Smooth transitions */
+        position: relative;
+        overflow: hidden;
+        padding: 12px 16px; /* Increased padding for better spacing */
+        align-items: flex-start;
+        min-height: 125px; /* Default minimum height 125px */
+        /* Removed max-height for responsive behavior */
+        /* Removed overflow: hidden to allow content to expand */
+    }
+    
+    /* Card Hover Effects */
+    .list-group-item:hover {
+        transform: translateY(-2px); /* Lift effect on hover */
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12), 0 3px 8px rgba(0,0,0,0.08); /* Enhanced shadow on hover */
+    }
+    
+    /* Card Active/Pressed Effect */
+    .list-group-item:active {
+        transform: translateY(0); /* Reset transform on click */
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Reduced shadow on click */
+    }
+    
+    /* Subtle gradient overlay for depth */
+    .list-group-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        pointer-events: none;
+        border-radius: 16px; /* Match card border radius */
+    }
+    
+    /* Enhanced styling for completed items */
+    .list-group-item[style*="#bfdbfe"] {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
+        border-left: 4px solid #3b82f6; /* Blue accent border */
+    }
+    
+    /* Enhanced styling for pending items */
+    .list-group-item[style*="#c6f6d5"] {
+        background: linear-gradient(135deg, #dcfce7 0%, #c6f6d5 100%) !important;
+        border-left: 4px solid #22c55e; /* Green accent border */
+    }
+    
+    /* Status indicator dot */
+    .list-group-item::after {
+        content: '';
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #22c55e; /* Default green for pending */
+    }
+    
+    /* Status indicator for completed items */
+    .list-group-item[style*="#bfdbfe"]::after {
+        background: #3b82f6; /* Blue for completed */
+    }
+    
+    /* Product Detail Modal Redesign */
+    .product-detail-modal {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .product-detail-modal .modal-body {
+        background: transparent;
+    }
+    
+    /* Product Photo Wrapper Redesign */
+    .product-detail-modal .product-photo-wrapper {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%) !important;
+        border: 2px solid rgba(226, 232, 240, 0.8);
+        border-radius: 16px !important;
+        box-shadow: inset 0 2px 8px rgba(0,0,0,0.06);
+        position: relative;
+        overflow: hidden;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    /* Ensure only one element is visible at a time */
+    .product-detail-modal #detailModalProductPhoto {
+        position: absolute !important;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain !important;
+        background: transparent !important;
+        margin: 0 !important;
+        max-height: none !important;
+        min-height: none !important;
+    }
+    
+    .product-detail-modal #detailModalProductPlaceholder {
+        position: absolute !important;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        min-height: none !important;
+        z-index: 1;
+    }
+    
+    .product-detail-modal #detailModalProductPhoto {
+        z-index: 2;
+    }
+    
+    /* Photo Overlay Buttons in Modal */
+    .product-detail-modal .photo-overlay-btn {
+        z-index: 20;
+        background-color: rgba(255, 255, 255, 0.95);
+        border: 2px solid rgba(255, 255, 255, 0.9);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .product-detail-modal .photo-overlay-btn:hover {
+        background-color: rgba(255, 255, 255, 1);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        transform: scale(1.1);
+    }
+    
+    /* Ensure proper display states - Force visibility control */
+    .product-detail-modal #detailModalProductPhoto[style*="display: none"],
+    .product-detail-modal #detailModalProductPhoto:not([style*="display: block"]) {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
+    .product-detail-modal #detailModalProductPlaceholder[style*="display: none"],
+    .product-detail-modal #detailModalProductPlaceholder:not([style*="display: flex"]) {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
+    /* When photo is shown, ensure placeholder is completely hidden */
+    .product-detail-modal #detailModalProductPhoto[style*="display: block"] {
+        display: block !important;
+        visibility: visible !important;
+    }
+    
+    .product-detail-modal #detailModalProductPhoto[style*="display: block"] ~ #detailModalProductPlaceholder {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
+    /* When placeholder is shown, ensure photo is completely hidden */
+    .product-detail-modal #detailModalProductPlaceholder[style*="display: flex"] {
+        display: flex !important;
+        visibility: visible !important;
+    }
+    
+    .product-detail-modal #detailModalProductPlaceholder[style*="display: flex"] ~ #detailModalProductPhoto {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
+    .product-detail-modal .product-photo-wrapper::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        pointer-events: none;
+        border-radius: 16px;
+    }
+    
+    /* Product Info Styling */
+    .product-detail-modal #detailModalNamaProduk {
+        font-size: 1rem !important;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 8px;
+        line-height: 1.3;
+    }
+    
+    .product-detail-modal #detailModalVariantProduk {
+        font-size: 1.1rem !important;
+        font-weight: 500;
+        color: #3b82f6;
+    }
+    
+    .product-detail-modal #detailModalBrand {
+        font-size: 1.1rem !important;
+        font-weight: 600;
+        color: #059669;
+    }
+    
+    .product-detail-modal .text-secondary {
+        color: #64748b !important;
+        font-weight: 500;
+    }
+    
+    /* Barcode Input Redesign */
+    .product-detail-modal #detailModalScanBarcodeInput {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    
+    .product-detail-modal #detailModalScanBarcodeInput:focus {
+        border-color: #3b82f6;
+        background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
+        outline: none;
+    }
+    
+    .product-detail-modal #detailModalEnterBarcodeBtn {
+        border-radius: 12px;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        border: none;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .product-detail-modal #detailModalEnterBarcodeBtn:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        transform: translateY(-1px);
+    }
+    
+    /* Quantity Section Redesign */
+    .product-detail-modal .border.rounded {
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    
+    .product-detail-modal .btn-outline-secondary:not(.btn-lg) {
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        color: #64748b;
+        transition: all 0.3s ease;
+    }
+    
+    .product-detail-modal .btn-outline-secondary:not(.btn-lg):hover {
+        border-color: #3b82f6;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .product-detail-modal .btn-outline-primary {
+        border: 2px solid #3b82f6;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);
+        color: #3b82f6;
+        transition: all 0.3s ease;
+    }
+    
+    .product-detail-modal .btn-outline-primary:hover {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .product-detail-modal .btn-success {
+        border-radius: 8px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border: none;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .product-detail-modal .btn-success:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        transform: translateY(-1px);
+    }
+    
+    /* Error Message Styling */
+    .product-detail-modal .text-danger {
+        color: #dc2626 !important;
+        font-weight: 500;
+    }
+    
+    /* Rak Info Styling */
+    .product-detail-modal .text-success {
+        color: #059669 !important;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        line-height: 1.4;
+    }
+    
+    /* Rak Info Badge-like Styling */
+    .product-detail-modal .text-success {
+        background: linear-gradient(135deg, rgba(5, 150, 105, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
+        padding: 4px 8px;
+        border-radius: 8px;
+        border: 1px solid rgba(5, 150, 105, 0.2);
+        display: inline-block;
+        margin-top: 2px;
+    }
+    
+    /* Rak Info Icon Styling */
+    .product-detail-modal .text-success i {
+        color: #059669;
+        font-size: 0.9em;
+        margin-right: 6px;
+    }
+    
+    /* Rak Info Styling for Card List */
+    .list-group-item .text-success {
+        color: #059669 !important;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        line-height: 1.4;
+        background: linear-gradient(135deg, rgba(5, 150, 105, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
+        padding: 3px 6px;
+        border-radius: 6px;
+        border: 1px solid rgba(5, 150, 105, 0.2);
+        display: inline-block;
+        margin-top: 1px;
+    }
+    
+    .list-group-item .text-success i {
+        color: #059669;
+        font-size: 0.8em;
+        margin-right: 4px;
+    }
+    
+    /* Close Button at Bottom Redesign */
+    .product-detail-modal .btn-outline-secondary {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        color: #64748b;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        padding: 12px 24px;
+    }
+    
+    .product-detail-modal .btn-outline-secondary:hover {
+        border-color: #64748b;
+        background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+    }
+    /* NEW: Hide itemListActual initially to prevent FOUC */
+    #itemListActual {
+        display: none;
+    }
+
+    /* Specific font sizes within list item */
+    .list-group-item > div:first-child > div:first-child { /* Product Name */
+        font-size: 0.7em; /* Reverted to 0.7em */
+        margin-bottom: 4px; /* Reverted to 4px */
+        line-height: 1.2; /* Set line height for consistent row calculation */
+        /* Removed line-clamp for responsive behavior - allow text to wrap naturally */
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    /* Dynamic height based on product name length - Responsive */
+    .list-group-item.product-name-2-rows {
+        min-height: 145px !important;
+        /* Removed max-height for responsive behavior */
+    }
+    
+    .list-group-item.product-name-3-rows {
+        min-height: 165px !important;
+        /* Removed max-height for responsive behavior */
+    }
+    
+    /* Rak Info - Compact 25px height */
+    .list-group-item .mt-1 {
+        margin-top: 0.1rem !important; /* Reduced from mt-1 */
+        height: 25px !important;
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+    }
+    
+    .list-group-item .mt-1 small {
+        font-size: 0.6em !important; /* Reduced font size */
+        line-height: 1.1 !important; /* Tighter line height */
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .list-group-item .mt-1 .bi {
+        font-size: 0.6em !important; /* Smaller icon */
+        margin-right: 0.2rem !important; /* Reduced margin */
+    }
+    .list-group-item > div:first-child > div:nth-child(2) { /* Brand */
+        font-size: 0.75em; /* Reverted to 0.75em */
+        margin-bottom: 0px !important; /* NEW: Remove spacing after brand */
+        height: 20px !important; /* Part 2: Brand height 20px */
+        display: flex;
+        align-items: center;
+    }
+    .list-group-item > div:first-child > span { /* Rak badge */
+        font-size: 0.7em; /* Reverted to 0.7em */
+        margin-top: 1px !important; /* NEW: Minimal spacing before rak badge */
+        padding: 0.2em 0.4em; /* Reverted to 0.2em 0.4em */
+        height: 20px !important; /* Part 4: Rak info height 20px */
+        display: flex;
+        align-items: center;
+    }
+    .list-group-item > div:first-child > div:nth-child(3) { /* Info Jumlah container */
+        margin-top: 2px !important; /* NEW: Minimal spacing before barcode section */
+        height: 20px !important; /* Part 3: Info jumlah height 20px */
+        display: flex;
+        align-items: center;
+    }
+    .list-group-item > div:first-child > div:nth-child(3) > div:first-child { /* Barcode */
+        font-size: 0.75em; /* Reverted to 0.75em */
+    }
+    .list-group-item > div:first-child > div:nth-child(3) > div:nth-child(2) { /* One Count */
+        font-size: 0.75em; /* Reverted to 0.75em */
+    }
+    .list-group-item > div:first-child > div:nth-child(3) > span { /* Jumlah/Ambil badge */
+        font-size: 0.75em; /* Reverted to 0.75em */
+        padding: 0.2em 0.5em; /* Reverted to 0.2em 0.5em */
+        border-radius: 0.25rem;
+    }
+
+    /* Product Photo */
+    .product-photo-zoomable {
+        max-width: 100px; /* Max width 100px */
+        height: auto; /* Height auto sesuai proporsi */
+        object-fit: contain;
+        background: #f8f8f8;
+        border-radius: 6px;
+    }
+    .list-group-item > div:last-child { /* Container for product photo */
+        flex-shrink: 0;
+        width: 100px !important; /* Changed to 100px */
+        margin-left: 8px; /* Reverted to 8px */
+        align-self: center;
+    }
+    /* Placeholder for missing image - Combined and fixed centering */
+    .list-group-item > div:last-child > .rounded-circle {
+        width: 100px !important; /* Changed to 100px */
+        height: 100px !important; /* Changed to 100px */
+        background: #f0f0f0;
+        font-size: 3em !important; /* Increased for better proportion */
+        color: #bbb;
+        border-radius: 6px; /* Reverted to 6px */
+        display: flex !important; /* Ensure flex display */
+        align-items: center !important; /* Center vertically */
+        justify-content: center !important; /* Center horizontally */
+        line-height: 1 !important; /* Remove extra line height */
+        margin: 0 !important; /* Remove any margin that could affect centering */
+        padding: 0 !important; /* Remove any padding that could affect centering */
+    }
+
+    /* Remove unused FAB CSS from earlier iterations */
+    .fab-reload, .fab-v1, .fab-v2, .fab-v3, .fab-v4, .fab-history {
+        display: none !important;
+    }
+
+    /* NEW: Add padding-bottom to prevent content from being obscured by sticky bar */
+    #product-details-container {
+        padding-bottom: 50px; /* Added to prevent content from being obscured by sticky bottom bar */
+    }
+    .fab-close-modal {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1060;
+        width: 56px; /* Reverted to 56px */
+        height: 56px; /* Reverted to 56px */
+        border-radius: 50%;
+        background-color: #6c757d;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        font-size: 2.2rem; /* Reverted to 2.2rem */
+        line-height: 1;
+        border: none;
+        outline: none;
+        transition: background-color 0.2s;
+    }
+    .fab-close-modal:active {
+        background-color: #5a6268;
+    }
+</style>
+<div class="container-fluid">
+    
+    <!-- Scan Barcode Input (Disesuaikan Design System) -->
+    <div class="mb-2"> {# Mengikuti Template Structure Form Components #}
+        <div class="input-group input-group-modern mb-2 flex-nowrap"> {# Menambahkan class modern #}
+            <input type="text" id="barcodeInput" class="form-control" 
+                   placeholder="Scan barcode..." autocomplete="off"> {# Removed autofocus #}
+            <button type="button" class="btn btn-modern-primary touch-friendly" id="barcodeSubmitBtn"> {# Mengubah type menjadi button dan menambahkan kelas design system #}
+                <i class="bi bi-arrow-right-circle"></i>
+            </button>
+        </div>
+        <div id="barcodeFeedback"></div>
+        <!-- Visual indicator for barcode scanning -->
+        <div id="barcodeScanIndicator" class="text-center mt-2" style="display: none;">
+            <small class="text-muted">
+                <i class="bi bi-upc-scan me-1"></i>
+                <span id="barcodeScanText">Scanning...</span>
+            </small>
+        </div>
+    </div>
+
+    <!-- Sticky Reload Bar -->
+    <div id="stickyReloadBar">
+        <div id="stickyButtonsContainer">
+            <!-- Centered Buttons -->
+            {# <button type="button" id="stickyClearBtn" class="btn btn-outline-danger"><i class="bi bi-eraser"></i></button> #}
+            <button class="btn btn-outline-primary" id="fabReloadBtn" title="Reload">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+            <button type="button" id="stickySearchBtn" class="btn btn-outline-primary"><i class="bi bi-search"></i></button>
+            <button type="button" id="stickyFilterBtn" class="btn btn-outline-secondary filter-btn-modern" data-bs-toggle="modal" data-bs-target="#brandFilterModal" title="Filter Brand">
+                <div class="d-flex flex-column align-items-center">
+                    <svg class="filter-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
+                    </svg>
+                    <small class="filter-label">Brand</small>
+                </div>
+            </button>
+            {# NEW: Tombol RAK untuk filter rak #}
+            <button type="button" id="stickyRakFilterBtn" class="btn btn-outline-secondary filter-btn-modern" data-bs-toggle="modal" data-bs-target="#rakFilterModal" title="Filter Rak">
+                <div class="d-flex flex-column align-items-center">
+                    <svg class="rak-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M4 6h16v2H4V6zm0 5h16v2H4v-2zm0 5h16v2H4v-2z"/>
+                        <path d="M2 4h20v16H2V4zm2 2v12h16V6H4z"/>
+                    </svg>
+                    <small class="filter-label">Rak</small>
+                </div>
+            </button>
+            {# Tombol baru untuk History Log #}
+            <button type="button" id="historyBtnV2" class="btn btn-outline-info"><i class="bi bi-clock-history"></i></button>
+            <!-- Tombol baru untuk Sort (MODIFIED) -->
+            <button type="button" id="stickySortBtn" class="btn btn-outline-warning ms-2" title="Urutkan Data">
+                <i class="bi bi-sort-down"></i>
+            </button>
+        </div>
+        <div id="stickySearchContainer">
+            <div class="d-flex align-items-center gap-2">
+                <input type="text" id="stickySearchInput" class="search form-control" placeholder="Cari produk..." autofocus>
+                <button id="closeSearchBtn" type="button" class="btn btn-secondary flex-shrink-0"><i class="bi bi-x-lg"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Buttons & Item List -->
+    <div class="mb-1" id="itemsListContainer">
+        <!-- Tombol Filter Status -->
+        <div class="d-flex justify-content-center mb-2">
+            <div class="btn-group w-100" role="group" id="statusFilterButtons" style="gap: 4px;">
+                <button type="button" class="btn btn-sm btn-primary" data-filter="all">All <span class="badge bg-secondary ms-1">{{ total_items }}</span></button>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-filter="pending">Pending <span class="badge bg-secondary ms-1">{{ status_counts.pending|default:0 }}</span></button>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-filter="over_stock">Over <span class="badge bg-secondary ms-1">{{ status_counts.over_stock|default:0 }}</span></button>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-filter="completed">Done <span class="badge bg-secondary ms-1">{{ total_completed }}</span></button>
+            </div>
+        </div>
+
+        <div id="currentFilterDisplay" class="mb-2" style="display: none;">
+            <span class="badge bg-primary fs-6 fw-normal">
+                Filter: <span id="activeFilterName" class="fw-bold"></span>
+                <button type="button" class="btn-close btn-close-white ms-1" id="clearFilterBtn" aria-label="Clear Filter"></button>
+            </span>
+        </div>
+        <div class="card">
+            <div class="card-body p-2">
+                <div class="list-group list" id="itemListActual">
+                    {% for item in details %}
+                    <div class="list-group-item d-flex" 
+                         style="background: {% if item.status_ambil == 'completed' %}#bfdbfe{% elif item.status_ambil == 'over_stock' %}#fecaca{% elif item.status_ambil == 'pending' %}#c6f6d5{% else %}#f3f4f6{% endif %};" {# Dynamic background: done=light blue, over=red, pending=green, other=gray #}
+                         data-product-id="{{ item.id }}"
+                         data-sku="{{ item.sku }}"
+                         data-nama="{{ item.nama_produk }}"
+                         data-barcode="{{ item.barcode }}"
+                         data-variant="{{ item.variant_produk }}"
+                         data-brand="{{ item.brand }}"
+                         data-rak="{{ item.rak }}"
+                         data-status="{{ item.status_ambil }}"
+                         data-one-count="{{ item.one_count|default:0 }}">
+                        
+                        <!-- Kolom Kiri: Detail + Info Jumlah -->
+                        <div style="flex: 1; min-width: 0;" class="d-flex flex-column justify-content-between">
+                            <!-- Part 1: Detail Produk -->
+                            <div>
+                                <div>{{ item.nama_produk }} {% if item.variant_produk %}- <span class="badge bg-custom-purple text-white rounded-pill me-1">{{ item.variant_produk }}</span>{% endif %}</div>
+                                <div class="text-primary brand">{{ item.brand }}</div>
+                                <span class="badge bg-light text-dark border" style="margin-top: 0 !important;">{{ item.rak }}</span>
+                            </div>
+                            <!-- Part 3: Info Jumlah -->
+                            <div class="d-flex justify-content-between align-items-center" style="margin-top: 0 !important;">
+                                <div class="text-secondary"><i class="bi bi-upc-scan"></i> {{ item.barcode }}</div>
+                                <div class="fw-bold" style="color: #d32f2f; white-space: nowrap;"> {{ item.one_count }}</div> {# Kept inline for specific color #}
+                                <span class="badge {% if item.status_ambil == 'completed' %}bg-primary{% elif item.status_ambil == 'over_stock' %}bg-danger{% elif item.status_ambil == 'pending' %}bg-success{% else %}bg-secondary{% endif %}">{{ item.jumlah_ambil|default:0 }}/{{ item.jumlah|default:0 }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Kolom Kanan: Foto Produk -->
+                        <div class="d-flex align-items-center justify-content-end ms-2"> {# Changed justify-content-center to justify-content-end #}
+                            {% if item.photo_url %}
+                                <img src="{{ item.photo_url }}" alt="Foto Produk"
+                                     class="rounded product-photo-zoomable"
+                                     style="cursor: zoom-in;" data-bs-toggle="modal" data-bs-target="#productDetailModal" data-item-id="{{ item.id }}">
+                            {% else %}
+                                <div class="rounded-circle d-flex align-items-center"
+                                     style="cursor: zoom-in;" data-bs-toggle="modal" data-bs-target="#productDetailModal" data-item-id="{{ item.id }}">📦</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Items (Hidden, will be in modal) -->
+    <!-- The content for completed items is now moved into a Bootstrap modal below -->
+</div>
+
+<!-- Floating Action Button (FAB) Reload di kiri bawah -->
+<style>
+/* REMOVED .fab-reload CSS as it's no longer a FAB */
+
+.fab-close-modal {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1060;
+  width: 56px; /* Reverted to 56px */
+  height: 56px; /* Reverted to 56px */
+  border-radius: 50%;
+  background-color: #6c757d;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  font-size: 2.2rem; /* Reverted to 2.2rem */
+  line-height: 1;
+  border: none;
+  outline: none;
+  transition: background-color 0.2s;
+}
+.fab-close-modal:active {
+  background-color: #5a6268;
+}
+
+/* Style untuk FAB V1 (baru) */
+.fab-v1 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #007bff; /* Contoh warna biru */
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  border: none;
+  outline: none;
+  transition: background 0.2s;
+  font-weight: 600;
+}
+.fab-v1:active {
+  background: #0056b3; /* Warna biru lebih gelap saat aktif */
+}
+
+/* Style untuk FAB V2 (jika perlu ditampilkan) */
+.fab-v2 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #ff6b35; /* Contoh warna oranye */
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  border: none;
+  outline: none;
+  transition: background 0.2s;
+  font-weight: 600;
+}
+.fab-v2:active {
+  background: #e55a2b;
+}
+
+/* Style untuk FAB V3 (baru) */
+.fab-v3 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #28a745; /* Contoh warna hijau */
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  border: none;
+  outline: none;
+  transition: background 0.2s;
+  font-weight: 600;
+}
+.fab-v3:active {
+  background: #218838; /* Warna hijau lebih gelap saat aktif */
+}
+/* Style untuk FAB V4 (baru) */
+.fab-v4 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #6f42c1; /* Contoh warna ungu */
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  border: none;
+  outline: none;
+  transition: background 0.2s;
+  font-weight: 600;
+}
+.fab-v4:active {
+  background: #5a32a3; /* Warna ungu lebih gelap saat aktif */
+}
+.fab-v4:disabled {
+  background-color: #bfa4e0;
+  cursor: not-allowed;
+}
+/* NEW: Custom purple background for variant_produk badge */
+.bg-custom-purple {
+    background-color: #6f42c1 !important;
+}
+/* Style untuk FAB History (reusable for V2) */
+.fab-history {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #6c757d; /* Contoh warna abu-abu */
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  border: none;
+  outline: none;
+  transition: background 0.2s;
+  font-size: 1.1rem; /* Ukuran ikon */
+}
+.fab-history:active {
+  background: #5a6268; /* Warna abu-abu lebih gelap saat aktif */
+}
+</style>
+
+ <button class="fab-reload" id="fabReloadBtn" title="Reload">
+  <i class="bi bi-arrow-clockwise"></i>
+</button>
+
+<!-- Modal for Brand Filter -->
+<div class="modal fade" id="brandFilterModal" tabindex="-1" aria-labelledby="brandFilterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius: 12px;">
+            <div class="modal-header">
+                <h5 class="modal-title" id="brandFilterModalLabel">
+                    <i class="bi bi-tags me-2"></i>Filter berdasarkan Brand
+                </h5>
+            </div>
+            <div class="modal-body p-1">
+                <div class="list-group" id="brandListForFilter">
+                    <!-- Brand list will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <button type="button" class="fab-close-modal" data-bs-dismiss="modal" aria-label="Close">
+        <i class="bi bi-x-lg"></i>
+    </button>
+</div>
+
+<!-- NEW: Modal for Rak Filter -->
+<div class="modal fade" id="rakFilterModal" tabindex="-1" aria-labelledby="rakFilterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius: 12px;">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rakFilterModalLabel">Filter berdasarkan Rak</h5>
+            </div>
+            <div class="modal-body p-1">
+                <div class="list-group" id="rakListForFilter">
+                    <!-- Rak list will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <button type="button" class="fab-close-modal" data-bs-dismiss="modal" aria-label="Close">
+        <i class="bi bi-x-lg"></i>
+    </button>
+</div>
+
+<!-- NEW: Modal for Product Detail (replaces old imageZoomModal and mobile_batchitem_detail page) -->
+<div class="modal fade" id="productDetailModal" tabindex="-1" aria-labelledby="productDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: 90%; transform: scale(0.9);">
+        <div class="modal-content product-detail-modal" style="border-radius: 20px; border: none; box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 8px 25px rgba(0,0,0,0.1);">
+            <div class="modal-body text-center p-3">
+                <div class="text-center mb-0">
+                    <!-- Product Photo / Placeholder -->
+                    <div class="product-photo-wrapper mb-0" style="min-height: 315px; display: flex; align-items: center; justify-content: center; background: #fafafa; border-radius: 8px;">
+                        <img id="detailModalProductPhoto" src="" alt="Foto Produk" class="rounded" style="display: none; margin: 0 auto; max-height:315px; min-height: 315px; width:auto; object-fit:contain; background:#fafafa; cursor: pointer;">
+                        <div id="detailModalProductPlaceholder" class="d-flex flex-column align-items-center justify-content-center" style="min-height: 315px; color: #6c757d;">
+                            <i class="bi bi-image" style="font-size: 4rem; margin-bottom: 1rem;"></i>
+                            <span style="font-size: 1.2rem;">Tidak ada foto produk</span>
+                        </div>
+                        
+                        <!-- Form Ganti/Hapus Foto (AJAX or page reload will depend on backend) -->
+                        <form method="post" enctype="multipart/form-data" action="" id="detailModalUploadForm" class="d-none"> {# Action will be set by JS #}
+                            {% csrf_token %}
+                            <input type="file" name="photo" id="detailModalUploadPhotoInput" accept="image/*" required style="display:none;">
+                            <button type="button" id="triggerDetailModalChangePhotoBtn" class="btn btn-warning btn-sm photo-overlay-btn photo-overlay-change">
+                                <i class="bi bi-camera"></i>
+                            </button>
+                        </form>
+                        <form method="post" action="" id="detailModalDeletePhotoForm" class="d-none"> {# Action will be set by JS #}
+                            {% csrf_token %}
+                            <button type="submit" id="deleteDetailModalPhotoBtn" class="btn btn-danger btn-sm photo-overlay-btn photo-overlay-delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="text-uppercase" style="font-size:0.9rem;" id="detailModalNamaProduk">---</div>
+                <div class="d-flex justify-content-between align-items-baseline mb-0">
+                    <div class="text-primary" style="font-size:1rem;" id="detailModalVariantProduk">---</div>
+                    <div class="text-primary" style="font-size: 1rem;" id="detailModalBrand">---</div>
+                </div>
+                
+                <div class="mb-0">
+                    <div class="d-flex justify-content-between mb-2">
+                        <div class="text-secondary" style="font-size:0.9rem;">SKU : <span id="detailModalSKU">---</span></div>
+                        <div class="text-secondary" style="font-size:0.9rem;" id="detailModalBarcode">---</div>
+                    </div>
+                </div>
+                
+                <!-- Barcode Input dengan tombol Enter -->
+                <div class="mb-0 d-flex align-items-center gap-2">
+                    <input type="text" id="detailModalScanBarcodeInput" class="form-control form-control-lg text-center" placeholder="Scan barcode..." autocomplete="off">
+                    <button type="button" id="detailModalEnterBarcodeBtn" class="btn btn-primary btn-lg">
+                        <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Qty Input dengan tombol Enter -->
+                <div class="d-flex justify-content-center gap-4" style="transform: scale(0.9);">
+                    <div class="border rounded px-2 py-1 bg-light">
+                        <div class="small text-muted">Jumlah</div>
+                        <div class="fs-5 fw-bold" id="detailModalJumlahTotal">---</div>
+                    </div>
+                    <div class="border rounded px-1 py-1 bg-light">
+                        <div class="d-flex align-items-center justify-content-center gap-2">
+                            <button class="btn btn-outline-secondary btn-sm" id="detailModalBtnMinus">-</button>
+                            <input type="number" id="detailModalJumlahAmbilInput" class="form-control form-control-sm text-center" style="width:60px;" value="0" min="0" max="0" disabled>
+                            <button class="btn btn-outline-secondary btn-sm" id="detailModalBtnPlus">+</button>
+                            <button class="btn btn-outline-primary btn-sm" id="detailModalBtnMax">Max</button>
+                            <button type="button" id="detailModalEnterQtyBtn" class="btn btn-success btn-sm" disabled>
+                                <i class="bi bi-check"></i>
+                            </button>
+                        </div>
+                        <div id="detailModalScanLockMsg" class="text-danger small mt-1">*scan barcode dahulu untuk edit</div>
+                    </div>
+                </div>
+                <div id="detailModalBarcodeFeedback" class="text-danger small mt-2"></div> {# Feedback for barcode scan within modal #}
+                
+                <!-- Close Button at Bottom -->
+                <div class="d-flex justify-content-center mt-3">
+                    <button type="button" class="btn btn-outline-secondary btn-lg" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="bi bi-x-lg me-2"></i>Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END NEW: Modal for Product Detail -->
+
+<!-- Modal for Image Zoom (BARU) -->
+<div class="modal fade" id="imageZoomModal" tabindex="-1" aria-labelledby="imageZoomModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageZoomModalLabel">Foto Produk</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-2">
+                <img src="" id="zoomedImage" class="img-fluid" alt="Zoomed Product Image">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- NEW: Modal for Scan History -->
+<div class="modal fade" id="scanHistoryModal" tabindex="-1" aria-labelledby="scanHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius: 12px;">
+            <div class="modal-header">
+                <h5 class="modal-title" id="scanHistoryModalLabel">Riwayat Scan (10 Terakhir)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-2">
+                <div class="table-responsive">
+                    <table class="table table-striped table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">Waktu</th>
+                                <th scope="col">Barcode</th>
+                                <th scope="col">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scanHistoryTableBodyModal">
+                            <!-- Scan history entries will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- NEW: Modal Footer with History button -->
+            <div class="modal-footer">
+                <a href="{% url 'batchitem_logs_view' nama_batch=nama_picklist %}" class="btn btn-primary"> {# Changed URL to batchitem_logs_view #}
+                    <i class="bi bi-clock-history me-1"></i> Lihat Semua Riwayat
+                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ details|json_script:"details-data" }}
+<script type="application/json" id="details-data">{{ details|safe }}</script>
+
+<!-- NEW: Debug info for auto-cleanup (optional) -->
+{% if cleanup_info %}
+<script>
+console.log('Auto-cleanup info:', {{ cleanup_info|safe }});
+</script>
+{% endif %}
+<style>
+#brandListForFilter .list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    padding: 8px 12px;
+    transition: all 0.2s ease;
+    background: #fff;
+}
+
+#brandListForFilter .list-group-item:hover {
+    background: #f8f9fa;
+    border-color: #007bff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#brandListForFilter .list-group-item:active {
+    background: #e9ecef;
+    transform: translateY(0);
+}
+
+#brandListForFilter .fw-bold {
+    font-size: 0.95em;
+    color: #212529;
+}
+
+#brandListForFilter .badge {
+    font-size: 0.6em;
+    padding: 0.2em 0.4em;
+    border-radius: 6px;
+    border: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    color: white;
+    font-weight: 500;
+    min-width: 45px;
+    text-align: center;
+}
+
+#brandListForFilter .badge.bg-primary {
+    background: linear-gradient(145deg, #007bff, #0056b3) !important;
+    box-shadow: 0 1px 3px rgba(0,123,255,0.3);
+    color: white;
+    font-weight: 500;
+}
+
+#brandListForFilter .badge.bg-info {
+    background: linear-gradient(145deg, #17a2b8, #138496) !important;
+    box-shadow: 0 1px 3px rgba(23,162,184,0.3);
+    color: white;
+    font-weight: 500;
+    margin-top: 1px;
+}
+
+/* NEW: Styling for brand filter empty state and error messages */
+#brandListForFilter .text-center {
+    border: 2px dashed #dee2e6;
+    border-radius: 12px;
+    background: #f8f9fa;
+}
+
+#brandListForFilter .text-center.text-muted {
+    color: #6c757d !important;
+}
+
+#brandListForFilter .text-center.text-danger {
+    color: #dc3545 !important;
+}
+
+#brandListForFilter .bi {
+    opacity: 0.6;
+}
+
+/* NEW: Improved styling for Rak filter modal */
+#rakListForFilter .list-group-item {
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    margin-bottom: 3px;
+    padding: 6px 10px;
+    transition: all 0.2s ease;
+    background: #fff;
+}
+
+#rakListForFilter .list-group-item:hover {
+    background: #f8f9fa;
+    border-color: #007bff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#rakListForFilter .list-group-item:active {
+    background: #e9ecef;
+    transform: translateY(0);
+}
+
+#rakListForFilter .fw-bold {
+    font-size: 0.85em;
+    color: #212529;
+}
+
+#rakListForFilter .text-muted {
+    font-size: 0.65em;
+    color: #6c757d;
+}
+
+#rakListForFilter .badge {
+    font-size: 0.55em;
+    padding: 0.15em 0.3em;
+    border-radius: 4px;
+    background: linear-gradient(145deg, #007bff, #0056b3) !important;
+    border: none;
+    box-shadow: 0 1px 3px rgba(0,123,255,0.3);
+    color: white;
+    font-weight: 500;
+    min-width: 40px;
+    text-align: center;
+}
+
+#rakListForFilter .badge.bg-primary {
+    background: linear-gradient(145deg, #007bff, #0056b3) !important;
+    box-shadow: 0 1px 3px rgba(0,123,255,0.3);
+    color: white;
+    font-weight: 500;
+    font-size: 0.65em;
+    padding: 0.15em 0.3em;
+    border-radius: 4px;
+    min-width: 40px;
+}
+
+#rakListForFilter .badge.bg-info {
+    background: linear-gradient(145deg, #17a2b8, #138496) !important;
+    box-shadow: 0 1px 3px rgba(23,162,184,0.3);
+    color: white;
+    font-weight: 500;
+    font-size: 0.65em;
+    padding: 0.15em 0.3em;
+    border-radius: 4px;
+    min-width: 40px;
+    margin-top: 1px;
+}
+
+/* NEW: Styling for empty state and error messages */
+#rakListForFilter .text-center {
+    border: 2px dashed #dee2e6;
+    border-radius: 12px;
+    background: #f8f9fa;
+}
+
+#rakListForFilter .text-center.text-muted {
+    color: #6c757d !important;
+}
+
+#rakListForFilter .text-center.text-danger {
+    color: #dc3545 !important;
+}
+
+#rakListForFilter .bi {
+    opacity: 0.6;
+}
+
+.product-photo-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.photo-overlay-btn {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    z-index: 15;
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+.photo-overlay-btn .btn {
+    padding: 0;
+    font-size: 1.2em;
+    border-radius: 50%;
+    background-color: transparent;
+    color: #333;
+    border: none;
+    box-shadow: none;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.photo-overlay-change {
+    bottom: 10px;
+    right: 10px;
+}
+
+.photo-overlay-delete {
+    bottom: 10px;
+    left: 10px;
+}
+
+/* Photo Overlay Button Hover Effects */
+.photo-overlay-btn:hover {
+    background-color: rgba(255, 255, 255, 1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.photo-overlay-change:hover {
+    background-color: rgba(255, 193, 7, 0.9);
+    border-color: rgba(255, 193, 7, 0.8);
+}
+
+.photo-overlay-change:hover .btn {
+    color: #fff;
+}
+
+.photo-overlay-delete:hover {
+    background-color: rgba(220, 53, 69, 0.9);
+    border-color: rgba(220, 53, 69, 0.8);
+}
+
+.photo-overlay-delete:hover .btn {
+    color: #fff;
+}
+
+.fab-detail-close {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1060;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #6c757d;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    font-size: 1.2rem;
+    line-height: 1;
+    border: none;
+    outline: none;
+    transition: background-color 0.2s;
+}
+.fab-detail-close:active {
+    background-color: #5a6268;
+}
+</style>
+{% endblock %}
+{% block extra_script %}
+{{ raks|json_script:"raks-data" }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- 1. SETUP GLOBAL VARIABLES & ELEMENTS ---
+    const barcodeInput = document.getElementById('barcodeInput');
+    const barcodeSubmitBtn = document.getElementById('barcodeSubmitBtn');
+    const namaPicklist = "{{ nama_picklist|default:'' }}";
+    const csrfToken = "{{ csrf_token }}";
+    
+    // Elements for filtering
+    const statusFilterButtons = document.getElementById('statusFilterButtons');
+    const itemListActual = document.getElementById('itemListActual');
+    const stickySearchInput = document.getElementById('stickySearchInput');
+    let currentStatusFilter = 'pending';
+    let currentBrandFilter = ''; // New: For brand filter
+    let currentRakFilter = ''; // NEW: For rak filter
+
+    // MODIFIED: Sorting State - Initial state is 'default'
+    let currentSortType = 'default'; 
+    const stickySortBtn = document.getElementById('stickySortBtn'); // Re-added ID
+
+    // New: Elements for brand filter display
+    const brandListForFilter = document.getElementById('brandListForFilter');
+    const rakListForFilter = document.getElementById('rakListForFilter'); // NEW: For rak filter
+    const details = JSON.parse(document.getElementById('details-data').textContent);
+    const clearFilterBtn = document.getElementById('clearFilterBtn');
+    const currentFilterDisplay = document.getElementById('currentFilterDisplay');
+    const activeFilterName = document.getElementById('activeFilterName');
+    
+    // NEW: Function to update filter display badge
+    function updateFilterDisplay() {
+        const filters = [];
+        if (currentBrandFilter) {
+            filters.push(`Brand: ${currentBrandFilter}`);
+        }
+        if (currentRakFilter) {
+            filters.push(`Rak: ${currentRakFilter}`);
+        }
+        
+        if (filters.length > 0) {
+            activeFilterName.textContent = filters.join(' + ');
+            currentFilterDisplay.style.display = 'inline-block';
+        } else {
+            currentFilterDisplay.style.display = 'none';
+        }
+    }
+
+    // NEW: Function to update filter button active states
+    function updateFilterButtonStates() {
+        const stickyFilterBtn = document.getElementById('stickyFilterBtn');
+        const stickyRakFilterBtn = document.getElementById('stickyRakFilterBtn');
+        
+        // Reset all filter buttons
+        if (stickyFilterBtn) stickyFilterBtn.classList.remove('active');
+        if (stickyRakFilterBtn) stickyRakFilterBtn.classList.remove('active');
+        
+        // Set active state based on current filters
+        if (currentBrandFilter && currentBrandFilter !== '') {
+            if (stickyFilterBtn) stickyFilterBtn.classList.add('active');
+        }
+        
+        if (currentRakFilter && currentRakFilter !== '') {
+            if (stickyRakFilterBtn) stickyRakFilterBtn.classList.add('active');
+        }
+    }
+
+    // NEW: Scan History related elements and variable
+    const historyBtnV2 = document.getElementById('historyBtnV2');
+    const scanHistoryModal = document.getElementById('scanHistoryModal');
+    const scanHistoryTableBodyModal = document.getElementById('scanHistoryTableBodyModal');
+    let scanHistoryLog = []; // Stores up to 10 latest scan entries
+
+    // NEW: Product Detail Modal elements
+    const productDetailModal = document.getElementById('productDetailModal');
+    const detailModalProductPhoto = document.getElementById('detailModalProductPhoto');
+    const detailModalProductPlaceholder = document.getElementById('detailModalProductPlaceholder');
+    const detailModalNamaProduk = document.getElementById('detailModalNamaProduk');
+    const detailModalVariantProduk = document.getElementById('detailModalVariantProduk');
+    const detailModalBrand = document.getElementById('detailModalBrand');
+    const detailModalSKU = document.getElementById('detailModalSKU');
+    const detailModalBarcode = document.getElementById('detailModalBarcode');
+    const detailModalJumlahTotal = document.getElementById('detailModalJumlahTotal');
+    const detailModalJumlahAmbilInput = document.getElementById('detailModalJumlahAmbilInput');
+    const detailModalBtnMinus = document.getElementById('detailModalBtnMinus');
+    const detailModalBtnPlus = document.getElementById('detailModalBtnPlus');
+    const detailModalBtnMax = document.getElementById('detailModalBtnMax');
+    const detailModalScanBarcodeInput = document.getElementById('detailModalScanBarcodeInput');
+    const detailModalEnterBarcodeBtn = document.getElementById('detailModalEnterBarcodeBtn');
+    const detailModalEnterQtyBtn = document.getElementById('detailModalEnterQtyBtn');
+    const detailModalScanLockMsg = document.getElementById('detailModalScanLockMsg');
+    const detailModalBarcodeFeedback = document.getElementById('detailModalBarcodeFeedback');
+
+    // Photo upload/delete elements in detail modal (for future AJAX integration)
+    const detailModalUploadForm = document.getElementById('detailModalUploadForm');
+    const detailModalUploadPhotoInput = document.getElementById('detailModalUploadPhotoInput');
+    const triggerDetailModalChangePhotoBtn = document.getElementById('triggerDetailModalChangePhotoBtn');
+    const detailModalDeletePhotoForm = document.getElementById('detailModalDeletePhotoForm');
+    const deleteDetailModalPhotoBtn = document.getElementById('deleteDetailModalPhotoBtn');
+
+    let currentDetailItem = null; // To store the itemData currently displayed in the modal
+    let barcodeScannedInModal = false; // To control qty input lock in modal
+
+    // NEW: Global Barcode Scanner Listener variables
+    let barcodeBuffer = '';
+    let barcodeTimeout;
+    const SCAN_INTERVAL = 50; // Milliseconds to wait before clearing buffer
+    
+    // Elements for barcode scan indicator
+    const barcodeScanIndicator = document.getElementById('barcodeScanIndicator');
+    const barcodeScanText = document.getElementById('barcodeScanText');
+    
+    // NEW: Global login check variable
+    const isLoggedIn = {{ request.user.is_authenticated|yesno:"true,false" }};
+
+    // --- 2. UTILITY FUNCTIONS ---
+    let soundPlaying = false; // Prevent multiple sounds from playing simultaneously
+    
+    // Function to get rak info for a product
+    function getRakInfoForProduct(sku) {
+        if (!document.getElementById('raks-data')) {
+            console.log('DEBUG: No raks-data element found');
+            return null;
+        }
+        
+        try {
+            const allRaks = JSON.parse(document.getElementById('raks-data').textContent);
+            console.log('DEBUG: All raks data:', allRaks);
+            const rakInfo = [];
+            
+            allRaks.forEach(rak => {
+                const productInRak = rak.products.find(product => product.sku === sku);
+                console.log(`DEBUG: Checking rak ${rak.kode_rak} for SKU ${sku}:`, productInRak);
+                if (productInRak && productInRak.stock_available > 0) {
+                    rakInfo.push({
+                        kode_rak: rak.kode_rak,
+                        nama_rak: rak.nama_rak,
+                        quantity: productInRak.stock_available
+                    });
+                }
+            });
+            
+            console.log('DEBUG: Final rakInfo for SKU', sku, ':', rakInfo);
+            return rakInfo.length > 0 ? rakInfo : null;
+        } catch (e) {
+            console.error('Error parsing rak data:', e);
+            return null;
+        }
+    }
+    
+    function playSound(type) {
+        if (soundPlaying) return; // Prevent overlapping sounds
+        
+        const sounds = {
+            success: '/static/sounds/ding.mp3',
+            completed: '/static/sounds/completedsound.mp3',
+            error: '/static/sounds/errorsound.mp3'
+        };
+        
+        if (sounds[type]) {
+            soundPlaying = true;
+            const audio = new Audio(sounds[type]);
+            audio.onended = () => {
+                soundPlaying = false;
+            };
+            audio.onerror = () => {
+                soundPlaying = false;
+            };
+            audio.play().catch(() => {
+                soundPlaying = false;
+            });
+        }
+    }
+
+    function showNotification(icon, title, message = '', autoCloseTimer = 1500, showCloseBtn = false) { 
+        Swal.fire({
+            icon: icon,
+            title: title,
+            html: message, 
+            timer: autoCloseTimer === 0 ? undefined : autoCloseTimer, 
+            showConfirmButton: false, 
+            showCloseButton: showCloseBtn, 
+            position: 'center'
+        });
+    }
+
+    // NEW: Helper function for Toast Notifications (for success/less critical info)
+    function showToast(icon, title, text = '', autoCloseTimer = 1500) {
+        Swal.fire({
+            icon: icon,
+            title: title,
+            html: text, // Use html to allow bold tags or other formatting
+            timer: autoCloseTimer === 0 ? undefined : autoCloseTimer,
+            showConfirmButton: false, // Toast by default doesn't have confirm button
+            toast: true,
+            position: 'top-end', // Toast position is usually top-end
+            showCloseButton: autoCloseTimer === 0 ? true : false, // Add close button if no auto-timer
+            didOpen: (toast) => { // Add progress bar behavior to toast
+              if (autoCloseTimer !== 0) {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+              }
+            }
+        });
+    }
+
+    // NEW: Function to recalculate and display counts for filter buttons
+    function recalculateAndDisplayCounts() {
+        if (!details || !statusFilterButtons) return;
+
+        let newTotalItems = 0; // Akan dihitung dari item yang relevan
+        let newTotalCompleted = 0;
+        let newStatusCounts = {
+            pending: 0,
+            over_stock: 0,
+            completed: 0
+        };
+
+        // NEW: Get rak data for filtering
+        let rakDataForCounts = null;
+        if (currentRakFilter && document.getElementById('raks-data')) {
+            try {
+                const allRaks = JSON.parse(document.getElementById('raks-data').textContent);
+                rakDataForCounts = allRaks.find(rak => rak.kode_rak === currentRakFilter);
+            } catch (e) {
+                console.error('Error parsing rak data:', e);
+            }
+        }
+
+        // Filter details berdasarkan brand dan rak yang aktif sebelum menghitung
+        const filteredDetails = details.filter(item => {
+            const brandMatch = (currentBrandFilter === '') || (item.brand === currentBrandFilter);
+            
+            // NEW: Rak filter logic
+            let rakMatch = true;
+            if (currentRakFilter && rakDataForCounts) {
+                const productInRak = rakDataForCounts.products.find(product => product.sku === item.sku);
+                rakMatch = productInRak !== undefined;
+            }
+            
+            return brandMatch && rakMatch;
+        });
+
+        filteredDetails.forEach(item => {
+            newTotalItems++; // Hitung total item yang relevan setelah filter
+            if (item.status_ambil === 'completed') {
+                newTotalCompleted++;
+                newStatusCounts.completed++;
+            } else {
+                if (item.status_ambil === 'pending') {
+                    newStatusCounts.pending++;
+                } else if (item.status_ambil === 'over_stock') {
+                    newStatusCounts.over_stock++;
+                }
+            }
+        });
+
+        // Update the badges on the filter buttons
+        statusFilterButtons.querySelector('button[data-filter="all"] .badge').textContent = newTotalItems;
+        statusFilterButtons.querySelector('button[data-filter="pending"] .badge').textContent = newStatusCounts.pending;
+        statusFilterButtons.querySelector('button[data-filter="over_stock"] .badge').textContent = newStatusCounts.over_stock;
+        statusFilterButtons.querySelector('button[data-filter="completed"] .badge').textContent = newTotalCompleted;
+    }
+
+    // --- MODIFIED: FILTER & SEARCH FUNCTION ---
+    function applyFilterAndSearch() {
+        if (!itemListActual || !details) return; // Pastikan details ada
+
+        const searchQuery = stickySearchInput ? stickySearchInput.value.toLowerCase().trim() : '';
+        
+        const visibleItemsData = []; // Akan menyimpan objek data, bukan elemen DOM
+
+        // NEW: Get rak data for filtering
+        let rakDataForFilter = null;
+        if (currentRakFilter && document.getElementById('raks-data')) {
+            try {
+                const allRaks = JSON.parse(document.getElementById('raks-data').textContent);
+                rakDataForFilter = allRaks.find(rak => rak.kode_rak === currentRakFilter);
+            } catch (e) {
+                console.error('Error parsing rak data:', e);
+            }
+        }
+
+        details.forEach(itemData => { // Loop melalui data ORIGINAL dari backend
+            const statusMatch = (currentStatusFilter === 'all') || (itemData.status_ambil === currentStatusFilter);
+            const brandMatch = (currentBrandFilter === '') || (itemData.brand === currentBrandFilter);
+            
+            // NEW: Improved rak filter logic
+            let rakMatch = true;
+            if (currentRakFilter && rakDataForFilter) {
+                // Check if this product exists in the selected rak
+                const productInRak = rakDataForFilter.products.find(product => product.sku === itemData.sku);
+                rakMatch = productInRak !== undefined;
+            }
+            
+            const itemText = (itemData.sku + ' ' + itemData.nama_produk + ' ' + itemData.variant_produk + ' ' + itemData.brand + ' ' + itemData.barcode).toLowerCase(); // Buat teks pencarian dari data
+            const searchMatch = itemText.includes(searchQuery);
+
+            if (statusMatch && searchMatch && brandMatch && rakMatch) { // NEW: Added rakMatch
+                visibleItemsData.push(itemData); // Tambahkan objek data yang match
+            }
+        });
+
+        // Prioritas status untuk sorting
+        const statusPriority = {
+            'pending': 1,
+            'partial': 2,
+            'over_stock': 3,
+            'completed': 4
+        };
+
+        // Urutkan itemData yang terlihat
+        visibleItemsData.sort((a, b) => {
+            // 1. Prioritas Utama: Item 'completed' selalu di paling bawah
+            const isACompleted = a.status_ambil === 'completed';
+            const isBCompleted = b.status_ambil === 'completed';
+
+            if (isACompleted && !isBCompleted) {
+                return 1; // A (completed) ke bawah
+            }
+            if (!isACompleted && isBCompleted) {
+                return -1; // A (belum completed) ke atas
+            }
+
+            // Jika keduanya 'completed' ATAU keduanya 'belum completed':
+            // Lanjutkan ke sorting sekunder berdasarkan currentSortType.
+            if (!isACompleted && !isBCompleted) { // Only apply custom sort if items are NOT completed
+                if (currentSortType === 'one_count_desc') {
+                    const oneCountA = parseInt(a.one_count || 0, 10);
+                    const oneCountB = parseInt(b.one_count || 0, 10);
+                    if (oneCountA !== oneCountB) {
+                        return oneCountB - oneCountA; // Urutkan one_count tertinggi ke terendah
+                    }
+                } else if (currentSortType === 'brand_asc') { // Sort by brand
+                    const brandA = a.brand || '';
+                    const brandB = b.brand || '';
+                    const brandResult = brandA.localeCompare(brandB);
+                    if (brandResult !== 0) {
+                        return brandResult; // Urutkan brand A-Z
+                    }
+                } else if (currentSortType === 'nama_produk_asc') { // RE-ADDED: Sort by nama_produk
+                    const namaA = a.nama_produk || '';
+                    const namaB = b.nama_produk || '';
+                    const namaResult = namaA.localeCompare(namaB);
+                    if (namaResult !== 0) {
+                        return namaResult; // Urutkan nama_produk A-Z
+                    }
+                }
+            }
+
+            // Fallback to existing logic if custom sort doesn't apply or results in equality
+            const statusA = a.status_ambil;
+            const statusB = b.status_ambil;
+            const statusOrderResult = (statusPriority[statusA] || 99) - (statusPriority[statusB] || 99);
+            if (statusOrderResult !== 0) {
+                return statusOrderResult;
+            }
+
+            // Fallback ke urutan rak jika status dan sorting sekunder sama
+            const rakA = a.rak || '';
+            const rakB = b.rak || '';
+            const rakOrderResult = rakA.localeCompare(rakB);
+            if (rakOrderResult !== 0) {
+                return rakOrderResult;
+            }
+
+            // Fallback ke urutan SKU jika rak sama
+            const skuA = a.sku || '';
+            const skuB = b.sku || '';
+            return skuA.localeCompare(skuB);
+        });
+
+        // Kosongkan container yang ada
+        itemListActual.innerHTML = '';
+
+        // Bangun kembali elemen DOM dari itemData yang sudah difilter dan diurutkan
+        visibleItemsData.forEach(itemData => {
+            const itemElement = document.createElement('div');
+            itemElement.className = `list-group-item d-flex`; 
+            itemElement.style.cssText = `background: ${itemData.status_ambil === 'completed' ? '#bfdbfe' : (itemData.status_ambil === 'over_stock' ? '#fecaca' : (itemData.status_ambil === 'pending' ? '#c6f6d5' : '#f3f4f6'))};`;
+            itemElement.dataset.productId = itemData.id;
+            itemElement.dataset.sku = itemData.sku;
+            itemElement.dataset.nama = itemData.nama_produk;
+            itemElement.dataset.barcode = itemData.barcode;
+            itemElement.dataset.variant = itemData.variant_produk;
+            itemElement.dataset.brand = itemData.brand;
+            itemElement.dataset.rak = itemData.rak;
+            itemElement.dataset.status = itemData.status_ambil;
+            itemElement.dataset.oneCount = itemData.one_count;
+
+            // Get rak info for this product
+            const rakInfo = getRakInfoForProduct(itemData.sku);
+            let rakInfoHtml = '';
+            
+            if (rakInfo && rakInfo.length > 0) {
+                rakInfoHtml = `
+                    <div class="mt-1">
+                        <small class="text-success">
+                            <i class="bi bi-box-seam me-1"></i>
+                            ${rakInfo.map(rak => `${rak.kode_rak} (${rak.quantity})`).join(' • ')}
+                        </small>
+                    </div>
+                `;
+            } else {
+                rakInfoHtml = `
+                    <div class="mt-1">
+                        <small class="text-danger">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            Tidak ada di rak
+                        </small>
+                    </div>
+                `;
+            }
+
+            itemElement.innerHTML = `
+                <!-- Kolom Kiri: Detail + Info Jumlah -->
+                <div style="flex: 1; min-width: 0;" class="d-flex flex-column justify-content-between">
+                    <!-- Part 1: Detail Produk -->
+                    <div>
+                        <div class="product-name-text">${itemData.nama_produk} ${itemData.variant_produk ? `- <span class="badge bg-custom-purple text-white rounded-pill me-1">${itemData.variant_produk}</span>` : ''}</div>
+                        <div class="text-primary brand">${itemData.brand}</div>
+                        <span class="badge bg-light text-dark border" style="margin-top: 0 !important;">${itemData.rak}</span>
+                    </div>
+                    <!-- Part 3: Info Jumlah -->
+                    <div class="d-flex justify-content-between align-items-center" style="margin-top: 0 !important;">
+                        <div class="text-secondary"><i class="bi bi-upc-scan"></i> ${itemData.barcode}</div>
+                        <div class="fw-bold" style="color: #d32f2f; white-space: nowrap;"> ${itemData.one_count}</div>
+                        <span class="badge ${itemData.status_ambil === 'completed' ? 'bg-primary' : (itemData.status_ambil === 'over_stock' ? 'bg-danger' : (itemData.status_ambil === 'pending' ? 'bg-success' : 'bg-secondary'))}">${itemData.jumlah_ambil || 0}/${itemData.jumlah || 0}</span>
+                    </div>
+                    <!-- Part 4: Rak Info -->
+                    ${rakInfoHtml}
+                </div>
+
+                <!-- Kolom Kanan: Foto Produk -->
+                <div class="d-flex align-items-center justify-content-end ms-2">
+                    ${itemData.photo_url
+                        ? `<img src="${itemData.photo_url}" alt="Foto Produk"
+                                class="rounded product-photo-zoomable"
+                                style="cursor: zoom-in;" data-bs-toggle="modal" data-bs-target="#productDetailModal" data-item-id="${itemData.id}">`
+                        : `<div class="rounded-circle d-flex align-items-center"
+                                style="cursor: zoom-in;" data-bs-toggle="modal" data-bs-target="#productDetailModal" data-item-id="${itemData.id}">📦</div>`
+                    }
+                </div>
+            `;
+            
+            // Height is now responsive - no need to add dynamic classes
+            // The container will automatically adjust to content height
+            // with minimum heights set in CSS (125px default, 145px for 2+ rows, 165px for 3+ rows)
+            
+            itemListActual.appendChild(itemElement);
+        });
+    }
+
+    // --- NEW: Function to populate brand filter modal ---
+    function populateBrandFilterModal() {
+        if (!brandListForFilter || !details) return;
+
+        try {
+            // 1. Grouping dan rekap di frontend
+            const brandMap = {};
+            details.forEach(item => {
+                if (item.status_ambil !== 'completed' && item.brand) {
+                    if (!brandMap[item.brand]) {
+                        brandMap[item.brand] = { skuSet: new Set(), total_one_count: 0 };
+                    }
+                    // Gunakan SKU sebagai kunci unik
+                    brandMap[item.brand].skuSet.add(item.sku);
+                    brandMap[item.brand].total_one_count += parseInt(item.one_count || 0, 10);
+                }
+            });
+
+            // 2. Ubah ke array dan urutkan
+            const brandsForFilter = Object.entries(brandMap).map(([brand, stat]) => ({
+                brand,
+                total_sku: stat.skuSet.size,
+                total_one_count: stat.total_one_count
+            })).sort((a, b) => a.brand.localeCompare(b.brand));
+
+            // 3. Render ke modal
+            brandListForFilter.innerHTML = '';
+            
+            if (brandsForFilter.length === 0) {
+                brandListForFilter.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-1 mb-3"></i>
+                        <div>Tidak ada data brand tersedia</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            brandsForFilter.forEach(obj => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                button.dataset.brand = obj.brand;
+                button.innerHTML = `
+                    <div>
+                        <div class="fw-bold">${obj.brand}</div>
+                    </div>
+                    <div class="d-flex flex-column gap-0">
+                        <span class="badge bg-primary">${obj.total_sku} SKU</span>
+                        <span class="badge bg-info">${obj.total_one_count} SAT</span>
+                    </div>
+                `;
+                brandListForFilter.appendChild(button);
+            });
+        } catch (error) {
+            console.error('Error populating brand filter:', error);
+            brandListForFilter.innerHTML = `
+                <div class="text-center text-danger py-4">
+                    <i class="bi bi-exclamation-triangle fs-1 mb-3"></i>
+                    <div>Error loading data brand</div>
+                </div>
+            `;
+        }
+    }
+
+    // NEW: Function to populate Rak filter modal
+    function populateRakFilterModal() {
+        if (!rakListForFilter || !document.getElementById('raks-data')) return;
+        
+        try {
+            const rakList = JSON.parse(document.getElementById('raks-data').textContent);
+            
+            rakListForFilter.innerHTML = '';
+            
+            if (!rakList || rakList.length === 0) {
+                rakListForFilter.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-1 mb-3"></i>
+                        <div>Tidak ada data rak tersedia</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            rakList.forEach(rak => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                button.dataset.rak = rak.kode_rak;
+                
+                button.innerHTML = `
+                    <div>
+                        <div class="fw-bold">${rak.kode_rak}</div>
+                        <div class="small text-muted">${rak.nama_rak || 'Nama rak tidak tersedia'}</div>
+                    </div>
+                    <div class="d-flex flex-column gap-0">
+                        <span class="badge bg-primary">${rak.total_products || 0} SKU</span>
+                        <span class="badge bg-info">${rak.total_one_count || 0} SAT</span>
+                    </div>
+                `;
+                rakListForFilter.appendChild(button);
+            });
+        } catch (error) {
+            console.error('Error parsing rak data:', error);
+            rakListForFilter.innerHTML = `
+                <div class="text-center text-danger py-4">
+                    <i class="bi bi-exclamation-triangle fs-1 mb-3"></i>
+                    <div>Error loading data rak</div>
+                </div>
+            `;
+        }
+    }
+
+    // NEW: Function to populate Scan History Modal
+    function populateScanHistoryModal() {
+        if (!scanHistoryTableBodyModal || !scanHistoryLog) return;
+
+        scanHistoryTableBodyModal.innerHTML = ''; // Clear existing entries
+
+        scanHistoryLog.forEach(entry => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${entry.time}</td>
+                <td>${entry.barcode}</td>
+                <td>
+                    ${entry.status === 'completed' 
+                        ? '<span class="badge bg-success">Completed</span>'
+                        : (entry.status === 'ok' 
+                            ? '<span class="badge bg-primary">OK</span>'
+                            : `<span class="badge bg-warning text-dark">${entry.status}</span>`)
+                    }
+                </td>
+            `;
+            scanHistoryTableBodyModal.prepend(row); // Add new entries at the top
+        });
+    }
+
+
+    // --- 3. CORE LOGIC: HANDLE BARCODE SUBMIT ---
+    let isProcessingBarcode = false; // Prevent multiple simultaneous barcode processing
+    
+    async function handleBarcodeSubmit(barcode) { // MODIFIED: barcode passed as parameter
+        // const barcode = barcodeInput.value.trim(); // Removed
+        if (!barcode || isProcessingBarcode) return;
+        
+        isProcessingBarcode = true;
+
+        // NEW: Check if user is logged in
+        if (!isLoggedIn) {
+            playSound('error');
+            showNotification('error', 'Akses Ditolak', 'Anda harus login terlebih dahulu untuk melakukan scan barcode.', 0, true);
+            return;
+        }
+
+        // NEW: Check if rak filter is active but no rak selected
+        if (currentRakFilter && currentRakFilter !== '') {
+            // Rak filter is active, proceed with rak-specific scanning
+        } else {
+            // No rak filter active, check if product exists in any rak
+            const productInDetails = details.find(item => item.barcode === barcode);
+            if (productInDetails) {
+                const rakInfo = getRakInfoForProduct(productInDetails.sku);
+                console.log('DEBUG: Product SKU:', productInDetails.sku);
+                console.log('DEBUG: Rak Info:', rakInfo);
+                if (rakInfo && rakInfo.length > 0) {
+                    // Product exists in rak, prevent regular scanning
+                    playSound('error');
+                    const rakList = rakInfo.map(rak => `${rak.kode_rak} (${rak.quantity})`).join(' • ');
+                    showNotification('error', 'Produk Ada di Rak!', 
+                        `Produk ini tersedia di rak: <b>${rakList}</b><br><br>Silakan gunakan filter rak terlebih dahulu untuk scan produk ini.`, 0, true);
+                    return;
+                }
+            }
+        }
+
+        // Check if the productDetailModal is currently shown
+        const isDetailModalOpen = productDetailModal.classList.contains('show');
+
+        // NEW: Determine which endpoint to use based on rak filter
+        let barcodeUrl;
+        let barcodeRequestBody;
+        
+        if (currentRakFilter && currentRakFilter !== '') {
+            // Use rak-specific endpoint
+            barcodeUrl = `/fullfilment/batchpicking/${namaPicklist}/update_barcode_to_rak/`;
+            barcodeRequestBody = { 
+                barcode: barcode,
+                selected_rak: currentRakFilter
+            };
+        } else {
+            // Use regular endpoint
+            barcodeUrl = `/fullfilment/batchpicking/${namaPicklist}/update_barcode/`;
+            barcodeRequestBody = { barcode: barcode };
+        }
+
+        try {
+            const response = await fetch(barcodeUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify(barcodeRequestBody)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                updateItemUI(barcode, data.jumlah_ambil, data.jumlah, data.status_ambil);
+                
+                // NEW: Add to scan history log and save to localStorage
+                const newEntry = {
+                    time: new Date().toLocaleTimeString('id-ID'), // Format time for Indonesia locale
+                    barcode: barcode,
+                    status: data.status_ambil 
+                };
+                scanHistoryLog.push(newEntry);
+                // Keep only the last 10 entries
+                if (scanHistoryLog.length > 10) {
+                    scanHistoryLog = scanHistoryLog.slice(-10);
+                }
+                localStorage.setItem('scanHistory', JSON.stringify(scanHistoryLog)); // Save to localStorage
+
+                if (data.status_ambil === 'completed') {
+                    playSound('completed');
+                    const rakInfo = data.rak_asal ? ` dari rak ${data.rak_asal}` : '';
+                    showNotification('success', 'Item Selesai!', `SKU ${data.product_info.sku} telah komplit${rakInfo}.`);
+                } else {
+                    playSound('success');
+                    const rakInfo = data.rak_asal ? ` dari rak ${data.rak_asal}` : '';
+                    showToast('success', `Berhasil Scan${rakInfo}`); // MODIFIED: Show rak info in toast
+                }
+
+                // If detail modal is open and this barcode matches the item in modal, update its UI
+                if (isDetailModalOpen && currentDetailItem && currentDetailItem.barcode === barcode) {
+                    populateProductDetailModal(currentDetailItem); // Re-populate to update counts/status in modal
+                    unlockDetailModalQtyInput(); // Ensure it's unlocked if successfully scanned
+                }
+
+
+            } else {
+                playSound('error');
+                // MODIFIED: Handle specific error message for over scan
+                if (data.error && data.error.includes('over_scan')) { // Adjust condition if data.error message changes
+                    showNotification('error', 'Gagal: Over Scan!', data.error, 0, true); // No auto-close, show close button
+                } else if (data.error) { // NEW: For any other specific error message
+                    showNotification('error', 'Gagal', data.error, 0, true); // No auto-close, show close button
+                } else { // Fallback for generic error
+                    showNotification('error', 'Gagal', 'Barcode tidak valid.', 0, true); // No auto-close, show close button
+                }
+            }
+
+        } catch (error) {
+            console.error('Fetch error:', error);
+            playSound('error');
+            showNotification('error', 'Error', 'Terjadi kesalahan koneksi.', 0, true); // NEW: No auto-close, show close button
+        } finally {
+            isProcessingBarcode = false; // Reset processing flag
+            // barcodeInput.value = ''; // Removed this, handled by global listener now
+            // barcodeInput.focus(); // Removed this, handled by global listener now
+        }
+    }
+
+    // --- 4. UI UPDATE FUNCTION (MODIFIED) ---
+    function updateItemUI(barcode, jumlahAmbil, jumlahTotal, status) {
+        // Validate input parameters
+        if (jumlahAmbil === undefined || jumlahAmbil === null) {
+            console.error('updateItemUI: jumlahAmbil is undefined/null', { barcode, jumlahAmbil, jumlahTotal, status });
+            return;
+        }
+        if (jumlahTotal === undefined || jumlahTotal === null) {
+            console.error('updateItemUI: jumlahTotal is undefined/null', { barcode, jumlahAmbil, jumlahTotal, status });
+            return;
+        }
+        
+        // Cari item di array data `details` (SUMBER KEBENARAN)
+        const itemToUpdate = details.find(item => item.barcode === barcode);
+
+        if (!itemToUpdate) {
+            console.warn(`Item with barcode ${barcode} not found in details array.`);
+            return;
+        }
+
+        console.log('updateItemUI called:', { barcode, jumlahAmbil, jumlahTotal, status, itemBefore: itemToUpdate });
+
+        // Update properti item di array `details`
+        itemToUpdate.jumlah_ambil = jumlahAmbil;
+        itemToUpdate.jumlah = jumlahTotal;
+        itemToUpdate.status_ambil = status;
+
+        // NEW: Jika status menjadi 'completed', update juga completed_at dan completed_by_username
+        if (status === 'completed' && itemToUpdate.completed_at === null) {
+            const now = new Date();
+            itemToUpdate.completed_at = now.toISOString();
+        }
+
+        // Update the currentDetailItem if it's the one being displayed
+        if (currentDetailItem && currentDetailItem.barcode === barcode) {
+            currentDetailItem.jumlah_ambil = jumlahAmbil;
+            currentDetailItem.jumlah = jumlahTotal;
+            currentDetailItem.status_ambil = status;
+            if (status === 'completed' && currentDetailItem.completed_at === null) {
+                currentDetailItem.completed_at = new Date().toISOString();
+            }
+            // Also update the UI in the modal if it's currently open
+            detailModalJumlahAmbilInput.value = jumlahAmbil;
+            detailModalJumlahTotal.textContent = jumlahTotal; // If total quantity can change
+            detailModalJumlahAmbilInput.max = jumlahTotal;
+        }
+
+        applyFilterAndSearch();
+        recalculateAndDisplayCounts();
+    }
+
+    // --- NEW: Functions for Product Detail Modal ---
+    function populateProductDetailModal(itemData) {
+        currentDetailItem = itemData; // Store the current item data
+
+        // Populate basic info
+        detailModalNamaProduk.textContent = itemData.nama_produk;
+        detailModalVariantProduk.textContent = itemData.variant_produk || '';
+        detailModalBrand.textContent = itemData.brand || '';
+        detailModalSKU.textContent = itemData.sku;
+        detailModalBarcode.textContent = itemData.barcode;
+        detailModalJumlahTotal.textContent = itemData.jumlah;
+        detailModalJumlahAmbilInput.value = itemData.jumlah_ambil;
+        detailModalJumlahAmbilInput.max = itemData.jumlah; // Set max value for input
+
+        // Photo display: Always hide the image initially and show placeholder
+        detailModalProductPhoto.style.display = 'none';
+        detailModalProductPhoto.src = ''; // Clear any previous image source
+        detailModalProductPlaceholder.style.display = 'flex'; // Show placeholder by default
+
+        // Clear previous error handlers to prevent old handlers from firing
+        detailModalProductPhoto.onerror = null;
+        detailModalProductPhoto.onload = null;
+
+        if (itemData.photo_url) {
+            detailModalProductPhoto.src = itemData.photo_url;
+            detailModalProductPhoto.style.display = 'block'; // Show image
+            detailModalProductPlaceholder.style.display = 'none'; // Hide placeholder
+
+            // Handle image loading errors: If image fails to load, show placeholder
+            detailModalProductPhoto.onerror = function() {
+                detailModalProductPhoto.style.display = 'none';
+                detailModalProductPlaceholder.style.display = 'flex';
+                detailModalProductPhoto.onerror = null; // Prevent infinite loop on subsequent errors
+            };
+            // Handle image load success: Ensure image is visible and hide placeholder
+            detailModalProductPhoto.onload = function() {
+                detailModalProductPhoto.style.display = 'block';
+                detailModalProductPlaceholder.style.display = 'none';
+                detailModalProductPhoto.onload = null; // Clear onload to prevent it from firing unnecessarily
+            };
+
+        } else {
+            // If no photo URL, show placeholder
+            detailModalProductPhoto.style.display = 'none';
+            detailModalProductPlaceholder.style.display = 'flex';
+        }
+
+        // Set form actions for photo upload/delete
+        detailModalUploadForm.action = `/fullfilment/batchpicking/${namaPicklist}/batchitem/${itemData.id}/detail/`;
+        detailModalDeletePhotoForm.action = `/fullfilment/delete_batchitem_photo/${itemData.id}/`;
+
+        // Show/hide photo forms based on photo_url
+        if (itemData.photo_url) {
+            detailModalUploadForm.classList.remove('d-none');
+            detailModalDeletePhotoForm.classList.remove('d-none');
+        } else {
+            detailModalUploadForm.classList.remove('d-none'); // Still show upload for initial
+            detailModalDeletePhotoForm.classList.add('d-none'); // Hide delete if no photo
+        }
+
+        // Lock quantity input until barcode is scanned
+        lockDetailModalQtyInput();
+        detailModalScanBarcodeInput.value = ''; // Clear scan input
+        detailModalBarcodeFeedback.textContent = ''; // Clear feedback
+        detailModalScanBarcodeInput.focus(); // Focus on barcode input
+    }
+
+    function lockDetailModalQtyInput() {
+        barcodeScannedInModal = false;
+        detailModalJumlahAmbilInput.disabled = true;
+        detailModalBtnMinus.disabled = true;
+        detailModalBtnPlus.disabled = true;
+        detailModalBtnMax.disabled = true;
+        detailModalEnterQtyBtn.disabled = true;
+        detailModalScanLockMsg.style.display = '';
+    }
+
+    function unlockDetailModalQtyInput() {
+        barcodeScannedInModal = true;
+        detailModalJumlahAmbilInput.disabled = false;
+        detailModalBtnMinus.disabled = false;
+        detailModalBtnPlus.disabled = false;
+        detailModalBtnMax.disabled = false;
+        detailModalEnterQtyBtn.disabled = false;
+        detailModalScanLockMsg.style.display = 'none';
+        detailModalJumlahAmbilInput.focus(); // Focus on quantity input
+    }
+
+    let isProcessingModalBarcode = false; // Prevent multiple simultaneous modal barcode processing
+    
+    async function handleDetailModalBarcodeScan() {
+        const barcodeValue = detailModalScanBarcodeInput.value.trim();
+        if (!barcodeValue || isProcessingModalBarcode) return;
+        
+        isProcessingModalBarcode = true;
+
+        // NEW: Check if user is logged in
+        if (!isLoggedIn) {
+            playSound('error');
+            showNotification('error', 'Akses Ditolak', 'Anda harus login terlebih dahulu untuk melakukan scan barcode.', 0, true);
+            return;
+        }
+
+        if (barcodeValue === currentDetailItem.barcode) {
+            unlockDetailModalQtyInput();
+            detailModalBarcodeFeedback.textContent = 'Barcode benar! Quantity input dibuka.';
+            detailModalBarcodeFeedback.className = 'text-success small mt-2';
+            setTimeout(() => detailModalBarcodeFeedback.textContent = '', 2000);
+        } else {
+            playSound('error'); // Assuming failSound is error
+            showNotification('error', 'Barcode Tidak Sesuai!', `<strong>Barcode yang discan:</strong> ${barcodeValue}<br><strong>Barcode produk:</strong> ${currentDetailItem.barcode}`, 0, true);
+            detailModalBarcodeFeedback.textContent = 'Barcode tidak sesuai produk ini!';
+            detailModalBarcodeFeedback.className = 'text-danger small mt-2';
+            setTimeout(() => detailModalBarcodeFeedback.textContent = '', 2000);
+        }
+        detailModalScanBarcodeInput.value = '';
+        isProcessingModalBarcode = false; // Reset processing flag
+    }
+
+    let isProcessingQtyUpdate = false; // Prevent multiple simultaneous quantity updates
+    
+    async function autoSaveDetailModalJumlahAmbil(newJumlah) {
+        // NEW: Check if user is logged in and currentDetailItem exists
+        if (!isLoggedIn || isProcessingQtyUpdate || !currentDetailItem) {
+            if (!isLoggedIn) {
+                playSound('error');
+                showNotification('error', 'Akses Ditolak', 'Anda harus login terlebih dahulu untuk melakukan update jumlah.', 0, true);
+            } else if (!currentDetailItem) {
+                console.error('currentDetailItem is null - cannot save quantity');
+                playSound('error');
+                showNotification('error', 'Error', 'Data produk tidak ditemukan. Silakan tutup dan buka ulang modal.', 0, true);
+            }
+            return;
+        }
+        
+        isProcessingQtyUpdate = true;
+
+        const detailUrl = `/fullfilment/batchpicking/${namaPicklist}/batchitem/${currentDetailItem.id}/update_jumlah_ambil/`;
+        try {
+            const response = await fetch(detailUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify({ jumlah_ambil: parseInt(newJumlah) })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                // Validate and set fallback values to prevent undefined/undefined
+                const jumlahAmbil = data.jumlah_ambil !== undefined ? data.jumlah_ambil : currentDetailItem.jumlah_ambil;
+                const jumlah = data.jumlah !== undefined ? data.jumlah : currentDetailItem.jumlah;
+                const statusAmbil = data.status_ambil !== undefined ? data.status_ambil : currentDetailItem.status_ambil;
+                
+                console.log('Auto save response:', { jumlahAmbil, jumlah, statusAmbil, originalData: data });
+                
+                // Update the original item in the `details` array
+                currentDetailItem.jumlah_ambil = jumlahAmbil;
+                currentDetailItem.jumlah = jumlah;
+                currentDetailItem.status_ambil = statusAmbil;
+                if (statusAmbil === 'completed' && currentDetailItem.completed_at === null) {
+                    currentDetailItem.completed_at = new Date().toISOString();
+                }
+
+                // Update UI on the main list
+                updateItemUI(currentDetailItem.barcode, jumlahAmbil, jumlah, statusAmbil);
+
+                detailModalJumlahAmbilInput.classList.add('border-success');
+                setTimeout(() => detailModalJumlahAmbilInput.classList.remove('border-success'), 300);
+
+                if (data.completed) {
+                    playSound('completed');
+                    showNotification('success', 'Item Selesai!', `SKU ${currentDetailItem.sku} telah komplit.`);
+                    // Modal will be closed by saveDetailModalQtyInput function
+                } else {
+                    playSound('success');
+                }
+            } else {
+                detailModalJumlahAmbilInput.classList.add('border-danger');
+                setTimeout(() => detailModalJumlahAmbilInput.classList.remove('border-danger'), 600);
+                playSound('error');
+                if (data.error && data.error.includes('over_scan')) {
+                    showNotification('error', 'Gagal: Over Scan!', data.error, 0, true);
+                } else {
+                    showNotification('error', 'Gagal', data.error || 'Terjadi kesalahan.');
+                }
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);
+            playSound('error');
+            showNotification('error', 'Error', 'Terjadi kesalahan koneksi.', 0, true);
+        } finally {
+            isProcessingQtyUpdate = false; // Reset processing flag
+        }
+    }
+
+    function saveDetailModalQtyInput() {
+        if (!barcodeScannedInModal) return;
+        let val = parseInt(detailModalJumlahAmbilInput.value) || 0;
+        const maxJumlah = parseInt(detailModalJumlahTotal.textContent);
+        if (val < 0) val = 0;
+        if (val > maxJumlah) val = maxJumlah;
+        detailModalJumlahAmbilInput.value = val;
+        autoSaveDetailModalJumlahAmbil(val).then(() => {
+            // Close modal after successful save
+            const modal = bootstrap.Modal.getInstance(productDetailModal);
+            if (modal) {
+                modal.hide();
+            }
+            // Refresh page after modal is closed
+            setTimeout(() => {
+                window.location.reload();
+            }, 500); // Small delay to ensure modal is fully closed
+        });
+        detailModalJumlahAmbilInput.blur();
+    }
+
+
+    // --- 5. EVENT LISTENERS ---
+    barcodeSubmitBtn.addEventListener('click', () => {
+        handleBarcodeSubmit(barcodeInput.value.trim()); // Call with value from input
+        barcodeInput.value = ''; // Clear input field
+        // No need to focus here, global listener handles focus
+    });
+
+    barcodeInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleBarcodeSubmit(barcodeInput.value.trim()); // Call with value from input
+            barcodeInput.value = ''; // Clear input field
+            // No need to focus here, global listener handles focus
+        }
+    });
+
+    // Listener for status filter buttons
+    if (statusFilterButtons) {
+        statusFilterButtons.addEventListener('click', (e) => {
+            const button = e.target.closest('button[data-filter]');
+            if (!button) return;
+
+            statusFilterButtons.querySelectorAll('button').forEach(btn => {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-outline-primary');
+            });
+            button.classList.remove('btn-outline-primary');
+            button.classList.add('btn-primary');
+            
+            currentStatusFilter = button.dataset.filter;
+            applyFilterAndSearch();
+        });
+    }
+    
+    // Listener for sticky search bar at the bottom
+    const bottomSearchBar = document.getElementById('stickySearchInput');
+    if (bottomSearchBar) {
+      bottomSearchBar.addEventListener('input', applyFilterAndSearch);
+    }
+
+    // NEW: Listeners for showing/hiding the search input
+    const stickySearchBtn = document.getElementById('stickySearchBtn');
+    const stickySearchContainer = document.getElementById('stickySearchContainer');
+    const closeSearchBtn = document.getElementById('closeSearchBtn');
+
+    if (stickySearchBtn && stickySearchContainer) {
+        stickySearchBtn.addEventListener('click', () => {
+            stickySearchContainer.style.display = 'flex';
+            bottomSearchBar.focus();
+        });
+    }
+
+    if (closeSearchBtn && stickySearchContainer && bottomSearchBar) {
+        closeSearchBtn.addEventListener('click', () => {
+            stickySearchContainer.style.display = 'none';
+            bottomSearchBar.value = '';
+            applyFilterAndSearch();
+        });
+    }
+  
+    // NEW: Listener for brand filter modal
+    if (brandListForFilter) {
+        brandListForFilter.addEventListener('click', e => {
+            const button = e.target.closest('button[data-brand]'); 
+            if (button) {
+                currentBrandFilter = button.dataset.brand;
+                applyFilterAndSearch();
+                updateFilterDisplay(); // NEW: Use the new function
+                updateFilterButtonStates(); // NEW: Update button active states
+                const modalEl = document.getElementById('brandFilterModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) {
+                    modal.hide();
+                }
+            }
+        });
+    }
+
+    // NEW: Listener for Rak filter modal
+    if (rakListForFilter) {
+        rakListForFilter.addEventListener('click', e => {
+            const button = e.target.closest('button[data-rak]');
+            if (button) {
+                currentRakFilter = button.dataset.rak;
+                applyFilterAndSearch();
+                updateFilterDisplay(); // NEW: Use the new function
+                updateFilterButtonStates(); // NEW: Update button active states
+                const modalEl = document.getElementById('rakFilterModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) {
+                    modal.hide();
+                }
+            }
+        });
+    }
+
+    // NEW: Listener for clearing the brand filter
+    if (clearFilterBtn) {
+        clearFilterBtn.addEventListener('click', () => {
+            currentBrandFilter = '';
+            currentRakFilter = ''; // NEW: Clear rak filter
+            applyFilterAndSearch();
+            updateFilterDisplay(); // NEW: Use the new function
+            updateFilterButtonStates(); // NEW: Update button active states
+        });
+    }
+
+    // NEW: Listener for FAB Reload button to focus on barcode input
+    const fabReloadBtn = document.getElementById('fabReloadBtn');
+    if (fabReloadBtn) {
+        fabReloadBtn.addEventListener('click', () => {
+            // MODIFIED: Only set focus, do NOT reload the page
+            barcodeInput.focus();
+        });
+    }
+
+    // MODIFIED: Listener for sort button
+    if (stickySortBtn) {
+        const sortIcon = stickySortBtn.querySelector('i');
+
+        function updateSortButtonUI() {
+            stickySortBtn.classList.remove('btn-warning', 'btn-primary', 'btn-info', 'btn-outline-warning');
+
+            if (currentSortType === 'default') {
+                stickySortBtn.classList.add('btn-outline-warning');
+                sortIcon.className = 'bi bi-sort-down-alt';
+            } else if (currentSortType === 'one_count_desc') {
+                stickySortBtn.classList.add('btn-warning');
+                sortIcon.className = 'bi bi-sort-numeric-down-alt';
+            } else if (currentSortType === 'brand_asc') {
+                stickySortBtn.classList.add('btn-primary');
+                sortIcon.className = 'bi bi-shop';
+            } else if (currentSortType === 'nama_produk_asc') {
+                stickySortBtn.classList.add('btn-info');
+                sortIcon.className = 'bi bi-sort-alpha-down';
+            }
+        }
+
+        stickySortBtn.addEventListener('click', () => {
+            if (currentSortType === 'default') {
+                currentSortType = 'one_count_desc';
+            } else if (currentSortType === 'one_count_desc') {
+                currentSortType = 'brand_asc';
+            } else if (currentSortType === 'brand_asc') {
+                currentSortType = 'nama_produk_asc';
+            } else {
+                currentSortType = 'default';
+            }
+            updateSortButtonUI();
+            applyFilterAndSearch();
+        });
+
+        updateSortButtonUI();
+    }
+
+    // NEW: Listener for History button to show scan history modal
+    if (historyBtnV2 && scanHistoryModal) {
+        historyBtnV2.addEventListener('click', () => {
+            populateScanHistoryModal();
+            const modal = new bootstrap.Modal(scanHistoryModal);
+            modal.show();
+        });
+    }
+
+    // NEW: Event Listener for Product Detail Modal to open and populate
+    if (productDetailModal) {
+        productDetailModal.addEventListener('show.bs.modal', function(event) {
+            const triggerElement = event.relatedTarget; // The element that triggered the modal
+            const itemId = triggerElement.dataset.itemId;
+            const itemData = details.find(item => item.id == itemId); // Find the item data
+
+            if (itemData) {
+                populateProductDetailModal(itemData);
+            }
+        });
+
+        // Event listeners for barcode scan within modal
+        detailModalEnterBarcodeBtn.addEventListener('click', handleDetailModalBarcodeScan);
+        detailModalScanBarcodeInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleDetailModalBarcodeScan();
+            }
+        });
+
+        // Event listeners for quantity controls within modal - CLEAN VERSION
+        
+        // Simple Minus Button - Only decrease number by 1
+        detailModalBtnMinus.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (!barcodeScannedInModal) {
+                console.log('Barcode not scanned yet');
+                return;
+            }
+            
+            let currentValue = parseInt(detailModalJumlahAmbilInput.value) || 0;
+            if (currentValue > 0) {
+                detailModalJumlahAmbilInput.value = currentValue - 1;
+                console.log('Minus clicked, new value:', detailModalJumlahAmbilInput.value);
+            }
+        });
+        
+        // Simple Plus Button - Only increase number by 1
+        detailModalBtnPlus.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (!barcodeScannedInModal) {
+                console.log('Barcode not scanned yet');
+                return;
+            }
+            
+            let currentValue = parseInt(detailModalJumlahAmbilInput.value) || 0;
+            let maxValue = parseInt(detailModalJumlahTotal.textContent) || 0;
+            
+            if (currentValue < maxValue) {
+                detailModalJumlahAmbilInput.value = currentValue + 1;
+                console.log('Plus clicked, new value:', detailModalJumlahAmbilInput.value);
+            }
+        });
+        
+        // Simple Max Button - Set to maximum value
+        detailModalBtnMax.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (!barcodeScannedInModal) {
+                console.log('Barcode not scanned yet');
+                return;
+            }
+            
+            let maxValue = parseInt(detailModalJumlahTotal.textContent) || 0;
+            detailModalJumlahAmbilInput.value = maxValue;
+            console.log('Max clicked, set to:', maxValue);
+        });
+
+        detailModalEnterQtyBtn.addEventListener('click', saveDetailModalQtyInput);
+        // REMOVED: Enter key event listener to prevent double fetch
+        // detailModalJumlahAmbilInput.addEventListener('keydown', function(e) {
+        //     if (e.key === 'Enter') {
+        //         saveDetailModalQtyInput();
+        //     }
+        // });
+        // REMOVED: detailModalJumlahAmbilInput.addEventListener('blur', saveDetailModalQtyInput);
+
+        // Photo upload/delete event listeners (requires backend AJAX endpoint support)
+        if (triggerDetailModalChangePhotoBtn) {
+            triggerDetailModalChangePhotoBtn.addEventListener('click', function() {
+                detailModalUploadPhotoInput.click();
+            });
+        }
+        if (detailModalUploadPhotoInput && detailModalUploadForm) {
+            detailModalUploadPhotoInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    // This will submit the form and cause a page reload.
+                    // For a seamless modal experience, this needs to be an AJAX upload.
+                    detailModalUploadForm.submit(); 
+                }
+            });
+        }
+        if (deleteDetailModalPhotoBtn && detailModalDeletePhotoForm) {
+            deleteDetailModalPhotoBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Yakin?',
+                    text: "Anda tidak bisa mengembalikan ini!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, hapus!',
+                    cancelButtonText: 'Batal',
+                    customClass: { popup: 'swal2-border-radius', title: 'swal2-title-bold', confirmButton: 'swal2-confirm-button-red' }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // This will submit the form and cause a page reload.
+                        // For a seamless modal experience, this needs to be an AJAX delete.
+                        detailModalDeletePhotoForm.submit();
+                    }
+                });
+            });
+        }
+    }
+
+
+    // --- 6. INITIALIZATION ---
+    // NEW: Load scan history from localStorage on page load
+    const storedScanHistory = localStorage.getItem('scanHistory');
+    if (storedScanHistory) {
+        try {
+            scanHistoryLog = JSON.parse(storedScanHistory);
+        } catch (e) {
+            console.error("Failed to parse scan history from localStorage:", e);
+            scanHistoryLog = []; // Reset if parsing fails
+        }
+    }
+
+    // GLOBAL BARCODE SCANNER LISTENER - ENABLED FOR AUTO-INPUT
+    // This listener captures barcode scanner input even when input is not focused
+    document.addEventListener('keydown', function(e) {
+        // Only process if not in input field (to avoid conflicts with manual typing)
+        const activeTagName = document.activeElement.tagName;
+        const isInputField = activeTagName === 'INPUT' || activeTagName === 'TEXTAREA' || activeTagName === 'SELECT';
+        
+        // If user is manually typing in input field, let them handle it
+        if (isInputField) {
+            return;
+        }
+
+        // Capture printable characters (barcode scanner input)
+        if (e.key.length === 1) {
+            barcodeBuffer += e.key;
+            // Show scanning indicator
+            if (barcodeScanIndicator && barcodeScanText) {
+                barcodeScanIndicator.style.display = 'block';
+                barcodeScanText.textContent = `Scanning: ${barcodeBuffer}`;
+            }
+        } else if (e.key === 'Enter') {
+            // When Enter is pressed after characters, assume it's from scanner
+            clearTimeout(barcodeTimeout);
+            if (barcodeBuffer.length > 0) {
+                e.preventDefault(); // Prevent default Enter behavior
+                
+                // Check if user is logged in
+                if (!isLoggedIn) {
+                    playSound('error');
+                    showNotification('error', 'Akses Ditolak', 'Anda harus login terlebih dahulu untuk melakukan scan barcode.', 0, true);
+                    barcodeBuffer = '';
+                    return;
+                }
+                
+                // Determine which input to use based on current state
+                const currentModal = document.querySelector('.modal.show');
+                if (currentModal && currentModal.id === 'productDetailModal') {
+                    // If product detail modal is open, use its barcode input
+                    detailModalScanBarcodeInput.value = barcodeBuffer;
+                    handleDetailModalBarcodeScan();
+                } else {
+                    // Check if product exists in rak when no filter is active
+                    if (!currentRakFilter || currentRakFilter === '') {
+                        const productInDetails = details.find(item => item.barcode === barcodeBuffer);
+                        if (productInDetails) {
+                            const rakInfo = getRakInfoForProduct(productInDetails.sku);
+                            console.log('DEBUG GLOBAL: Product SKU:', productInDetails.sku);
+                            console.log('DEBUG GLOBAL: Rak Info:', rakInfo);
+                            if (rakInfo && rakInfo.length > 0) {
+                                // Product exists in rak, prevent regular scanning
+                                playSound('error');
+                                const rakList = rakInfo.map(rak => `${rak.kode_rak} (${rak.quantity})`).join(' • ');
+                                showNotification('error', 'Produk Ada di Rak!', 
+                                    `Produk ini tersedia di rak: <b>${rakList}</b><br><br>Silakan gunakan filter rak terlebih dahulu untuk scan produk ini.`, 0, true);
+                                barcodeBuffer = '';
+                                return;
+                            }
+                        }
+                    }
+                    
+                    // Otherwise, use the main barcode input
+                    barcodeInput.value = barcodeBuffer;
+                    handleBarcodeSubmit(barcodeBuffer);
+                }
+                
+                barcodeBuffer = ''; // Clear buffer after processing
+                // Hide scanning indicator
+                if (barcodeScanIndicator) {
+                    barcodeScanIndicator.style.display = 'none';
+                }
+            }
+        }
+
+        // Reset buffer if no key is pressed for SCAN_INTERVAL
+        clearTimeout(barcodeTimeout);
+        barcodeTimeout = setTimeout(() => {
+            barcodeBuffer = '';
+            // Hide scanning indicator when buffer times out
+            if (barcodeScanIndicator) {
+                barcodeScanIndicator.style.display = 'none';
+            }
+        }, SCAN_INTERVAL);
+    });
+
+
+    // Initial setup
+    populateBrandFilterModal();
+    populateRakFilterModal(); // NEW: Populate rak filter
+    applyFilterAndSearch();
+    recalculateAndDisplayCounts();
+    updateFilterButtonStates(); // NEW: Initialize filter button states
+    
+    // Aktifkan tombol pending secara default
+    const pendingButton = document.querySelector('#statusFilterButtons button[data-filter="pending"]');
+    if (pendingButton) {
+        pendingButton.classList.remove('btn-outline-primary');
+        pendingButton.classList.add('btn-primary');
+        // Pastikan tombol lain tidak aktif
+        statusFilterButtons.querySelectorAll('button[data-filter]:not([data-filter="pending"])').forEach(btn => {
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-outline-primary');
+        });
+    }
+    
+    // NEW: Show the item list after initial rendering
+    if (itemListActual) {
+        itemListActual.style.display = 'block';
+    }
+    
+    // Focus on barcode input after everything is loaded
+    setTimeout(() => {
+        if (barcodeInput) {
+            barcodeInput.focus();
+        }
+    }, 100);
+});
+</script>
+{% endblock %} 

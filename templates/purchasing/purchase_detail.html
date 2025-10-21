@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Detail Purchase{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-cart-check"></i> Detail Purchase</h2>
+    <div>
+        <a href="{% url 'purchasing:purchase_list' %}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
+        <a href="{% url 'purchasing:purchase_print' purchase.id %}" class="btn btn-info" target="_blank"><i class="bi bi-printer"></i> Print</a>
+        {% if purchase.status == 'pending' %}
+        <a href="{% url 'purchasing:purchase_edit' purchase.id %}" class="btn btn-warning"><i class="bi bi-pencil"></i> Edit</a>
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#receiveModal">
+            <i class="bi bi-check-circle"></i> Receive Purchase
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Informasi Purchase</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-3"><strong>Nomor Purchase:</strong></div>
+                    <div class="col-md-9">{{ purchase.nomor_purchase }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-3"><strong>Supplier:</strong></div>
+                    <div class="col-md-9">{{ purchase.supplier.nama_supplier }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-3"><strong>Tanggal Purchase:</strong></div>
+                    <div class="col-md-9">{{ purchase.tanggal_purchase|date:"d M Y, H:i" }}</div>
+                </div>
+                {% if purchase.po %}
+                <div class="row mb-3">
+                    <div class="col-md-3"><strong>PO Reference:</strong></div>
+                    <div class="col-md-9">{{ purchase.po.nomor_po }}</div>
+                </div>
+                {% endif %}
+                <div class="row mb-3">
+                    <div class="col-md-3"><strong>Status:</strong></div>
+                    <div class="col-md-9">
+                        {% if purchase.status == 'pending' %}
+                        <span class="badge bg-warning">Pending</span>
+                        {% elif purchase.status == 'received' %}
+                        <span class="badge bg-success">Received</span>
+                        {% elif purchase.status == 'cancelled' %}
+                        <span class="badge bg-danger">Cancelled</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-3"><strong>Total Amount:</strong></div>
+                    <div class="col-md-9"><h4 class="text-success mb-0">Rp {{ purchase.total_amount|floatformat:0|intcomma }}</h4></div>
+                </div>
+                {% if purchase.notes %}
+                <div class="row mb-3">
+                    <div class="col-md-3"><strong>Catatan:</strong></div>
+                    <div class="col-md-9">{{ purchase.notes }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Detail Item</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:120px; text-align:center;">Photo</th>
+                                <th style="width:150px; text-align:center;">Kode Produk</th>
+                                <th style="width:300px; text-align:center;">Detail Produk</th>
+                                <th style="width:80px; text-align:center;">Qty</th>
+                                <th style="width:130px; text-align:center;">Harga Beli</th>
+                                <th style="width:130px; text-align:center;">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr>
+                                <td style="vertical-align:middle; text-align:center;">
+                                    {% if item.product.photo and item.product.photo.name %}
+                                    <div class="product-photo-zoom" data-photo-url="{{ item.product.photo.url }}">
+                                        <img src="{{ item.product.photo.url }}" alt="{{ item.product.nama_produk }}" style="width:90px;height:90px;object-fit:cover;border-radius:4px;">
+                                        <div class="magnifier-icon">
+                                            <i class="bi bi-zoom-in"></i>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="bg-light d-flex align-items-center justify-content-center" style="width:90px;height:90px;border-radius:4px;">
+                                        <i class="bi bi-file-image text-secondary" style="font-size:32px;"></i>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td style="vertical-align:middle;">
+                                    <div class="sku-row">{{ item.product.sku }}</div>
+                                    <div class="barcode-row">{{ item.product.barcode|default:"-" }}</div>
+                                </td>
+                                <td style="vertical-align:middle;">
+                                    <div class="nama-row">{{ item.product.nama_produk }}</div>
+                                    <div class="variant-brand-row">
+                                        <span class="variant-text">{{ item.product.variant_produk|default:"" }}</span>
+                                        <span class="brand-text">{{ item.product.brand|default:"" }}</span>
+                                    </div>
+                                </td>
+                                <td style="vertical-align:middle; text-align:center;">{{ item.quantity }}</td>
+                                <td style="vertical-align:middle; text-align:right;">Rp {{ item.harga_beli|floatformat:0|intcomma }}</td>
+                                <td style="vertical-align:middle; text-align:right;"><strong>Rp {{ item.subtotal|floatformat:0|intcomma }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <th colspan="5" class="text-end">Total:</th>
+                                <th class="text-end">Rp {{ purchase.total_amount|floatformat:0|intcomma }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Tracking</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Created By:</strong><br>
+                    {{ purchase.created_by.username|default:"-" }}<br>
+                    <small class="text-muted">{{ purchase.created_at|date:"d M Y, H:i" }}</small>
+                </div>
+                {% if purchase.received_by %}
+                <div class="mb-3">
+                    <strong>Received By:</strong><br>
+                    {{ purchase.received_by.username }}<br>
+                    <small class="text-muted">{{ purchase.received_at|date:"d M Y, H:i" }}</small>
+                </div>
+                {% endif %}
+                <div class="mb-3">
+                    <strong>Updated At:</strong><br>
+                    <small class="text-muted">{{ purchase.updated_at|date:"d M Y, H:i" }}</small>
+                </div>
+            </div>
+        </div>
+
+        {% if purchase.status == 'received' and purchase.inbound_set.exists %}
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Inbound Terkait</h5>
+            </div>
+            <div class="card-body">
+                {% for inbound in purchase.inbound_set.all %}
+                <p class="mb-2">
+                    <a href="{% url 'inventory:inbound_detail' inbound.id %}" class="btn btn-sm btn-outline-info">
+                        {{ inbound.nomor_inbound }}
+                    </a>
+                </p>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">History</h5>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                {% for h in history %}
+                <div class="mb-2 pb-2 border-bottom">
+                    <strong>{{ h.get_action_display }}</strong><br>
+                    <small class="text-muted">
+                        {{ h.user.username }} - {{ h.timestamp|date:"d M Y, H:i" }}
+                    </small>
+                    {% if h.notes %}
+                    <br><small>{{ h.notes }}</small>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <p class="text-muted">Tidak ada history</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .product-photo-zoom {
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .product-photo-zoom:hover {
+        transform: scale(1.05);
+    }
+    .magnifier-icon {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+    }
+    .sku-row {
+        font-weight: bold;
+        font-size: 0.95rem;
+        color: #2c3e50;
+    }
+    .barcode-row {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        margin-top: 2px;
+    }
+    .nama-row {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #2c3e50;
+        margin-bottom: 4px;
+    }
+    .variant-brand-row {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+    }
+    .variant-text {
+        display: block;
+    }
+    .brand-text {
+        display: block;
+        font-weight: 500;
+        color: #3498db;
+    }
+</style>
+
+<script>
+    // Photo zoom modal
+    $(document).on('click', '.product-photo-zoom', function() {
+        const photoUrl = $(this).data('photo-url');
+        const modalHtml = `
+            <div class="modal fade" id="photoModal" tabindex="-1" aria-labelledby="photoModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="photoModalLabel">Photo Produk</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <img src="${photoUrl}" class="img-fluid" alt="Photo Produk">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        $('body').append(modalHtml);
+        $('#photoModal').modal('show');
+        $('#photoModal').on('hidden.bs.modal', function() {
+            $(this).remove();
+        });
+    });
+</script>
+
+<!-- Receive Confirmation Modal -->
+<div class="modal fade" id="receiveModal" tabindex="-1" aria-labelledby="receiveModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="receiveModalLabel">
+                    <i class="bi bi-check-circle"></i> Confirm Receive Purchase
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> <strong>Informasi Purchase:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li><strong>Nomor:</strong> {{ purchase.nomor_purchase }}</li>
+                        <li><strong>Supplier:</strong> {{ purchase.supplier.nama_supplier }}</li>
+                        <li><strong>Total Amount:</strong> Rp {{ purchase.total_amount|floatformat:0 }}</li>
+                        <li><strong>Items:</strong> {{ purchase.items.count }} produk</li>
+                    </ul>
+                </div>
+                <p class="mb-0">
+                    <strong>Apakah Anda yakin ingin menerima purchase ini?</strong><br>
+                    Setelah di-receive, purchase akan:
+                </p>
+                <ul class="mt-2">
+                    <li>Status berubah menjadi "Received"</li>
+                    <li>Stock akan di-update</li>
+                    <li>Putaway akan dibuat</li>
+                    <li>Stock card entry akan dibuat</li>
+                </ul>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Batal
+                </button>
+                <form method="post" action="{% url 'purchasing:purchase_receive' purchase.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Ya, Receive Purchase
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

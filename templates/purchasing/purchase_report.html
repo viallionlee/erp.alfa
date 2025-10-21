@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Purchase Report{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="bi bi-file-earmark-bar-graph"></i> Purchase Report</h2>
+    <a href="{% url 'purchasing:purchase_list' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Purchase List
+    </a>
+</div>
+
+    <div class="card shadow-lg border-0 mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-funnel"></i> Filter Report</h5>
+    </div>
+    <div class="card-body">
+        <form id="reportForm">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Date From <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="date_from" name="date_from" value="{{ date_from_default }}" required>
+                </div>
+                
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Date To <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" id="date_to" name="date_to" value="{{ date_to_default }}" required>
+                </div>
+                
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Supplier</label>
+                    <select class="form-select" id="supplier_id" name="supplier_id">
+                        <option value="">All Suppliers</option>
+                        {% for supplier in suppliers %}
+                        <option value="{{ supplier.id }}">{{ supplier.nama_supplier }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Report Type</label>
+                    <select class="form-select" id="report_type" name="report_type">
+                        <option value="detail">Detail (with SKU)</option>
+                        <option value="summary">Summary (Total Only)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <button type="button" class="btn btn-primary me-2" onclick="loadPreview()">
+                        <i class="bi bi-eye"></i> Preview Data
+                    </button>
+                    <button type="button" class="btn btn-success me-2" onclick="generateExcel()">
+                        <i class="bi bi-file-excel"></i> Export to Excel
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="generatePDF()">
+                        <i class="bi bi-file-pdf"></i> Export to PDF
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Preview Section -->
+<div class="card shadow-lg border-0" id="preview-section" style="display: none;">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="bi bi-table"></i> Preview Data</h5>
+    </div>
+    <div class="card-body">
+        <div id="preview-content">
+            <!-- Data akan di-load di sini -->
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 10px;
+    }
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #1e40af;
+        box-shadow: 0 0 0 0.2rem rgba(30, 64, 175, 0.25);
+    }
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+</style>
+
+<script>
+function loadPreview() {
+    const dateFrom = document.getElementById('date_from').value;
+    const dateTo = document.getElementById('date_to').value;
+    const supplierId = document.getElementById('supplier_id').value;
+    const reportType = document.getElementById('report_type').value;
+    
+    if (!dateFrom || !dateTo) {
+        alert('Please select date range!');
+        return;
+    }
+    
+    // Show loading
+    const previewSection = document.getElementById('preview-section');
+    const previewContent = document.getElementById('preview-content');
+    previewSection.style.display = 'block';
+    previewContent.innerHTML = '<div class="text-center"><i class="bi bi-hourglass-split"></i> Loading data...</div>';
+    
+    // Load data via AJAX
+    $.ajax({
+        url: '/purchaseorder/purchase-report/preview/',
+        method: 'GET',
+        data: {
+            date_from: dateFrom,
+            date_to: dateTo,
+            supplier_id: supplierId,
+            report_type: reportType
+        },
+        success: function(response) {
+            previewContent.innerHTML = response.html;
+        },
+        error: function(xhr) {
+            previewContent.innerHTML = '<div class="alert alert-danger">Error loading data. Please try again.</div>';
+        }
+    });
+}
+
+function generateExcel() {
+    const dateFrom = document.getElementById('date_from').value;
+    const dateTo = document.getElementById('date_to').value;
+    const supplierId = document.getElementById('supplier_id').value;
+    const reportType = document.getElementById('report_type').value;
+    
+    if (!dateFrom || !dateTo) {
+        alert('Please select date range!');
+        return;
+    }
+    
+    const url = `/purchaseorder/purchase-report/excel/?date_from=${dateFrom}&date_to=${dateTo}&supplier_id=${supplierId}&report_type=${reportType}`;
+    window.open(url, '_blank');
+}
+
+function generatePDF() {
+    const dateFrom = document.getElementById('date_from').value;
+    const dateTo = document.getElementById('date_to').value;
+    const supplierId = document.getElementById('supplier_id').value;
+    const reportType = document.getElementById('report_type').value;
+    
+    if (!dateFrom || !dateTo) {
+        alert('Please select date range!');
+        return;
+    }
+    
+    const url = `/purchaseorder/purchase-report/pdf/?date_from=${dateFrom}&date_to=${dateTo}&supplier_id=${supplierId}&report_type=${reportType}`;
+    window.open(url, '_blank');
+}
+</script>
+{% endblock %}
+

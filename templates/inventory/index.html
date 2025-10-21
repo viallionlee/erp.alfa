@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+{% block title %}Inventory Stock{% endblock %}
+{% block content %}
+<!-- Menu Cards -->
+<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4 mb-4">
+  
+  <div class="col">
+    <a href="{% url 'inventory:inbound' %}" class="card h-100 text-decoration-none text-reset modern-card">
+      <div class="card-body d-flex flex-row align-items-center p-3" style="height: 90px;">
+        <div class="icon-wrapper me-3 flex-shrink-0">
+          <i class="bi bi-box-arrow-in-down"></i>
+        </div>
+        <div class="text-start">
+          <h6 class="card-title mb-0 fw-bold">Inbound</h6>
+          <small>Kelola barang masuk</small>
+        </div>
+      </div>
+    </a>
+  </div>
+  
+  <div class="col">
+    <a href="{% url 'inventory:stock_card' %}" class="card h-100 text-decoration-none text-reset modern-card">
+      <div class="card-body d-flex flex-row align-items-center p-3" style="height: 90px;">
+        <div class="icon-wrapper me-3 flex-shrink-0">
+          <i class="bi bi-clipboard-data"></i>
+        </div>
+        <div class="text-start">
+          <h6 class="card-title mb-0 fw-bold">Kartu Stok</h6>
+          <small>Riwayat pergerakan</small>
+        </div>
+      </div>
+    </a>
+  </div>
+  
+  <div class="col">
+    <a href="{% url 'inventory:daftar_supplier' %}" class="card h-100 text-decoration-none text-reset modern-card">
+      <div class="card-body d-flex flex-row align-items-center p-3" style="height: 90px;">
+        <div class="icon-wrapper me-3 flex-shrink-0">
+          <i class="bi bi-database"></i>
+        </div>
+        <div class="text-start">
+          <h6 class="card-title mb-0 fw-bold">Database Supplier</h6>
+          <small>Kelola data supplier</small>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col">
+    <a href="{% url 'inventory:export_stock' %}" class="card h-100 text-decoration-none text-reset modern-card">
+      <div class="card-body d-flex flex-row align-items-center p-3" style="height: 90px;">
+        <div class="icon-wrapper me-3 flex-shrink-0">
+          <i class="bi bi-download"></i>
+        </div>
+        <div class="text-start">
+          <h6 class="card-title mb-0 fw-bold">Download Semua Data</h6>
+          <small>Export ke Excel</small>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col">
+    <a href="{% url 'inventory:putaway' %}" class="card h-100 text-decoration-none text-reset modern-card">
+      <div class="card-body d-flex flex-row align-items-center p-3" style="height: 90px;">
+        <div class="icon-wrapper me-3 flex-shrink-0">
+          <i class="bi bi-box-arrow-up"></i>
+        </div>
+        <div class="text-start">
+          <h6 class="card-title mb-0 fw-bold">Daftar Putaway
+            {% if total_putaway_items > 0 %}
+                <span class="badge bg-danger ms-2">{{ total_putaway_items }}</span>
+            {% endif %}
+          </h6>
+          <small>Lihat barang belum masuk rak</small>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<div class="card table-container mb-4">
+    <div class="card-body">
+        <table id="stock-table" class="table table-hover w-100">
+            <thead>
+                <tr>
+                    <th style="width:120px;">SKU</th>
+                    <th style="width:140px;">Barcode</th>
+                    <th style="width:300px;">Nama Produk</th>
+                    <th style="width:120px;">Variant</th>
+                    <th style="width:120px;">Brand</th>
+                    <th style="width:50px;">Quantity</th>
+                    <th style="width:50px;">Quantity Putaway</th>
+                    <th style="width:50px;">Quantity Locked</th>
+                    <th style="width:50px;">Quantity Ready</th>
+                </tr>
+                <tr id="filter-row">
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari SKU" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari Barcode" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari Nama" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari Variant" /></th>
+                    <th>
+                        <select id="brand-filter" class="form-select form-select-sm">
+                            <option value="">Semua Brand</option>
+                        </select>
+                    </th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Qty" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Putaway" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Locked" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Ready" /></th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- DataTables server-side: tbody will be filled by AJAX -->
+            </tbody>
+        </table>
+    </div>
+</div>
+<!-- Modal Import, Export, History (akan diisi JS/HTML berikutnya) -->
+<div id="importModal" class="modal" tabindex="-1"></div>
+<div id="historyModal" class="modal" tabindex="-1"></div>
+<style>
+#stock-table {
+  font-size: 0.88rem;
+}
+#stock-table input.form-control.form-control-sm {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+  height: auto;
+}
+
+/* Modern Card Styling - Subtle Theme */
+.modern-card {
+  border: 1px solid #e2e8f0;
+  border-left-width: 4px;
+  border-radius: 12px;
+  background-color: #fff;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+}
+
+.modern-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.07);
+}
+
+/* Card Theme Colors */
+.col:nth-child(1) .modern-card { border-left-color: #198754; }
+.col:nth-child(2) .modern-card { border-left-color: #dc3545; }
+.col:nth-child(3) .modern-card { border-left-color: #0dcaf0; }
+.col:nth-child(4) .modern-card { border-left-color: #ffc107; }
+.col:nth-child(5) .modern-card { border-left-color: #0d6efd; }
+
+.col:nth-child(1) .icon-wrapper { background-color: #e8f5e9; }
+.col:nth-child(2) .icon-wrapper { background-color: #fde8e8; }
+.col:nth-child(3) .icon-wrapper { background-color: #e1f5fe; }
+.col:nth-child(4) .icon-wrapper { background-color: #fff8e1; }
+.col:nth-child(5) .icon-wrapper { background-color: #e7f1ff; }
+
+.col:nth-child(1) .icon-wrapper i { color: #198754; }
+.col:nth-child(2) .icon-wrapper i { color: #dc3545; }
+.col:nth-child(3) .icon-wrapper i { color: #0dcaf0; }
+.col:nth-child(4) .icon-wrapper i { color: #ffc107; }
+.col:nth-child(5) .icon-wrapper i { color: #0d6efd; }
+
+.icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-wrapper i {
+  font-size: 1.5rem;
+}
+
+.modern-card .card-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: #343a40;
+}
+
+.modern-card small {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  font-weight: 400;
+  color: #6c757d !important;
+}
+
+.modern-card .card-body {
+  position: relative;
+  z-index: 1;
+}
+
+/* Modern Table Styling */
+.table-container {
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.07);
+    border: none;
+    background-color: #fff;
+    padding: 1rem;
+}
+
+#stock-table thead {
+    color: #334155;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+#stock-table thead th {
+    padding: 1rem 1.5rem;
+    border: none;
+    background-color: #f8fafc;
+}
+
+#stock-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+}
+
+#stock-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+#stock-table tbody td {
+    padding: 1rem 1.5rem;
+    vertical-align: middle;
+    color: #475569;
+}
+
+#stock-table.table-hover>tbody>tr:hover {
+    background-color: #f1f5f9;
+    --bs-table-accent-bg: #f1f5f9; /* Override Bootstrap hover color */
+}
+
+#filter-row input.form-control, #brand-filter.form-select {
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    transition: box-shadow 0.2s;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+    height: auto;
+}
+
+#filter-row input.form-control:focus, #brand-filter.form-select:focus {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    border-color: #a5b4fc;
+}
+</style>
+{% endblock %}
+
+{% block extra_script %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css">
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Setup - add a text input to each footer cell
+    $('#stock-table thead #filter-row th').each(function(i) {
+        var title = $(this).text();
+        // If it's a regular input field
+        if ($(this).find('input').length) {
+            $(this).find('input').on('keyup change clear', function() {
+                if (table.column(i).search() !== this.value) {
+                    table.column(i).search(this.value).draw();
+                }
+            });
+        }
+        // If it's a select field
+        if ($(this).find('select').length) {
+            $(this).find('select').on('change', function() {
+                if (table.column(i).search() !== this.value) {
+                    table.column(i).search(this.value).draw();
+                }
+            });
+        }
+    });
+
+    var table = $('#stock-table').DataTable({
+        "processing": true,
+        "serverSide": true,
+        "ajax": "{% url 'inventory:stock_data' %}",
+        "columns": [
+            { "data": "sku" },
+            { "data": "barcode" },
+            { "data": "nama_produk" },
+            { "data": "variant_produk" },
+            { "data": "brand" },
+            { "data": "quantity" },
+            { "data": "quantity_putaway" },
+            { "data": "quantity_locked" },
+            { "data": "quantity_ready" }
+        ],
+        "order": [[2, "asc"]], // Default sort by Nama Produk
+        "pageLength": 25,
+        "lengthMenu": [10, 25, 50, 100, 250],
+        "dom": 'lrtip', // Structure: l-length, r-processing, t-table, i-info, p-pagination
+        "language": {
+            "url": "https://cdn.datatables.net/plug-ins/2.0.8/i18n/id.json"
+        },
+        "searchDelay": 350, // Delay for server-side search
+        "initComplete": function() {
+            // Populate brand filter
+            $.ajax({
+                url: "{% url 'inventory:brand_list' %}",
+                success: function(data) {
+                    var brandFilter = $('#brand-filter');
+                    data.forEach(function(brand) {
+                        brandFilter.append(new Option(brand, brand));
+                    });
+                }
+            });
+        }
+    });
+
+    // Custom global search
+    $('#global-search').on('keyup', function(){
+        table.search(this.value).draw();
+    });
+});
+</script>
+{% endblock %}

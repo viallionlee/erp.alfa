@@ -1,0 +1,396 @@
+{% extends 'base_mobile.html' %}
+{% load static %}
+
+{% block title %}ERP Mobile - Home{% endblock %}
+
+{% block content %}
+<!-- Header dengan tombol logout -->
+<div class="header-container" style="background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 0 0 20px 20px; margin-bottom: 2rem; padding: 1.5rem; box-shadow: var(--shadow-soft);">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-1 fw-bold text-dark">ERP Mobile</h5>
+            <small class="text-muted">{{ user.get_full_name|default:user.username }}</small>
+        </div>
+        <a href="{% url 'logout' %}" class="btn btn-modern-primary btn-sm">
+            <i class="bi bi-box-arrow-right me-1"></i>Logout
+        </a>
+    </div>
+</div>
+
+<div class="container-fluid px-3" style="padding-bottom: 120px;">
+    <h3 class="text-center mb-4 text-white fw-bold">Selamat Datang di ERP Mobile</h3>
+    
+    <!-- Fulfillment Section -->
+    <div class="section-title mb-3">
+        <h6 class="text-white fw-bold mb-2">📦 FULFILLMENT</h6>
+    </div>
+    <div class="row g-3 mb-4">
+        {% if perms.fullfilment.view_mobile_batchlist %}
+        <div class="col-6">
+            <div class="modern-card h-100" style="cursor:pointer;" onclick="window.location.href='{% url 'fullfilment_index' %}'">
+                <div class="card-body text-center p-3">
+                    <div class="icon-circle icon-products mb-3">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <h6 class="card-title fw-bold">Batchlist</h6>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if perms.fullfilment.view_mobile_returnlist or perms.fullfilment.view_desktop_returnlist %}
+        <div class="col-6">
+            <div class="modern-card h-100" style="cursor:pointer;" onclick="window.location.href='{% url 'returnlist_dashboard' %}'">
+                <div class="card-body text-center p-3">
+                    <div class="icon-circle icon-return mb-3">
+                        <i class="bi bi-arrow-return-left"></i>
+                    </div>
+                    <h6 class="card-title fw-bold">Return List</h6>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Shipping List - Pindahan dari Scan Operations -->
+        {% if perms.fullfilment.view_mobile_shipping_module %}
+        <div class="col-6">
+            <div class="modern-card h-100" style="cursor:pointer;" onclick="window.location.href='{% url 'order_shipping_list' %}'">
+                <div class="card-body text-center p-3">
+                    <div class="icon-circle icon-shipping mb-3">
+                        <i class="bi bi-truck-flatbed"></i>
+                    </div>
+                    <h6 class="card-title fw-bold">Order Shipping List</h6>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Shipping History - Pindahan dari Scan Operations -->
+        {% if perms.fullfilment.view_mobile_shipping_module %}
+        <div class="col-6">
+            <div class="modern-card h-100" style="cursor:pointer;" onclick="window.location.href='{% url 'shipping_history' %}'">
+                <div class="card-body text-center p-3">
+                    <div class="icon-circle icon-shipping mb-3">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <h6 class="card-title fw-bold">Shipping History</h6>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Order Picking List - Mobile Permission -->
+        {% if perms.fullfilment.view_mobile_picking_module %}
+        <div class="col-6">
+            <div class="modern-card h-100" style="cursor:pointer;" onclick="window.location.href='{% url 'scanpicking_list' %}'">
+                <div class="card-body text-center p-3">
+                    <div class="icon-circle icon-orders mb-3">
+                        <i class="bi bi-list-check"></i>
+                    </div>
+                    <h6 class="card-title fw-bold">Order Picking List</h6>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Picking History - Mobile Permission -->
+        {% if perms.fullfilment.view_mobile_picking_module %}
+        <div class="col-6">
+            <div class="modern-card h-100" style="cursor:pointer;" onclick="window.location.href='{% url 'scanpicking_history' %}'">
+                <div class="card-body text-center p-3">
+                    <div class="icon-circle icon-orders mb-3">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <h6 class="card-title fw-bold">Picking History</h6>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Inventory Section -->
+    {% if perms.inventory.view_stock or perms.inventory.view_inbound or perms.inventory.view_rak or perms.inventory.view_rakopnamesession %}
+    <div class="section-title mb-3">
+        <h6 class="text-white fw-bold mb-2">📋 INVENTORY</h6>
+    </div>
+    <div class="row g-3 mb-4">
+        {% if perms.inventory.view_stock %}
+        <div class="col-6">
+            <div class="modern-card h-100" style="cursor:pointer;" onclick="window.location.href='{% url 'inventory:mobile_inventory' %}'">
+                <div class="card-body text-center p-3">
+                    <div class="icon-circle icon-inventory mb-3">
+                        <i class="bi bi-gear-fill"></i>
+                    </div>
+                    <h6 class="card-title fw-bold">Inventory Management</h6>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if perms.inventory.view_inbound %}
+        <div class="col-6">
+            <div class="modern-card h-100" style="cursor:pointer;" onclick="window.location.href='{% url 'inventory:inbound' %}'">
+                <div class="card-body text-center p-3">
+                    <div class="icon-circle icon-inbound mb-3">
+                        <i class="bi bi-box-arrow-in-down"></i>
+                    </div>
+                    <h6 class="card-title fw-bold">Inbound</h6>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if perms.inventory.view_stock %}
+        <div class="col-6">
+            <div class="modern-card h-100" style="cursor:pointer;" onclick="window.location.href='{% url 'inventory:putaway' %}'">
+                <div class="card-body text-center p-3">
+                    <div class="icon-circle icon-putaway mb-3">
+                        <i class="bi bi-archive"></i>
+                    </div>
+                    <h6 class="card-title fw-bold">Putaway</h6>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if perms.inventory.view_rak %}
+        <div class="col-6">
+            <div class="modern-card h-100" style="cursor:pointer;" onclick="window.location.href='{% url 'inventory:rak_stock' %}'">
+                <div class="card-body text-center p-3">
+                    <div class="icon-circle icon-stock mb-3">
+                        <i class="bi bi-boxes"></i>
+                    </div>
+                    <h6 class="card-title fw-bold">Stock Rak</h6>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if perms.inventory.view_rakopnamesession %}
+        <div class="col-6">
+            <div class="modern-card h-100" style="cursor:pointer;" onclick="window.location.href='{% url 'inventory:opname_rak_list' %}'">
+                <div class="card-body text-center p-3">
+                    <div class="icon-circle icon-opname mb-3">
+                        <i class="bi bi-clipboard-check"></i>
+                    </div>
+                    <h6 class="card-title fw-bold">Opname Rak</h6>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if perms.inventory.view_rakopnamesession %}
+        <div class="col-6">
+            <div class="modern-card h-100" style="cursor:pointer;" onclick="window.location.href='{% url 'inventory:full_opname_list' %}'">
+                <div class="card-body text-center p-3">
+                    <div class="icon-circle icon-opname mb-3">
+                        <i class="bi bi-clipboard-data"></i>
+                    </div>
+                    <h6 class="card-title fw-bold">Full Opname Rak</h6>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <!-- Returns & Cancellations Section -->
+    {% if perms.fullfilment.view_mobile_returnlist or perms.fullfilment.view_desktop_returnlist or perms.fullfilment.view_ordercancellog %}
+    <div class="section-title mb-3">
+        <h6 class="text-white fw-bold mb-2">📋 RETURNS & CANCELLATIONS</h6>
+    </div>
+    <div class="row g-3 mb-4">
+        {% if perms.fullfilment.view_mobile_returnlist or perms.fullfilment.view_desktop_returnlist %}
+        <div class="col-6">
+            <div class="modern-card h-100" style="cursor:pointer;" onclick="window.location.href='{% url 'returnlist_dashboard' %}'">
+                <div class="card-body text-center p-3">
+                    <div class="icon-circle icon-return mb-3">
+                        <i class="bi bi-archive"></i>
+                    </div>
+                    <h6 class="card-title fw-bold">Return List</h6>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if perms.fullfilment.view_ordercancellog %}
+        <div class="col-6">
+            <div class="modern-card h-100" style="cursor:pointer;" onclick="window.location.href='{% url 'order_cancel_log_view' %}'">
+                <div class="card-body text-center p-3">
+                    <div class="icon-circle icon-cancel mb-3">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                    <h6 class="card-title fw-bold">Order Cancel Log</h6>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Sticky Bar Bottom - Scan Operations -->
+{% if perms.fullfilment.view_mobile_picking_module or perms.fullfilment.view_mobile_packing_module or perms.fullfilment.view_mobile_shipping_module %}
+<div id="sticky-scan-bar" style="position:fixed;bottom:0;left:0;width:100vw;z-index:1000;background:#fff;border-top:2px solid #667eea;box-shadow:0 -4px 20px rgba(0,0,0,0.15);padding:0.75rem 1rem;">
+    <div style="max-width:480px;margin:0 auto;display:flex;gap:0.75rem;justify-content:center;align-items:center;">
+        {% if perms.fullfilment.view_mobile_picking_module %}
+        <button onclick="window.location.href='{% url 'scanpicking_index' %}'" class="btn-scan-operation" style="flex:1;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);border:none;border-radius:12px;padding:0.75rem 0.5rem;color:white;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:0.25rem;box-shadow:0 2px 8px rgba(102,126,234,0.3);transition:all 0.2s ease;">
+            <i class="bi bi-upc-scan" style="font-size:1.5rem;"></i>
+            <span style="font-size:0.75rem;">PICKING</span>
+        </button>
+        {% endif %}
+        
+        {% if perms.fullfilment.view_mobile_packing_module %}
+        <button onclick="window.location.href='{% url 'scanpacking' %}'" class="btn-scan-operation" style="flex:1;background:linear-gradient(135deg, #6f42c1 0%, #9b59b6 100%);border:none;border-radius:12px;padding:0.75rem 0.5rem;color:white;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:0.25rem;box-shadow:0 2px 8px rgba(111,66,193,0.3);transition:all 0.2s ease;">
+            <i class="bi bi-bag-check" style="font-size:1.5rem;"></i>
+            <span style="font-size:0.75rem;">PACKING</span>
+        </button>
+        {% endif %}
+        
+        {% if perms.fullfilment.view_mobile_shipping_module %}
+        <button onclick="window.location.href='{% url 'scanshipping' %}'" class="btn-scan-operation" style="flex:1;background:linear-gradient(135deg, #fd7e14 0%, #ff922b 100%);border:none;border-radius:12px;padding:0.75rem 0.5rem;color:white;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:0.25rem;box-shadow:0 2px 8px rgba(253,126,20,0.3);transition:all 0.2s ease;">
+            <i class="bi bi-truck" style="font-size:1.5rem;"></i>
+            <span style="font-size:0.75rem;">SHIPPING</span>
+        </button>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_script %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --glass-bg: rgba(255, 255, 255, 0.95);
+    --glass-blur: blur(10px);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    --border-radius: 20px;
+    --shadow-soft: 0 4px 15px rgba(0,0,0,0.1);
+    --shadow-hover: 0 6px 20px rgba(102, 126, 234, 0.3);
+}
+
+body {
+    background: var(--primary-gradient);
+    min-height: 100vh;
+}
+
+.header-container {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border-radius: 0 0 20px 20px;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.section-title {
+    border-left: 4px solid rgba(255,255,255,0.8);
+    padding-left: 1rem;
+    margin-top: 1rem;
+}
+
+.btn-modern-primary {
+    background: var(--primary-gradient);
+    border: none;
+    border-radius: 12px;
+    padding: 8px 16px;
+    font-weight: 600;
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease;
+}
+
+.btn-modern-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    color: white;
+}
+
+.modern-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-soft);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.modern-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: var(--shadow-hover);
+}
+
+.icon-circle {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 12px auto;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.icon-products { background: linear-gradient(135deg, #e7f1ff 0%, #dbeafe 100%); color: #0d6efd; }
+.icon-orders { background: linear-gradient(135deg, #fff3cd 0%, #fef3c7 100%); color: #ffc107; }
+.icon-fulfillment { background: linear-gradient(135deg, #e0f7fa 0%, #ccfbf1 100%); color: #17a2b8; }
+.icon-stock { background: linear-gradient(135deg, #eafbe7 0%, #dcfce7 100%); color: #198754; }
+.icon-dashboard { background: linear-gradient(135deg, #dbeafe 0%, #dbeafe 100%); color: #3b82f6; }
+.icon-packing { background: linear-gradient(135deg, #f0eaff 0%, #f3e8ff 100%); color: #6f42c1; }
+.icon-shipping { background: linear-gradient(135deg, #ffe8d6 0%, #fed7aa 100%); color: #fd7e14; }
+.icon-cancel { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #dc2626; }
+.icon-return { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #d97706; }
+.icon-inbound { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); color: #2563eb; }
+.icon-putaway { background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); color: #4f46e5; }
+.icon-opname { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: #059669; }
+.icon-inventory { background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%); color: #7c3aed; }
+
+.card-title {
+    font-weight: 700;
+    font-size: 1rem;
+    text-transform: uppercase;
+    color: #2d3748;
+    margin-bottom: 8px;
+    line-height: 1.2;
+}
+
+.card-body {
+    padding: 1.2rem !important;
+}
+
+@media (max-width: 576px) {
+    .header-container {
+        padding: 1rem;
+    }
+    .modern-card {
+        border-radius: 15px;
+    }
+    .icon-circle {
+        width: 48px;
+        height: 48px;
+        font-size: 1.5rem;
+    }
+    .card-title {
+        font-size: 0.9rem;
+    }
+}
+
+/* Sticky Scan Bar Styles */
+.btn-scan-operation:active {
+    transform: scale(0.95);
+}
+
+.btn-scan-operation:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}
+
+

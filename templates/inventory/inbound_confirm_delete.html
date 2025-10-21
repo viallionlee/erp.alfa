@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% block title %}Hapus Inbound{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Konfirmasi Hapus Inbound</h2>
+    <div class="d-flex gap-2">
+        <a href="{% url 'inventory:inbound' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Batal
+        </a>
+        <form method="post" class="d-inline" onsubmit="return confirmDelete()">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+                <i class="bi bi-trash"></i> Hapus Inbound
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Warning Alert -->
+<div class="alert alert-danger">
+    <h5 class="alert-heading">
+        <i class="bi bi-exclamation-triangle"></i> Peringatan!
+    </h5>
+    <p class="mb-0">
+        <strong>Yakin ingin menghapus inbound {{ inbound.nomor_inbound }}?</strong><br>
+        Tindakan ini akan mengurangi stok produk sesuai dengan quantity yang tertera di tabel di bawah.
+        Tindakan ini <strong>tidak dapat dibatalkan</strong>.
+    </p>
+</div>
+
+<!-- Inbound Info -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Informasi Inbound</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <strong>Nomor Inbound:</strong><br>
+                {{ inbound.nomor_inbound }}
+            </div>
+            <div class="col-md-3">
+                <strong>Tanggal:</strong><br>
+                {{ inbound.tanggal|date:"d/m/Y H:i" }}
+            </div>
+            <div class="col-md-3">
+                <strong>Supplier:</strong><br>
+                {{ inbound.supplier.nama_supplier|default:"-" }}
+            </div>
+            <div class="col-md-3">
+                <strong>Total Items:</strong><br>
+                {{ inbound.items.count }} produk
+            </div>
+        </div>
+        {% if inbound.keterangan %}
+        <div class="row mt-2">
+            <div class="col-12">
+                <strong>Keterangan:</strong><br>
+                {{ inbound.keterangan }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Products Table -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Produk yang Akan Dihapus</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 100px;">SKU</th>
+                        <th style="width: 120px;">Barcode</th>
+                        <th style="width: 300px;">Nama Produk</th>
+                        <th style="width: 120px;">Variant</th>
+                        <th style="width: 100px;">Brand</th>
+                        <th style="width: 80px;">Qty Inbound</th>
+                        <th style="width: 80px;">Stok Saat Ini</th>
+                        <th style="width: 80px;">Stok Putaway</th>
+                        <th style="width: 80px;">Stok Locked</th>
+                        <th style="width: 80px;">Stok Ready</th>
+                        <th style="width: 100px;">Stok Setelah Hapus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in items_data %}
+                    <tr>
+                        <td>{{ data.item.product.sku }}</td>
+                        <td>{{ data.item.product.barcode|default:"-" }}</td>
+                        <td>{{ data.item.product.nama_produk }}</td>
+                        <td>{{ data.item.product.variant_produk|default:"-" }}</td>
+                        <td>{{ data.item.product.brand|default:"-" }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-primary">{{ data.item.quantity }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-info">{{ data.item.product.stock.quantity|default:0 }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-warning">{{ data.item.product.stock.quantity_putaway|default:0 }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-secondary">{{ data.item.product.stock.quantity_locked|default:0 }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-success">{{ data.item.product.stock.quantity_ready_virtual|default:0 }}</span>
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex flex-column gap-1">
+                                <span class="badge bg-danger">{{ data.stock_after_delete.quantity }}</span>
+                                <small class="text-muted">Putaway: {{ data.stock_after_delete.quantity_putaway }}</small>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="11" class="text-center text-muted">Tidak ada produk</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<style>
+.table th {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table td {
+    font-size: 0.9rem;
+    vertical-align: middle;
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 0.4em 0.6em;
+}
+
+.alert-danger {
+    border-left: 4px solid #dc3545;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+</style>
+
+<script>
+function confirmDelete() {
+    return confirm('Apakah Anda yakin ingin menghapus inbound {{ inbound.nomor_inbound }}?\n\nTindakan ini akan mengurangi stok produk dan TIDAK DAPAT DIBATALKAN!');
+}
+</script>
+{% endblock %}

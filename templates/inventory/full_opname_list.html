@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Full Opname Session{% endblock %}
+
+{% block extra_head %}
+<style>
+  :root{
+    --bg:#f7f8fa;--card:#fff;--muted:#6b7280;--line:#e5e7eb;--ink:#0f172a;
+    --ok:#16a34a;--warn:#f59e0b;--err:#dc2626;--info:#2563eb;--chip:#f3f4f6
+  }
+  .container-fluid{max-width:1200px}
+  /* CARD lebih pendek & rapat */
+  .session-card{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:14px;overflow:hidden}
+  .session-header{display:flex;gap:12px;justify-content:space-between;align-items:center;padding:12px 14px}
+  .session-header h4{margin:0;font-size:16px;font-weight:700}
+  .session-meta{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:12px}
+  .session-right{text-align:right}
+  .status-badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700}
+  .status-draft{background:#fff7ed;color:#9a3412;border:1px solid #fed7aa}
+  .status-in_progress{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
+  .status-completed{background:#ecfdf5;color:#166534;border:1px solid #bbf7d0}
+  .status-cancelled{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+
+  .session-body{padding:10px 14px 12px}
+
+  /* progress strip super tipis */
+  .p-row{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px;margin-bottom:6px}
+  .progress-bar{height:6px;background:#f3f4f6;border-radius:999px;overflow:hidden}
+  .progress-fill{height:100%;background:linear-gradient(90deg,#3b82f6,#1d4ed8);transition:width .4s ease}
+
+  /* STAT jadi chip ringkas */
+  .stats-grid{display:grid;grid-template-columns:repeat(5,minmax(90px,1fr));gap:8px;margin-top:10px}
+  .stat-item{background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:10px 8px;text-align:center}
+  .stat-value{font-size:18px;font-weight:800;color:var(--ink);line-height:1}
+  .stat-label{margin-top:4px;font-size:11px;color:var(--muted)}
+  .text-danger{color:var(--err)!important}
+  .text-warning{color:var(--warn)!important}
+  .text-success{color:var(--ok)!important}
+
+  /* Action line kecil & rapat */
+  .act-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .btn-xs{padding:6px 10px;font-size:12px;border-radius:8px}
+
+  /* header halaman */
+  .page-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .page-head h2{margin:0;font-size:20px}
+  .gap-2{gap:.5rem}
+
+  /* responsive */
+  @media (max-width: 992px){
+    .stats-grid{grid-template-columns:repeat(3,1fr)}
+    .session-header{align-items:flex-start}
+  }
+  @media (max-width: 640px){
+    .stats-grid{grid-template-columns:repeat(2,1fr)}
+    .session-right{text-align:left}
+    .session-header{flex-direction:column;gap:6px}
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="page-head">
+    <h2 class="mb-0"><i class="bi bi-clipboard-data"></i> Full Opname Session</h2>
+    <div class="d-flex gap-2">
+      <a href="{% url 'inventory:full_opname_create' %}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-circle"></i> Buat Full Opname
+      </a>
+      <a href="{% url 'inventory:opname_rak_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Kembali ke Opname Rak
+      </a>
+    </div>
+  </div>
+
+  {% if full_sessions %}
+    {% for session in full_sessions %}
+    <div class="session-card">
+      <!-- HEADER RINGKAS -->
+      <div class="session-header">
+        <div>
+          <h4>{{ session.nama_opname }}</h4>
+          <div class="session-meta">
+            <span><i class="bi bi-calendar"></i>
+              {{ session.tanggal_mulai|date:"d/m/Y H:i" }}
+              {% if session.tanggal_selesai %}- {{ session.tanggal_selesai|date:"d/m/Y H:i" }}{% endif %}
+            </span>
+            <span><i class="bi bi-person"></i> Created: {{ session.created_by.username }}</span>
+            {% if session.supervisor %}<span>Supervisor: {{ session.supervisor.username }}</span>{% endif %}
+          </div>
+        </div>
+        <div class="session-right">
+          <span class="status-badge status-{{ session.status }}">{{ session.get_status_display }}</span><br>
+          <small class="text-muted">{{ session.session_code }}</small>
+        </div>
+      </div>
+
+      <!-- BODY RINGKAS -->
+      <div class="session-body">
+        {% if session.status == 'in_progress' %}
+        <div class="p-row">
+          <span>Progress Verifikasi</span>
+          <span>{{ session.progress_percentage|floatformat:1 }}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: {{ session.stats.progress_verifikasi }}%"></div>
+        </div>
+        {% endif %}
+
+        <!-- STAT CHIPS KOMPAK -->
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value">{{ session.stats.total_rak }}</div>
+            <div class="stat-label">Total Rak</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ session.stats.rak_selesai }}</div>
+            <div class="stat-label">Selesai</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ session.stats.progress_verifikasi|floatformat:0 }}%</div>
+            <div class="stat-label">Progress</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ session.stats.total_rak }}</div>
+            <div class="stat-label">Sesi Rak</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value {% if session.stats.total_selisih > 0 %}text-danger{% elif session.stats.total_selisih < 0 %}text-warning{% else %}text-success{% endif %}">
+              {{ session.stats.total_selisih|floatformat:0 }}
+            </div>
+            <div class="stat-label">Total Selisih</div>
+          </div>
+        </div>
+
+        {% if session.catatan %}
+          <div class="mt-2" style="font-size:12px;color:var(--muted)">
+            <strong style="color:#374151">Catatan:</strong> {{ session.catatan }}
+          </div>
+        {% endif %}
+
+        <!-- ACTION BAR KECIL -->
+        <div class="act-row">
+          {% if session.status == 'draft' %}
+          <a href="{% url 'inventory:full_opname_detail' session.id %}" class="btn btn-primary btn-xs">
+            <i class="bi bi-eye"></i> Lihat Detail
+          </a>
+          {% elif session.status == 'in_progress' %}
+          <a href="{% url 'inventory:full_opname_detail' session.id %}" class="btn btn-info btn-xs">
+            <i class="bi bi-arrow-right-circle"></i> Lanjutkan Opname
+          </a>
+          {% else %}
+          <a href="{% url 'inventory:full_opname_detail' session.id %}" class="btn btn-outline-secondary btn-xs">
+            <i class="bi bi-eye"></i> Lihat Hasil
+          </a>
+          {% endif %}
+
+          {% if session.status == 'draft' and session.can_delete_by_child_status %}
+          <button type="button" class="btn btn-danger btn-xs"
+            onclick="deleteFullOpnameSession({{ session.id }}, '{{ session.nama_opname }}')">
+            <i class="bi bi-trash"></i> Hapus
+          </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="text-center py-5">
+      <i class="bi bi-clipboard-data" style="font-size:3rem;color:#6c757d;"></i>
+      <h4 class="mt-3 text-muted">Belum ada Full Opname Session</h4>
+      <p class="text-muted">Buat Full Opname Session pertama untuk mulai mengelola opname secara terstruktur.</p>
+      <a href="{% url 'inventory:full_opname_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Buat Full Opname Pertama
+      </a>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+function deleteFullOpnameSession(sessionId, sessionName){
+  if(confirm('Apakah Anda yakin ingin menghapus Full Opname Session "'+sessionName+'"?\n\nTindakan ini akan menghapus:\n- Full Opname Session\n- Semua sesi opname rak yang terkait (jika masih draft)\n- Semua data opname yang belum selesai\n\nTindakan ini tidak dapat dibatalkan!')){
+    var form=document.createElement('form');
+    form.method='POST';
+    form.action='{% url "inventory:full_opname_delete" 0 %}'.replace('0', sessionId);
+    var csrf=document.createElement('input');
+    csrf.type='hidden';csrf.name='csrfmiddlewaretoken';csrf.value='{{ csrf_token }}';
+    form.appendChild(csrf);document.body.appendChild(form);form.submit();
+  }
+}
+</script>
+{% endblock %}

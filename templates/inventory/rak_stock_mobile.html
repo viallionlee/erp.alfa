@@ -1,0 +1,1075 @@
+{% extends 'base_mobile.html' %}
+{% load static %}
+
+{% block title %}Stok Rak - Mobile{% endblock %}
+
+{% block extra_head %}
+<style>
+    .content-wrapper {
+        padding-bottom: 60px; /* Space for sticky bar */
+    }
+    
+    .stock-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem;
+        border-radius: 8px;
+        margin-bottom: 0.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .header-content {
+        flex: 0 0 70%;
+        text-align: left;
+    }
+    
+    .stock-header h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+    
+    .stock-header p {
+        margin: 0.1rem 0 0 0;
+        opacity: 0.9;
+        font-size: 0.7rem;
+    }
+    
+    .header-action {
+        flex: 0 0 30%;
+        text-align: right;
+    }
+    
+    .header-btn {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        border-radius: 6px;
+        padding: 0.4rem 0.6rem;
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+    
+    .header-btn:hover {
+        background: rgba(255,255,255,0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 0.3rem 0.2rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+        font-size: 0.6rem;
+    }
+    
+    .stat-value {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #0d6efd;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.55rem;
+        line-height: 1;
+        margin-top: 0.1rem;
+    }
+    
+
+    
+
+    
+    .stock-list {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+    }
+    
+    .stock-item {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-bottom: 0.25rem;
+        border-left: 4px solid #0d6efd;
+    }
+    
+    .stock-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .stock-content {
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+    
+    .product-photo {
+        width: 80px;
+        height: 80px;
+        border-radius: 6px;
+        object-fit: cover;
+        border: 1px solid #e9ecef;
+        flex-shrink: 0;
+    }
+    
+    .photo-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.3rem;
+        flex-shrink: 0;
+    }
+    
+    .rack-info {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        padding: 0.2rem 0.4rem;
+        border-radius: 8px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #1976d2;
+        border: 1px solid #90caf9;
+        text-align: center;
+        white-space: nowrap;
+    }
+    
+    .product-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .product-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.3rem;
+    }
+    
+    .product-name {
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #0d6efd;
+        word-wrap: break-word;
+        line-height: 1.2;
+        flex: 1;
+        margin-right: 0.5rem;
+    }
+    
+    .stock-quantity {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #28a745;
+        background: #f8f9fa;
+        padding: 0.2rem 0.4rem;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+        flex-shrink: 0;
+    }
+    
+    .stock-zero {
+        color: #6c757d !important;
+    }
+    
+    .stock-low {
+        color: #dc3545 !important;
+    }
+    
+    .stock-medium {
+        color: #ffc107 !important;
+    }
+    
+    .stock-high {
+        color: #28a745 !important;
+    }
+    
+    .stock-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+    
+    .detail-row {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.65rem;
+        line-height: 1.2;
+    }
+    
+    .detail-icon {
+        width: 12px;
+        color: #6c757d;
+        font-size: 0.7rem;
+    }
+    
+    .detail-label {
+        font-weight: 600;
+        color: #495057;
+        min-width: 35px;
+    }
+    
+    .detail-value {
+        color: #6c757d;
+        flex: 1;
+        word-wrap: break-word;
+    }
+    
+    .sku-barcode-row {
+        background: #f8f9fa;
+        padding: 0.3rem 0.5rem;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+        font-family: monospace;
+        font-size: 0.7rem;
+        color: #495057;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.2rem;
+    }
+    
+    .sku-value {
+        font-weight: 600;
+        color: #0d6efd;
+    }
+    
+    .separator {
+        color: #6c757d;
+        font-weight: 300;
+    }
+    
+    .barcode-value {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .variant-row {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        border: 1px solid #ffcc02;
+        color: #f57c00;
+        font-weight: 600;
+        font-size: 0.6rem;
+    }
+    
+    .brand-row {
+        background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        border: 1px solid #4caf50;
+        color: #2e7d32;
+        font-weight: 600;
+        font-size: 0.6rem;
+        font-style: italic;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #ffffff;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 0.5rem;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .notification-area {
+        margin-top: 0.5rem;
+    }
+    
+    .alert {
+        padding: 0.5rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .alert-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+    
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .alert-danger {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    /* Sticky Action Bar */
+    .sticky-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #e9ecef;
+        padding: 0.25rem;
+        z-index: 100;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+        max-height: 50px;
+    }
+    
+    .action-bar-buttons {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    
+
+    
+    .sticky-actions {
+        display: flex;
+        gap: 0.2rem;
+        align-items: center;
+        justify-content: space-between;
+        height: 100%;
+    }
+    
+    .action-icon-btn {
+        width: 50px;
+        height: 50px;
+        border: none;
+        border-radius: 12px;
+        background: white;
+        color: #495057;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        cursor: pointer;
+    }
+    
+    .action-proportional-btn {
+        flex: 1;
+        height: 50px;
+        border: none;
+        border-radius: 8px;
+        background: white;
+        color: #495057;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        cursor: pointer;
+        padding: 0.25rem;
+        min-width: 0;
+    }
+    
+    .btn-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.1rem;
+    }
+    
+    .btn-content i {
+        font-size: 1rem;
+        color: white;
+    }
+    
+    .btn-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        color: white;
+        text-align: center;
+        line-height: 1;
+    }
+    
+    .action-icon-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .action-proportional-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .action-icon-btn:active {
+        transform: translateY(0);
+    }
+    
+    .action-proportional-btn:active {
+        transform: translateY(0);
+    }
+    
+    .btn-filter {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+    }
+    
+    .btn-search {
+        background: linear-gradient(135deg, #0d6efd 0%, #0056b3 100%);
+        color: white;
+    }
+    
+    .btn-sort {
+        background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+        color: white;
+    }
+    
+    
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 400px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 1.5rem 1rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        flex-shrink: 0;
+    }
+    
+    .modal-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #495057;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 0.2rem;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+    
+    .modal-close:hover {
+        background: #f8f9fa;
+        color: #495057;
+    }
+    
+    .modal-body {
+        padding: 1rem 1.5rem;
+        overflow-y: auto;
+        flex: 1;
+    }
+    
+    .filter-option {
+        padding: 0.8rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .filter-option:hover {
+        background: #f8f9fa;
+        border-color: #0d6efd;
+    }
+    
+    .filter-option.selected {
+        background: #e3f2fd;
+        border-color: #0d6efd;
+        color: #0d6efd;
+    }
+    
+    .search-input-modal {
+        width: 100%;
+        padding: 0.8rem;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    
+    .search-input-modal:focus {
+        border-color: #0d6efd;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+    }
+    
+    .modal-footer {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e9ecef;
+        background: white;
+        border-radius: 0 0 16px 16px;
+        flex-shrink: 0;
+    }
+    
+    .btn-modal {
+        padding: 0.6rem 1rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-modal-primary {
+        background: #0d6efd;
+        color: white;
+    }
+    
+    .btn-modal-primary:hover {
+        background: #0056b3;
+    }
+    
+    .btn-modal-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-modal-secondary:hover {
+        background: #495057;
+    }
+    
+    .hidden {
+        display: none !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="content-wrapper">
+        <!-- Header -->
+        <div class="stock-header">
+            <div class="header-content">
+                <h4><i class="bi bi-box-seam"></i> Stok Rak</h4>
+                <p>Manajemen stok per rak</p>
+            </div>
+            <div class="header-action">
+                <a href="{% url 'inventory:stock_position_view' %}" class="header-btn">
+                    <i class="bi bi-bar-chart"></i> Posisi Stock
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-card">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalRak">-</div>
+                    <div class="stat-label">Total Rak</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalProduk">-</div>
+                    <div class="stat-label">Total Produk</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalStok">-</div>
+                    <div class="stat-label">Total Stok</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="stokRendah">-</div>
+                    <div class="stat-label">Stok Rendah</div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Stock Content -->
+        <div id="stock-content">
+            <!-- Stock List -->
+            <div class="stock-list">
+                <div id="stockItems">
+                    <!-- Stock items will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sticky Action Bar -->
+<div class="sticky-action-bar">
+    <div class="sticky-actions">
+        <button class="action-proportional-btn btn-filter" onclick="showFilterModal()">
+            <div class="btn-content">
+                <i class="bi bi-funnel"></i>
+                <span class="btn-label">Filter Rak</span>
+            </div>
+        </button>
+        <button class="action-proportional-btn btn-sort" onclick="showSortModal()">
+            <div class="btn-content">
+                <i class="bi bi-sort-down"></i>
+                <span class="btn-label">Sort Data</span>
+            </div>
+        </button>
+        <button class="action-proportional-btn btn-search" onclick="showSearchModal()">
+            <div class="btn-content">
+                <i class="bi bi-search"></i>
+                <span class="btn-label">Cari Produk</span>
+            </div>
+        </button>
+    </div>
+</div>
+
+<!-- Filter Modal -->
+<div id="filterModal" class="modal-overlay" onclick="closeModal('filterModal')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="bi bi-funnel"></i> Filter Data
+            </div>
+            <button class="modal-close" onclick="closeModal('filterModal')">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div style="margin-bottom: 1rem;">
+                <h6 style="margin-bottom: 0.5rem; color: #495057;">Filter Rak:</h6>
+                <div id="rakFilterOptions">
+                    <div class="filter-option selected" data-value="" onclick="selectFilterOption(this, 'rak')">
+                        <i class="bi bi-check-circle"></i> Semua Rak
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h6 style="margin-bottom: 0.5rem; color: #495057;">Filter Stok:</h6>
+                <div class="filter-option selected" data-value="" onclick="selectFilterOption(this, 'stock')">
+                    <i class="bi bi-check-circle"></i> Semua Stok
+                </div>
+                <div class="filter-option" data-value="low_stock" onclick="selectFilterOption(this, 'stock')">
+                    <i class="bi bi-exclamation-triangle"></i> Stok Rendah (≤10)
+                </div>
+                <div class="filter-option" data-value="medium_stock" onclick="selectFilterOption(this, 'stock')">
+                    <i class="bi bi-dash-circle"></i> Stok Sedang (11-50)
+                </div>
+                <div class="filter-option" data-value="high_stock" onclick="selectFilterOption(this, 'stock')">
+                    <i class="bi bi-check-circle-fill"></i> Stok Tinggi (>50)
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('filterModal')">Batal</button>
+            <button class="btn-modal btn-modal-primary" onclick="applyFilters()">Terapkan</button>
+        </div>
+    </div>
+</div>
+
+<!-- Sort Modal -->
+<div id="sortModal" class="modal-overlay" onclick="closeModal('sortModal')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="bi bi-sort-down"></i> Urutkan Data
+            </div>
+            <button class="modal-close" onclick="closeModal('sortModal')">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <h6 style="margin-bottom: 0.5rem; color: #495057;">Urutkan berdasarkan:</h6>
+            <div class="filter-option selected" data-value="rak__kode_rak" onclick="selectSortOption(this)">
+                <i class="bi bi-box"></i> Kode Rak
+            </div>
+            <div class="filter-option" data-value="product__nama_produk" onclick="selectSortOption(this)">
+                <i class="bi bi-tag"></i> Nama Produk
+            </div>
+            <div class="filter-option" data-value="quantity" onclick="selectSortOption(this)">
+                <i class="bi bi-bar-chart"></i> Jumlah Stok
+            </div>
+            <div class="filter-option" data-value="product__brand" onclick="selectSortOption(this)">
+                <i class="bi bi-award"></i> Brand
+            </div>
+            <div class="filter-option" data-value="updated_at" onclick="selectSortOption(this)">
+                <i class="bi bi-clock"></i> Terakhir Update
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('sortModal')">Batal</button>
+            <button class="btn-modal btn-modal-primary" onclick="applySort()">Terapkan</button>
+        </div>
+    </div>
+</div>
+
+<!-- Search Modal -->
+<div id="searchModal" class="modal-overlay" onclick="closeModal('searchModal')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="bi bi-search"></i> Cari Produk
+            </div>
+            <button class="modal-close" onclick="closeModal('searchModal')">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <input type="text" id="searchInputModal" class="search-input-modal" placeholder="Cari berdasarkan nama, SKU, barcode, brand..." onkeyup="handleSearchModal()" onkeypress="handleSearchKeyPress(event)">
+            <div id="searchResults" style="max-height: 300px; overflow-y: auto;">
+                <!-- Search results will appear here -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('searchModal')">Batal</button>
+            <button class="btn-modal btn-modal-primary" onclick="performSearch()">Cari</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let stockData = [];
+let currentFilters = {
+    rak: '',
+    stock: ''
+};
+let currentSearch = '';
+let currentSort = {
+    field: 'rak__kode_rak',
+    direction: 'asc'
+};
+
+// Load sounds
+function playSound(type) {
+    if (type === 'success') {
+        new Audio('/static/sounds/ding.mp3').play();
+    } else if (type === 'error') {
+        new Audio('/static/sounds/wrong_barcode.mp3').play();
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadSummaryData();
+    loadRakOptions();
+    loadStockData();
+});
+
+
+
+function loadSummaryData() {
+    fetch("{% url 'inventory:rak_stock_summary' %}")
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data) {
+                document.getElementById('totalRak').textContent = data.data.total_raks || 0;
+                document.getElementById('totalProduk').textContent = data.data.total_products || 0;
+                document.getElementById('totalStok').textContent = data.data.total_stock || 0;
+                document.getElementById('stokRendah').textContent = data.data.low_stock || 0;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading summary data:', error);
+        });
+}
+
+function loadRakOptions() {
+    fetch("{% url 'inventory:rak_stock_data' %}?get_rak_options=true")
+        .then(response => response.json())
+        .then(data => {
+            const rakFilterOptions = document.getElementById('rakFilterOptions');
+            
+            if (data.rak_options) {
+                data.rak_options.forEach(rak => {
+                    const option = document.createElement('div');
+                    option.className = 'filter-option';
+                    option.setAttribute('data-value', rak.id);
+                    option.onclick = function() { selectFilterOption(this, 'rak'); };
+                    option.innerHTML = `<i class="bi bi-box"></i> ${rak.kode_rak} - ${rak.nama_rak}`;
+                    rakFilterOptions.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading rak options:', error);
+        });
+}
+
+function loadStockData() {
+    const stockItems = document.getElementById('stockItems');
+    stockItems.innerHTML = '<div style="text-align: center; padding: 2rem;"><span class="loading-spinner"></span>Loading...</div>';
+    
+    let url = "{% url 'inventory:rak_stock_data' %}?draw=1&start=0&length=50";
+    
+    if (currentFilters.rak) {
+        url += `&rak_filter=${currentFilters.rak}`;
+    }
+    
+    if (currentFilters.stock) {
+        url += `&filter=${currentFilters.stock}`;
+    }
+    
+    if (currentSearch) {
+        url += `&search[value]=${encodeURIComponent(currentSearch)}`;
+    }
+    
+    // Add sorting parameters
+    url += `&order[0][column]=${getSortColumnIndex(currentSort.field)}&order[0][dir]=${currentSort.direction}`;
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            stockItems.innerHTML = '';
+            
+            if (data.data && data.data.length > 0) {
+                data.data.forEach(item => {
+                    const stockItem = createStockItemElement(item);
+                    stockItems.appendChild(stockItem);
+                });
+            } else {
+                stockItems.innerHTML = '<div style="text-align: center; padding: 2rem; color: #6c757d;">Tidak ada data stok</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading stock data:', error);
+            stockItems.innerHTML = '<div style="text-align: center; padding: 2rem; color: #dc3545;">Error loading data</div>';
+        });
+}
+
+function getSortColumnIndex(field) {
+    const columnMap = {
+        'rak__kode_rak': 0,
+        'product__nama_produk': 3,
+        'quantity': 4,
+        'product__brand': 3, // Brand is part of product name column
+        'updated_at': 5
+    };
+    return columnMap[field] || 0;
+}
+
+function createStockItemElement(item) {
+    const div = document.createElement('div');
+    div.className = 'stock-item';
+    
+    const quantity = parseInt(item.quantity) || 0;
+    let stockClass = '';
+    if (quantity === 0) stockClass = 'stock-zero';
+    else if (quantity <= 10) stockClass = 'stock-low';
+    else if (quantity <= 50) stockClass = 'stock-medium';
+    else stockClass = 'stock-high';
+    
+    // Check if product has photo
+    const hasPhoto = item.photo_url && item.photo_url !== '/static/icons/box.png';
+    
+    div.innerHTML = `
+        <div class="stock-content">
+            <div class="photo-section">
+                ${hasPhoto ? 
+                    `<img src="${item.photo_url}" alt="${item.nama_produk || 'Product'}" class="product-photo" onerror="this.src='/static/icons/box.png'">` :
+                    `<div class="product-photo" style="display: flex; align-items: center; justify-content: center; background: #f8f9fa; border: 1px solid #e9ecef;">
+                        <i class="bi bi-box" style="font-size: 2rem; color: #6c757d;"></i>
+                    </div>`
+                }
+                <div class="rack-info">
+                    <i class="bi bi-box"></i> ${item.kode_rak || 'N/A'}
+                </div>
+            </div>
+            <div class="product-info">
+                <div class="product-header">
+                    <div class="product-name">${item.nama_produk || 'N/A'}</div>
+                    <div class="stock-quantity ${stockClass}">${quantity}</div>
+                </div>
+                <div class="stock-details">
+                    <div class="variant-row">
+                        <i class="bi bi-tag"></i> ${item.variant_produk || 'N/A'}
+                    </div>
+                    <div class="brand-row">
+                        <i class="bi bi-award"></i> ${item.brand || 'N/A'}
+                    </div>
+                    <div class="sku-barcode-row">
+                        <span class="sku-value">${item.sku || 'N/A'}</span>
+                        <span class="separator">|</span>
+                        <span class="barcode-value">${item.barcode || 'N/A'}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return div;
+}
+
+
+
+
+// Modal Functions
+function showFilterModal() {
+    document.getElementById('filterModal').style.display = 'flex';
+}
+
+function showSearchModal() {
+    document.getElementById('searchModal').style.display = 'flex';
+    document.getElementById('searchInputModal').focus();
+}
+
+function showSortModal() {
+    document.getElementById('sortModal').style.display = 'flex';
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+function selectFilterOption(element, type) {
+    // Remove selected class from all options in the same group
+    const parent = element.parentElement;
+    parent.querySelectorAll('.filter-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked option
+    element.classList.add('selected');
+}
+
+function selectSortOption(element) {
+    // Remove selected class from all sort options
+    document.querySelectorAll('#sortModal .filter-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked option
+    element.classList.add('selected');
+}
+
+function applyFilters() {
+    // Get selected rak filter
+    const selectedRak = document.querySelector('#rakFilterOptions .filter-option.selected');
+    currentFilters.rak = selectedRak ? selectedRak.getAttribute('data-value') : '';
+    
+    // Get selected stock filter
+    const selectedStock = document.querySelector('.modal-body > div:last-child .filter-option.selected');
+    currentFilters.stock = selectedStock ? selectedStock.getAttribute('data-value') : '';
+    
+    // Close modal and reload data
+    closeModal('filterModal');
+    loadStockData();
+    
+    showNotification('✅ Filter berhasil diterapkan!', 'success');
+    playSound('success');
+}
+
+function applySort() {
+    // Get selected sort option
+    const selectedSort = document.querySelector('#sortModal .filter-option.selected');
+    if (selectedSort) {
+        currentSort.field = selectedSort.getAttribute('data-value');
+        // Toggle direction if same field is selected
+        if (currentSort.field === selectedSort.getAttribute('data-value')) {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSort.direction = 'asc';
+        }
+    }
+    
+    // Close modal and reload data
+    closeModal('sortModal');
+    loadStockData();
+    
+    showNotification('✅ Pengurutan berhasil diterapkan!', 'success');
+    playSound('success');
+}
+
+function handleSearchModal() {
+    const searchValue = document.getElementById('searchInputModal').value;
+    // Don't automatically search, just store the value
+    currentSearch = searchValue;
+}
+
+function performSearch() {
+    const searchValue = document.getElementById('searchInputModal').value;
+    currentSearch = searchValue;
+    
+    // Close modal and perform search
+    closeModal('searchModal');
+    loadStockData();
+    
+    if (searchValue.trim()) {
+        showNotification('🔍 Mencari: ' + searchValue, 'info');
+    } else {
+        showNotification('✅ Menampilkan semua data', 'success');
+    }
+    playSound('success');
+}
+
+function handleSearchKeyPress(event) {
+    if (event.key === 'Enter') {
+        performSearch();
+    }
+}
+
+
+
+function showNotification(message, type) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type}`;
+    notification.textContent = message;
+    
+    // Add to page
+    const container = document.querySelector('.content-wrapper');
+    container.insertBefore(notification, container.firstChild);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

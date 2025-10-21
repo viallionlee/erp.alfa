@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load l10n %} {# Untuk format waktu lokal #}
+
+{% block title %}Order Cancel Log - Packer Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+    .card {
+        border-radius: 15px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+    .table-responsive {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+    .status-badge {
+        font-weight: bold;
+        padding: 0.3em 0.6em;
+        border-radius: 0.25rem;
+    }
+    .status-N {
+        background-color: #ffc107;
+        color: #343a40;
+    }
+    .status-Y {
+        background-color: #28a745;
+        color: #fff;
+    }
+    .summary-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .summary-card .card-body {
+        padding: 1.5rem;
+    }
+    .summary-number {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+    .filter-card-clickable {
+        transition: all 0.3s ease;
+    }
+    .filter-card-clickable:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .filter-card-clickable.active {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+    }
+    .filter-card-small {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .filter-card-small .card-body {
+        padding: 0.75rem;
+    }
+    .summary-number-small {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    .filter-card-small:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .filter-card-small.active {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+    .filter-btn {
+        transition: all 0.3s ease;
+    }
+    .filter-btn.active {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+
+            <!-- Main Content -->
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title text-center mb-4">
+                        <i class="bi bi-clipboard-data me-2"></i>
+                        Dashboard Order Dibatalkan - Packer View
+                    </h3>
+                    <p class="text-center text-muted mb-3">
+                        Monitor order yang statusnya dibatalkan dan sudah discan oleh user untuk proses return
+                    </p>
+                    
+                    <!-- Filter Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card filter-card-small filter-card-clickable {% if filter_type == 'belum_return' %}active{% endif %}" 
+                                 data-filter="belum_return" style="cursor: pointer;">
+                                <div class="card-body text-center py-2">
+                                    <h6 class="card-title mb-1">Belum Return</h6>
+                                    <div class="summary-number-small"><span id="belum-return-count">{{ total_belum_return }}</span></div>
+                                    <small>Perlu diproses return</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card filter-card-small filter-card-clickable {% if filter_type == 'sudah_return' %}active{% endif %}" 
+                                 data-filter="sudah_return" style="cursor: pointer;">
+                                <div class="card-body text-center py-2">
+                                    <h6 class="card-title mb-1">Sudah Return</h6>
+                                    <div class="summary-number-small">{{ total_sudah_return }}</div>
+                                    <small>Sudah diproses return</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle" id="orderCancelLogTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th><i class="bi bi-hash me-1"></i>ID Pesanan</th>
+                                    <th><i class="bi bi-person me-1"></i>User Scanner</th>
+                                    <th><i class="bi bi-clock me-1"></i>Waktu Scan</th>
+                                    <th><i class="bi bi-credit-card me-1"></i>Status Pembayaran</th>
+                                    <th><i class="bi bi-truck me-1"></i>Status Fulfillment</th>
+                                    <th><i class="bi bi-arrow-return-left me-1"></i>Status Retur</th>
+                                    <th><i class="bi bi-person-check me-1"></i>Diterima oleh</th>
+                                    <th><i class="bi bi-person-gear me-1"></i>User Fulfillment</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in logs %}
+                                <tr data-status-retur="{{ log.linked_order_status_retur|default:log.status_retur }}">
+                                    <td>
+                                        <strong class="text-primary">{{ log.order_id_scanned }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if log.scanner_user %}
+                                        <span class="badge bg-secondary">
+                                            {{ log.scanner_user }}
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-light text-muted">
+                                            <i class="bi bi-dash"></i> Belum di-scan
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {% localize off %}{{ log.scan_time|date:"d M Y, H:i:s" }}{% endlocalize %}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            {{ log.status_pembayaran_at_scan|default:"-" }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning text-dark">
+                                            {{ log.status_fulfillment_at_scan|default:"-" }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% with status_retur=log.linked_order_status_retur|default:log.status_retur %}
+                                        <span class="status-badge status-{{ status_retur }}">
+                                            {% if status_retur == 'N' or status_retur == '' or status_retur == None %}
+                                                <i class="bi bi-clock me-1"></i>Belum Return
+                                            {% elif status_retur == 'Y' %}
+                                                <i class="bi bi-check-circle me-1"></i>Sudah Return
+                                            {% else %}
+                                                <i class="bi bi-question-circle me-1"></i>{{ status_retur }}
+                                            {% endif %}
+                                        </span>
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        {% if log.return_user %}
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-person-check me-1"></i>{{ log.return_user }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">
+                                                <i class="bi bi-dash me-1"></i>Belum Return
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if log.user %}
+                                            <span class="badge bg-primary">
+                                                <i class="bi bi-person-gear me-1"></i>{{ log.user.username }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">
+                                                <i class="bi bi-dash me-1"></i>N/A
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-4">
+                                        <div class="text-muted">
+                                            <i class="bi bi-inbox display-4 d-block mb-2"></i>
+                                            <h5>Tidak ada data order dibatalkan</h5>
+                                            <p>Belum ada order yang statusnya dibatalkan dan sudah discan oleh user.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+<script>
+$(document).ready(function() {
+    // Initialize DataTable
+    const table = $('#orderCancelLogTable').DataTable({
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        language: {
+            search: "Cari:",
+            lengthMenu: "Tampilkan _MENU_ order per halaman",
+            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ order",
+            infoEmpty: "Menampilkan 0 sampai 0 dari 0 order",
+            infoFiltered: "(disaring dari _MAX_ total order)",
+            paginate: {
+                first: "Pertama",
+                last: "Terakhir",
+                next: "Selanjutnya",
+                previous: "Sebelumnya"
+            }
+        },
+        order: [[2, 'desc']], // Sort by waktu scan (desc)
+        columnDefs: [
+            { orderable: false, targets: 7 } // Disable sorting untuk kolom User Fulfillment
+        ],
+        responsive: true,
+        autoWidth: false
+    });
+
+    // Auto-refresh every 30 seconds
+    setInterval(function() {
+        location.reload();
+    }, 30000);
+
+    // Add tooltips
+    $('[data-bs-toggle="tooltip"]').tooltip();
+
+    // Add click handler for filter cards
+    $('.filter-card-clickable').on('click', function(e) {
+        e.preventDefault();
+        const filter = $(this).data('filter');
+        const url = `?filter=${filter}`;
+        window.location.href = url;
+    });
+
+    // Update belum return count
+    function updateBelumReturnCount() {
+        fetch('/fullfilment/order-cancel-log/data/?filter=belum_return')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    const count = data.data.length;
+                    $('#belum-return-count').text(count);
+                }
+            })
+            .catch(error => {
+                console.error('Error updating belum return count:', error);
+            });
+    }
+
+    // Update count on page load and every 30 seconds
+    updateBelumReturnCount();
+    setInterval(updateBelumReturnCount, 30000);
+
+    // Add status color coding
+    $('.status-badge').each(function() {
+        const status = $(this).text().trim();
+        if (status.includes('Belum')) {
+            $(this).addClass('bg-warning text-dark');
+        } else if (status.includes('Sudah')) {
+            $(this).addClass('bg-success text-white');
+        }
+    });
+});
+</script>
+{% endblock %}

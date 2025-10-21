@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+{% block title %}Daftar Purchase{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="bi bi-cart-check"></i> Daftar Purchase</h2>
+    <div class="d-flex gap-2">
+        <a href="{% url 'purchasing:purchase_create' %}" class="btn btn-success"><i class="bi bi-plus-circle"></i> Buat Purchase</a>
+        <a href="{% url 'purchasing:po_list' %}" class="btn btn-primary"><i class="bi bi-file-earmark-text"></i> Purchase Order List</a>
+        <a href="{% url 'purchasing:purchase_report' %}" class="btn btn-info"><i class="bi bi-file-earmark-bar-graph"></i> Report</a>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total Purchase</h5>
+                <h2 class="mb-0">{{ total_purchases }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-secondary">
+            <div class="card-body">
+                <h5 class="card-title">Draft</h5>
+                <h2 class="mb-0">{{ draft_purchases }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">Pending</h5>
+                <h2 class="mb-0">{{ pending_purchases }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Received</h5>
+                <h2 class="mb-0">{{ received_purchases }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Verified</h5>
+                <h2 class="mb-0">{{ verified_purchases }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <h5 class="card-title">Cancelled</h5>
+                <h2 class="mb-0">{{ cancelled_purchases }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Total Amount</h5>
+                <h2 class="mb-0">Rp {{ total_amount|floatformat:0 }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-lg mb-4 border-0">
+    <div class="card-body">
+        <div class="table-responsive">
+        <table id="purchase-table" class="table table-hover table-bordered align-middle w-100">
+            <thead class="table-primary">
+                <tr>
+                    <th>ID</th>
+                    <th>Nomor Purchase</th>
+                    <th>Tanggal</th>
+                    <th>Supplier</th>
+                    <th>PO Reference</th>
+                    <th>Status</th>
+                    <th>Total Amount</th>
+                    <th>Created By</th>
+                    <th>Received By</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .aksi-btn-group {
+        display: flex;
+        gap: 0.25rem;
+        flex-wrap: wrap;
+    }
+    .aksi-btn-group .btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        white-space: nowrap;
+    }
+    .aksi-btn-group .btn i {
+        font-size: 0.75rem;
+    }
+    .dropdown-toggle::after {
+        display: none;
+    }
+    .dropdown-menu {
+        min-width: 150px;
+    }
+    @media (max-width: 900px) {
+        .aksi-btn-group { 
+            flex-direction: column; 
+            gap: 0.25rem; 
+        }
+        .aksi-btn-group .btn {
+            width: 100%;
+        }
+    }
+</style>
+
+{% load humanize %}
+{% endblock %}
+
+{% block extra_script %}
+<script>
+$(document).ready(function() {
+    var table = $('#purchase-table').DataTable({
+        data: [
+            {% for purchase in purchases %}
+            {
+                id: {{ purchase.id }},
+                nomor_purchase: "{{ purchase.nomor_purchase }}",
+                tanggal_purchase: "{{ purchase.tanggal_purchase|date:'d-m-Y H:i' }}",
+                supplier: "{{ purchase.supplier.nama_supplier }}",
+                po_reference: "{{ purchase.po.nomor_po|default:'-' }}",
+                status: "{{ purchase.get_status_display }}",
+                total_amount: "Rp {{ purchase.total_amount|floatformat:0 }}",
+                created_by: "{{ purchase.created_by.username|default:'-' }}",
+                received_by: "{{ purchase.received_by.username|default:'-' }}",
+                aksi: `
+                    <a href="/purchasing/purchase/{{ purchase.id }}/" class="btn btn-sm btn-info"><i class="bi bi-eye"></i> Detail</a>
+                    {% if purchase.status == 'draft' %}
+                    <a href="/purchasing/purchase/{{ purchase.id }}/edit/" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i> Edit</a>
+                    <a href="/purchasing/purchase/{{ purchase.id }}/cancel/" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus draft ini?')"><i class="bi bi-trash"></i> Hapus</a>
+                    {% elif purchase.status == 'pending' %}
+                    <a href="/purchasing/purchase/{{ purchase.id }}/edit/" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i> Edit</a>
+                    <a href="/purchasing/purchase/{{ purchase.id }}/" class="btn btn-sm btn-success"><i class="bi bi-check-circle"></i> Receive</a>
+                    <a href="/purchasing/purchase/{{ purchase.id }}/cancel/" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin membatalkan purchase ini?')"><i class="bi bi-x-circle"></i> Cancel</a>
+                    {% elif purchase.status == 'received' %}
+                    <a href="/purchasing/purchase/{{ purchase.id }}/verify/" class="btn btn-sm btn-primary"><i class="bi bi-check2-circle"></i> Verification</a>
+                    {% endif %}
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/purchasing/purchase/{{ purchase.id }}/print/" target="_blank"><i class="bi bi-printer"></i> Print</a></li>
+                            <li><a class="dropdown-item" href="/purchasing/purchase/{{ purchase.id }}/download-pdf/" target="_blank"><i class="bi bi-file-pdf"></i> Download PDF</a></li>
+                            <li><a class="dropdown-item" href="/purchasing/purchase/{{ purchase.id }}/download-excel/" target="_blank"><i class="bi bi-file-excel"></i> Download Excel</a></li>
+                        </ul>
+                    </div>
+                `
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        columns: [
+            { data: 'id' },
+            { data: 'nomor_purchase' },
+            { data: 'tanggal_purchase' },
+            { data: 'supplier' },
+            { data: 'po_reference' },
+            { 
+                data: 'status',
+                render: function(data, type, row) {
+                    var badgeClass = 'secondary';
+                    if (data === 'Draft') badgeClass = 'secondary';
+                    if (data === 'Pending') badgeClass = 'warning';
+                    if (data === 'Received') badgeClass = 'info';
+                    if (data === 'Verified') badgeClass = 'success';
+                    if (data === 'Cancelled') badgeClass = 'danger';
+                    return '<span class="badge bg-' + badgeClass + '">' + data + '</span>';
+                }
+            },
+            { data: 'total_amount' },
+            { data: 'created_by' },
+            { data: 'received_by' },
+            { 
+                data: 'aksi', 
+                orderable: false, 
+                searchable: false,
+                render: function(data, type, row) {
+                    return '<div class="aksi-btn-group">' + data + '</div>';
+                }
+            }
+        ],
+        order: [[1, 'desc']],
+        pageLength: 100,
+        lengthMenu: [[100, 500, 1000, -1], ['100', '500', '1000', 'All']],
+    });
+});
+</script>
+{% endblock %}
+

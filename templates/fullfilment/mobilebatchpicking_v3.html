@@ -1,0 +1,620 @@
+{% extends 'base_mobile.html' %}
+{% block content %}
+<div class="container-fluid px-2 py-2" style="max-width:480px; margin:auto;">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h3 class="fw-bold mb-2 text-center flex-grow-1" style="font-size:1.1rem; letter-spacing:0.5px;">
+          BATCHPICKING : <span class="text-primary">{{ nama_picklist }}</span>
+        </h3>
+        <!-- FAB V1: Mengarahkan ke mobilebatchpicking.html (versi asli) -->
+        <button class="fab-v1" id="fabV1Btn" title="Versi 1">
+          <span style="font-size:0.9rem; font-weight:600;">V1</span>
+        </button>
+        <!-- FAB V2: Mengarahkan ke mobilebatchpicking_v2.html -->
+        <button class="fab-v2 ms-2" id="fabV2Btn" title="Versi 2">
+          <span style="font-size:0.9rem; font-weight:600;">V2</span>
+        </button>
+        <!-- Tombol baru untuk History Log -->
+        <button class="fab-history ms-2" id="fabHistoryBtn" title="History Log">
+          <i class="bi bi-clock-history"></i>
+        </button>
+        <!-- FAB V3: Ini adalah versi saat ini, tidak perlu tombol khusus, tapi jika mau tetap tampilkan -->
+        <!-- Jika Anda ingin tombol V3 terlihat, Anda bisa menambahkannya lagi dengan gaya berbeda atau hanya menyajikannya sebagai 'Current Version' -->
+        <!-- Contoh jika mau tombol V3 tetap ada: -->
+        <!-- <button class="fab-current ms-2" title="Versi Aktif">
+          <span style="font-size:0.9rem; font-weight:600;">V3</span>
+        </button> -->
+    </div>
+    
+    <!-- Area untuk feedback barcode, tidak ada input field lagi -->
+    <div id="barcodeFeedback"></div>
+
+    <!-- Card produk terakhir berhasil scan -->
+    <div id="lastScannedCard" style="display:none;">
+        <!-- Card akan diisi via JS, tambahkan style background soft purple di JS -->
+    </div>
+
+    <!-- Pending Items -->
+    <div class="mb-4 d-flex justify-content-between align-items-center">
+        <h5 class="mb-2" style="font-size:1em;">Pending Items</h5>
+    </div>
+    <div class="mb-4">
+        <div class="card shadow-sm" style="border-radius:12px;">
+            <div class="card-body p-2">
+                <ul class="list-group" id="pendingList">
+                    {% for item in details %}
+                    {% if item.status_ambil != 'completed' %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-2 py-2" style="font-size:0.98em; border-radius:10px; margin-bottom:6px; box-shadow:0 1px 4px rgba(0,0,0,0.04); border:1px solid #f0f0f0; background: #c6f6d5;"
+                        data-product-id="{{ item.id }}"
+                        data-sku="{{ item.sku }}"
+                        data-nama="{{ item.nama_produk }}"
+                        data-barcode="{{ item.barcode }}"
+                        data-variant="{{ item.variant_produk }}"
+                        data-brand="{{ item.brand }}"
+                        data-rak="{{ item.rak }}">
+                        <div class="d-flex align-items-start gap-2">
+                            {% if item.photo_url %}
+                                <img src="{{ item.photo_url }}" alt="Foto Produk" class="rounded mb-3" style="height:100px; width:auto; max-width:100%; object-fit:contain; background:#fafafa;">
+                            {% else %}
+                                <div class="rounded-circle d-flex align-items-center justify-content-center mb-3" style="width:48px; height:48px; background:#f0f0f0; font-size:1.5em; color:#bbb;">📦</div>
+                            {% endif %}
+                            <div>
+                                <div class="fw-bold" style="font-size:0.98em;">sku : {{ item.sku }}</div>
+                                <div style="font-size:0.9em;" class="text-secondary">bar : {{ item.barcode }}</div>
+                                <div style="font-size:0.95em;">{{ item.nama_produk }} <span class="text-muted">{{ item.variant_produk }}</span></div>
+                                <div style="font-size:0.9em;" class="text-secondary">{{ item.brand }}</div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-primary" style="font-size:0.95em;">{{ item.jumlah_ambil }}/{{ item.jumlah }}</span><br>
+                            <span class="badge bg-light text-dark border mt-1" style="font-size:0.92em;">{{ item.rak }}</span>
+                        </div>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Items -->
+    <div class="mb-4">
+        <h5 class="mb-2" style="font-size:1em;">Completed Items</h5>
+        <div class="card shadow-sm" style="border-radius:12px;">
+            <div class="card-body p-2">
+                <ul class="list-group" id="completedList">
+                    {% for item in details %}
+                    {% if item.status_ambil == 'completed' %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-2 py-2" style="font-size:0.98em; border-radius:10px; margin-bottom:6px; box-shadow:0 1px 4px rgba(0,0,0,0.04); border:1px solid #f0f0f0; background: #bfdbfe;" 
+                        data-product-id="{{ item.id }}"
+                        data-sku="{{ item.sku }}"
+                        data-nama="{{ item.nama_produk }}"
+                        data-barcode="{{ item.barcode }}"
+                        data-variant="{{ item.variant_produk }}"
+                        data-brand="{{ item.brand }}"
+                        data-rak="{{ item.rak }}">
+                        <div class="d-flex align-items-start gap-2">
+                            {% if item.photo_url %}
+                                <img src="{{ item.photo_url }}" alt="Foto Produk" class="rounded mb-3" style="height:48px; width:auto; max-width:100%; object-fit:contain; background:#fafafa;">
+                            {% else %}
+                                <div class="rounded-circle d-flex align-items-center justify-content-center mb-3" style="width:48px; height:48px; background:#f0f0f0; font-size:1.5em; color:#bbb;">📦</div>
+                            {% endif %}
+                            <div>
+                                <div class="fw-bold" style="font-size:0.98em;">{{ item.sku }}</div>
+                                <div style="font-size:0.93em;">{{ item.nama_produk }} <span class="text-muted">{{ item.variant_produk }}</span></div>
+                                <div style="font-size:0.9em;" class="text-secondary">{{ item.brand }}</div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-success" style="font-size:0.95em;">{{ item.jumlah_ambil }}/{{ item.jumlah }}</span><br>
+                            <span class="badge bg-light text-dark border mt-1" style="font-size:0.92em;">{{ item.rak }}</span>
+                        </div>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sticky Reload Bar -->
+<div id="stickyReloadBar" style="position:fixed; left:0; right:0; bottom:0; width:100vw; z-index:1000; background:rgba(255,255,255,0.95); border-top:1px solid #eee; padding:10px 0 6px 0; display:flex; flex-direction:column; align-items:center; box-shadow:0 -2px 8px rgba(0,0,0,0.08);">
+    <div style="width:100%; max-width:480px; display:flex; justify-content:center; align-items:center; gap:12px;">
+        <button type="button" id="batchBtn" class="btn btn-outline-primary btn-lg" style="min-width:90px;"><i class="bi bi-list"></i> Batch</button>
+        {# Tombol baru untuk History Log #}
+        <button type="button" id="historyBtn" class="btn btn-outline-info btn-lg" style="min-width:90px;"><i class="bi bi-clock-history"></i> History</button>
+    </div>
+</div>
+
+<!-- Floating Action Button (FAB) Reload di kiri bawah -->
+<style>
+.fab-reload {
+  position: fixed;
+  bottom: 80px;
+  left: 24px;
+  z-index: 1050;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #1976d2;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  font-size: 2rem;
+  border: none;
+  outline: none;
+  transition: background 0.2s;
+}
+.fab-reload:active {
+  background: #1565c0;
+}
+/* Style untuk FAB V1 */
+.fab-v1 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #007bff; /* Contoh warna biru */
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  border: none;
+  outline: none;
+  transition: background 0.2s;
+  font-weight: 600;
+  margin-right: 8px; /* Tambahkan sedikit jarak */
+}
+.fab-v1:active {
+  background: #0056b3; /* Warna biru lebih gelap saat aktif */
+}
+/* Style untuk FAB V2 */
+.fab-v2 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #ff6b35;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  border: none;
+  outline: none;
+  transition: background 0.2s;
+  font-weight: 600;
+}
+.fab-v2:active {
+  background: #e55a2b;
+}
+/* Style untuk FAB V3 (tidak perlu lagi karena ini adalah V3) */
+/* .fab-v3 {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #28a745;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  border: none;
+  outline: none;
+  transition: background 0.2s;
+  font-weight: 600;
+}
+.fab-v3:active {
+  background: #218838;
+} */
+/* Style untuk FAB History (baru) */
+.fab-history {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #6c757d; /* Contoh warna abu-abu */
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  border: none;
+  outline: none;
+  transition: background 0.2s;
+  font-size: 1.1rem; /* Ukuran ikon */
+}
+.fab-history:active {
+  background: #5a6268; /* Warna abu-abu lebih gelap saat aktif */
+}
+</style>
+
+<button class="fab-reload" id="fabReloadBtn" title="Reload">
+  <i class="bi bi-arrow-clockwise"></i>
+</button>
+
+{% endblock %}
+{% block extra_script %}
+<script>
+window.NAMA_PICKLIST = "{{ nama_picklist }}";
+window.CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+<script>
+function playSound(type) {
+    if (type === 'completed') {
+        const audio = new Audio('/static/sounds/completedsound.mp3');
+        audio.play();
+    } else {
+        const audio = new Audio(type === 'success' ? 'https://cdn.jsdelivr.net/gh/ttskch/audio-sample/success.mp3' : 'https://cdn.jsdelivr.net/gh/ttskch/audio-sample/error.mp3');
+        audio.play();
+    }
+}
+function showFeedback(message, type, status_ambil) {
+    const feedback = document.getElementById('barcodeFeedback');
+    feedback.innerHTML = message;
+    feedback.className = type === 'success' ? 'alert alert-success' : 'alert alert-danger';
+    if (status_ambil === 'completed') {
+        playSound('completed');
+    }
+}
+
+// Variable untuk akumulasi barcode yang di-scan
+let barcodeBuffer = '';
+// Timestamp terakhir keydown, untuk deteksi jeda (debouncing)
+let lastScanTimestamp = 0;
+// Waktu maksimum (ms) antar penekanan tombol untuk dianggap bagian dari scan yang sama
+const SCAN_THRESHOLD_MS = 50; // Scanner biasanya lebih cepat dari ini
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Tidak perlu lagi memfokuskan input barcode karena sudah dihapus
+    // var barcodeInput = document.getElementById('barcodeInput');
+    // if (barcodeInput) {
+    //     barcodeInput.focus();
+    // }
+
+    // --- GLOBAL KEYDOWN LISTENER UNTUK BARCODE SCANNING ---
+    document.addEventListener('keydown', function(e) {
+        const currentTime = new Date().getTime();
+        const activeElement = document.activeElement;
+
+        // Cek apakah elemen yang sedang fokus adalah input, textarea, atau select
+        // (Tidak perlu lagi mengecek id !== 'barcodeInput' karena input barcode sudah dihapus)
+        const isTypingInAnotherField = activeElement &&
+                                       (activeElement.tagName === 'INPUT' ||
+                                        activeElement.tagName === 'TEXTAREA' ||
+                                        activeElement.tagName === 'SELECT');
+
+        if (isTypingInAnotherField) {
+            barcodeBuffer = ''; // Reset buffer jika user mengetik di field lain
+            lastScanTimestamp = 0;
+            return; // Jangan proses lebih lanjut untuk barcode scan
+        }
+
+        // Reset buffer jika ada jeda yang signifikan (kemungkinan pengetikan manual)
+        if (currentTime - lastScanTimestamp > SCAN_THRESHOLD_MS) {
+            barcodeBuffer = '';
+        }
+
+        if (e.key === 'Enter') {
+            if (barcodeBuffer.length > 0) {
+                // Proses barcode yang terkumpul
+                handleBarcodeScan(barcodeBuffer);
+                // Kosongkan buffer setelah diproses
+            }
+            barcodeBuffer = ''; 
+            e.preventDefault(); // Cegah perilaku default Enter (misal: submit form, baris baru)
+        } else if (e.key.length === 1 && e.key.match(/^[a-zA-Z0-9]$/)) {
+            // Hanya tambahkan karakter alfanumerik ke buffer
+            barcodeBuffer += e.key;
+            e.preventDefault(); // Cegah karakter muncul di tempat lain jika ini bagian dari scan
+        } else {
+            // Jika tombol yang ditekan bukan Enter atau karakter alfanumerik (misal: Shift, Ctrl, F keys)
+            barcodeBuffer = '';
+        }
+        lastScanTimestamp = currentTime;
+    });
+    // --- AKHIR GLOBAL KEYDOWN LISTENER ---
+
+    var reloadBtn = document.getElementById('reloadPageBtn');
+    if (reloadBtn) {
+        reloadBtn.onclick = function() {
+            window.location.reload();
+        };
+    }
+    // Batch button action ke halaman index fullfilment
+    var batchBtn = document.getElementById('batchBtn');
+    if (batchBtn) {
+        batchBtn.onclick = function() {
+            window.location.href = '/fullfilment/';
+        };
+    }
+    
+    // History button action ke halaman batchitemlogs
+    var historyBtn = document.getElementById('historyBtn');
+    if (historyBtn) {
+        historyBtn.onclick = function() {
+            window.location.href = `/fullfilment/batchitemlogs/${window.NAMA_PICKLIST}/`;
+        };
+    }
+
+    // FAB V1 button action (baru)
+    var fabV1Btn = document.getElementById('fabV1Btn');
+    if (fabV1Btn) {
+        fabV1Btn.onclick = function() {
+            window.location.href = `/fullfilment/batchpicking/${window.NAMA_PICKLIST}/`; // Mengarahkan ke V1 (asli)
+        };
+    }
+
+    // FAB V2 button action (untuk kembali ke V2)
+    var fabV2Btn = document.getElementById('fabV2Btn');
+    if (fabV2Btn) {
+        fabV2Btn.onclick = function() {
+            window.location.href = `/fullfilment/mobile/batchpicking_v2/${window.NAMA_PICKLIST}/`;
+        };
+    }
+
+    // FAB History button action (baru)
+    var fabHistoryBtn = document.getElementById('fabHistoryBtn');
+    if (fabHistoryBtn) {
+        fabHistoryBtn.onclick = function() {
+            window.location.href = `/fullfilment/batchitemlogs/${window.NAMA_PICKLIST}/`;
+        };
+    }
+    
+    // Klik pada item pending langsung ke detail
+    document.querySelectorAll('#pendingList li').forEach(function(li) {
+        li.style.cursor = 'pointer';
+        li.addEventListener('click', function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.closest('input')) {
+                return;
+            }
+            const batchitemId = li.getAttribute('data-product-id');
+            window.location.href = `/fullfilment/batchpicking/${window.NAMA_PICKLIST}/batchitem/${batchitemId}/detail/`;
+        });
+    });
+    // Klik pada item completed juga ke detail
+    document.querySelectorAll('#completedList li').forEach(function(li) {
+        li.style.cursor = 'pointer';
+        li.addEventListener('click', function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.closest('input')) {
+                return;
+            }
+            const batchitemId = li.getAttribute('data-product-id');
+            window.location.href = `/fullfilment/batchpicking/${window.NAMA_PICKLIST}/batchitem/${batchitemId}/detail/`;
+        });
+    });
+    // Auto reload jika ada query ?reload=1
+    if (window.location.search.includes('reload=1')) {
+        // Hapus query reload=1 setelah reload pertama
+        const url = new URL(window.location);
+        url.searchParams.delete('reload');
+        window.history.replaceState({}, '', url.pathname + url.search);
+        window.location.reload();
+    }
+    // Hapus force reload, biarkan backend yang selalu ambil data terbaru
+});
+
+function handleBarcodeScan(barcode) {
+    fetch(`/fullfilment/batchpicking/${window.NAMA_PICKLIST}/update_barcode/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.CSRF_TOKEN,
+        },
+        body: JSON.stringify({ barcode })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showFeedback('Berhasil scan: ' + barcode, 'success', data.status_ambil);
+            updateListsAfterScan(data.product_info.barcode, data.status_ambil, data.jumlah_ambil, data.jumlah);
+            showLastScannedCard(data.product_info.barcode, data.product_info); // Pass product_info
+        } else {
+            showFeedback(data.error || 'Barcode tidak valid.', 'error');
+        }
+    })
+    .catch(() => {
+        showFeedback('Terjadi kesalahan koneksi.', 'error');
+    });
+}
+
+function showLastScannedCard(barcode, productInfo = null) {
+    let item = document.querySelector(`#pendingList .list-group-item[data-barcode='${barcode}']`);
+    if (!item) {
+        item = document.querySelector(`#completedList .list-group-item[data-barcode='${barcode}']`);
+    }
+
+    if (!item && !productInfo) { // If no item found and no productInfo provided, hide card
+        document.getElementById('lastScannedCard').style.display = 'none';
+        return;
+    }
+
+    // Use productInfo if provided by AJAX response, otherwise fallback to data attributes from existing item
+    const sku = productInfo ? productInfo.sku : item.getAttribute('data-sku');
+    const nama = productInfo ? productInfo.nama_produk : item.getAttribute('data-nama');
+    const variant = productInfo ? productInfo.variant_produk : item.getAttribute('data-variant');
+    const brand = productInfo ? productInfo.brand : item.getAttribute('data-brand');
+    const rak = item ? item.getAttribute('data-rak') : 'N/A'; // Rak might only be on initial list
+    const productId = item ? item.getAttribute('data-product-id') : 'N/A';
+    
+    // Get current jumlah_ambil and jumlah from the updated list item (if exists) or fall back
+    let currentJumlahAmbil = 0;
+    let totalJumlah = 0;
+    if (item) {
+        const jumlahText = item.querySelector('.badge').textContent;
+        [currentJumlahAmbil, totalJumlah] = jumlahText.split('/').map(x => parseInt(x));
+    } else if (productInfo) { // If it's a new scan that completed something not in the initial list
+        currentJumlahAmbil = productInfo.jumlah_ambil; // Assuming productInfo has this from update_barcode
+        totalJumlah = productInfo.jumlah;
+    }
+
+    let imgHtml = '';
+    const photoUrl = productInfo ? productInfo.photo_url : (item ? item.querySelector('img')?.src : '');
+    if (photoUrl && photoUrl !== '/static/icons/alfaicon.png') { // Exclude default icon
+        imgHtml = `<img src="${photoUrl}" alt="Photo" style="width:48px; height:48px; object-fit:contain; border-radius:8px; background:#f8f9fa;" class="me-2">`;
+    } else {
+        imgHtml = `<div style="width:48px; height:48px; background:#f0f0f0; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.5em; color:#bbb;" class="me-2">📦</div>`;
+    }
+    
+    document.getElementById('lastScannedCard').innerHTML = `
+        <div class="card shadow-sm mb-3" style="border-radius:12px; background:#f3e8ff;">
+            <div class="card-body d-flex align-items-center gap-2">
+                ${imgHtml}
+                <div style="flex:1;">
+                    <div class="fw-bold" style="font-size:1.1em;">${sku}</div>
+                    <div class="font-weight-bold" style="font-size:0.95em;">${nama}</div>
+                    <div class="text-muted" style="font-size:0.9em;">${variant}</div>
+                    <div class="text-muted" style="font-size:0.9em;">${brand}</div>
+                    <div class="small text-secondary">Rak: ${rak}</div>
+                    <div class="d-flex align-items-center gap-2 mt-2">
+                        <button class="btn btn-outline-secondary btn-sm" id="lastScanMinus">-</button>
+                        <input type="number" id="lastScanJumlahInput" class="form-control form-control-sm text-center" style="width:60px;" value="${currentJumlahAmbil}" min="0" max="${totalJumlah}">
+                        <button class="btn btn-outline-secondary btn-sm" id="lastScanPlus">+</button>
+                        <button class="btn btn-outline-primary btn-sm" id="lastScanMax">Max</button>
+                        <span class="badge bg-info text-dark ms-2" style="font-size:1em;">/ ${totalJumlah}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('lastScannedCard').style.display = '';
+
+    // Tambahkan event untuk +, -, Max, dan input
+    const minusBtn = document.getElementById('lastScanMinus');
+    const plusBtn = document.getElementById('lastScanPlus');
+    const maxBtn = document.getElementById('lastScanMax');
+    const jumlahInput = document.getElementById('lastScanJumlahInput');
+
+    function updateJumlahAmbilManual(newJumlah) {
+        if (newJumlah < 0) newJumlah = 0;
+        if (newJumlah > totalJumlah) newJumlah = totalJumlah;
+
+        // Update badge di list yang relevan
+        let targetItem = document.querySelector(`#pendingList .list-group-item[data-barcode='${barcode}']`) ||
+                         document.querySelector(`#completedList .list-group-item[data-barcode='${barcode}']`);
+        if (targetItem) {
+            targetItem.querySelector('.badge').textContent = `${newJumlah}/${totalJumlah}`;
+            // Optional: update background/status if needed, similar to updateListsAfterScan
+        }
+
+        // AJAX update ke backend
+        fetch(`/fullfilment/batchitem/${productId}/update_jumlah_ambil/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.CSRF_TOKEN,
+            },
+            body: JSON.stringify({ jumlah_ambil: parseInt(newJumlah) })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update the UI based on server response for the item status
+                updateListsAfterScan(barcode, data.status_ambil, newJumlah, totalJumlah);
+                showFeedback('Update manual berhasil.', 'success', data.status_ambil);
+            } else {
+                showFeedback(data.error || 'Update manual gagal.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating manual quantity:', error);
+            showFeedback('Terjadi kesalahan koneksi saat update manual.', 'error');
+        });
+    }
+
+    minusBtn.onclick = function() {
+        let val = parseInt(jumlahInput.value) || 0;
+        if (val > 0) {
+            jumlahInput.value = val - 1;
+            updateJumlahAmbilManual(jumlahInput.value);
+        }
+    };
+    plusBtn.onclick = function() {
+        let val = parseInt(jumlahInput.value) || 0;
+        if (val < totalJumlah) {
+            jumlahInput.value = val + 1;
+            updateJumlahAmbilManual(jumlahInput.value);
+        }
+    };
+    maxBtn.onclick = function() {
+        jumlahInput.value = totalJumlah;
+        updateJumlahAmbilManual(totalJumlah);
+    };
+    jumlahInput.oninput = function() {
+        // Only trigger update after a short delay or on blur to prevent too many requests
+        // For simplicity here, we'll trigger immediately but in production, debouncing is good.
+        let val = parseInt(jumlahInput.value);
+        if (isNaN(val)) val = 0;
+        if (val > totalJumlah) jumlahInput.value = totalJumlah;
+        if (val < 0) jumlahInput.value = 0;
+        updateJumlahAmbilManual(jumlahInput.value);
+    };
+}
+
+function updateListsAfterScan(barcode, status_ambil, jumlah_ambil, jumlah) {
+    const pendingList = document.getElementById('pendingList');
+    const completedList = document.getElementById('completedList');
+    let item = pendingList.querySelector(`[data-barcode='${barcode}']`);
+    let badge;
+
+    if (item) {
+        badge = item.querySelector('.badge');
+        if (badge) {
+            badge.textContent = `${jumlah_ambil}/${jumlah}`;
+            if (status_ambil === 'completed') {
+                badge.classList.remove('bg-primary');
+                badge.classList.add('bg-success');
+                // Pindahkan item dari pending ke completed
+                pendingList.removeChild(item);
+                item.style.background = '#bfdbfe'; // Update background for completed item
+                completedList.prepend(item);
+                // Update photo size for completed list
+                const img = item.querySelector('img');
+                if (img) {
+                    img.style.height = '48px';
+                    img.style.width = '48px';
+                }
+            } else {
+                // Jika status berubah dari 'completed' ke 'pending' (misal manual ubah jumlah),
+                // pindahkan kembali ke pending. (Ini case jarang, tapi bisa ditangani)
+                if (item.parentNode === completedList) {
+                    completedList.removeChild(item);
+                    item.style.background = '#c6f6d5'; // Update background for pending item
+                    pendingList.prepend(item);
+                     // Update photo size for pending list
+                    const img = item.querySelector('img');
+                    if (img) {
+                        img.style.height = '100px';
+                        img.style.width = 'auto';
+                    }
+                }
+            }
+        }
+    } else { // Item mungkin sudah ada di completedList atau baru muncul
+        item = completedList.querySelector(`[data-barcode='${barcode}']`);
+        if (item) {
+            badge = item.querySelector('.badge');
+            if (badge) {
+                badge.textContent = `${jumlah_ambil}/${jumlah}`;
+                if (status_ambil !== 'completed' && item.parentNode === completedList) {
+                    // Jika status berubah dari 'completed' ke 'pending' (misal manual ubah jumlah)
+                    completedList.removeChild(item);
+                    item.style.background = '#c6f6d5';
+                    pendingList.prepend(item);
+                     // Update photo size for pending list
+                    const img = item.querySelector('img');
+                    if (img) {
+                        img.style.height = '100px';
+                        img.style.width = 'auto';
+                    }
+                }
+            }
+        }
+    }
+}
+
+document.getElementById('fabReloadBtn').onclick = function() {
+  window.location.reload();
+};
+</script>
+{% endblock %} 

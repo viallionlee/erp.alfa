@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERP.ALFA Home</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-blur: blur(10px);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --border-radius: 20px;
+            --shadow-soft: 0 4px 15px rgba(0,0,0,0.1);
+            --shadow-hover: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        body { 
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-title { 
+            font-weight: 700; 
+            color: white; 
+            letter-spacing: 1px; 
+            text-align: center; 
+        }
+
+        .modern-card { 
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border: none; 
+            border-radius: var(--border-radius); 
+            box-shadow: var(--shadow-soft); 
+            transition: all 0.3s ease;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .modern-card:hover { 
+            transform: translateY(-7px) scale(1.02); 
+            box-shadow: var(--shadow-hover);
+        }
+
+        .modern-card .card-body {
+            padding: 1.5rem !important;
+        }
+
+        .icon-circle { 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 1.6rem; 
+            margin-bottom: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .modern-card:hover .icon-circle {
+            transform: scale(1.1);
+        }
+
+        /* Icon color schemes */
+        .icon-products { background: linear-gradient(135deg, #e7f1ff 0%, #dbeafe 100%); color: #0d6efd; }
+        .icon-orders { background: linear-gradient(135deg, #fff3cd 0%, #fef3c7 100%); color: #ffc107; }
+        .icon-fulfillment { background: linear-gradient(135deg, #e0f7fa 0%, #ccfbf1 100%); color: #17a2b8; }
+        .icon-stock { background: linear-gradient(135deg, #eafbe7 0%, #dcfce7 100%); color: #198754; }
+        .icon-dashboard { background: linear-gradient(135deg, #dbeafe 0%, #dbeafe 100%); color: #3b82f6; }
+        .icon-packing { background: linear-gradient(135deg, #f0eaff 0%, #f3e8ff 100%); color: #6f42c1; }
+        .icon-shipping { background: linear-gradient(135deg, #ffe8d6 0%, #fed7aa 100%); color: #fd7e14; }
+        .icon-rak { background: linear-gradient(135deg, #d4e8f7 0%, #a6d9f7 100%); color: #007bff; }
+        .icon-picking { background: linear-gradient(135deg, #d8e5ff 0%, #b0c4ff 100%); color: #007bff; }
+        .icon-return { background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); color: #3b82f6; }
+        .icon-cancel { background: linear-gradient(135deg, #ffdcdc 0%, #ffadad 100%); color: #dc3545; }
+        .icon-purchasing { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); color: #388e3c; }
+
+        .card-title { 
+            font-weight: 700; 
+            font-size: 1.1rem; 
+            text-transform: uppercase;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .card-text { 
+            font-size: 0.85rem; 
+            text-align: center;
+            color: #718096;
+            line-height: 1.4;
+        }
+
+        .header-container {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            color: #2d3748;
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 30px 30px;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .logout-btn {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            border-radius: 12px;
+            padding: 8px 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+            color: white;
+        }
+
+        .user-info {
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .user-info h4 {
+            color: #2d3748;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .user-info small {
+            color: #718096;
+            font-weight: 500;
+        }
+
+        .container {
+            max-width: 1200px;
+        }
+
+        .welcome-text {
+            color: rgba(255,255,255,0.9);
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+
+        .module-section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            color: rgba(255,255,255,0.8);
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 20px;
+            }
+            
+            .header-container {
+                margin-bottom: 1.5rem;
+                padding: 1rem 0;
+            }
+            
+            .icon-circle {
+                width: 45px;
+                height: 45px;
+                font-size: 1.4rem;
+            }
+            
+            .card-title {
+                font-size: 1rem;
+            }
+
+            .welcome-text {
+                font-size: 0.9rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 0.9rem;
+                margin-bottom: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header dengan user info dan logout -->
+    <div class="header-container position-relative">
+        <div class="container">
+            <div class="user-info">
+                <h4 class="mb-1">Welcome to ERP.ALFA</h4>
+                <small>Logged in as: {{ user.get_full_name|default:user.username }}</small>
+            </div>
+            <a href="{% url 'logout' %}" class="btn btn-sm logout-btn position-absolute" style="top: 1rem; right: 1rem;">
+                <i class="bi bi-box-arrow-right me-1"></i>Logout
+            </a>
+        </div>
+    </div>
+
+    <div class="container">
+        <p class="welcome-text">Silakan pilih modul yang ingin diakses:</p>
+        
+        <!-- Section 1: Master Data Management -->
+        {% if perms.products.view_product %}
+        <div class="module-section">
+            <h5 class="section-title">Master Data Management</h5>
+            <div class="row justify-content-center g-3">
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="/products/" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-products"><i class="bi bi-box-seam"></i></div>
+                            <h5 class="card-title">Products</h5>
+                            <p class="card-text">Kelola produk, tambah, edit, dan hapus produk di database.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Section 2: Inventory Management -->
+        {% if perms.inventory.view_stock or perms.inventory.view_inbound or perms.inventory.view_rak or perms.inventory.view_rakopnamesession %}
+        <div class="module-section">
+            <h5 class="section-title">Inventory Management</h5>
+            <div class="row justify-content-center g-3">
+                {% if perms.inventory.view_stock %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="/inventory/" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-stock"><i class="bi bi-bar-chart-line"></i></div>
+                            <h5 class="card-title">Inventory</h5>
+                            <p class="card-text">Kelola stok produk, tambah, edit, dan hapus stok.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if perms.inventory.view_inbound %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'inventory:inbound' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-stock"><i class="bi bi-box-arrow-in-down"></i></div>
+                            <h5 class="card-title">Inbound</h5>
+                            <p class="card-text">Kelola data inbound, tambah barang masuk ke gudang.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if perms.inventory.view_stock %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="/inventory/opname/queue/" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-stock"><i class="bi bi-clipboard-check"></i></div>
+                            <h5 class="card-title">Opname Queue</h5>
+                            <p class="card-text">Daftar wajib opname & input hasil stok opname bulanan/discrepancy.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if perms.inventory.view_stock %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'inventory:pickingrak_scan' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-picking"><i class="bi bi-box-arrow-down"></i></div>
+                            <h5 class="card-title">Picking Rak</h5>
+                            <p class="card-text">Proses pengambilan barang dari rak.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if perms.inventory.view_rak %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'inventory:rak_stock' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-rak"><i class="bi bi-box-seam"></i></div>
+                            <h5 class="card-title">Stok Rak</h5>
+                            <p class="card-text">Kelola stok rak, manajemen rak, dan log aktivitas dalam satu dashboard.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if perms.inventory.view_rakopnamesession %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'inventory:opname_rak_list' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-stock"><i class="bi bi-clipboard-check"></i></div>
+                            <h5 class="card-title">Opname Rak</h5>
+                            <p class="card-text">Buat sesi opname rak, input qty fisik, dan koreksi stok rak.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Section 2.5: Purchasing Management -->
+        {% if perms.purchasing.view_purchaseorder %}
+        <div class="module-section">
+            <h5 class="section-title">Purchasing Management</h5>
+            <div class="row justify-content-center g-3">
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'purchasing:po_dashboard' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-purchasing"><i class="bi bi-graph-up"></i></div>
+                            <h5 class="card-title">PO Dashboard</h5>
+                            <p class="card-text">Dashboard Purchase Order dengan analytics & statistics.</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'purchasing:po_list' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-purchasing"><i class="bi bi-file-earmark-text"></i></div>
+                            <h5 class="card-title">Purchase Order</h5>
+                            <p class="card-text">Kelola Purchase Order, tracking harga beli, dan supplier.</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'purchasing:po_create' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-purchasing"><i class="bi bi-plus-circle"></i></div>
+                            <h5 class="card-title">Buat PO Baru</h5>
+                            <p class="card-text">Buat Purchase Order baru dengan harga beli.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Section 3: Order Management -->
+        {% if perms.orders.view_order or perms.fullfilment.add_batchlist or perms.fullfilment.view_mobile_batchlist or perms.fullfilment.view_desktop_batchlist or perms.fullfilment.view_mobile_generatebatch or perms.fullfilment.view_desktop_generatebatch %}
+        <div class="module-section">
+            <h5 class="section-title">Order Management</h5>
+            <div class="row justify-content-center g-3">
+                {% if perms.orders.view_order %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="/orders/" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-orders"><i class="bi bi-journal-text"></i></div>
+                            <h5 class="card-title">Orders</h5>
+                            <p class="card-text">Lihat daftar order yang masuk ke sistem dan detailnya.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+                
+                {% if perms.fullfilment.add_batchlist or perms.fullfilment.view_mobile_generatebatch or perms.fullfilment.view_desktop_generatebatch %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="/fullfilment/generatebatch/" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-dashboard"><i class="bi bi-layers"></i></div>
+                            <h5 class="card-title">Generate Batch (OMS)</h5>
+                            <p class="card-text">Generate batch order dari OMS.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if perms.fullfilment.view_desktop_batchlist %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="/fullfilment/" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-fulfillment"><i class="bi bi-truck"></i></div>
+                            <h5 class="card-title">BATCHLIST</h5>
+                            <p class="card-text">Proses order, picking, packing, dan pengiriman.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+                {% if perms.fullfilment.view_desktop_batchlist %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'fullfilment_dashboard' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-dashboard"><i class="bi bi-graph-up"></i></div>
+                            <h5 class="card-title">Dashboard Fulfillment</h5>
+                            <p class="card-text">Progress order fulfillment: printed, picked, packed, shipped, returned, cancelled.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Section 4: Fulfillment Operations -->
+        {% if perms.fullfilment.view_desktop_picking_module or perms.fullfilment.view_desktop_packing_module or perms.fullfilment.view_desktop_shipping_module %}
+        <div class="module-section">
+            <h5 class="section-title">Fulfillment Operations</h5>
+            <div class="row justify-content-center g-3">
+                <!-- PICKING GROUP - Desktop Permission -->
+                {% if perms.fullfilment.view_desktop_picking_module %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'scanpicking_list' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-fulfillment"><i class="bi bi-clipboard2-check-fill"></i></div>
+                            <h5 class="card-title">Ready to Pick List</h5>
+                            <p class="card-text">Lihat order yang siap untuk diambil.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if perms.fullfilment.view_desktop_picking_module %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'scanpicking_index' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-packing"><i class="bi bi-upc-scan"></i></div>
+                            <h5 class="card-title">Scan Picking</h5>
+                            <p class="card-text">Langsung ke halaman scan untuk input Order ID manual.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if perms.fullfilment.view_desktop_picking_module %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'scanpicking_history' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-fulfillment"><i class="bi bi-clock-history"></i></div>
+                            <h5 class="card-title">Picking History</h5>
+                            <p class="card-text">Riwayat proses picking order.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- PACKING GROUP - Desktop Permission -->
+                {% if perms.fullfilment.view_desktop_packing_module %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'scanpacking' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-packing"><i class="bi bi-box-arrow-in-down"></i></div>
+                            <h5 class="card-title">Scan Packing</h5>
+                            <p class="card-text">Proses packing pesanan yang telah selesai di-pick.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if perms.fullfilment.view_desktop_packing_module %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'order_packing_list' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-packing"><i class="bi bi-list-check"></i></div>
+                            <h5 class="card-title">Order Packing List</h5>
+                            <p class="card-text">Daftar order yang siap untuk di-packing.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- SHIPPING GROUP - Desktop Permission -->
+                {% if perms.fullfilment.view_desktop_shipping_module %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'scanshipping' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-shipping"><i class="bi bi-send"></i></div>
+                            <h5 class="card-title">Scan Shipping</h5>
+                            <p class="card-text">Proses serah terima pesanan ke pihak kurir.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if perms.fullfilment.view_desktop_shipping_module %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'order_shipping_list' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-shipping"><i class="bi bi-truck"></i></div>
+                            <h5 class="card-title">Order Shipping List</h5>
+                            <p class="card-text">Daftar order yang siap untuk dikirim.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if perms.fullfilment.view_desktop_shipping_module %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'shipping_history' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-shipping"><i class="bi bi-clock-history"></i></div>
+                            <h5 class="card-title">Shipping History</h5>
+                            <p class="card-text">Riwayat proses shipping order.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Section 5: Returns & Cancellations -->
+        {% if perms.fullfilment.view_mobile_returnlist or perms.fullfilment.view_desktop_returnlist or perms.fullfilment.view_ordercancellog %}
+        <div class="module-section">
+            <h5 class="section-title">Returns & Cancellations</h5>
+            <div class="row justify-content-center g-3">
+                {% if perms.fullfilment.view_mobile_returnlist or perms.fullfilment.view_desktop_returnlist %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'returnlist_dashboard' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-return"><i class="bi bi-archive"></i></div>
+                            <h5 class="card-title">Return List</h5>
+                            <p class="card-text">Dashboard monitoring & manajemen return stock</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+
+
+                {% if perms.fullfilment.view_ordercancellog %}
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'order_cancel_log_view' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-orders"><i class="bi bi-x-circle"></i></div>
+                            <h5 class="card-title">Order Cancel Log</h5>
+                            <p class="card-text">Lihat riwayat order yang dibatalkan.</p>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto redirect ke mobile jika diakses dari device mobile dan bukan sudah di /mobile/
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            if (!window.location.pathname.includes('mobile')) {
+                window.location.href = '/mobile_home/';
+            }
+        }
+    </script>
+</body>
+</html>

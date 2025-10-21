@@ -1,0 +1,226 @@
+{% load humanize %}
+
+<div class="mb-3">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="alert alert-info">
+                <strong><i class="bi bi-info-circle"></i> Purchase Summary:</strong><br>
+                Total Purchases: <strong>{{ total_purchases }}</strong> | 
+                Total Amount: <strong>Rp {{ total_amount|floatformat:0|intcomma }}</strong>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="alert alert-success">
+                <strong><i class="bi bi-credit-card"></i> Payment Info:</strong><br>
+                Paid: <strong>Rp {{ total_paid|floatformat:0|intcomma }}</strong><br>
+                Unpaid: <strong>Rp {{ total_unpaid|floatformat:0|intcomma }}</strong>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="alert alert-warning">
+                <strong><i class="bi bi-receipt"></i> Tax Invoice Info:</strong><br>
+                Total Invoice: <strong>Rp {{ total_invoice_amount|floatformat:0|intcomma }}</strong><br>
+                Pending: <strong>{{ pending_invoices }}</strong> invoices
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if purchases %}
+<div class="table-responsive">
+    {% if report_type == 'detail' %}
+    <!-- Detail Report Table -->
+    <table class="table table-hover table-bordered">
+        <thead class="table-primary">
+            <tr>
+                <th>Date</th>
+                <th>Purchase #</th>
+                <th>Supplier</th>
+                <th>Product</th>
+                <th>Barcode</th>
+                <th class="text-center">Qty</th>
+                <th class="text-end">Harga Beli</th>
+                <th class="text-end">Subtotal</th>
+                <th>Status</th>
+                <th>Received By</th>
+                <th>Payment Status</th>
+                <th>Tax Invoice Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for purchase in purchases %}
+                {% for item in purchase.items.all %}
+                <tr>
+                    <td>{{ purchase.tanggal_purchase|date:"d M Y" }}</td>
+                    <td>{{ purchase.nomor_purchase }}</td>
+                    <td>{{ purchase.supplier.nama_supplier }}</td>
+                    <td>{{ item.product.nama_produk }}</td>
+                    <td>{{ item.product.barcode|default:item.product.sku }}</td>
+                    <td class="text-center">{{ item.quantity }}</td>
+                    <td class="text-end">Rp {{ item.harga_beli|floatformat:0|intcomma }}</td>
+                    <td class="text-end"><strong>Rp {{ item.subtotal|floatformat:0|intcomma }}</strong></td>
+                    <td>
+                        {% if purchase.status == 'received' %}
+                            <span class="badge bg-success">Received</span>
+                        {% elif purchase.status == 'pending' %}
+                            <span class="badge bg-warning">Pending</span>
+                        {% elif purchase.status == 'draft' %}
+                            <span class="badge bg-secondary">Draft</span>
+                        {% elif purchase.status == 'verified' %}
+                            <span class="badge bg-info">Verified</span>
+                        {% else %}
+                            <span class="badge bg-danger">{{ purchase.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if purchase.received_by %}
+                            {{ purchase.received_by.get_full_name|default:purchase.received_by.username }}
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if purchase.payment.first %}
+                            {% with payment=purchase.payment.first %}
+                                {% if payment.status == 'paid' %}
+                                    <span class="badge bg-info">Paid</span>
+                                {% elif payment.status == 'partial' %}
+                                    <span class="badge bg-warning">Partial</span>
+                                {% elif payment.status == 'overdue' %}
+                                    <span class="badge bg-danger">Overdue</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Unpaid</span>
+                                {% endif %}
+                                <br><small class="text-muted">Rp {{ payment.paid_amount|default:0|floatformat:0|intcomma }} / Rp {{ payment.total_amount|default:0|floatformat:0|intcomma }}</small>
+                            {% endwith %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if purchase.tax_invoice.first %}
+                            {% with tax_invoice=purchase.tax_invoice.first %}
+                                {% if tax_invoice.status == 'received' %}
+                                    <span class="badge bg-info">Received</span>
+                                {% elif tax_invoice.status == 'verified' %}
+                                    <span class="badge bg-info">Verified</span>
+                                {% elif tax_invoice.status == 'rejected' %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Pending</span>
+                                {% endif %}
+                                <br><small class="text-muted">{{ tax_invoice.invoice_number|default:"No Invoice" }}</small>
+                            {% endwith %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+        <tfoot class="table-secondary">
+            <tr>
+                <td colspan="8" class="text-end"><strong>TOTAL:</strong></td>
+                <td class="text-end"><strong>Rp {{ total_amount|floatformat:0|intcomma }}</strong></td>
+                <td colspan="3"></td>
+            </tr>
+        </tfoot>
+    </table>
+    {% else %}
+    <!-- Summary Report Table -->
+    <table class="table table-hover table-bordered">
+        <thead class="table-primary">
+            <tr>
+                <th>Date</th>
+                <th>Purchase #</th>
+                <th>Supplier</th>
+                <th class="text-end">Total Amount</th>
+                <th>Status</th>
+                <th>Payment Status</th>
+                <th>Tax Invoice Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for purchase in purchases %}
+            <tr>
+                <td>{{ purchase.tanggal_purchase|date:"d M Y" }}</td>
+                <td>{{ purchase.nomor_purchase }}</td>
+                <td>{{ purchase.supplier.nama_supplier }}</td>
+                <td class="text-end"><strong>Rp {{ purchase.total_amount|floatformat:0|intcomma }}</strong></td>
+                <td>
+                    {% if purchase.status == 'received' %}
+                        <span class="badge bg-success">Received</span>
+                    {% elif purchase.status == 'pending' %}
+                        <span class="badge bg-warning">Pending</span>
+                    {% elif purchase.status == 'draft' %}
+                        <span class="badge bg-secondary">Draft</span>
+                    {% else %}
+                        <span class="badge bg-danger">{{ purchase.get_status_display }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if purchase.payment.first %}
+                        {% with payment=purchase.payment.first %}
+                            {% if payment.status == 'paid' %}
+                                <span class="badge bg-info">Paid</span>
+                            {% elif payment.status == 'partial' %}
+                                <span class="badge bg-warning">Partial</span>
+                            {% elif payment.status == 'overdue' %}
+                                <span class="badge bg-danger">Overdue</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Unpaid</span>
+                            {% endif %}
+                            <br><small class="text-muted">Rp {{ payment.paid_amount|default:0|floatformat:0|intcomma }} / Rp {{ payment.total_amount|default:0|floatformat:0|intcomma }}</small>
+                        {% endwith %}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if purchase.tax_invoice.first %}
+                        {% with tax_invoice=purchase.tax_invoice.first %}
+                            {% if tax_invoice.status == 'received' %}
+                                <span class="badge bg-info">Received</span>
+                            {% elif tax_invoice.status == 'verified' %}
+                                <span class="badge bg-info">Verified</span>
+                            {% elif tax_invoice.status == 'rejected' %}
+                                <span class="badge bg-danger">Rejected</span>
+                            {% else %}
+                                <span class="badge bg-warning">Pending</span>
+                            {% endif %}
+                            <br><small class="text-muted">{{ tax_invoice.invoice_number|default:"No Invoice" }}</small>
+                        {% endwith %}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot class="table-secondary">
+            <tr>
+                <td colspan="3" class="text-end"><strong>TOTAL:</strong></td>
+                <td class="text-end"><strong>Rp {{ total_amount|floatformat:0|intcomma }}</strong></td>
+                <td colspan="3"></td>
+            </tr>
+        </tfoot>
+    </table>
+    {% endif %}
+</div>
+{% else %}
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle"></i> No data found for the selected filters.
+</div>
+{% endif %}
+
+<style>
+    .table {
+        font-size: 0.9rem;
+    }
+    .table thead {
+        background: #1e40af;
+        color: white;
+    }
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    .table tfoot {
+        background-color: #e9ecef;
+    }
+</style>
+
+
+

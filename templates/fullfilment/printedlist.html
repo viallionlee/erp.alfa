@@ -1,0 +1,754 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load tz %}
+
+{% block title %}Ready to Print List - Fulfillment{% endblock %}
+
+{% block extra_head %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 0.8rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 8px;
+        padding: 0.6rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        border: none;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .info-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+    }
+    
+    .info-card .icon {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        margin-right: 1rem;
+    }
+    
+    .info-card .content {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .info-card .value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #343a40;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-card .label {
+        font-size: 0.7rem;
+        color: #6c757d;
+        line-height: 1;
+    }
+    
+    .info-card.primary .icon {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .info-card.success .icon {
+        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        color: white;
+    }
+    
+    .info-card.warning .icon {
+        background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        color: white;
+    }
+    
+    .info-card.info .icon {
+        background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+        color: white;
+    }
+    
+    .info-card.secondary .icon {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+    }
+    
+    .table-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .table-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .table th {
+        background: #f8f9fa;
+        border: none;
+        font-weight: 600;
+        color: #495057;
+        padding: 1rem;
+    }
+    
+    .table td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .table tbody tr:hover {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        transition: all 0.2s ease;
+    }
+    
+    .badge-print {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    
+    .badge-sat { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+    .badge-prio { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; }
+    .badge-mix { background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%); color: white; }
+    .badge-brand { background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; }
+    .badge-sku { background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); color: white; }
+    
+    .btn-modern {
+        border-radius: 25px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .btn-modern:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .btn-detail {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .btn-handover {
+        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        color: white;
+    }
+    
+    .status-badge {
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    
+    .status-pending { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+    .status-copied { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    .status-handover { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    
+    .pagination .page-link {
+        border-radius: 8px;
+        margin: 0 2px;
+        border: none;
+        color: #667eea;
+        font-weight: 600;
+    }
+    
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+    }
+    
+    .modal-content {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        border: none;
+    }
+    
+    .list-group-item {
+        border: none;
+        border-bottom: 1px solid #f1f3f4;
+        padding: 1rem;
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h3 class="h6 fw-bold mb-0">
+                    <i class="bi bi-printer me-2"></i>
+                    Ready to Print List
+                </h3>
+                <p class="small mb-0 opacity-75">Kelola dan lacak semua aktivitas pencetakan order dengan mudah</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="/fullfilment/" class="btn btn-light btn-sm py-1 px-2">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Kembali ke Fulfillment
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="row g-2 mb-3">
+        <div class="col-md-2">
+            <div class="info-card primary">
+                <div class="d-flex align-items-center">
+                    <div class="icon">
+                        <i class="bi bi-printer"></i>
+                    </div>
+                    <div class="content">
+                        <div class="value">{{ page_obj.paginator.count|default:0 }}</div>
+                        <div class="label">Total Sesi Print</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="info-card success">
+                <div class="d-flex align-items-center">
+                    <div class="icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="content">
+                        <div class="value" id="totalHandedOver">-</div>
+                        <div class="label">Sudah Diserahkan</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="info-card warning">
+                <div class="d-flex align-items-center">
+                    <div class="icon">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <div class="content">
+                        <div class="value" id="totalPending">-</div>
+                        <div class="label">Belum Diserahkan</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="info-card info">
+                <div class="d-flex align-items-center">
+                    <div class="icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="content">
+                        <div class="value" id="totalUsers">-</div>
+                        <div class="label">User Aktif</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="info-card secondary">
+                <div class="d-flex align-items-center">
+                    <div class="icon">
+                        <i class="bi bi-box"></i>
+                    </div>
+                    <div class="content">
+                        <div class="value">{{ total_orders_printed|default:0 }}</div>
+                        <div class="label">Total Order</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Table -->
+    <div class="table-container">
+        <div class="table-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="mb-0 fw-bold text-primary">
+                        <i class="bi bi-list-ul me-2"></i>
+                        Daftar Aktivitas Print
+                    </h5>
+                </div>
+                <div class="col-md-6 text-end">
+                    {% if page_obj.paginator.count > 0 %}
+                    <span class="badge bg-light text-dark">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Menampilkan {{ page_obj.start_index }}-{{ page_obj.end_index }} dari {{ page_obj.paginator.count }} aktivitas
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th><i class="bi bi-clock me-1"></i> Waktu Print</th>
+                        <th><i class="bi bi-tag me-1"></i> Dicetak Via</th>
+                        <th><i class="bi bi-person me-1"></i> User</th>
+                        <th class="text-center"><i class="bi bi-box me-1"></i> Total Order</th>
+                        <th class="text-center"><i class="bi bi-flag me-1"></i> Status</th>
+                        <th class="text-center"><i class="bi bi-gear me-1"></i> Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for group in grouped_prints %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold">{{ group.printed_at|date:"d M Y" }}</div>
+                            <small class="text-muted">{{ group.printed_at|date:"H:i:s" }}</small>
+                        </td>
+                        <td>
+                            <span class="badge badge-print 
+                                {% if group.printed_via == 'SAT' %}badge-sat
+                                {% elif group.printed_via == 'PRIO' %}badge-prio
+                                {% elif group.printed_via == 'MIX' %}badge-mix
+                                {% elif group.printed_via == 'BRAND' %}badge-brand
+                                {% elif group.printed_via == 'SKU' %}badge-sku
+                                {% else %}bg-secondary{% endif %}">
+                                {{ group.printed_via|default:"N/A" }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 0.8rem; font-weight: 600;">
+                                    {{ group.printed_by|default:"S"|first|upper }}
+                                </div>
+                                <span class="fw-semibold">{{ group.printed_by|default:"System" }}</span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-primary fs-6">{{ group.total_printed }}</span>
+                        </td>
+                        <td class="text-center">
+                            {% if group.is_handed_over %}
+                                <span class="status-badge status-handover">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Sudah Diserahkan
+                                </span>
+                            {% elif group.is_copied %}
+                                <div class="d-flex flex-column align-items-center gap-2">
+                                    <span class="status-badge status-copied">
+                                        <i class="bi bi-clipboard-check me-1"></i>
+                                        Sudah Dicopy
+                                    </span>
+                                    <button class="btn btn-sm btn-modern btn-handover" data-printed-at="{{ group.printed_at.isoformat }}" title="Tandai sudah diserahkan">
+                                        <i class="bi bi-check-circle me-1"></i>
+                                        Tandai Selesai
+                                    </button>
+                                </div>
+                            {% else %}
+                                <span class="status-badge status-pending">
+                                    <i class="bi bi-clock me-1"></i>
+                                    Belum Diserahkan
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-modern btn-detail btn-view-details" data-printed-at="{{ group.printed_at.isoformat }}" data-print-info="Sesi {{ group.printed_at|date:'H:i' }} ({{ group.total_printed }} order)" title="Lihat Detail Order">
+                                <i class="bi bi-search me-1"></i>
+                                Detail
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <i class="bi bi-printer"></i>
+                                <h4 class="fw-bold">Belum Ada Riwayat Print</h4>
+                                <p class="text-muted">Belum ada aktivitas pencetakan yang tercatat dalam sistem.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="table-header">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">
+                                <i class="bi bi-chevron-double-left"></i> Awal
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                <i class="bi bi-chevron-left"></i> Sebelumnya
+                            </a>
+                        </li>
+                    {% endif %}
+                    <li class="page-item active">
+                        <span class="page-link">
+                            <i class="bi bi-file-text me-1"></i>
+                            Halaman {{ page_obj.number }} dari {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                Selanjutnya <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+                                Akhir <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal untuk Detail Sesi Print -->
+<div class="modal fade" id="printDetailModal" tabindex="-1" aria-labelledby="printDetailModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="printDetailModalLabel">
+            <i class="bi bi-search me-2"></i>
+            Detail Sesi Print
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="printDetailModalBody">
+          <div class="text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-2 text-muted">Memuat detail...</p>
+          </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-modern btn-detail" id="copyOrderIdsBtn">
+            <i class="bi bi-clipboard me-1"></i>
+            Copy Semua
+        </button>
+        <button type="button" class="btn btn-secondary btn-modern" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i>
+            Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrftoken = '{{ csrf_token }}';
+    const detailModalEl = document.getElementById('printDetailModal');
+    const detailModal = new bootstrap.Modal(detailModalEl);
+
+    // Update statistics
+    function updateStatistics() {
+        const rows = document.querySelectorAll('tbody tr');
+        let handedOver = 0;
+        let pending = 0;
+        const users = new Set();
+        
+        rows.forEach(row => {
+            const statusCell = row.querySelector('td:nth-child(5)');
+            if (statusCell) {
+                if (statusCell.textContent.includes('Sudah Diserahkan')) {
+                    handedOver++;
+                } else if (statusCell.textContent.includes('Belum Diserahkan') || statusCell.textContent.includes('Sudah Dicopy')) {
+                    pending++;
+                }
+            }
+            
+            const userCell = row.querySelector('td:nth-child(3)');
+            if (userCell) {
+                const userText = userCell.textContent.trim();
+                if (userText && userText !== 'System') {
+                    users.add(userText);
+                }
+            }
+        });
+        
+        document.getElementById('totalHandedOver').textContent = handedOver;
+        document.getElementById('totalPending').textContent = pending;
+        document.getElementById('totalUsers').textContent = users.size;
+    }
+
+    // Handler untuk tombol "Lihat Detail"
+    document.querySelectorAll('.btn-view-details').forEach(button => {
+        button.addEventListener('click', function() {
+            const printedAt = this.getAttribute('data-printed-at');
+            const printInfo = this.getAttribute('data-print-info');
+            
+            const modalTitle = detailModalEl.querySelector('.modal-title');
+            const modalBody = detailModalEl.querySelector('.modal-body');
+            
+            // Simpan timestamp di modal untuk digunakan oleh tombol "Copy"
+            detailModalEl.dataset.printedAt = printedAt;
+            
+            modalTitle.innerHTML = `<i class="bi bi-search me-2"></i>Detail Order - ${printInfo}`;
+            modalBody.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Memuat detail...</p>
+                </div>
+            `;
+            detailModal.show();
+
+            fetch(`{% url 'get_printed_session_details' %}?printed_at=${printedAt}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        let content = '<div class="list-group list-group-flush">';
+                        data.orders.forEach(orderId => {
+                            content += `<div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">${orderId}</span>
+                                <span class="badge bg-primary rounded-pill">Order ID</span>
+                            </div>`;
+                        });
+                        content += '</div>';
+                        modalBody.innerHTML = content;
+                    } else {
+                        modalBody.innerHTML = `
+                            <div class="text-center py-4">
+                                <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+                                <h5 class="mt-3 text-danger">Gagal Memuat Data</h5>
+                                <p class="text-muted">${data.error || 'Terjadi kesalahan saat memuat detail.'}</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(err => {
+                    modalBody.innerHTML = `
+                        <div class="text-center py-4">
+                            <i class="bi bi-wifi-off text-danger" style="font-size: 3rem;"></i>
+                            <h5 class="mt-3 text-danger">Kesalahan Jaringan</h5>
+                            <p class="text-muted">Terjadi kesalahan saat menghubungi server.</p>
+                        </div>
+                    `;
+                    console.error(err);
+                });
+        });
+    });
+
+    // Handler untuk tombol "Copy Semua" di modal
+    document.getElementById('copyOrderIdsBtn').addEventListener('click', function() {
+        const listItems = detailModalEl.querySelectorAll('.modal-body .list-group-item span:first-child');
+        if (listItems.length === 0) return;
+
+        // Ambil timestamp yang disimpan di modal
+        const printedAt = detailModalEl.dataset.printedAt;
+        if (!printedAt) {
+            console.error('Could not find printedAt timestamp for marking as copied.');
+            return;
+        }
+        
+        const textToCopy = Array.from(listItems).map(span => span.textContent.trim()).join('\n');
+        
+        // Function untuk copy dengan fallback method
+        async function copyToClipboard(text) {
+            // Method 1: Modern Clipboard API (requires HTTPS or localhost)
+            if (navigator.clipboard && window.isSecureContext) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                } catch (err) {
+                    console.log('Clipboard API failed, trying fallback method');
+                }
+            }
+            
+            // Method 2: Fallback method (works on HTTP)
+            try {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                const successful = document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                if (successful) {
+                    return true;
+                } else {
+                    throw new Error('execCommand copy failed');
+                }
+            } catch (err) {
+                console.error('Fallback copy method failed:', err);
+                return false;
+            }
+        }
+        
+        // Execute copy
+        copyToClipboard(textToCopy).then(success => {
+            if (success) {
+                Swal.fire({ 
+                    toast: true, 
+                    position: 'top-end', 
+                    icon: 'success', 
+                    title: 'ID Pesanan berhasil disalin!', 
+                    showConfirmButton: false, 
+                    timer: 2000,
+                    background: '#4CAF50',
+                    color: 'white'
+                });
+                
+                // Panggil API untuk menandai sebagai "copied"
+                fetch(`{% url 'mark_as_copied' %}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ printed_at: printedAt })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        // Beri jeda sedikit agar user bisa melihat toast "disalin"
+                        setTimeout(() => window.location.reload(), 1000);
+                    } else {
+                        console.error("Gagal update status: ", data.error);
+                    }
+                })
+                .catch(err => console.error("Error saat update status:", err));
+            } else {
+                Swal.fire({
+                    title: 'Gagal',
+                    text: 'Tidak bisa menyalin ke clipboard. Silakan salin manual dari modal ini.',
+                    icon: 'error',
+                    confirmButtonColor: '#667eea'
+                });
+            }
+        });
+    });
+
+    // Handler untuk tombol "Tandai Sudah Diserahkan"
+    document.querySelectorAll('.btn-handover').forEach(button => {
+        button.addEventListener('click', function() {
+            const printedAt = this.getAttribute('data-printed-at');
+            
+            Swal.fire({
+                title: 'Konfirmasi Penyerahan',
+                text: "Tandai grup print ini sebagai sudah diserahkan?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#4CAF50',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="bi bi-check-circle me-1"></i> Ya, Tandai!',
+                cancelButtonText: '<i class="bi bi-x-circle me-1"></i> Batal',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch("{% url 'mark_as_handed_over' %}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrftoken
+                        },
+                        body: JSON.stringify({ printed_at: printedAt })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Berhasil!',
+                                text: data.message,
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false,
+                                background: '#4CAF50',
+                                color: 'white'
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Gagal',
+                                text: data.error,
+                                icon: 'error',
+                                confirmButtonColor: '#667eea'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Terjadi kesalahan saat menghubungi server.',
+                            icon: 'error',
+                            confirmButtonColor: '#667eea'
+                        });
+                    });
+                }
+            });
+        });
+    });
+
+    // Update statistics on page load
+    updateStatistics();
+});
+</script>
+{% endblock %}

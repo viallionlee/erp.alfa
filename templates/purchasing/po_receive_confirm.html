@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Receive Purchase Order{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-lg">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="bi bi-check-circle"></i> Receive Purchase Order</h4>
+            </div>
+            <div class="card-body">
+                <p class="lead">Apakah Anda yakin ingin receive PO ini?</p>
+                
+                <div class="alert alert-info">
+                    <strong>Nomor PO:</strong> {{ po.nomor_po }}<br>
+                    <strong>Supplier:</strong> {{ po.supplier.nama_supplier }}<br>
+                    <strong>Total Item:</strong> {{ po.items.count }}<br>
+                    <strong>Total Amount:</strong> Rp {{ po.total_amount|floatformat:0 }}
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> <strong>Peringatan:</strong><br>
+                    Setelah di-receive, sistem akan:
+                    <ul>
+                        <li>Membuat Inbound otomatis</li>
+                        <li>Update stock inventory</li>
+                        <li>Update harga_beli di Product</li>
+                        <li>Mengubah status PO menjadi 'Received'</li>
+                    </ul>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-check-circle"></i> Ya, Receive PO
+                        </button>
+                        <a href="{% url 'purchasing:po_detail' po.id %}" class="btn btn-secondary btn-lg">
+                            <i class="bi bi-x-circle"></i> Batal
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+

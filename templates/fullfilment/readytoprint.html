@@ -1,0 +1,912 @@
+{% extends 'base.html' %}
+{% load render_table from django_tables2 %}
+{% load static %}
+
+{% block extra_head %}
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% endblock %}
+
+{% block content %}
+<style>
+    .summary-card-btn {
+        transition: all 0.2s ease-in-out;
+    }
+    .summary-card-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .summary-value {
+        font-size: 2rem;
+        font-weight: 600;
+    }
+    .batal-printed-link {
+        transition: all 0.2s ease;
+        border-radius: 4px;
+        padding: 4px 8px;
+    }
+    .batal-printed-link:hover {
+        background-color: rgba(255, 193, 7, 0.1);
+        transform: scale(1.05);
+    }
+    .batal-retur-format {
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+    .batal-retur-format .separator {
+        color: #6c757d;
+        font-weight: normal;
+    }
+    .summary-value small {
+        font-size: 0.7rem;
+        line-height: 1.2;
+        margin-top: 2px;
+        display: block;
+    }
+
+    /* Desain Baru: Stat Cards */
+    .summary-group-title {
+        font-size: 0.9rem; /* Smaller */
+        font-weight: 600;
+        margin-bottom: 0.75rem; /* Closer */
+        color: #495057;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .stat-card {
+        border: 1px solid #e9ecef;
+        border-radius: 0.5rem;
+        background-color: #fff;
+        transition: all 0.2s ease-in-out;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        height: 100px; /* SET HEIGHT */
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+    .stat-card .card-body {
+        padding: 0.5rem; /* SMALLER PADDING */
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        height: 100%;
+    }
+    .stat-card-title {
+        font-size: 0.65rem; /* SMALLER FONT */
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 0.2rem; /* Tighter */
+        text-transform: uppercase;
+    }
+    .stat-card-value {
+        font-size: 1.6rem; /* SMALLER FONT */
+        font-weight: 700;
+        color: #212529;
+        line-height: 1.1; /* Tighter */
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .stat-card-subtitle {
+        font-size: 0.65rem; /* SMALLER FONT */
+        color: #6c757d;
+        margin-top: 0.1rem; /* Tighter */
+        display: block;
+        height: 1.2em;
+        line-height: 1.2em;
+    }
+    .stat-card-breakdown {
+        font-size: 0.8rem;
+        margin-top: 0.75rem;
+        color: #495057;
+    }
+    .stat-card-breakdown .label {
+        font-weight: 600;
+        color: #6c757d;
+    }
+    .stat-card-breakdown .value {
+        font-weight: 700;
+        margin-left: 4px;
+    }
+     .stat-card-value.small-text {
+        font-size: 1.1rem; /* Adjusted to be proportional */
+    }
+    
+    /* Wrapper untuk baris card agar proporsional */
+    .card-row-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        margin-left: -12px;
+        margin-right: -12px;
+    }
+    .card-col {
+        flex: 1 0 0%;
+        padding-left: 12px;
+        padding-right: 12px;
+        margin-bottom: 1rem; /* Tighter row spacing */
+    }
+     .summary-card-btn {
+        height: 100px;
+        padding: 0.5rem !important;
+        font-size: 0.8rem; /* Font lebih kecil */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        transition: all 0.2s ease-in-out;
+    }
+    .summary-card-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .table-responsive table th, .table-responsive table td {
+        padding: 12px 8px !important;
+        text-align: center;
+        vertical-align: middle !important;
+    }
+    .table-responsive table th:first-child, .table-responsive table td:first-child {
+        width: 80px;
+    }
+    .table-responsive table th:nth-child(3), .table-responsive table td:nth-child(3) {
+        word-break: break-all;
+        max-width: 200px;
+        font-size: 0.9rem;
+    }
+    .table-responsive table th:nth-child(4), .table-responsive table td:nth-child(4),
+    .table-responsive table th:nth-child(5), .table-responsive table td:nth-child(5),
+    .table-responsive table th:nth-child(6), .table-responsive table td:nth-child(6),
+    .table-responsive table th:nth-child(7), .table-responsive table td:nth-child(7) {
+        width: 100px;
+    }
+    .table-responsive table th:last-child, .table-responsive table td:last-child {
+        width: 150px;
+    }
+    
+    /* Ensure table is not height-limited */
+    .table-responsive {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    
+    /* Ensure django-tables2 table is not height-limited */
+    .table-responsive table {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    
+    /* Ensure card body doesn't limit height */
+    .card-body {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    
+    /* Ensure main container doesn't limit height */
+    .container-fluid {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    
+    /* Ensure card doesn't limit height */
+    .card {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    
+    /* Ensure body doesn't limit height */
+    body {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    
+    /* Ensure django-tables2 pagination is visible */
+    .pagination {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    
+    /* Ensure django-tables2 table wrapper is not height-limited */
+    .table-wrapper {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    
+    /* Ensure all table-related elements are not height-limited */
+    table, thead, tbody, tr, td, th {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    .card-footer {
+        padding: 15px 20px !important;
+    }
+    .btn-group .btn {
+        margin-right: 8px;
+    }
+    .btn-group .btn:last-child {
+        margin-right: 0;
+    }
+    .batal-group {
+        border: 1px solid #ffc107;
+        border-radius: 0.5rem; /* Border radius lebih kecil */
+        padding: 0.5rem 0.5rem 0.1rem 0.5rem; /* Padding lebih kecil */
+        background-color: #fffcf5;
+    }
+    .stat-card-body {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 0.5rem; /* Padding lebih kecil */
+    }
+    .summary-card-btn .fs-4 {
+        font-size: 1.5rem !important; /* Ukuran angka di tombol */
+    }
+</style>
+
+<div class="container mt-4">
+  <div class="row mb-3 align-items-center border-bottom pb-3">
+    <!-- Kolom Kiri: Tombol Back -->
+    <div class="col-md-3 d-flex justify-content-start">
+      <a href="/fullfilment/batchpicking/{{ nama_batch }}/" class="btn btn-outline-secondary">
+        &larr; Back to Batchlist
+      </a>
+    </div>
+    <!-- Kolom Tengah dan Kanan bisa diisi sesuai kebutuhan, atau dikosongkan jika tidak perlu -->
+  </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Ready to Print: <span class="text-primary">{{ nama_batch }}</span></h2>
+        </div>
+        <div>
+            {% if perms.fullfilment.generate_batch %}
+            <a href="{% url 'printed_list' %}" target="_blank" class="btn btn-link text-decoration-none me-2 fw-bold">
+                to Printed List &rarr;
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="d-flex mb-2 gap-3"> {# Wrapper for the buttons with better spacing #}
+        <button class="btn btn-warning" id="btnShowNotReady">
+          Daftar Order Not Ready to Pick ({{ not_ready_to_pick_ids|length }})
+        </button>
+        <a href="{% url 'unallocated_stock_list' nama_batch=nama_batch %}" class="btn btn-outline-info btn-sm">Lihat Stok Gantung</a>
+        <a href="{% url 'scan_return_cancelled_order' nama_batch=nama_batch %}" class="btn btn-outline-danger btn-sm">
+            Scan Return Cancelled Order
+        </a>
+    </div>
+
+    <!-- Summary Cards (Desain Baru) -->
+    <div class="summary-container mb-4">
+        <!-- Grup 1: Order Status -->
+        <h5 class="summary-group-title">Order Status</h5>
+        <div class="row">
+            <!-- Card 1: Total Order -->
+            <div class="col-lg-2 col-md-4 mb-4">
+                <div class="stat-card h-100">
+                    <div class="card-body">
+                        <div class="stat-card-title">Total Order</div>
+                        <div class="stat-card-value">{{ total_order }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grup Kartu Batal -->
+            <div class="col-lg-6 col-md-12 mb-4">
+                <div class="batal-group h-100">
+                    <div class="row">
+                        <!-- Card 2: Order Batal (Total) -->
+                        <div class="col-md-4 mb-3">
+                            <div class="stat-card danger h-100">
+                                <div class="card-body">
+                                    <div class="stat-card-title">Order Batal</div>
+                                    <div class="stat-card-value">{{ order_batal_count }}</div>
+                                    <div class="stat-card-subtitle">Total Dibatalkan</div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Card 3: Batal Sebelum Print -->
+                        <div class="col-md-4 mb-3">
+                             <div class="stat-card h-100">
+                                <div class="card-body">
+                                    <div class="stat-card-title">Sebelum Print</div>
+                                    <div class="stat-card-value">{{ cancelled_not_printed_count|default:"0" }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Card 4: Batal Setelah Print -->
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'scan_return_cancelled_order' nama_batch=nama_batch %}" class="text-decoration-none">
+                                <div class="stat-card warning h-100">
+                                    <div class="card-body">
+                                        <div class="stat-card-title">Setelah Print</div>
+                                        <div class="stat-card-value small-text batal-retur-format">
+                                            {{ cancelled_printed_count }}<span class="separator">/</span>{{ already_returned_count }}
+                                        </div>
+                                        <div class="stat-card-subtitle">Batal/Retur</div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 5: Stok Gantung -->
+            <div class="col-lg-2 col-md-6 mb-4">
+                <a href="{% url 'unallocated_stock_list' nama_batch=nama_batch %}" class="text-decoration-none">
+                    <div class="stat-card info h-100">
+                        <div class="card-body">
+                            <div class="stat-card-title">Order Gantung</div>
+                            <div class="stat-card-value">{{ unallocated_stock_count|default:"0" }}</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            
+            <!-- Card 6: Ready to Pick -->
+            <div class="col-lg-2 col-md-6 mb-4">
+                 <a id="showReadyToPickModal" href="{% url 'scanpicking_index' %}?nama_batch={{ nama_batch }}" class="text-decoration-none">
+                    <div class="stat-card primary h-100">
+                        <div class="card-body">
+                            <div class="stat-card-title">Ready to Pick</div>
+                            <div class="stat-card-value">{{ready_to_pick}}</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Grup 2: Print Categories -->
+        <h5 class="summary-group-title mt-2">Print Categories</h5>
+        <div class="row">
+             <div class="col-lg-2 col-md-4 mb-3">
+                <button id="satBtn" type="button" class="btn btn-outline-primary fw-bold w-100 p-2 summary-card-btn">
+                    SAT<br><span class="fs-4">{{sat_summary}}</span>
+                </button>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-3">
+                <button id="prioBtn" type="button" class="btn btn-outline-warning fw-bold w-100 p-2 summary-card-btn">
+                    PRIO<br><span class="fs-4">{{prio_summary}}</span>
+                </button>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-3">
+                <button id="skuBtn" type="button" class="btn btn-outline-info fw-bold w-100 p-2 summary-card-btn">
+                    SKU<br><span class="fs-4">{{sat_sku_summary}}</span>
+                </button>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-3">
+                <button id="brandBtn" type="button" class="btn btn-outline-success fw-bold w-100 p-2 summary-card-btn">
+                    BRAND<br><span class="fs-4">{{brand_summary}}</span>
+                </button>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-3">
+                <button id="mixBtn" type="button" class="btn btn-outline-danger fw-bold w-100 p-2 summary-card-btn">
+                    MIX<br><span id="mixCountBadge" class="fs-4">{{ mix_summary }}</span>
+                </button>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-3">
+                 <div class="stat-card h-100">
+                    <div class="card-body">
+                        <div class="stat-card-title">Printed</div>
+                        <div class="stat-card-value text-muted">{{ printed_summary }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Table Card for Printable Orders -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light fw-bold border-0 d-flex justify-content-between align-items-center">
+            <span>Daftar Order Siap Print</span>
+            <form method="get" class="d-flex" style="width: 300px;">
+                <input type="hidden" name="nama_batch" value="{{ nama_batch|default:'' }}">
+                <input class="form-control form-control-sm me-2" type="search" placeholder="Cari ID Pesanan..." name="q" value="{{ search_query|default:'' }}">
+                <button class="btn btn-sm btn-outline-secondary" type="submit">Cari</button>
+            </form>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: none; overflow: visible;">
+                {% render_table table %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const NAMA_PICKLIST = "{{ nama_batch|escapejs }}";
+    const CSRF_TOKEN = "{{ csrf_token }}";
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ensure table is not height-limited
+        function ensureTableNotHeightLimited() {
+            const tableResponsive = document.querySelector('.table-responsive');
+            if (tableResponsive) {
+                tableResponsive.style.maxHeight = 'none';
+                tableResponsive.style.overflow = 'visible';
+            }
+            
+            const tables = document.querySelectorAll('table');
+            tables.forEach(table => {
+                table.style.maxHeight = 'none';
+                table.style.overflow = 'visible';
+            });
+            
+            const cardBodies = document.querySelectorAll('.card-body');
+            cardBodies.forEach(cardBody => {
+                cardBody.style.maxHeight = 'none';
+                cardBody.style.overflow = 'visible';
+            });
+        }
+        
+        // Run immediately and after a delay to catch dynamically loaded content
+        ensureTableNotHeightLimited();
+        setTimeout(ensureTableNotHeightLimited, 1000);
+        setTimeout(ensureTableNotHeightLimited, 3000);
+        
+        // Helper function for showing toast and reloading
+        const showToastAndReload = (message) => {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: message || 'Status berhasil diperbarui!',
+                showConfirmButton: false,
+                timer: 2000
+            }).then(() => {
+                window.location.reload();
+            });
+        };
+
+        const showErrorToast = (message) => {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'error',
+                title: message || 'Terjadi kesalahan!',
+                showConfirmButton: false,
+                timer: 3000
+            });
+        };
+
+        const prioBtn = document.getElementById('prioBtn');
+        if (prioBtn) {
+            prioBtn.addEventListener('click', function() {
+                const prioCount = parseInt("{{ prio_summary }}", 10);
+                if (prioCount === 0) {
+                    Swal.fire('Info', 'Tidak ada order PRIO yang siap untuk ditandai.', 'info');
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Konfirmasi Print PRIO',
+                    text: `Anda akan menandai ${prioCount} order PRIO sebagai 'printed'. Tindakan ini tidak akan mengunduh file. Lanjutkan?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Tandai Printed!',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#ffc107',
+                    customClass: {
+                        confirmButton: 'text-dark'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(`/fullfilment/print_prio/${NAMA_PICKLIST}/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': CSRF_TOKEN,
+                                'Content-Type': 'application/json'
+                            },
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                showToastAndReload(data.message || `${data.updated_count} order PRIO telah ditandai.`);
+                            } else {
+                                throw new Error(data.error || 'Gagal memperbarui status.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('PRIO Print error:', error);
+                            showErrorToast('Terjadi kesalahan saat memproses permintaan.');
+                        });
+                    }
+                });
+            });
+        }
+
+
+        // === Logic for Summary Card & Modals (Copied from batchpicking) ===
+        const satBtn = document.getElementById('satBtn');
+        if (satBtn) {
+            satBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                fetch(`/fullfilment/get_sat_brands/?nama_batch=${NAMA_PICKLIST}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const brands = data.brands;
+                            const sat_count = brands.reduce((a, b) => a + b.totalOrders, 0);
+                            let html = '<div class="modal fade" id="satBrandModal" tabindex="-1" aria-labelledby="satBrandModalLabel" aria-hidden="true">';
+                            html += '<div class="modal-dialog"><div class="modal-content">';
+                            html += `<div class="modal-header"><h5 class="modal-title" id="satBrandModalLabel">Brand SAT (order_type 1) <span class="text-primary" style="font-size:1rem; font-weight:normal;">TOTAL ORDER SAT: ${sat_count}</span></h5>`;
+                            html += '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>';
+                            html += '<div class="modal-body">';
+                            if (brands.length > 0) {
+                                html += '<ul class="list-group">';
+                                brands.forEach(b => {
+                                    html += `<li class='list-group-item d-flex justify-content-between align-items-center'><div><b>${b.brand}</b> <span class='text-muted ms-2'>(${b.totalOrders} order)</span></div> <button class='btn btn-success btn-sm btn-print-brand' data-brand="${encodeURIComponent(b.brand)}">Print</button></li>`;
+                                });
+                                html += '</ul>';
+                            } else {
+                                html += '<div class="text-muted">Tidak ada brand SAT (order_type 1) ditemukan.</div>';
+                            }
+                            html += '</div><div class="modal-footer">';
+                            html += '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>';
+                            html += '<button type="button" class="btn btn-primary" id="printAllSatBrands">PRINT SEMUA</button>';
+                            html += '</div></div></div></div>';
+                            document.body.insertAdjacentHTML('beforeend', html);
+                            
+                            var modalEl = new bootstrap.Modal(document.getElementById('satBrandModal'));
+                            modalEl.show();
+                            
+                            const modalNode = document.getElementById('satBrandModal');
+                            modalNode.addEventListener('hidden.bs.modal', function () {
+                                this.remove();
+                            });
+
+                            // --- REFACTORED EVENT LISTENER (EVENT DELEGATION) ---
+                            modalNode.addEventListener('click', function(event) {
+                                const target = event.target;
+
+                                // Handle individual brand print
+                                if (target.matches('.btn-print-brand')) {
+                                    const brand = decodeURIComponent(target.getAttribute('data-brand'));
+                                    fetch(`/fullfilment/print_sat_brand/?brand=${encodeURIComponent(brand)}&nama_batch=${NAMA_PICKLIST}`)
+                                        .then(resp => resp.json())
+                                        .then(data => {
+                                            if (data.success) showToastAndReload(data.message);
+                                            else showErrorToast(data.error);
+                                        })
+                                        .catch(error => {
+                                            console.error('Print SAT Brand error:', error);
+                                            showErrorToast('Gagal memproses permintaan.');
+                                        });
+                                }
+
+                                // Handle print all SAT brands
+                                if (target.id === 'printAllSatBrands') {
+                                    fetch(`/fullfilment/print_all_sat_brands/?nama_batch=${NAMA_PICKLIST}`)
+                                        .then(resp => resp.json())
+                                        .then(data => {
+                                            if (data.success) showToastAndReload(data.message);
+                                            else showErrorToast(data.error);
+                                        })
+                                        .catch(error => {
+                                            console.error('Print All SAT Brands error:', error);
+                                            showErrorToast('Gagal memproses permintaan.');
+                                        });
+                                }
+                            });
+                        } else {
+                            showErrorToast(data.error || 'Gagal memuat data brand.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Fetch SAT Brands error:', error);
+                        showErrorToast('Gagal mengambil data brand.');
+                    });
+            });
+        }
+
+        const skuBtn = document.getElementById('skuBtn');
+        if(skuBtn) {
+            skuBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                fetch(`/fullfilment/get_sat_skus/?nama_batch=${NAMA_PICKLIST}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const skus = data.skus;
+                            const sku_count = skus.reduce((a, b) => a + b.totalOrders, 0);
+
+                            let html = '<div class="modal fade" id="satSkuModal" tabindex="-1" aria-labelledby="satSkuModalLabel" aria-hidden="true">';
+                            html += '<div class="modal-dialog modal-lg"><div class="modal-content">';
+                            html += `<div class="modal-header"><h5 class="modal-title" id="satSkuModalLabel">SKU SAT (order_type 1) <span class="text-primary" style="font-size:1rem; font-weight:normal;">TOTAL ORDER SAT: ${sku_count}</span></h5>`;
+                            html += '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>';
+                            html += '<div class="modal-body">';
+                            if (skus.length > 0) {
+                                html += '<ul class="list-group list-group-flush">'; // Use flush to remove borders
+                                skus.forEach(s => {
+                                    const photo_html = s.photo_url 
+                                        ? `<img src="${s.photo_url}" class="img-fluid rounded border" style="width: 60px; height: 60px; object-fit: cover;" alt="${s.nama_produk}">`
+                                        : `<div class="bg-light rounded border d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;"><i class="bi bi-image fs-4 text-muted"></i></div>`;
+
+                                    html += `<li class='list-group-item p-3'>
+                                               <div class="d-flex w-100 justify-content-between align-items-center">
+                                                 <!-- Left side: Image + Text -->
+                                                 <div class="d-flex align-items-center">
+                                                   <div class="flex-shrink-0 me-3">${photo_html}</div>
+                                                   <div>
+                                                     <h6 class="mb-1"><span class="badge bg-light text-dark border">${s.sku}</span></h6>
+                                                     <p class="mb-1 fw-bold">${s.nama_produk || ''} ${s.variant_produk || ''}</p>
+                                                     <small class="text-muted d-block">
+                                                       <span class="badge bg-light text-dark border">${s.brand || 'No Brand'}</span>
+                                                       <span class="ms-1">Barcode: ${s.barcode || 'N/A'}</span>
+                                                     </small>
+                                                   </div>
+                                                 </div>
+                                                 <!-- Right side: Count + Button -->
+                                                 <div class="text-end ms-3">
+                                                   <div class="mb-2">
+                                                     <span class="fw-bold fs-5">${s.totalOrders}</span> <span class="text-muted small">order</span>
+                                                   </div>
+                                                   <button class='btn btn-primary btn-sm btn-print-sku' data-sku="${encodeURIComponent(s.sku)}">Print</button>
+                                                 </div>
+                                               </div>
+                                             </li>`;
+                                });
+                                html += '</ul>';
+                            } else {
+                                html += '<div class="text-center p-4 text-muted">Tidak ada SKU SAT (order_type 1) yang siap print ditemukan.</div>';
+                            }
+                            html += '</div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button></div></div></div></div>';
+                            
+                            document.body.insertAdjacentHTML('beforeend', html);
+                            var modal = new bootstrap.Modal(document.getElementById('satSkuModal'));
+                            modal.show();
+                            
+                            document.getElementById('satSkuModal').addEventListener('hidden.bs.modal', function () {
+                                this.remove();
+                            });
+
+                            document.querySelectorAll('#satSkuModal .btn-print-sku').forEach(btn => {
+                                btn.addEventListener('click', function () {
+                                    const sku = decodeURIComponent(this.getAttribute('data-sku'));
+                                    fetch(`/fullfilment/print_sat_sku/?sku=${encodeURIComponent(sku)}&nama_batch=${NAMA_PICKLIST}`)
+                                        .then(resp => resp.json())
+                                        .then(data => {
+                                            if (data.success) {
+                                                showToastAndReload(data.message);
+                                            } else {
+                                                showErrorToast(data.error || 'Gagal memperbarui status SKU.');
+                                            }
+                                        })
+                                        .catch(error => {
+                                            console.error('Print SKU error:', error);
+                                            showErrorToast('Terjadi kesalahan saat memproses permintaan.');
+                                        });
+                                });
+                            });
+                        } else {
+                            showErrorToast(data.error || 'Tidak ada data SKU yang bisa ditampilkan.');
+                        }
+                    }).catch(error => {
+                        console.error('Fetch SKU error:', error);
+                        showErrorToast('Terjadi kesalahan saat mengambil data SKU.');
+                    });
+            });
+        }
+
+        const brandBtn = document.getElementById('brandBtn');
+        if (brandBtn) {
+            brandBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                fetch(`/fullfilment/get_brand_data/?nama_batch=${NAMA_PICKLIST}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data.success) {
+                            const brands = data.brands;
+                            const brand_count = brands.reduce((a, b) => a + b.totalOrders, 0);
+                            let html = '<div class="modal fade" id="brandModal" tabindex="-1" aria-labelledby="brandModalLabel" aria-hidden="true">';
+                            html += '<div class="modal-dialog"><div class="modal-content">';
+                            html += `<div class="modal-header"><h5 class="modal-title" id="brandModalLabel">Brand (order_type 1 & 4) <span class="text-primary" style="font-size:1rem; font-weight:normal;">TOTAL: ${brand_count}</span></h5>`;
+                            html += '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>';
+                            html += '<div class="modal-body">';
+                            if (brands.length > 0) {
+                                html += '<ul class="list-group">';
+                                brands.forEach(b => {
+                                    html += `<li class='list-group-item d-flex justify-content-between align-items-center'><div><b>${b.brand}</b> <span class='text-muted ms-2'>(${b.totalOrders} order)</span></div><button class='btn btn-success btn-sm ms-3 btn-print-brand' data-brand="${encodeURIComponent(b.brand)}">Print</button></li>`;
+                                });
+                                html += '</ul>';
+                            } else {
+                                html += '<div class="text-muted">Tidak ada brand ditemukan.</div>';
+                            }
+                            html += '</div><div class="modal-footer">';
+                            html += '<button type="button" class="btn btn-primary" id="printAllBrands">PRINT SEMUA</button>';
+                            html += '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>';
+                            html += '</div></div></div></div>';
+                            document.body.insertAdjacentHTML('beforeend', html);
+                            
+                            var modal = new bootstrap.Modal(document.getElementById('brandModal'));
+                            modal.show();
+                            
+                            document.getElementById('brandModal').addEventListener('hidden.bs.modal', function () {
+                                document.getElementById('brandModal').remove();
+                            });
+
+                            document.querySelectorAll('#brandModal .btn-print-brand').forEach(btn => {
+                                btn.addEventListener('click', function () {
+                                    const brand = decodeURIComponent(this.getAttribute('data-brand'));
+                                    fetch(`/fullfilment/print_brand/?brand=${encodeURIComponent(brand)}&nama_batch=${NAMA_PICKLIST}`)
+                                        .then(resp => resp.json())
+                                        .then(data => {
+                                            if (data.success) {
+                                                showToastAndReload(data.message);
+                                            } else {
+                                                Swal.fire('Gagal', data.error, 'error');
+                                            }
+                                        })
+                                        .catch(error => {
+                                            console.error('Print Brand error:', error);
+                                            Swal.fire('Error', 'Terjadi kesalahan saat memproses permintaan.', 'error');
+                                        });
+                                });
+                            });
+
+                            const printAllBrandsBtn = document.getElementById('printAllBrands');
+                            if (printAllBrandsBtn) {
+                                printAllBrandsBtn.addEventListener('click', function () {
+                                    fetch(`/fullfilment/print_all_brands/?nama_batch=${NAMA_PICKLIST}`)
+                                        .then(resp => resp.json())
+                                        .then(data => {
+                                            if (data.success) {
+                                                showToastAndReload(data.message);
+                                            } else {
+                                                Swal.fire('Gagal', data.error, 'error');
+                                            }
+                                        })
+                                        .catch(error => {
+                                            console.error('Print All Brands error:', error);
+                                            Swal.fire('Error', 'Terjadi kesalahan saat memproses permintaan.', 'error');
+                                        });
+                                });
+                            }
+                        } else {
+                             Swal.fire('Info', data.error || 'Gagal memuat data brand.', 'info');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Fetch All Brands error:', error);
+                        Swal.fire('Error', 'Terjadi kesalahan saat mengambil data brand.', 'error');
+                    });
+            });
+        }
+
+        const mixBtn = document.getElementById('mixBtn');
+        if (mixBtn) {
+            mixBtn.addEventListener('click', function () {
+                fetch(`/fullfilment/batchpicking/${NAMA_PICKLIST}/mix_count/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Print Order MIX',
+                                html: `<div class='mb-2'>Total order MIX yang akan diprint: <b>${data.mix_count}</b></div><div class="text-muted small">Lanjutkan print semua order MIX?</div>`,
+                                icon: 'info',
+                                showCancelButton: true,
+                                confirmButtonText: 'Print MIX',
+                                cancelButtonText: 'Batal',
+                                confirmButtonColor: '#dc3545'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    fetch(`/fullfilment/batchpicking/${NAMA_PICKLIST}/print_mix/`, {
+                                        method: 'POST',
+                                        headers: {'X-CSRFToken': CSRF_TOKEN},
+                                    }).then(resp => resp.json()).then(data => {
+                                        if (data.success) showToastAndReload(data.message || 'Semua order MIX telah ditandai sebagai printed.');
+                                        else Swal.fire('Gagal', data.error, 'error');
+                                    }).catch(error => {
+                                        console.error('Print MIX error:', error);
+                                        Swal.fire('Error', 'Terjadi kesalahan saat memproses permintaan.', 'error');
+                                    });
+                                }
+                            });
+                        } else {
+                            Swal.fire('Error', data.error || 'Gagal mengambil data MIX count.', 'error');
+                        }
+                    }).catch(error => {
+                        console.error('Mix count fetch error:', error);
+                        Swal.fire('Error', 'Terjadi kesalahan saat mengambil data MIX count.', 'error');
+                    });
+            });
+        }
+
+        const btnShowNotReady = document.getElementById('btnShowNotReady');
+        if (btnShowNotReady) {
+            btnShowNotReady.addEventListener('click', function() {
+                var modal = new bootstrap.Modal(document.getElementById('notReadyModal'));
+                modal.show();
+            });
+        }
+
+        // --- TAMBAHAN BARU: LOGIKA UNTUK MODAL DETAIL ---
+        // --- AKHIR TAMBAHAN BARU ---
+    });
+</script>
+<!-- Modals from batchpicking.html -->
+<div class="modal fade" id="skuNotFoundModal" tabindex="-1" aria-labelledby="skuNotFoundModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="skuNotFoundModalLabel">Detail SKU Tidak Ditemukan</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul id="skuNotFoundList" class="mb-0"></ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="mixDetailModal" tabindex="-1" aria-labelledby="mixDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mixDetailModalLabel">Detail Order MIX</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Memuat detail...</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-primary" id="printMixBtn">Print MIX</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="notReadyModal" tabindex="-1" aria-labelledby="notReadyModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="notReadyModalLabel">Daftar Order Not Ready to Pick</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="list-group">
+          {% for id in not_ready_to_pick_ids %}
+            <li class="list-group-item">
+              {{ id }}
+              {% for order in orders %}
+                {% if order.id_pesanan == id %}
+                  {% if order.status %}
+                    {% if 'batal' in order.status|lower or 'cancel' in order.status|lower %}
+                      <span class="badge bg-danger ms-2">{{ order.status }}</span>
+                    {% else %}
+                      <span class="badge bg-secondary ms-2">{{ order.status }}</span>
+                    {% endif %}
+                  {% endif %}
+                {% endif %}
+              {% endfor %}
+            </li>
+          {% empty %}
+            <li class="list-group-item">Semua order sudah siap pick.</li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+        {% if not_ready_to_pick_ids %}
+        <a href="{% url 'not_ready_to_pick_details' nama_batch=nama_batch %}" target="_blank" class="btn btn-primary">
+            Lihat Detail Barang
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal baru untuk menampilkan detail pesanan (HAPUS ATAU BIARKAN KOSONG, KARENA TIDAK DIGUNAKAN LAGI) -->
+<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailModalLabel" aria-hidden="true">
+</div>
+{% endblock %}
+

@@ -1,0 +1,544 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="container mt-4">
+    {% if not show_tables %}
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="me-3 mb-0">Order Checking{% if nama_batch %} - Batch: <span class="text-primary">{{ nama_batch }}</span>{% endif %}</h4>
+    </div>
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Masukkan Order ID</h5>
+        <a href="{% url 'scanpicking_history' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-clock-history me-1"></i> View History
+        </a>
+    </div>
+    <div class="card-body">
+        <form id="orderIdForm" method="GET" action="" class="mb-3">
+            <label for="orderIdInput" class="form-label">Scan Order ID:</label>
+            <div class="input-group">
+                <input type="text" id="orderIdInput" name="order_id" class="form-control" placeholder="Scan atau ketik Order ID..." value="{{ order_id|default:'' }}" autofocus>
+                <button class="btn btn-primary" type="submit" id="searchOrderIdBtn">Cari</button>
+                {% if order_id %}
+                <a href="{% url 'scanpicking_index' %}" class="btn btn-outline-secondary">Clear</a>
+                {% endif %}
+            </div>
+        </form>
+
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if show_tables %}
+        <div class="d-flex align-items-center mb-3">
+            <h4 class="me-3 mb-0">Order Checking - Order ID: <span class="text-primary">{{ order_id }}</span></h4>
+        </div>
+        <div class="row">
+            <!-- KOLOM 1: Monitoring Item -->
+            <div class="col-md-4 mb-3">
+                <!-- Kartu Monitoring Item -->
+                <div id="monitoring-card" class="card mb-3 shadow-sm text-center" style="background-color: #e3f2fd;">
+                    <div class="d-flex justify-content-center align-items-center p-3">
+                        <img id="monitor-photo" src="{% static 'icons/bi-box.svg' %}" class="img-fluid rounded" style="max-height: 400px; width: auto; border: 1px solid #dee2e6;">
+                    </div>
+                    <div class="card-body py-3">
+                        <h5 id="monitor-nama" class="card-title mb-2" style="font-size: 1.4rem;">---</h5>
+                        <p class="card-text text-muted mb-3">
+                            <span id="monitor-brand">---</span> - <span id="monitor-variant">---</span>
+                        </p>
+                        <div class="mb-3">
+                            <span class="badge bg-secondary">SKU: <span id="monitor-sku">---</span></span>
+                            <br class="mb-1">
+                            <span class="badge bg-secondary mt-1">Barcode: <span id="monitor-barcode">---</span></span>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-muted mb-1" style="font-size: 1rem;">Jumlah Ambil</p>
+                            <p class="fw-bold text-primary mb-0" style="font-size: 3rem; line-height: 1;" id="monitor-jumlah">- / -</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KOLOM 2: Scan Barcode, Pending Items, Completed Items -->
+            <div class="col-md-8 mb-3">
+                <form id="barcodeForm" class="mb-3" autocomplete="off">
+                    <label for="orderBarcodeInput" class="form-label fw-bold">Scan Barcode</label>
+                    <input type="text" id="orderBarcodeInput" class="form-control" placeholder="Scan barcode..." autofocus autocomplete="off">
+                    <div id="barcodeFeedback" class="mt-2"></div>
+                </form>
+                <div id="barcodeError" class="alert alert-danger mt-2 d-none"></div>
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body p-2">
+                        <div class="fw-bold text-white px-3 py-2 mb-0 rounded-top" style="background:#ffc107;">PENDING ITEMS</div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover table-sm align-middle mb-0" id="pendingTable">
+                                <thead class="table-warning">
+                                    <tr>
+                                        <th style="width: auto;">Photo</th>
+                                        <th>Detail Produk</th>
+                                        <th style="width: 80px;">Jumlah</th>
+                                        <th style="width: 80px;">J.Ambil</th>
+                                        <th style="width: 100px;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pendingTableBody">
+                                    {% for o in pending_orders %}
+                                    <tr data-sku="{{ o.sku }}" data-barcode="{{ o.barcode }}" data-nama="{{ o.nama_produk }}" data-variant="{{ o.variant_produk }}" data-brand="{{ o.brand }}" data-photo="{{ o.photo_url }}" style="cursor:pointer;">
+                                        <td>
+                                            <img src="{{ o.photo_url }}" alt="Product Photo" style="height: 200px; width: auto; object-fit: contain; border-radius: 5px;">
+                                        </td>
+                                        <td>
+                                            <div class="flex-grow-1 pe-3">
+                                                <div class="fw-bold text-dark">{{ o.nama_produk }}</div>
+                                                <small class="d-block text-primary fw-bold">{{ o.variant_produk|default_if_none:'' }}</small>
+                                                <div>
+                                                    <span class="badge bg-light text-dark border me-1">SKU: {{ o.sku }}</span>
+                                                    <span class="badge bg-light text-dark border me-1"><i class="bi bi-upc me-1"></i>{{ o.barcode }}</span>
+                                                    {% if o.brand %}<span class="badge bg-light text-success border">{{ o.brand }}</span>{% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="jumlah text-end">{{ o.jumlah }}</td>
+                                        <td class="jumlah-ambil text-end">{{ o.jumlah_ambil }}</td>
+                                        <td class="status-ambil text-center">
+                                            {% if o.status_ambil == 'pending' %}
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                            {% elif o.status_ambil == 'partial' %}
+                                            <span class="badge bg-info">Partial</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">{{ o.status_ambil }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="5" class="text-center text-muted">Tidak ada data pending.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-body p-2">
+                        <div class="fw-bold text-white px-3 py-2 mb-0 rounded-top" style="background:#28a745;">COMPLETED ITEMS</div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover table-sm align-middle mb-0" id="completedTable">
+                                <thead class="table-success">
+                                    <tr>
+                                        <th style="width: 80px;">Photo</th>
+                                        <th>Detail Produk</th>
+                                        <th style="width: 80px;">Jumlah</th>
+                                        <th style="width: 80px;">J.Ambil</th>
+                                        <th style="width: 100px;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="completedTableBody">
+                                    {% for o in completed_orders %}
+                                    <tr data-sku="{{ o.sku }}" data-barcode="{{ o.barcode }}" data-nama="{{ o.nama_produk }}" data-variant="{{ o.variant_produk }}" data-brand="{{ o.brand }}" data-photo="{{ o.photo_url }}" style="cursor:pointer;">
+                                        <td>
+                                            <img src="{{ o.photo_url }}" alt="Product Photo" style="height: 100px; width: auto; object-fit: contain; border-radius: 5px;">
+                                        </td>
+                                        <td>
+                                            <div class="flex-grow-1 pe-3">
+                                                <div class="fw-bold text-dark">{{ o.nama_produk }}</div>
+                                                <small class="d-block text-primary fw-bold">{{ o.variant_produk|default_if_none:'' }}</small>
+                                                <div>
+                                                    <span class="badge bg-light text-dark border me-1">SKU: {{ o.sku }}</span>
+                                                    <span class="badge bg-light text-dark border me-1"><i class="bi bi-upc me-1"></i>{{ o.barcode }}</span>
+                                                    {% if o.brand %}<span class="badge bg-light text-success border">{{ o.brand }}</span>{% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="jumlah text-end">{{ o.jumlah }}</td>
+                                        <td class="jumlah-ambil text-end">{{ o.jumlah_ambil }}</td>
+                                        <td class="status-ambil text-center">
+                                            <span class="badge bg-success">Completed</span>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="5" class="text-center text-muted">Tidak ada data completed.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+<script>
+    // Inisialisasi variabel global untuk digunakan
+    window.ORDER_ID = "{{ order_id|escapejs }}";
+    window.CSRF_TOKEN = "{{ csrf_token }}";
+
+    function playSound(type) {
+        if (type === 'completed') {
+            new Audio('/static/sounds/completedsound.mp3').play();
+        } else if (type === 'success') {
+            new Audio('/static/sounds/ding.mp3').play();
+        } else if (type === 'error' || type === 'fail') {
+            new Audio('/static/sounds/wrong_barcode.mp3').play();
+        } else {
+            new Audio('/static/sounds/over_scan.mp3').play();
+        }
+    }
+
+    function showFeedback(message, type, status_ambil, sku) {
+        const feedback = document.getElementById('barcodeFeedback');
+        if (!feedback) return;
+        feedback.innerHTML = message;
+        feedback.className = type === 'success' ? 'alert alert-success' : 'alert alert-danger';
+
+        // Mainkan suara 'ding' jika ada SKU yang baru selesai, TAPI BUKAN seluruh order.
+        if (status_ambil === 'completed') {
+            playSound('success'); // Gunakan suara 'success' (ding) untuk SKU
+            Swal.fire({
+                icon: 'success',
+                title: 'SKU Selesai!',
+                html: `<b>SKU <span style='color:#1769aa;'>${sku || ''}</span> sudah semua di scan.</b>`,
+                showConfirmButton: false,
+                timer: 1500,
+                customClass: { title: 'fw-bold' }
+            });
+        }
+    }
+
+    // Function to update monitoring card
+    function updateMonitoringCard(sku, barcode, nama, variant, brand, photoUrl, jumlah, jumlahAmbil) {
+        const monitorPhoto = document.getElementById('monitor-photo');
+        const monitorNama = document.getElementById('monitor-nama');
+        const monitorBrand = document.getElementById('monitor-brand');
+        const monitorVariant = document.getElementById('monitor-variant');
+        const monitorSku = document.getElementById('monitor-sku');
+        const monitorBarcode = document.getElementById('monitor-barcode');
+        const monitorJumlah = document.getElementById('monitor-jumlah');
+
+        monitorPhoto.src = photoUrl || "{% static 'icons/bi-box.svg' %}";
+        monitorNama.textContent = nama || '---';
+        monitorBrand.textContent = brand || '---';
+        monitorVariant.textContent = variant || '---';
+        monitorSku.textContent = sku || '---';
+        monitorBarcode.textContent = barcode || '---';
+        monitorJumlah.textContent = `${jumlahAmbil || '-'} / ${jumlah || '-'}`;
+    }
+
+    function updateTable(tableBodyId, rows) {
+        const tbody = document.getElementById(tableBodyId);
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        if (rows.length === 0) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 5; // Adjusted colspan to 5
+            td.className = 'text-center text-muted';
+            td.textContent = tableBodyId === 'pendingTableBody' ? 'Tidak ada data pending.' : 'Tidak ada data completed.';
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+            return;
+        }
+        rows.forEach(function(o) {
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-sku', o.sku);
+            tr.setAttribute('data-barcode', o.barcode);
+            tr.setAttribute('data-nama', o.nama_produk);
+            tr.setAttribute('data-variant', o.variant_produk);
+            tr.setAttribute('data-brand', o.brand);
+            tr.setAttribute('data-photo', o.photo_url);
+
+            let statusBadge = '';
+            if (o.status_ambil === 'pending') {
+                statusBadge = '<span class="badge bg-warning text-dark">Pending</span>';
+            } else if (o.status_ambil === 'partial') {
+                statusBadge = '<span class="badge bg-info">Partial</span>';
+            } else if (o.status_ambil === 'completed') {
+                statusBadge = '<span class="badge bg-success">Completed</span>';
+            } else {
+                statusBadge = `<span class="badge bg-secondary">${o.status_ambil}</span>`;
+            }
+
+            const photoHtml = `<img src="${o.photo_url || '/static/icons/bi-box.svg'}" alt="Product Photo" style="height: 100px; width: auto; object-fit: contain; border-radius: 5px;">`;
+
+            const detailProdukHtml = `
+                <div class="flex-grow-1 pe-3">
+                    <div class="fw-bold text-dark">${o.nama_produk}</div>
+                    <small class="d-block text-primary fw-bold">${o.variant_produk || ''}</small>
+                    <div>
+                        <span class="badge bg-light text-dark border me-1">SKU: ${o.sku}</span>
+                        <span class="badge bg-light text-dark border me-1"><i class="bi bi-upc me-1"></i>${o.barcode}</span>
+                        ${o.brand ? `<span class="badge bg-light text-success border">${o.brand}</span>` : ''}
+                    </div>
+                </div>
+            `;
+
+            tr.innerHTML = `
+                <td>${photoHtml}</td>
+                <td>${detailProdukHtml}</td>
+                <td class="jumlah text-end">${o.jumlah}</td>
+                <td class="jumlah-ambil text-end">${o.jumlah_ambil}</td>
+                <td class="status-ambil text-center">${statusBadge}</td>
+            `;
+            // BARU: Setel cursor pointer untuk baris yang baru dibuat
+            tr.style.cursor = 'pointer';
+            tbody.appendChild(tr);
+        });
+    }
+
+    function showCompletedModal() {
+        // Mainkan suara "completed" HANYA saat modal akhir muncul
+        playSound('completed');
+        
+        if (document.getElementById('completedModal')) return;
+        const modal = document.createElement('div');
+        modal.id = 'completedModal';
+        modal.innerHTML = `
+        <div style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center;">
+            <div style="background:#fff;padding:2.5rem 2rem 2rem 2rem;border-radius:1rem;box-shadow:0 4px 32px rgba(0,0,0,0.15);text-align:center;min-width:320px;max-width:90vw;">
+                <div style="font-size:3rem;color:#28a745;margin-bottom:0.5rem;">
+                    <svg width="60" height="60" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#e6f9ed"/><path d="M7 13.5l3 3 7-7" stroke="#28a745" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <div style="font-size:1.2rem;font-weight:600;margin-bottom:0.5rem;">Semua Order ID <span class="text-primary">${window.ORDER_ID}</span> Sudah Selesai di Check</div>
+            </div>
+        </div>`;
+        document.body.appendChild(modal);
+        setTimeout(function(){
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('from') === 'scanpicking') {
+                window.location.href = window.location.origin + "/fullfilment/scanpicking/";
+            } else {
+                window.location.href = window.location.origin + "/fullfilment/scanpicking/";
+            }
+        }, 300);
+    }
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const orderIdInput = document.getElementById('orderIdInput');
+    const orderIdForm = document.getElementById('orderIdForm');
+    const orderBarcodeInput = document.getElementById('orderBarcodeInput');
+    const barcodeForm = document.getElementById('barcodeForm');
+    // const barcodeError = document.getElementById('barcodeError'); // Not used directly in JS, only in HTML
+    const pendingTableBody = document.getElementById('pendingTableBody');
+    const completedTableBody = document.getElementById('completedTableBody');
+
+    // Initial load for monitoring card (if an order_id is present and has pending items)
+    if (window.ORDER_ID && pendingTableBody.children.length > 0) {
+        // Find the first pending item and display its details
+        const firstPendingRow = pendingTableBody.querySelector('tr[data-barcode]');
+        if (firstPendingRow) {
+            const sku = firstPendingRow.dataset.sku;
+            const barcode = firstPendingRow.dataset.barcode;
+            const nama = firstPendingRow.dataset.nama;
+            const variant = firstPendingRow.dataset.variant;
+            const brand = firstPendingRow.dataset.brand;
+            const photoUrl = firstPendingRow.dataset.photo;
+            const jumlah = firstPendingRow.querySelector('.jumlah').textContent.trim();
+            const jumlahAmbil = firstPendingRow.querySelector('.jumlah-ambil').textContent.trim();
+            updateMonitoringCard(sku, barcode, nama, variant, brand, photoUrl, jumlah, jumlahAmbil);
+        }
+    }
+
+    // ========== BARU: CLICK ROW TO UPDATE MONITOR ========== //
+    function handleRowClick(rowElement) {
+        if (!rowElement) return;
+
+        const sku = rowElement.dataset.sku;
+        const barcode = rowElement.dataset.barcode;
+        const nama = rowElement.dataset.nama;
+        const variant = rowElement.dataset.variant;
+        const brand = rowElement.dataset.brand;
+        const photoUrl = rowElement.dataset.photo;
+        
+        const jumlahEl = rowElement.querySelector('.jumlah');
+        const jumlahAmbilEl = rowElement.querySelector('.jumlah-ambil');
+
+        const jumlah = jumlahEl ? jumlahEl.textContent.trim() : '-';
+        const jumlahAmbil = jumlahAmbilEl ? jumlahAmbilEl.textContent.trim() : '-';
+        
+        updateMonitoringCard(sku, barcode, nama, variant, brand, photoUrl, jumlah, jumlahAmbil);
+        
+        // Hapus highlight dari semua baris
+        document.querySelectorAll('#pendingTableBody tr, #completedTableBody tr').forEach(tr => {
+            tr.style.backgroundColor = '';
+        });
+        // Tambahkan highlight ke baris yang diklik
+        rowElement.style.backgroundColor = '#dbeafe'; // Warna biru muda
+    }
+
+    // Gunakan event delegation untuk menangani klik pada baris tabel
+    if (pendingTableBody) {
+        pendingTableBody.addEventListener('click', function(e) {
+            handleRowClick(e.target.closest('tr'));
+        });
+    }
+
+    if (completedTableBody) {
+        completedTableBody.addEventListener('click', function(e) {
+            handleRowClick(e.target.closest('tr'));
+        });
+    }
+    // ========== AKHIR BARU ========== //
+
+
+    // Function to handle Order ID redirection
+    function redirectToOrderId() {
+        const orderId = orderIdInput.value.trim();
+        if (orderId) {
+            window.location.href = `/fullfilment/scanpicking/${encodeURIComponent(orderId)}/`;
+        }
+    }
+
+    // ========== ORDER ID FORM SUBMIT ========== //
+    if (orderIdForm && orderIdInput) {
+        orderIdForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            redirectToOrderId();
+        });
+    }
+
+    // ========== BARCODE SCAN FORM SUBMIT ========== //
+    if (barcodeForm && orderBarcodeInput) {
+        barcodeForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const barcode = orderBarcodeInput.value.trim();
+            if (!barcode) return;
+            
+            processBarcodeScan(barcode);
+            orderBarcodeInput.value = ''; // Clear input after scan
+        });
+    }
+
+    // ========== FUNGSI SCAN BARCODE ========== //
+    function processBarcodeScan(barcode) {
+        fetch(`/fullfilment/scanpicking/${window.ORDER_ID}/scan-barcode/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.CSRF_TOKEN,
+            },
+            body: JSON.stringify({ barcode })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateTable('pendingTableBody', data.pending_orders);
+                updateTable('completedTableBody', data.completed_orders);
+                
+                // Update monitoring card with latest data after tables are updated
+                let foundRow = null;
+                // Check in pending table first
+                let pendingRows = pendingTableBody.querySelectorAll('tr[data-barcode]');
+                for (let i = 0; i < pendingRows.length; i++) {
+                    if (pendingRows[i].dataset.barcode === barcode) {
+                        foundRow = pendingRows[i];
+                        break;
+                    }
+                }
+                // If not found in pending, check in completed table
+                if (!foundRow) {
+                    let completedRows = completedTableBody.querySelectorAll('tr[data-barcode]');
+                    for (let i = 0; i < completedRows.length; i++) {
+                        if (completedRows[i].dataset.barcode === barcode) {
+                            foundRow = completedRows[i];
+                            break;
+                        }
+                    }
+                }
+
+                if (foundRow) {
+                    const sku = foundRow.dataset.sku;
+                    const nama = foundRow.dataset.nama;
+                    const variant = foundRow.dataset.variant;
+                    const brand = foundRow.dataset.brand;
+                    const photoUrl = foundRow.dataset.photo;
+                    const jumlah = foundRow.querySelector('.jumlah').textContent.trim();
+                    const jumlahAmbil = foundRow.querySelector('.jumlah-ambil').textContent.trim();
+                    updateMonitoringCard(sku, barcode, nama, variant, brand, photoUrl, jumlah, jumlahAmbil);
+                } else {
+                    // If barcode is no longer in either table (e.g., fully processed and removed), clear monitoring card
+                    updateMonitoringCard(null, null, null, null, null, null, null, null);
+                }
+
+                const pendingDataRows = pendingTableBody.querySelectorAll('tr[data-sku]');
+
+                // KONDISI UTAMA
+                if (pendingDataRows.length === 0 && data.completed_orders.length > 0) {
+                    // Jika seluruh order selesai, panggil modal penyelesaian.
+                    // Ini akan memutar suara "completed".
+                    showCompletedModal();
+                    // JANGAN lanjutkan ke blok 'else' di bawah ini.
+                    return; 
+                }
+                
+                // Blok ini hanya akan berjalan jika order BELUM selesai.
+                showFeedback('Berhasil scan: ' + (data.sku || barcode), 'success', data.status_ambil, data.sku);
+                
+            } else {
+                playSound('error');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Scan Gagal',
+                    text: data.error || 'Barcode tidak valid.',
+                    confirmButtonText: 'Tutup'
+                });
+            }
+            
+            // IMPORTANT: Return focus to barcode input after processing
+            setTimeout(() => {
+                if (orderBarcodeInput) {
+                    orderBarcodeInput.focus();
+                }
+            }, 100);
+        })
+        .catch(() => {
+            showFeedback('Terjadi kesalahan koneksi.', 'error');
+            playSound('error');
+            
+            // Return focus to barcode input even on error
+            setTimeout(() => {
+                if (orderBarcodeInput) {
+                    orderBarcodeInput.focus();
+                }
+            }, 100);
+        });
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+R for reload and focus
+        if (e.ctrlKey && (e.key === 'r' || e.key === 'R')) {
+            e.preventDefault();
+            window.location.reload();
+        }
+    });
+
+    {% if is_already_packed %}
+    Swal.fire({
+        icon: 'warning',
+        title: 'Pesanan Sudah Diproses',
+        html: `ID Pesanan <strong>{{ order_id }}</strong> telah selesai di-scan pada:<br><strong>{{ packed_at }}</strong> oleh <strong>{{ packed_by }}</strong>.`,
+        confirmButtonText: 'Tutup',
+        allowOutsideClick: false,
+        allowEnterKey: true,
+    }).then(() => {
+        // Menonaktifkan input setelah modal ditutup
+        const barcodeInput = document.getElementById('orderBarcodeInput');
+        if (barcodeInput) {
+            barcodeInput.disabled = true;
+            barcodeInput.placeholder = 'Pesanan ini sudah selesai diperiksa.';
+        }
+    });
+    
+    playSound('error');
+    {% endif %}
+});
+</script>
+{% endblock %}

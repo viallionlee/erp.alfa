@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Konfirmasi Hapus Order{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">Konfirmasi Penghapusan</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Apakah Anda yakin ingin menghapus order dengan ID: 
+                        <strong class="fs-5">{{ order.id_pesanan }}</strong>?
+                    </p>
+                    <p class="text-muted small">
+                        Tindakan ini akan menghapus semua detail order yang terkait dan tidak dapat diurungkan.
+                    </p>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'orders_list' %}" class="btn btn-secondary">Batal</a>
+                        <form method="POST" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Ya, Hapus</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

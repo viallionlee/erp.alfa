@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h4>Detail Return Session: {{ session.kode }}</h4>
+    <table class="table table-bordered mt-3">
+        <thead>
+            <tr>
+                <th>SKU</th>
+                <th>Barcode</th>
+                <th>Nama Produk</th>
+                <th>Variant Produk</th>
+                <th>Brand</th>
+                <th>Qty Target</th>
+                <th>Qty Scan</th>
+                <th>Status QC</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.product.sku }}</td>
+                <td>{{ item.product.barcode }}</td>
+                <td>{{ item.product.nama_produk }}</td>
+                <td>{{ item.product.variant_produk }}</td>
+                <td>{{ item.product.brand }}</td>
+                <td>{{ item.qty }}</td>
+                <td>{{ item.qty_scanned }}</td>
+                <td>{{ item.qc_status }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" class="text-center">Tidak ada item.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'returnlist_dashboard' %}" class="btn btn-secondary">Kembali</a>
+</div>
+{% endblock %} 

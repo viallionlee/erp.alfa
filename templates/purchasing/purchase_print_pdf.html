@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {% load humanize %}
+    <title>Purchase - {{ purchase.nomor_purchase }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #333;
+            width: 21cm;
+            max-width: 21cm;
+            margin: 0 auto;
+            padding: 1cm;
+            background: #fff;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            border-bottom: 4px solid #1e3a8a;
+            padding: 30px 20px;
+            margin-bottom: 30px;
+            background: #1e40af;
+            color: white;
+            border-radius: 8px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .header h2 {
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        /* Info Boxes */
+        .purchase-info {
+            display: table;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .info-box {
+            display: table-cell;
+            width: 50%;
+            padding: 15px;
+            vertical-align: top;
+        }
+        
+        .info-box-left {
+            padding-right: 10px;
+        }
+        
+        .info-box-right {
+            padding-left: 10px;
+        }
+        
+        .info-box-inner {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #1e40af;
+        }
+        
+        .info-box h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #1e40af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-box p {
+            margin: 0;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+        
+        .info-box strong {
+            color: #2d3748;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-received {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-draft {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        thead {
+            background: #1e40af;
+            color: white;
+        }
+        
+        th {
+            padding: 12px 10px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            border: 1px solid #1e3a8a;
+        }
+        
+        td {
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            font-size: 12px;
+        }
+        
+        tbody tr:nth-child(even) {
+            background: #f9fafb;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        tfoot th {
+            background: #f3f4f6;
+            font-weight: 700;
+            border: 1px solid #e5e7eb;
+        }
+        
+        /* Notes Section */
+        .notes-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9fafb;
+            border-left: 4px solid #9ca3af;
+            border-radius: 8px;
+        }
+        
+        .notes-section h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #374151;
+        }
+        
+        .notes-section p {
+            font-size: 12px;
+            line-height: 1.6;
+            margin: 0;
+        }
+        
+        /* Signature Section */
+        .signature-section {
+            margin-top: 50px;
+            display: table;
+            width: 100%;
+        }
+        
+        .signature-box {
+            display: table-cell;
+            width: 33.33%;
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .signature-box p {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 60px;
+            color: #374151;
+        }
+        
+        .signature-line {
+            border-top: 1px solid #9ca3af;
+            padding-top: 5px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        /* Footer */
+        .footer-info {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 10px;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Purchase Receipt</h1>
+            <h2>PT. ALFA ERP</h2>
+        </div>
+
+        <div class="purchase-info">
+            <div class="info-box info-box-left">
+                <div class="info-box-inner">
+                    <h3>Supplier</h3>
+                    <p>
+                        <strong>{{ purchase.supplier.nama_supplier }}</strong><br>
+                        {% if purchase.supplier.alamat %}{{ purchase.supplier.alamat }}<br>{% endif %}
+                        {% if purchase.supplier.kota %}{{ purchase.supplier.kota }}{% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="info-box info-box-right">
+                <div class="info-box-inner">
+                    <h3>Purchase Information</h3>
+                    <p>
+                        <strong>Nomor Purchase:</strong> {{ purchase.nomor_purchase }}<br>
+                        <strong>Tanggal:</strong> {{ purchase.tanggal_purchase|date:"d M Y" }}<br>
+                        <strong>Status:</strong> <span class="status-badge status-{{ purchase.status }}">{{ purchase.get_status_display }}</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        {% if purchase.po %}
+        <div class="purchase-info">
+            <div class="info-box info-box-left">
+                <div class="info-box-inner">
+                    <h3>PO Reference</h3>
+                    <p>
+                        <strong>Nomor PO:</strong> {{ purchase.po.nomor_po }}<br>
+                        <strong>Tanggal PO:</strong> {{ purchase.po.tanggal_po|date:"d M Y" }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 5%;">No</th>
+                    <th style="width: 15%;">Barcode</th>
+                    <th style="width: 35%;">Nama Produk</th>
+                    <th style="width: 15%;">Variant</th>
+                    <th style="width: 8%;" class="text-center">Qty</th>
+                    <th style="width: 12%;" class="text-right">Harga Beli</th>
+                    <th style="width: 10%;" class="text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="text-center">{{ forloop.counter }}</td>
+                    <td>{{ item.product.barcode|default:item.product.sku }}</td>
+                    <td>{{ item.product.nama_produk }}</td>
+                    <td>{{ item.product.variant_produk|default:"-" }}</td>
+                    <td class="text-center">{{ item.quantity }}</td>
+                    <td class="text-right">Rp {{ item.harga_beli|floatformat:0|intcomma }}</td>
+                    <td class="text-right"><strong>Rp {{ item.subtotal|floatformat:0|intcomma }}</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="5" class="text-right">TOTAL:</th>
+                    <th class="text-right">Rp {{ purchase.total_amount|floatformat:0|intcomma }}</th>
+                </tr>
+            </tfoot>
+        </table>
+
+        {% if purchase.notes %}
+        <div class="notes-section">
+            <h4>Catatan:</h4>
+            <p>{{ purchase.notes }}</p>
+        </div>
+        {% endif %}
+
+        <div class="signature-section">
+            <div class="signature-box">
+                <p><strong>Dibuat Oleh:</strong></p>
+                <div class="signature-line">{{ purchase.created_by.username|default:"-" }}</div>
+            </div>
+            <div class="signature-box">
+                <p><strong>Diterima Oleh:</strong></p>
+                <div class="signature-line">{{ purchase.received_by.username|default:"-" }}</div>
+            </div>
+        </div>
+
+        <div class="footer-info">
+            <p>Dokumen ini dicetak pada: {{ purchase.updated_at|date:"d M Y, H:i" }}</p>
+        </div>
+    </div>
+</body>
+</html>
+

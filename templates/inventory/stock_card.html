@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+{% block title %}Kartu Stok{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="bi bi-clipboard-data"></i> Kartu Stok</h2>
+  </div>
+
+  <!-- Filter Card -->
+  <div class="card mb-3" style="border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label small text-muted">Cari Produk</label>
+          <input type="text" id="filter-produk" class="form-control form-control-sm" placeholder="SKU, Barcode, atau Nama Produk">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small text-muted">Tipe Pergerakan</label>
+          <select id="filter-tipe" class="form-select form-select-sm">
+            <option value="">Semua Tipe</option>
+            {% for tipe in tipe_pergerakan_list %}
+              <option value="{{ tipe.0 }}">{{ tipe.1 }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small text-muted">Status</label>
+          <select id="filter-status" class="form-select form-select-sm">
+            <option value="">Semua Status</option>
+            <option value="active">Active</option>
+            <option value="voided">Voided</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small text-muted">User</label>
+          <input type="text" id="filter-user" class="form-control form-control-sm" placeholder="Nama User">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small text-muted">&nbsp;</label>
+          <button type="button" id="btn-reset-filter" class="btn btn-outline-secondary btn-sm w-100">
+            <i class="bi bi-arrow-counterclockwise"></i> Reset Filter
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="card" style="border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table id="stock-card-table" class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th style="width: 150px;">Waktu</th>
+              <th style="width: 100px;">SKU</th>
+              <th style="width: 120px;">Barcode</th>
+              <th style="width: 300px;">Nama Produk</th>
+              <th style="width: 120px;">Tipe</th>
+              <th style="width: 80px;">User</th>
+              <th style="width: 80px;">Status</th>
+              <th style="width: 70px;" class="text-end">Qty</th>
+              <th style="width: 70px;" class="text-end">Awal</th>
+              <th style="width: 70px;" class="text-end">Akhir</th>
+              <th style="width: 200px;">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css" />
+<style>
+/* Modern Table Styling */
+#stock-card-table {
+    font-size: 0.9rem;
+}
+
+/* Table Header */
+#stock-card-table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+#stock-card-table thead th {
+    padding: 1rem 1rem;
+    border: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+#stock-card-table thead th:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Table Body */
+#stock-card-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: all 0.2s ease;
+}
+
+#stock-card-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+#stock-card-table tbody td {
+    padding: 0.875rem 1rem;
+    vertical-align: middle;
+    color: #475569;
+}
+
+#stock-card-table tbody tr:hover {
+    background-color: #f8fafc;
+    transform: translateX(2px);
+}
+
+/* Text truncation untuk kolom panjang */
+#stock-card-table td:nth-child(4), /* Nama Produk */
+#stock-card-table td:nth-child(11) { /* Notes */
+    max-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Styling untuk variant produk */
+#stock-card-table td:nth-child(4) small {
+    font-size: 0.8rem;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Hover untuk melihat text lengkap */
+#stock-card-table td:nth-child(4):hover,
+#stock-card-table td:nth-child(11):hover {
+    white-space: normal;
+    word-wrap: break-word;
+    background-color: #f8f9fa;
+    position: relative;
+    z-index: 1;
+}
+
+/* Sorting indicators */
+#stock-card-table thead th.sorting::after {
+    content: " ↕";
+    color: rgba(255, 255, 255, 0.5);
+    float: right;
+}
+
+#stock-card-table thead th.sorting_asc::after {
+    content: " ▲";
+    color: white;
+    float: right;
+}
+
+#stock-card-table thead th.sorting_desc::after {
+    content: " ▼";
+    color: white;
+    float: right;
+}
+
+/* Styling untuk tipe pergerakan stok */
+/* Tipe yang mengurangi stok - warna merah */
+#stock-card-table tbody tr.stock-decrease-row {
+    color: #dc3545 !important; /* Merah */
+    font-weight: 600 !important;
+}
+
+#stock-card-table tbody tr.stock-decrease-row:hover {
+    background-color: #f8d7da !important; /* Merah muda saat hover */
+    color: #721c24 !important;
+}
+
+/* Tipe yang menambah stok - warna hijau */
+#stock-card-table tbody tr.stock-increase-row {
+    color: #198754 !important; /* Hijau */
+    font-weight: 600 !important;
+}
+
+#stock-card-table tbody tr.stock-increase-row:hover {
+    background-color: #d1e7dd !important; /* Hijau muda saat hover */
+    color: #0f5132 !important;
+}
+
+/* Tipe pembatalan/transfer - warna biru */
+#stock-card-table tbody tr.stock-transfer-row {
+    color: #0d6efd !important; /* Biru */
+    font-weight: 600 !important;
+}
+
+#stock-card-table tbody tr.stock-transfer-row:hover {
+    background-color: #cfe2ff !important; /* Biru muda saat hover */
+    color: #084298 !important;
+}
+
+/* Override untuk status voided - tetap abu-abu */
+#stock-card-table tbody tr.stock-decrease-row[style*="color: #999"],
+#stock-card-table tbody tr.stock-increase-row[style*="color: #999"],
+#stock-card-table tbody tr.stock-transfer-row[style*="color: #999"] {
+    color: #999 !important;
+    background-color: transparent !important;
+}
+
+/* Tambahan styling untuk memastikan warna terlihat */
+#stock-card-table tbody tr.stock-decrease-row td {
+    color: #dc3545 !important;
+    font-weight: 600 !important;
+}
+
+#stock-card-table tbody tr.stock-increase-row td {
+    color: #198754 !important;
+    font-weight: 600 !important;
+}
+
+#stock-card-table tbody tr.stock-transfer-row td {
+    color: #0d6efd !important;
+    font-weight: 600 !important;
+}
+
+/* Debug styling - tambahkan border untuk memastikan class terpasang */
+#stock-card-table tbody tr.stock-decrease-row {
+    border-left: 4px solid #dc3545 !important;
+}
+
+#stock-card-table tbody tr.stock-increase-row {
+    border-left: 4px solid #198754 !important;
+}
+
+#stock-card-table tbody tr.stock-transfer-row {
+    border-left: 4px solid #0d6efd !important;
+}
+</style>
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script>
+$(document).ready(function() {
+    var table = $('#stock-card-table').DataTable({
+        "processing": true,
+        "serverSide": true,
+        "ajax": "{% url 'inventory:stock_card_data' %}",
+        "columns": [
+            { "data": "waktu" },
+            { "data": "product__sku" },
+            { "data": "product__barcode" },
+            { 
+                "data": null,
+                "render": function(data, type, row) {
+                    var namaProduk = row.product__nama_produk || '-';
+                    var variant = row.product__variant_produk || '-';
+                    return `<div>
+                        <strong>${namaProduk}</strong>
+                        <br><small class="text-muted">Variant: ${variant}</small>
+                    </div>`;
+                }
+            },
+            { "data": "tipe_pergerakan" },
+            { "data": "user" },
+            { "data": "status_display" },
+            { "data": "qty", "className": "text-end" },
+            { "data": "qty_awal", "className": "text-end" },
+            { "data": "qty_akhir", "className": "text-end" },
+            { "data": "notes" }
+        ],
+        "order": [[0, "desc"]], // Default sort by waktu terbaru
+        "pageLength": 50,
+        "lengthMenu": [25, 50, 100, 500],
+        "dom": 'lrtip', // Structure: l-length, r-processing, t-table, i-info, p-pagination
+        "language": {
+            "url": "https://cdn.datatables.net/plug-ins/2.0.8/i18n/id.json"
+        },
+        "createdRow": function(row, data, dataIndex) {
+            // Styling untuk status voided
+            if (data.status === 'voided') {
+                $(row).css('text-decoration', 'line-through').css('color', '#999');
+            }
+            
+            // Styling untuk tipe pergerakan stok
+            var tipePergerakan = data.tipe_pergerakan;
+            
+            if (tipePergerakan) {
+                // Tipe yang mengurangi stok - warna merah
+                if (['outbound', 'kunci_stok', 'close_batch', 'opname_out', 'koreksi_stok', 'putaway_selesai'].includes(tipePergerakan)) {
+                    $(row).addClass('stock-decrease-row');
+                }
+                // Tipe yang menambah stok - warna hijau
+                else if (['inbound', 'opname_in', 'reopen_batch', 'return_stock', 'koreksi_stok', 'Inbound (+)'].includes(tipePergerakan)) {
+                    $(row).addClass('stock-increase-row');
+                }
+                // Tipe pembatalan/transfer - warna biru
+                else if (['pindah_rak', 'transfer_batch', 'cancel_order', 'putaway_selesai'].includes(tipePergerakan)) {
+                    $(row).addClass('stock-transfer-row');
+                }
+            }
+        },
+        "autoWidth": false,
+        "scrollX": true
+    });
+
+    // Filter by Produk (SKU, Barcode, Nama)
+    var filterProdukTimeout;
+    $('#filter-produk').on('keyup', function() {
+        clearTimeout(filterProdukTimeout);
+        var keyword = $(this).val();
+        filterProdukTimeout = setTimeout(function() {
+            table.column(1).search(keyword).draw(); // Filter SKU
+        }, 500);
+    });
+
+    // Filter by Tipe Pergerakan
+    $('#filter-tipe').on('change', function() {
+        table.column(4).search($(this).val()).draw();
+    });
+
+    // Filter by Status
+    $('#filter-status').on('change', function() {
+        table.column(6).search($(this).val()).draw();
+    });
+
+    // Filter by User
+    var filterUserTimeout;
+    $('#filter-user').on('keyup', function() {
+        clearTimeout(filterUserTimeout);
+        var keyword = $(this).val();
+        filterUserTimeout = setTimeout(function() {
+            table.column(5).search(keyword).draw();
+        }, 500);
+    });
+
+    // Reset Filter
+    $('#btn-reset-filter').on('click', function() {
+        $('#filter-produk').val('');
+        $('#filter-tipe').val('');
+        $('#filter-status').val('');
+        $('#filter-user').val('');
+        table.search('').columns().search('').draw();
+    });
+
+});
+</script>
+{% endblock %} 

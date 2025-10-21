@@ -1,0 +1,619 @@
+{% extends 'base_mobile.html' %}
+{% block content %}
+<div class="container-fluid py-3" style="max-width:460px; margin:auto;">
+  <div id="scanBarcodeFeedback" class="text-danger small mb-2"></div>
+  <div class="card shadow-sm rounded-3 mb-3">
+    <div class="card-body text-center px-3 py-3">
+      <div class="text-center mb-3">
+        {% if product.photo %}
+          <!-- Foto Produk yang bisa di-klik untuk zoom. Tombol-tombol akan di dalam modal. -->
+          <img id="productPhoto" src="{{ product.photo.url }}" alt="Foto Produk" class="rounded mb-3" style="height:300px; width:auto; max-width:100%; object-fit:contain; background:#fafafa; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#imageZoomModal">
+          
+          <!-- Form Ganti/Hapus Foto tidak lagi di sini, mereka dipindahkan ke dalam modal. -->
+
+        {% else %}
+          <!-- Jika belum ada foto, form upload awal tetap di sini -->
+          <div id="photoPlaceholder" class="rounded-circle d-flex align-items-center justify-content-center mb-3" style="width:120px; height:120px; background:#f0f0f0; font-size:3rem; color:#bbb;">📦</div>
+          <form method="post" enctype="multipart/form-data" action="{% url 'batchitem_detail_view' nama_batch=nama_batch pk=batchitem.pk %}" id="initialUploadForm"> {# Tambahkan ID form #}
+            {% csrf_token %}
+            <input type="file" name="photo" id="uploadPhotoInput" accept="image/*" required style="display:none;">
+            <button type="button" id="triggerUploadBtn" class="btn btn-primary btn-sm">Upload Foto</button>
+            {# Tombol Simpan Foto di sini akan dihapus dari tampilan #}
+          </form>
+        {% endif %}
+      </div>
+      <div class="text-uppercase fw-bold mb-1" style="font-size:0.95rem;">{{ product.nama_produk }}</div>
+      <div class="text-primary mb-1" style="font-size:1.05rem;">{{ product.variant_produk }}</div>
+      <div class="fw-semibold text-primary mb-3" style="font-size: 1rem;">{{ product.brand }}</div>
+      <div class="mb-3">
+        <div class="d-flex justify-content-between mb-2">
+          <div class="text-start text-monospace fw-semibold">{{ product.sku }}</div>
+          <div class="text-end text-monospace fw-semibold" id="currentBarcode">{{ product.barcode }}</div>
+        </div>
+      </div>
+      <!-- Barcode Input dengan tombol Enter -->
+      <div class="mb-3 d-flex align-items-center gap-2">
+          <input type="text" id="scanBarcodeInput" class="form-control form-control-lg text-center" placeholder="Scan barcode..." autocomplete="off" autofocus>
+          <button type="button" id="enterBarcodeBtn" class="btn btn-primary btn-lg">
+              <i class="bi bi-arrow-right"></i>
+          </button>
+      </div>
+
+      <!-- Qty Input dengan tombol Enter -->
+      <div class="d-flex justify-content-center gap-4">
+          <div class="border rounded px-3 py-2 bg-light">
+              <div class="small text-muted">Jumlah</div>
+              <div class="fs-5 fw-bold" id="jumlahTotal">{{ jumlah }}</div>
+          </div>
+          <div class="border rounded px-3 py-2 bg-light">
+              <div class="small text-muted">Ambil</div>
+              <div class="d-flex align-items-center justify-content-center gap-2">
+                  <button class="btn btn-outline-secondary btn-sm" id="btnMinus">-</button>
+                  <input type="number" id="jumlahAmbilInput" class="form-control form-control-sm text-center" style="width:60px;" value="{{ jumlah_ambil }}" min="0" max="{{ jumlah }}" disabled>
+                  <button class="btn btn-outline-secondary btn-sm" id="btnPlus">+</button>
+                  <button class="btn btn-outline-primary btn-sm" id="btnMax">Max</button>
+                  <button type="button" id="enterQtyBtn" class="btn btn-success btn-sm" disabled>
+                      <i class="bi bi-check"></i>
+                  </button>
+              </div>
+              <div id="scanLockMsg" class="text-danger small mt-1">*scan barcode dahulu untuk edit</div>
+          </div>
+      </div>
+  </div>
+  <div class="modal fade" id="failModal" tabindex="-1" aria-labelledby="failModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-sm">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="failModalLabel">Barcode Tidak Sesuai</h5>
+        </div>
+        <div class="modal-body text-center">
+          <p>Barcode yang discan tidak sesuai dengan produk ini.</p>
+          <button type="button" class="btn btn-secondary mt-2" data-bs-dismiss="modal">Tutup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="completedModal" tabindex="-1" aria-labelledby="completedModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-sm text-center p-4">
+        <div class="modal-body">
+          <div class="mb-3">
+            <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 rounded-circle mb-2" style="width:64px; height:64px;">
+              <i class="bi bi-check2" style="font-size:2.5rem; color:#198754;"></i>
+            </div>
+          </div>
+          <h5 class="mb-2 text-success">Scan Completed</h5>
+          <div class="mb-3">Barang sudah selesai diambil.</div>
+          <div class="small text-muted">Anda akan kembali ke daftar dalam 1 detik...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Modal Zoom Foto -->
+  <div class="modal fade" id="imageZoomModal" tabindex="-1" aria-labelledby="imageZoomModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+      <div class="modal-content bg-dark">
+        <div class="modal-header border-0">
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body d-flex align-items-center justify-content-center">
+          {% if product.photo %} {# Tambahkan pengecekan ini #}
+          <img src="{{ product.photo.url }}" class="img-fluid" alt="Foto Zoom" style="max-height: 90vh; max-width: 90vw; object-fit: contain;">
+          {% else %}
+          {# Opsional: Tampilkan placeholder atau pesan jika tidak ada foto #}
+          <p class="text-white">Tidak ada foto untuk ditampilkan.</p>
+          {% endif %} {# Tutup pengecekan ini #}
+        </div>
+        
+        <!-- NEW: Modal Footer for buttons - hanya muncul jika ada foto -->
+        {% if product.photo %}
+        <div class="modal-footer justify-content-center border-0">
+          <!-- Form untuk Ganti Foto -->
+          <form method="post" enctype="multipart/form-data" action="{% url 'batchitem_detail_view' nama_batch=nama_batch pk=batchitem.pk %}" id="modalUploadForm"> {# Tambahkan ID form #}
+            {% csrf_token %}
+            <input type="file" name="photo" id="modalUploadPhotoInput" accept="image/*" required style="display:none;">
+            <button type="button" id="triggerModalChangePhotoBtn" class="btn btn-warning">Ganti Foto</button>
+            {# Tombol Simpan Foto Baru di sini akan dihapus dari tampilan #}
+          </form>
+
+          <!-- Form untuk Hapus Foto -->
+          <form method="post" action="{% url 'delete_batchitem_photo' pk=batchitem.pk %}">
+            {% csrf_token %}
+            <button type="submit" id="deleteModalPhotoBtn" class="btn btn-danger">Hapus Foto</button>
+          </form>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+  <style>
+  body, .container-fluid { padding-bottom: 0 !important; }
+  .fab-reload {
+  position: fixed;
+  bottom: 80px;
+  left: 24px;
+  z-index: 1050;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #1976d2;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  font-size: 2rem;
+  border: none;
+  outline: none;
+  transition: background 0.2s;
+}
+.fab-reload:active {
+  background: #1565c0;
+}
+.fab-save-back {
+  position: fixed;
+  bottom: 80px;
+  right: 24px;
+  z-index: 1050;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #28a745;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  font-size: 2rem;
+  border: none;
+  outline: none;
+  transition: background 0.2s;
+}
+.fab-save-back:active {
+  background: #218838;
+}
+.swal2-border-radius { border-radius: 12px !important; }
+.swal2-title-bold { font-weight: 700 !important; }
+.swal2-x-icon-red { }
+.swal2-confirm-button-red {
+  background-color: #F44336 !important;
+  border-color: #F44336 !important;
+  font-weight: 600 !important;
+}
+  </style>
+  <!-- Hapus sticky bar dan buat FAB untuk Save & Back -->
+  <button class="fab-save-back" id="fabSaveBackBtn" title="Save & Back">
+    <i class="bi bi-arrow-left"></i>
+  </button>
+  <button class="fab-reload" id="fabReloadBtn" title="Reload">
+    <i class="bi bi-arrow-clockwise"></i>
+  </button>
+</div>
+<audio id="successSound" src="/static/sounds/completedsound.mp3"></audio>
+<audio id="failSound" src="/static/sounds/wrong_barcode.mp3"></audio>
+
+<!-- Modal Konfirmasi Hapus -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center">
+        <p>Yakin ingin menghapus foto produk ini?</p>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Hapus</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_script %}
+<script>
+  const input = document.getElementById('jumlahAmbilInput');
+  const btnMinus = document.getElementById('btnMinus');
+  const btnPlus = document.getElementById('btnPlus');
+  const btnMax = document.getElementById('btnMax');
+  const scanBarcodeInput = document.getElementById('scanBarcodeInput');
+  const scanBarcodeFeedback = document.getElementById('scanBarcodeFeedback');
+  const currentBarcode = document.getElementById('currentBarcode').textContent.trim();
+  const maxJumlah = parseInt(document.getElementById('jumlahTotal').textContent.trim());
+  const pathParts = window.location.pathname.split('/');
+  const batchitemId = pathParts[pathParts.indexOf('batchitem') + 1];
+  const namaBatch = '{{ nama_batch|urlencode }}';
+  const urlUpdate = `/fullfilment/batchpicking/${namaBatch}/batchitem/${batchitemId}/update_jumlah_ambil/`;
+  
+  // --- JS untuk mengelola form upload foto baru (initial state, no photo) ---
+  const uploadPhotoInput = document.getElementById('uploadPhotoInput'); 
+  const triggerUploadBtn = document.getElementById('triggerUploadBtn'); 
+  const initialUploadForm = document.getElementById('initialUploadForm'); // Dapatkan referensi form
+  
+  // Event listener untuk tombol "Upload Foto" (jika belum ada foto)
+  if (triggerUploadBtn) {
+    triggerUploadBtn.addEventListener('click', function() {
+      uploadPhotoInput.click();
+    });
+  }
+
+  // Event listener saat file dipilih pada input tersembunyi (initial state)
+  if (uploadPhotoInput && initialUploadForm) {
+    uploadPhotoInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            initialUploadForm.submit(); // Langsung submit form
+        }
+    });
+  }
+
+  // --- JS untuk mengelola form upload/ganti foto di dalam modal (when photo exists) ---
+  const modalUploadPhotoInput = document.getElementById('modalUploadPhotoInput');
+  const triggerModalChangePhotoBtn = document.getElementById('triggerModalChangePhotoBtn');
+  const modalUploadForm = document.getElementById('modalUploadForm'); // Dapatkan referensi form
+
+  // Event listener untuk tombol "Ganti Foto" di modal
+  if (triggerModalChangePhotoBtn) {
+    triggerModalChangePhotoBtn.addEventListener('click', function() {
+      modalUploadPhotoInput.click();
+    });
+  }
+
+  // Event listener saat file dipilih pada input tersembunyi di modal
+  if (modalUploadPhotoInput && modalUploadForm) {
+    modalUploadPhotoInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            modalUploadForm.submit(); // Langsung submit form
+        }
+    });
+  }
+
+  // --- JS untuk hapus foto (di dalam modal) ---
+  const deleteModalPhotoBtn = document.getElementById('deleteModalPhotoBtn');
+  if (deleteModalPhotoBtn) {
+    deleteModalPhotoBtn.addEventListener('click', function(e) {
+      e.preventDefault(); // Mencegah submit form langsung
+      // Tampilkan konfirmasi SweetAlert2 (jika ada), atau konfirmasi standar
+      if (window.Swal) {
+        Swal.fire({
+          title: 'Yakin?',
+          text: "Anda tidak bisa mengembalikan ini!",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Ya, hapus!',
+          cancelButtonText: 'Batal',
+          customClass: {
+            popup: 'swal2-border-radius',
+            title: 'swal2-title-bold',
+            confirmButton: 'swal2-confirm-button-red'
+          }
+        }).then((result) => {
+          if (result.isConfirmed) {
+            this.closest('form').submit(); // Submit form hapus foto
+          }
+        });
+      } else {
+        if (confirm('Yakin ingin menghapus foto produk ini?')) {
+          this.closest('form').submit(); // Submit form hapus foto
+        }
+      }
+    });
+  }
+
+  function autoSaveJumlahAmbil(val, callback) {
+    fetch(urlUpdate, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      body: JSON.stringify({ jumlah_ambil: val })
+    })
+    .then(r => r.json())
+    .then(function(data) {
+      if (data.success) {
+        input.classList.add('border-success');
+        setTimeout(() => input.classList.remove('border-success'), 300);
+        if (data.completed) {
+          const successSound = document.getElementById('successSound');
+          if (successSound) successSound.play();
+          // Tampilkan modal scan completed
+          const completedModal = new bootstrap.Modal(document.getElementById('completedModal'));
+          completedModal.show();
+          setTimeout(() => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromV2 = urlParams.get('from_v2');
+            const namaBatch = "{{ batchitem.batchlist.nama_batch|urlencode }}";
+            if (fromV2 === 'true') {
+              window.location.href = `/fullfilment/mobile/batchpicking_v2/${namaBatch}/`;
+            } else {
+              // Tambahkan query param agar batchpicking auto reload
+              window.location.href = `/fullfilment/batchpicking/${namaBatch}/?reload=1`;
+            }
+          }, 1000);
+          return;
+        }
+      } else {
+        input.classList.add('border-danger');
+        setTimeout(() => input.classList.remove('border-danger'), 600);
+
+        // --- Tambahan: Suara & Toast jika stok tidak cukup ---
+        if (data.error && data.error.toLowerCase().includes('stok tidak cukup')) {
+          // Play wrong barcode sound (PASTI sebelum toast)
+          const failSound = document.getElementById('failSound');
+          if (failSound) failSound.play();
+
+          // Extract stock info from error message
+          let stockInfo = '';
+          let errorMessage = data.error;
+          
+          // Parse stock info from error message
+          if (data.error.includes('STOCK:')) {
+            const stockMatch = data.error.match(/STOCK:\s*([-\d]+)/);
+            if (stockMatch) {
+              stockInfo = stockMatch[1];
+              // Remove stock info from main error message
+              errorMessage = data.error.replace(/STOCK:\s*[-\d]+\./, '').replace(/STOCK:\s*[-\d]+/, '');
+            }
+          }
+
+          // Show SweetAlert2 toast dengan custom icon X merah
+          if (window.Swal) {
+            Swal.fire({
+              toast: true,
+              position: 'top-end',
+              showConfirmButton: false,
+              timer: 4000,
+              timerProgressBar: true,
+              customClass: {
+                popup: 'swal2-border-radius',
+                title: 'swal2-title-bold',
+                icon: 'swal2-x-icon-red'
+              },
+              html: `
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <span style="display:inline-flex;align-items:center;">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                      <circle cx="16" cy="16" r="16" fill="#F44336"/>
+                      <path d="M10 10L22 22" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                      <path d="M22 10L10 22" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                  </span>
+                  <div style="flex:1;">
+                    <div style="font-weight:600;font-size:1.1rem;color:#F44336;">${errorMessage}</div>
+                    ${stockInfo ? `<div style="font-weight:700;font-size:1.2rem;color:#D32F2F;margin-top:2px;">STOCK: ${stockInfo}</div>` : ''}
+                    <div style="font-size:0.9em;color:#888;margin-top:2px;">Segera lakukan stock opname!</div>
+                  </div>
+                </div>
+              `,
+              didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+              }
+            });
+          } else {
+            alert(data.error + '\nSegera lakukan stock opname!');
+          }
+        }
+      }
+      if (typeof callback === 'function') callback();
+    });
+  }
+  
+  function reloadWithSave() {
+    let val = parseInt(input.value) || 0;
+    autoSaveJumlahAmbil(val, function() {
+      // Tunggu sebentar untuk memastikan data tersimpan
+      setTimeout(() => {
+        window.location.reload();
+      }, 500); // Tambah delay 500ms
+    });
+  }
+  
+  function goBack() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromV2 = urlParams.get('from_v2');
+    const namaBatch = "{{ batchitem.batchlist.nama_batch|urlencode }}";
+
+    if (fromV2 === 'true') {
+      // Kembali ke batchpicking v2
+      window.location.href = `/fullfilment/mobile/batchpicking_v2/${namaBatch}/`;
+    } else {
+      // Kembali ke batchpicking v1 dengan reload
+      window.location.href = `/fullfilment/batchpicking/${namaBatch}/?reload=1`;
+    }
+  }
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    // FAB Reload
+    var fabReloadBtn = document.getElementById('fabReloadBtn');
+    if (fabReloadBtn) {
+      fabReloadBtn.onclick = reloadWithSave;
+    }
+    
+    // FAB Save & Back
+    var fabSaveBackBtn = document.getElementById('fabSaveBackBtn');
+    if (fabSaveBackBtn) {
+      fabSaveBackBtn.onclick = goBack;
+    }
+  });
+  
+  // Variabel global
+  let barcodeScanned = false;
+
+  // Lock semua input qty di awal
+  function lockQtyInput() {
+      input.disabled = true;
+      btnMinus.disabled = true;
+      btnPlus.disabled = true;
+      btnMax.disabled = true;
+      document.getElementById('enterQtyBtn').disabled = true;
+      document.getElementById('scanLockMsg').style.display = '';
+  }
+
+  // Unlock semua input qty
+  function unlockQtyInput() {
+      input.disabled = false;
+      btnMinus.disabled = false;
+      btnPlus.disabled = false;
+      btnMax.disabled = false;
+      document.getElementById('enterQtyBtn').disabled = false;
+      document.getElementById('scanLockMsg').style.display = 'none';
+  }
+
+  // Lock di awal
+  lockQtyInput();
+
+  // 1. TOMBOL ENTER UNTUK BARCODE INPUT
+  document.getElementById('enterBarcodeBtn').addEventListener('click', function() {
+      const barcodeValue = scanBarcodeInput.value.trim();
+      if (barcodeValue !== '') {
+          handleBarcodeCheck(barcodeValue);
+          scanBarcodeInput.value = '';
+      }
+  });
+
+  // Event listener untuk Enter key di keyboard untuk barcode
+  scanBarcodeInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+          const barcodeValue = scanBarcodeInput.value.trim();
+          if (barcodeValue !== '') {
+              handleBarcodeCheck(barcodeValue);
+              scanBarcodeInput.value = '';
+          }
+      }
+  });
+
+  // Fungsi untuk cek barcode
+  function handleBarcodeCheck(barcodeValue) {
+      if (barcodeValue === currentBarcode) {
+          // Barcode benar - unlock qty input
+          barcodeScanned = true;
+          unlockQtyInput();
+          scanBarcodeFeedback.textContent = 'Barcode benar! Quantity input dibuka.';
+          scanBarcodeFeedback.className = 'text-success small mb-2';
+          setTimeout(() => {
+              scanBarcodeFeedback.textContent = '';
+              input.focus(); // Focus ke qty input
+          }, 2000);
+      } else {
+          // Barcode salah - tampilkan modal dengan desain yang lebih menarik
+          const failSound = document.getElementById('failSound');
+          if (failSound) failSound.play();
+          
+          // Show SweetAlert2 modal untuk barcode salah
+          if (window.Swal) {
+            Swal.fire({
+              title: 'Barcode Tidak Sesuai!',
+              html: `
+                <div style="text-align:center;padding:20px 0;">
+                  <div style="margin-bottom:20px;">
+                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                      <circle cx="40" cy="40" r="40" fill="#F44336"/>
+                      <path d="M25 25L55 55" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                      <path d="M55 25L25 55" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                    </svg>
+                  </div>
+                  <div style="font-size:1.1rem;font-weight:600;color:#333;margin-bottom:10px;">
+                    Barcode yang discan tidak sesuai dengan produk ini
+                  </div>
+                  <div style="font-size:0.95rem;color:#666;">
+                    <strong>Barcode yang discan:</strong> ${barcodeValue}<br>
+                    <strong>Barcode produk:</strong> ${currentBarcode}
+                  </div>
+                </div>
+              `,
+              icon: 'none',
+              confirmButtonText: 'OK',
+              confirmButtonColor: '#F44336',
+              showCancelButton: false,
+              customClass: {
+                popup: 'swal2-border-radius',
+                confirmButton: 'swal2-confirm-button-red'
+              }
+            });
+          } else {
+              // Fallback ke modal Bootstrap yang sudah ada
+              const failModal = new bootstrap.Modal(document.getElementById('failModal'));
+              failModal.show();
+          }
+          
+          scanBarcodeFeedback.textContent = 'Barcode tidak sesuai produk ini!';
+          scanBarcodeFeedback.className = 'text-danger small mb-2';
+          setTimeout(() => scanBarcodeFeedback.textContent = '', 2000);
+      }
+  }
+
+  // 2. TOMBOL ENTER UNTUK QTY INPUT
+  document.getElementById('enterQtyBtn').addEventListener('click', function() {
+      if (!barcodeScanned) {
+          alert('Scan barcode terlebih dahulu untuk mengedit quantity!');
+          return;
+      }
+      saveQtyInput();
+  });
+
+  // Event listener untuk Enter key di keyboard untuk qty input
+  input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+          if (!barcodeScanned) {
+              alert('Scan barcode terlebih dahulu untuk mengedit quantity!');
+              return;
+          }
+          saveQtyInput();
+      }
+  });
+
+  // Fungsi untuk save qty input
+  function saveQtyInput() {
+      let val = parseInt(input.value) || 0;
+      if (val < 0) val = 0;
+      if (val > maxJumlah) val = maxJumlah;
+      input.value = val;
+      autoSaveJumlahAmbil(val);
+      input.blur();
+  }
+
+  // Event listener untuk blur (klik di luar input) untuk qty
+  input.addEventListener('blur', function() {
+      if (!barcodeScanned) return; // Jangan save jika belum di-unlock
+      saveQtyInput();
+  });
+
+  // Tombol + - Max tetap seperti biasa
+  btnMinus.onclick = function() {
+      if (!barcodeScanned) return;
+      let val = parseInt(input.value) || 0;
+      if (val > 0) {
+          input.value = val - 1;
+          autoSaveJumlahAmbil(input.value);
+      }
+  }
+
+  btnPlus.onclick = function() {
+      if (!barcodeScanned) return;
+      let val = parseInt(input.value) || 0;
+      if (val < maxJumlah) {
+          input.value = val + 1;
+          autoSaveJumlahAmbil(input.value);
+      }
+  }
+
+  btnMax.onclick = function() {
+      if (!barcodeScanned) return;
+      input.value = maxJumlah;
+      autoSaveJumlahAmbil(input.value);
+  }
+  
+
+
+  // --- JS untuk hapus foto (jika ada tombolnya) ---
+  const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+  if (confirmDeleteBtn) {
+    confirmDeleteBtn.addEventListener('click', function(e) {
+      e.preventDefault(); // Mencegah submit form langsung
+      if (confirm('Yakin ingin menghapus foto produk ini?')) {
+        this.closest('form').submit(); // Submit form hapus foto
+      }
+    });
+  }
+</script>
+{% endblock %}

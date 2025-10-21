@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css"/>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                <h4 class="card-title mb-2 mb-md-0">Order Ready to Pack</h4>
+                <div class="btn-toolbar" role="toolbar">
+                    <div class="btn-group btn-group-sm me-2" role="group">
+                        <a href="#" class="btn btn-outline-secondary" disabled>
+                            <i class="bi bi-clock-history me-1"></i> History
+                        </a>
+                    </div>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <a href="{% url 'scanpacking' %}" class="btn btn-primary">
+                            <i class="bi bi-qr-code-scan me-1"></i> Ke Halaman Scan
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <form id="print-form" method="POST" action="#">
+                {% csrf_token %}
+                <div class="table-responsive">
+                    <table id="ready-to-pack-table" class="table table-striped table-hover" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAllRows"></th>
+                                <th>ID Pesanan</th>
+                                <th>Tanggal Order</th>
+                                <th>Nama Batch</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be loaded by DataTables -->
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+        <div class="card-footer bg-light d-flex justify-content-end align-items-center">
+            <button type="submit" class="btn btn-primary" form="print-form" disabled>Print Selected</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script src=""></script>
+<script>
+$(document).ready(function() {
+    var table = $('#ready-to-pack-table').DataTable({
+        "processing": true,
+        "serverSide": true,
+        "ajax": {
+            "url": "{% url 'scanpacking_list_api' %}",
+            "type": "GET"
+        },
+        "columns": [
+            {
+                "data": "pk",
+                "orderable": false,
+                "searchable": false,
+                "render": function(data, type, row) {
+                    return `<input type="checkbox" name="ids[]" class="form-check-input" value="${data}">`;
+                }
+            },
+            { "data": "id_pesanan" },
+            { "data": "tanggal_pembuatan" },
+            { "data": "nama_batch" },
+            { "data": "status_order" },
+            {
+                "data": null,
+                "orderable": false,
+                "searchable": false,
+                "render": function(data, type, row) {
+                    let detailUrl = `/orders/detail/0/`.replace('0', row.id_pesanan);
+                    return `<div class="d-flex gap-2">
+                                <a href="${detailUrl}" class="btn btn-sm btn-info">Detail</a>
+                            </div>`;
+                }
+            }
+        ],
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/2.0.8/i18n/id.json"
+        },
+        "order": [[ 1, "desc" ]]
+    });
+
+    $('#selectAllRows').on('click', function() {
+        var rows = table.rows({ 'search': 'applied' }).nodes();
+        $('input[type="checkbox"]', rows).prop('checked', this.checked);
+    });
+
+    $('#ready-to-pack-table tbody').on('change', 'input[type="checkbox"]', function() {
+        if (!this.checked) {
+            var el = $('#selectAllRows').get(0);
+            if (el && el.checked && ('indeterminate' in el)) {
+                el.indeterminate = true;
+            }
+        }
+    });
+
+    // Print Selected: (opsional, aktifkan jika ada endpoint print)
+    // $('#print-form').on('submit', function(e) {
+    //     e.preventDefault();
+    //     // Implementasi mirip scanpicking_list jika diperlukan
+    // });
+});
+</script>
+{% endblock %}

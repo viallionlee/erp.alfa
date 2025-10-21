@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Hapus Purchase Order{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-lg">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Hapus Purchase Order</h4>
+            </div>
+            <div class="card-body">
+                <p class="lead text-danger">Apakah Anda yakin ingin menghapus PO ini?</p>
+                
+                <div class="alert alert-danger">
+                    <strong>Nomor PO:</strong> {{ po.nomor_po }}<br>
+                    <strong>Supplier:</strong> {{ po.supplier.nama_supplier }}<br>
+                    <strong>Status:</strong> {{ po.get_status_display }}<br>
+                    <strong>Total Amount:</strong> Rp {{ po.total_amount|floatformat:0 }}
+                </div>
+
+                {% if po.status == 'received' %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> <strong>Peringatan:</strong><br>
+                    PO ini sudah di-receive. Menghapus PO ini tidak akan menghapus Inbound yang sudah dibuat.
+                </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="bi bi-trash"></i> Ya, Hapus PO
+                        </button>
+                        <a href="{% url 'purchasing:po_detail' po.id %}" class="btn btn-secondary btn-lg">
+                            <i class="bi bi-x-circle"></i> Batal
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+

@@ -1,0 +1,923 @@
+{% extends 'base_mobile.html' %}
+{% load static %}
+
+{% block title %}Scan Order Cancel - Mobile{% endblock %}
+
+{% block extra_head %}
+<style>
+    body {
+        background: #f5f7fa;
+        font-family: 'Segoe UI', Roboto, sans-serif;
+        padding-bottom: 120px !important;
+    }
+    
+    .header-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 0 0 20px 20px;
+    }
+    
+    .header-content h4 {
+        margin: 0;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .header-action {
+        margin-top: 0.5rem;
+    }
+    
+    .header-btn {
+        color: white;
+        text-decoration: none;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .content-wrapper {
+        padding: 0 1rem;
+    }
+    
+    .scan-section {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .scan-input-group {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .scan-input {
+        flex: 1;
+        padding: 0.75rem;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+    }
+    
+    .scan-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .scan-btn {
+        padding: 0.75rem 1rem;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    
+    .scan-btn:hover {
+        background: #5a6fd8;
+    }
+    
+    .scan-feedback {
+        padding: 0.75rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        display: none;
+    }
+    
+    .scan-feedback.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .scan-feedback.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .product-monitor {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    
+    .product-image {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        border: 2px solid #e9ecef;
+    }
+    
+    .product-placeholder {
+        width: 120px;
+        height: 120px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        color: #6c757d;
+        font-size: 3rem;
+    }
+    
+    .product-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #2d3748;
+    }
+    
+    .product-variant {
+        color: #667eea;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    
+    .product-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    
+    .product-badge {
+        background: #f8f9fa;
+        color: #495057;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .product-quantity {
+        background: #e3f2fd;
+        padding: 1rem;
+        border-radius: 12px;
+        margin-top: 1rem;
+    }
+    
+    .quantity-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    
+    .quantity-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #667eea;
+        line-height: 1;
+    }
+    
+    .items-section {
+        background: white;
+        border-radius: 16px;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .section-header {
+        background: #ffc107;
+        color: #212529;
+        padding: 1rem;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .section-count {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+    }
+    
+    .item-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .item-card {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    
+    .item-card:last-child {
+        border-bottom: none;
+    }
+    
+    .item-card:hover {
+        background: #f8f9fa;
+    }
+    
+    .item-card.selected {
+        background: #e3f2fd;
+        border-left: 4px solid #667eea;
+    }
+    
+    .item-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .item-photo {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 8px;
+        flex-shrink: 0;
+    }
+    
+    .item-placeholder {
+        width: 50px;
+        height: 50px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        flex-shrink: 0;
+    }
+    
+    .item-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .item-name {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.25rem;
+        line-height: 1.3;
+    }
+    
+    .item-variant {
+        color: #667eea;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+    
+    .item-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+    
+    .item-badge {
+        background: #f8f9fa;
+        color: #495057;
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+    
+    .item-status {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.5rem;
+    }
+    
+    .item-quantity {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    
+    .quantity-target, .quantity-scanned {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .quantity-target {
+        color: #6c757d;
+    }
+    
+    .quantity-scanned {
+        color: #667eea;
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-partial {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .status-completed {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .submit-section {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: 1rem;
+        border-top: 1px solid #e9ecef;
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+    }
+    
+    .submit-btn {
+        width: 100%;
+        padding: 0.75rem;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    
+    .submit-btn:hover:not(:disabled) {
+        background: #218838;
+    }
+    
+    .submit-btn:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #dee2e6;
+    }
+    
+    .empty-state h5 {
+        margin-bottom: 0.5rem;
+        color: #495057;
+    }
+    
+    .error-message {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        border: 1px solid #f5c6cb;
+    }
+    
+    @media (max-width: 375px) {
+        .content-wrapper {
+            padding: 0 0.75rem;
+        }
+        
+        .scan-section, .product-monitor, .items-section {
+            padding: 1rem;
+        }
+        
+        .product-image, .product-placeholder {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .quantity-value {
+            font-size: 1.75rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="header-section">
+        <div class="header-content">
+            <h4><i class="bi bi-x-circle"></i> Scan Order Cancel</h4>
+            {% if order_id %}
+            <p class="mb-0">Order ID: <strong>{{ order_id }}</strong></p>
+            {% endif %}
+        </div>
+        <div class="header-action">
+            <a href="{% url 'returnlist_dashboard' %}" class="header-btn">
+                <i class="bi bi-arrow-left"></i> Kembali
+            </a>
+        </div>
+    </div>
+
+    <div class="content-wrapper">
+        {% if not show_tables %}
+        <!-- Order ID Input Section -->
+        <div class="scan-section">
+            <h5 class="mb-3"><i class="bi bi-search"></i> Masukkan Order ID</h5>
+            <form id="orderIdForm" method="GET" action="">
+                <div class="scan-input-group">
+                    <input type="text" id="orderIdInput" name="order_id" class="scan-input" 
+                           placeholder="Scan atau ketik Order ID..." value="{{ order_id|default:'' }}" autofocus>
+                    <button class="scan-btn" type="submit" id="searchOrderIdBtn">
+                        <i class="bi bi-search"></i> Cari
+                    </button>
+                </div>
+                {% if order_id %}
+                <div class="text-center mt-2">
+                    <a href="/fullfilment/return/session/{{ return_session.id }}/ordercancel/" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-x-circle"></i> Clear
+                    </a>
+                </div>
+                {% endif %}
+            </form>
+
+            {% if error %}
+            <div class="error-message">
+                <i class="bi bi-exclamation-triangle"></i> {{ error }}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if show_tables %}
+        <!-- Barcode Scan Section -->
+        <div class="scan-section">
+            <h5 class="mb-3"><i class="bi bi-upc-scan"></i> Scan Barcode</h5>
+            <form id="barcodeForm" autocomplete="off">
+                <input type="text" id="orderBarcodeInput" class="scan-input" 
+                       placeholder="Scan barcode..." autofocus autocomplete="off">
+                <div id="barcodeFeedback" class="scan-feedback"></div>
+            </form>
+        </div>
+
+        <!-- Product Monitor Section -->
+        <div class="product-monitor">
+            <img id="monitor-photo" src="" class="product-image d-none" alt="Product Image">
+            <div id="monitor-photo-placeholder" class="product-placeholder">
+                <i class="bi bi-box"></i>
+            </div>
+            
+            <h5 id="monitor-nama" class="product-name">---</h5>
+            <div id="monitor-variant" class="product-variant">---</div>
+            
+            <div class="product-badges">
+                <span class="product-badge">SKU: <span id="monitor-sku">---</span></span>
+                <span class="product-badge">Barcode: <span id="monitor-barcode">---</span></span>
+                <span id="monitor-brand-badge" class="product-badge d-none">Brand: <span id="monitor-brand">---</span></span>
+            </div>
+            
+            <div class="product-quantity">
+                <div class="quantity-label">Jumlah Target / Jumlah Scan</div>
+                <div class="quantity-value" id="monitor-jumlah">- / -</div>
+            </div>
+        </div>
+
+        <!-- Pending Items Section -->
+        <div class="items-section">
+            <div class="section-header">
+                <span><i class="bi bi-clock"></i> PENDING ITEMS</span>
+                <span class="section-count" id="pending-count">{{ pending_orders|length }}</span>
+            </div>
+            <div class="item-list" id="pending-items">
+                {% for o in pending_orders %}
+                <div class="item-card" data-item-id="{{ o.id }}" data-sku="{{ o.sku }}" 
+                     data-barcode="{{ o.barcode }}" data-nama="{{ o.nama_produk }}" 
+                     data-variant="{{ o.variant_produk }}" data-brand="{{ o.brand }}" 
+                     data-photo="{{ o.photo_url }}">
+                    <div class="item-header">
+                        {% if o.product_photo_url %}
+                        <img src="{{ o.product_photo_url }}" alt="Product" class="item-photo">
+                        {% else %}
+                        <div class="item-placeholder">
+                            <i class="bi bi-box"></i>
+                        </div>
+                        {% endif %}
+                        <div class="item-info">
+                            <div class="item-name">{{ o.nama_produk }}</div>
+                            <div class="item-variant">{{ o.variant_produk|default_if_none:'' }}</div>
+                            <div class="item-badges">
+                                <span class="item-badge">{{ o.sku }}</span>
+                                <span class="item-badge">{{ o.barcode }}</span>
+                                {% if o.brand %}<span class="item-badge">{{ o.brand }}</span>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item-status">
+                        <div class="item-quantity">
+                            <span class="quantity-scanned" data-scanned="0">0</span>
+                            <span>/</span>
+                            <span class="quantity-target">{{ o.jumlah_ambil }}</span>
+                        </div>
+                        <span class="status-badge status-pending">Pending</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <i class="bi bi-check-circle"></i>
+                    <h5>Tidak ada item pending</h5>
+                    <p>Semua item sudah selesai di-scan</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Completed Items Section -->
+        <div class="items-section">
+            <div class="section-header">
+                <span><i class="bi bi-check-circle"></i> COMPLETED ITEMS</span>
+                <span class="section-count" id="completed-count">0</span>
+            </div>
+            <div class="item-list" id="completed-items">
+                <div class="empty-state">
+                    <i class="bi bi-clock"></i>
+                    <h5>Belum ada item completed</h5>
+                    <p>Scan barcode untuk menyelesaikan item</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if show_tables %}
+    <!-- Submit Section -->
+    <div class="submit-section">
+        <button id="submitReturnBtn" class="submit-btn" disabled>
+            <i class="bi bi-check-circle"></i> Submit Return
+        </button>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+// Global variables
+window.ORDER_ID = "{{ order_id|escapejs }}";
+window.RETURN_SESSION_ID = "{{ return_session.id|escapejs }}";
+window.CSRF_TOKEN = "{{ csrf_token }}";
+
+// Sound functions
+function playSound(type) {
+    if (type === 'completed') {
+        new Audio('/static/sounds/completedsound.mp3').play();
+    } else if (type === 'success') {
+        new Audio('/static/sounds/ding.mp3').play();
+    } else if (type === 'error' || type === 'fail') {
+        new Audio('/static/sounds/wrong_barcode.mp3').play();
+    } else {
+        new Audio('/static/sounds/over_scan.mp3').play();
+    }
+}
+
+// Feedback functions
+function showFeedback(message, type) {
+    const feedback = document.getElementById('barcodeFeedback');
+    if (!feedback) return;
+    
+    feedback.innerHTML = message;
+    feedback.className = `scan-feedback ${type}`;
+    feedback.style.display = 'block';
+    
+    setTimeout(() => {
+        feedback.style.display = 'none';
+    }, 3000);
+}
+
+// Update product monitor
+function updateMonitoringCard(sku, barcode, nama, variant, brand, photoUrl, jumlahTarget, jumlahCheck) {
+    const monitorPhoto = document.getElementById('monitor-photo');
+    const monitorPhotoPlaceholder = document.getElementById('monitor-photo-placeholder');
+    const monitorNama = document.getElementById('monitor-nama');
+    const monitorVariant = document.getElementById('monitor-variant');
+    const monitorSku = document.getElementById('monitor-sku');
+    const monitorBarcode = document.getElementById('monitor-barcode');
+    const monitorBrand = document.getElementById('monitor-brand');
+    const monitorBrandBadge = document.getElementById('monitor-brand-badge');
+    const monitorJumlah = document.getElementById('monitor-jumlah');
+
+    if (photoUrl && !photoUrl.endsWith('/alfaicon.png')) {
+        monitorPhoto.src = photoUrl;
+        monitorPhoto.classList.remove('d-none');
+        monitorPhotoPlaceholder.classList.add('d-none');
+    } else {
+        monitorPhoto.src = '';
+        monitorPhoto.classList.add('d-none');
+        monitorPhotoPlaceholder.classList.remove('d-none');
+    }
+
+    monitorNama.textContent = nama || '---';
+    monitorVariant.textContent = variant || '---';
+    monitorSku.textContent = sku || '---';
+    monitorBarcode.textContent = barcode || '---';
+    monitorJumlah.textContent = `${jumlahCheck || '0'} / ${jumlahTarget || '-'}`;
+    
+    if (brand) {
+        monitorBrand.textContent = brand;
+        monitorBrandBadge.classList.remove('d-none');
+    } else {
+        monitorBrandBadge.classList.add('d-none');
+    }
+}
+
+// Move item between sections
+function moveItemToCompleted(itemCard) {
+    const completedItems = document.getElementById('completed-items');
+    const emptyState = completedItems.querySelector('.empty-state');
+    
+    if (emptyState) {
+        emptyState.remove();
+    }
+    
+    // Update item status
+    const statusBadge = itemCard.querySelector('.status-badge');
+    statusBadge.className = 'status-badge status-completed';
+    statusBadge.textContent = 'Completed';
+    
+    // Add to completed section
+    completedItems.appendChild(itemCard);
+    
+    // Update counts
+    updateItemCounts();
+}
+
+// Update item counts
+function updateItemCounts() {
+    const pendingCount = document.querySelectorAll('#pending-items .item-card').length;
+    const completedCount = document.querySelectorAll('#completed-items .item-card').length;
+    
+    document.getElementById('pending-count').textContent = pendingCount;
+    document.getElementById('completed-count').textContent = completedCount;
+    
+    // Update submit button
+    const submitBtn = document.getElementById('submitReturnBtn');
+    submitBtn.disabled = pendingCount > 0;
+    
+    // Show completion modal if all items are done
+    if (pendingCount === 0 && completedCount > 0) {
+        showCompletedModal();
+    }
+}
+
+// Show completion modal
+function showCompletedModal() {
+    playSound('completed');
+    
+    Swal.fire({
+        icon: 'success',
+        title: 'Semua Item Selesai!',
+        text: `Order ID ${window.ORDER_ID} sudah selesai di-scan`,
+        showConfirmButton: false,
+        timer: 2000
+    }).then(() => {
+        performSubmitReturn();
+    });
+}
+
+// Submit return
+function performSubmitReturn() {
+    const itemsToSubmit = [];
+    Array.from(document.querySelectorAll('#completed-items .item-card')).forEach(card => {
+        const scanned = parseInt(card.querySelector('[data-scanned]').textContent);
+        const target = parseInt(card.querySelector('.quantity-target').textContent);
+        
+        itemsToSubmit.push({
+            id: card.dataset.itemId,
+            product_sku: card.dataset.sku,
+            jumlah_target: target,
+            jumlah_check: scanned
+        });
+    });
+
+    fetch(`/fullfilment/api/return/session/${window.RETURN_SESSION_ID}/ordercancel/${window.ORDER_ID}/submit-return/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': window.CSRF_TOKEN,
+        },
+        body: JSON.stringify({
+            return_session_id: window.RETURN_SESSION_ID,
+            order_id: window.ORDER_ID,
+            items: itemsToSubmit
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: data.message || 'Return berhasil disubmit',
+                showConfirmButton: false,
+                timer: 1500
+            }).then(() => {
+                window.location.href = `/fullfilment/return/session/${window.RETURN_SESSION_ID}/ordercancel/`;
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: data.message || 'Terjadi kesalahan saat submit return',
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error submitting return:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: 'Terjadi kesalahan koneksi saat submit return',
+        });
+    });
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    const orderIdForm = document.getElementById('orderIdForm');
+    const orderIdInput = document.getElementById('orderIdInput');
+    const barcodeForm = document.getElementById('barcodeForm');
+    const barcodeInput = document.getElementById('orderBarcodeInput');
+    const submitBtn = document.getElementById('submitReturnBtn');
+
+    // Order ID form submission
+    if (orderIdForm && orderIdInput) {
+        orderIdForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const orderId = orderIdInput.value.trim();
+            if (orderId) {
+                window.location.href = `/fullfilment/return/session/${window.RETURN_SESSION_ID}/ordercancel/${encodeURIComponent(orderId)}/`;
+            }
+        });
+    }
+
+    // Barcode scanning
+    if (barcodeForm && barcodeInput) {
+        barcodeForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const barcode = barcodeInput.value.trim();
+            
+            if (!barcode) return;
+            
+            // Clear input
+            barcodeInput.value = '';
+            
+            // Find item in pending items
+            const itemCard = Array.from(document.querySelectorAll('#pending-items .item-card'))
+                .find(card => card.dataset.barcode === barcode);
+            
+            if (!itemCard) {
+                showFeedback('Barcode tidak ditemukan dalam daftar pending!', 'error');
+                playSound('error');
+                return;
+            }
+            
+            // Process the scan
+            processBarcodeScan(itemCard, barcode);
+            
+            // Refocus input
+            setTimeout(() => barcodeInput.focus(), 100);
+        });
+    }
+
+    // Item card selection
+    document.addEventListener('click', function(e) {
+        const itemCard = e.target.closest('.item-card');
+        if (itemCard) {
+            // Remove previous selection
+            document.querySelectorAll('.item-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Select current card
+            itemCard.classList.add('selected');
+            
+            // Update monitoring card
+            const scanned = parseInt(itemCard.querySelector('[data-scanned]').textContent);
+            const target = parseInt(itemCard.querySelector('.quantity-target').textContent);
+            
+            updateMonitoringCard(
+                itemCard.dataset.sku,
+                itemCard.dataset.barcode,
+                itemCard.dataset.nama,
+                itemCard.dataset.variant,
+                itemCard.dataset.brand,
+                itemCard.dataset.photo,
+                target,
+                scanned
+            );
+        }
+    });
+
+    // Submit button
+    if (submitBtn) {
+        submitBtn.addEventListener('click', function() {
+            Swal.fire({
+                title: 'Konfirmasi Submit Return?',
+                text: 'Pastikan semua item sudah di-scan dengan benar.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Submit Return!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    performSubmitReturn();
+                }
+            });
+        });
+    }
+
+    // Auto-select first pending item if available
+    const firstPendingItem = document.querySelector('#pending-items .item-card');
+    if (firstPendingItem) {
+        firstPendingItem.click();
+    }
+});
+
+// Process barcode scan
+function processBarcodeScan(itemCard, barcode) {
+    const targetEl = itemCard.querySelector('.quantity-target');
+    const scannedEl = itemCard.querySelector('[data-scanned]');
+    const statusBadge = itemCard.querySelector('.status-badge');
+    
+    const target = parseInt(targetEl.textContent);
+    let scanned = parseInt(scannedEl.textContent) || 0;
+    
+    if (scanned >= target) {
+        showFeedback('Jumlah scan sudah mencapai target!', 'error');
+        playSound('error');
+        return;
+    }
+    
+    scanned++;
+    scannedEl.textContent = scanned;
+    
+    playSound('success');
+    
+    if (scanned === target) {
+        statusBadge.className = 'status-badge status-completed';
+        statusBadge.textContent = 'Completed';
+        
+        // Move to completed section
+        setTimeout(() => {
+            moveItemToCompleted(itemCard);
+        }, 500);
+        
+        showFeedback(`SKU ${itemCard.dataset.sku} selesai di-scan!`, 'success');
+    } else {
+        statusBadge.className = 'status-badge status-partial';
+        statusBadge.textContent = 'Partial';
+        
+        showFeedback(`SKU ${itemCard.dataset.sku} di-scan (${scanned}/${target})`, 'success');
+    }
+    
+    // Update monitoring card if this item is selected
+    if (itemCard.classList.contains('selected')) {
+        updateMonitoringCard(
+            itemCard.dataset.sku,
+            itemCard.dataset.barcode,
+            itemCard.dataset.nama,
+            itemCard.dataset.variant,
+            itemCard.dataset.brand,
+            itemCard.dataset.photo,
+            target,
+            scanned
+        );
+    }
+}
+</script>
+{% endblock %}

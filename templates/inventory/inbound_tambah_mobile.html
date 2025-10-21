@@ -1,0 +1,903 @@
+{% extends 'base_mobile.html' %}
+{% block title %}Tambah Inbound{% endblock %}
+
+{% block content %}
+<style>
+/* Minimalist Mobile Design */
+.compact-header {
+    background: #fff;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #e9ecef;
+    margin-bottom: 0.5rem;
+}
+
+.compact-form-section {
+    background: #fff;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+.compact-section-header {
+    background: #f8f9fa;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #495057;
+}
+
+.compact-section-body {
+    padding: 0.75rem;
+}
+
+.compact-input-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.compact-input {
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 0.5rem;
+    font-size: 0.85rem;
+    background: #fff;
+}
+
+.compact-input:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1);
+}
+
+.compact-btn {
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.compact-btn-primary {
+    background: #0d6efd;
+    color: white;
+}
+
+.compact-btn-primary:hover {
+    background: #0b5ed7;
+}
+
+.compact-btn-outline {
+    background: transparent;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.compact-btn-outline:hover {
+    background: #f8f9fa;
+    color: #495057;
+}
+
+.compact-search-box {
+    position: relative;
+    margin-bottom: 0.5rem;
+}
+
+.compact-search-input {
+    width: 100%;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 0.5rem;
+    font-size: 0.85rem;
+    background: #fff;
+}
+
+.compact-search-results {
+    position: fixed;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    z-index: 9999;
+    max-height: 50vh;
+    overflow-y: auto;
+    display: none;
+    width: calc(100vw - 2rem);
+    left: 1rem;
+    right: 1rem;
+}
+
+.compact-search-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.1);
+    z-index: 9998;
+    display: none;
+}
+
+.compact-product-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-bottom: 1px solid #f8f9fa;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    position: relative;
+}
+
+.compact-product-item:nth-child(odd) {
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    border-left-color: #0d6efd;
+}
+
+.compact-product-item:nth-child(even) {
+    background: linear-gradient(135deg, #fff 0%, #f0f8ff 100%);
+    border-left-color: #198754;
+}
+
+.compact-product-item:nth-child(3n) {
+    background: linear-gradient(135deg, #fff 0%, #fff5f5 100%);
+    border-left-color: #dc3545;
+}
+
+.compact-product-item:nth-child(4n) {
+    background: linear-gradient(135deg, #fff 0%, #f0fff0 100%);
+    border-left-color: #20c997;
+}
+
+.compact-product-item:nth-child(5n) {
+    background: linear-gradient(135deg, #fff 0%, #fff8e1 100%);
+    border-left-color: #fd7e14;
+}
+
+.compact-product-item:hover {
+    transform: translateX(2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.compact-product-item:last-child {
+    border-bottom: none;
+}
+
+.compact-product-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.compact-product-photo, .compact-product-photo-placeholder {
+    width: 60px;
+    height: 60px;
+    border-radius: 6px;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.compact-product-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.compact-product-photo-placeholder i {
+    font-size: 1.5rem;
+    color: #6c757d;
+}
+
+.compact-product-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.compact-product-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.compact-product-sku-barcode {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #495057;
+    flex: 1;
+}
+
+.compact-product-name {
+    font-size: 0.75rem;
+    color: #6c757d;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    margin-bottom: 0.25rem;
+    min-height: 1.8rem;
+}
+
+.compact-product-brand-variant {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.7rem;
+    color: #6c757d;
+}
+
+.compact-product-brand {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    color: #1565c0;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.65rem;
+    border: 1px solid #90caf9;
+}
+
+.compact-product-variant {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    color: #7b1fa2;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 0.65rem;
+    border: 1px solid #ce93d8;
+}
+
+.compact-product-list {
+    margin-top: 1rem;
+}
+
+.compact-added-product {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    position: relative;
+}
+
+.compact-added-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding-right: 40px; /* Space for 25px vertical quantity controls */
+}
+
+.compact-added-photo, .compact-added-photo-placeholder {
+    width: 60px;
+    height: 60px;
+    border-radius: 6px;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.compact-added-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.compact-added-photo-placeholder i {
+    font-size: 1.5rem;
+    color: #6c757d;
+}
+
+.compact-added-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.compact-added-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.compact-added-sku-barcode {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #495057;
+    flex: 1;
+}
+
+.compact-added-name {
+    font-size: 0.75rem;
+    color: #6c757d;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    margin-bottom: 0.25rem;
+    min-height: 1.8rem;
+}
+
+.compact-added-brand-variant {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.7rem;
+    color: #6c757d;
+}
+
+.compact-added-brand {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    color: #1565c0;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.65rem;
+    border: 1px solid #90caf9;
+}
+
+.compact-added-variant {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    color: #7b1fa2;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 0.65rem;
+    border: 1px solid #ce93d8;
+}
+
+.compact-qty-controls {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.compact-qty-btn {
+    width: 25px;
+    height: 25px;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #495057;
+    transition: all 0.2s ease;
+}
+
+.compact-qty-btn:hover {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    transform: scale(1.05);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.compact-qty-input {
+    width: 25px;
+    height: 25px;
+    text-align: center;
+    border: 2px solid #e9ecef;
+    border-radius: 4px;
+    padding: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    transition: all 0.2s ease;
+}
+
+.compact-qty-input:focus {
+    border-color: #0d6efd;
+    background: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1);
+}
+
+.compact-remove-btn {
+    position: absolute;
+    bottom: 0.5rem;
+    left: 0.5rem;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.compact-remove-btn:hover {
+    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+    transform: scale(1.05);
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+.compact-floating-btn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #0d6efd;
+    color: white;
+    border: none;
+    box-shadow: 0 4px 16px rgba(13, 110, 253, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.compact-floating-btn:hover {
+    background: #0b5ed7;
+    transform: scale(1.05);
+}
+
+.compact-floating-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.compact-back-btn {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #fff;
+    color: #6c757d;
+    border: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.compact-empty-state {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #6c757d;
+}
+
+.compact-empty-state i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+.compact-empty-state p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.compact-form-section.supplier-selected {
+    display: none;
+}
+
+.compact-supplier-summary {
+    background: #e8f5e8;
+    border: 1px solid #c3e6c3;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.compact-supplier-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.compact-supplier-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #0d6efd;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+}
+
+.compact-supplier-details h6 {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.compact-supplier-details small {
+    color: #6c757d;
+    font-size: 0.75rem;
+}
+
+.compact-change-supplier-btn {
+    background: transparent;
+    border: 1px solid #0d6efd;
+    color: #0d6efd;
+    border-radius: 4px;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.compact-change-supplier-btn:hover {
+    background: #0d6efd;
+    color: white;
+}
+</style>
+
+<div class="container-fluid px-3 py-1">
+    <!-- Back Button -->
+    <a href="{% url 'inventory:inbound' %}" class="compact-back-btn" title="Kembali">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+
+    <!-- Minimal Header -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h6 class="mb-0">{{ default_nomor_inbound }}</h6>
+        <small class="text-muted">Tambah Inbound</small>
+    </div>
+
+    <form method="post" id="add-inbound-form">
+        {% csrf_token %}
+
+        <!-- Hidden inputs -->
+        <input type="hidden" name="tanggal" id="tanggal">
+        <input type="hidden" name="nomor_inbound" id="nomor_inbound" value="{{ default_nomor_inbound }}">
+
+        <!-- Minimal Transfer Section -->
+        <div class="card mb-2 shadow-sm" id="transfer-section">
+            <div class="card-body p-2">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-arrow-left-right text-primary"></i>
+                    <small class="text-muted">Transfer Antar Gudang</small>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small mb-1">Dari Gudang</label>
+                    <input type="text" name="from_warehouse" id="from_warehouse" class="form-control form-control-sm" required placeholder="Contoh: Gudang Pusat">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small mb-1">Ke Gudang</label>
+                    <input type="text" name="to_warehouse" id="to_warehouse" class="form-control form-control-sm" required placeholder="Contoh: Gudang Cabang">
+                </div>
+                <div>
+                    <label class="form-label small mb-1">Keterangan (opsional)</label>
+                    <input type="text" name="keterangan" id="keterangan" class="form-control form-control-sm" placeholder="Keterangan tambahan">
+                </div>
+            </div>
+        </div>
+
+        <!-- Minimal Product Search Section -->
+        <div class="card mb-2 shadow-sm">
+            <div class="card-body p-2">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="bi bi-search text-primary"></i>
+                    <small class="text-muted">Cari Produk</small>
+                </div>
+                <div class="position-relative">
+                    <input type="text" id="produk_search" class="form-control form-control-sm" placeholder="SKU, Barcode, Nama..." autocomplete="off">
+                    <div id="search-result-box" class="compact-search-results">
+                        <!-- Search results will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product List Section -->
+        <div class="compact-form-section">
+            <div class="compact-section-header">
+                <i class="bi bi-box-seam me-2"></i>Produk Terpilih
+                <span id="product-count" class="badge bg-primary ms-2" style="font-size: 0.7rem;">0</span>
+            </div>
+            <div class="compact-section-body">
+                <div id="produk-list" class="compact-product-list">
+                    <!-- Added products will appear here -->
+                </div>
+                <div id="no-product-msg" class="compact-empty-state" style="display: none;">
+                    <i class="bi bi-box"></i>
+                    <p>Belum ada produk ditambahkan</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Spacer for floating button -->
+        <div style="height: 100px;"></div>
+    </form>
+
+    <!-- Floating Save Button -->
+    <button type="submit" form="add-inbound-form" class="compact-floating-btn" id="save-btn">
+        <i class="bi bi-check-lg"></i>
+    </button>
+
+    <!-- Search Backdrop -->
+    <div class="compact-search-backdrop" id="search-backdrop"></div>
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+<script>
+$(document).ready(function() {
+    console.log('Mobile template jQuery loaded successfully');
+    
+    // Set default tanggal
+    let now = new Date();
+    let pad = n => n < 10 ? '0' + n : n;
+    let tglStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    $('#tanggal').val(tglStr);
+
+    // Fungsi untuk mengecek daftar produk
+    function checkProductList() {
+        const count = $('#produk-list .compact-added-product').length;
+        $('#product-count').text(count);
+        if (count > 0) {
+            $('#no-product-msg').hide();
+        } else {
+            $('#no-product-msg').show();
+        }
+    }
+
+    // Fungsi untuk menambah produk ke list
+    function tambahProdukKeList(produk) {
+        let existing = $(`#produk-list .compact-added-product[data-sku="${produk.sku}"]`);
+        if (existing.length > 0) {
+            let qtyInput = existing.find('.compact-qty-input');
+            qtyInput.val(parseInt(qtyInput.val()) + 1);
+            return;
+        }
+        
+        const photoUrl = produk.photo_url ? produk.photo_url : null;
+        
+        let itemHtml = `
+            <div class="compact-added-product" data-sku="${produk.sku}">
+                <div class="compact-added-top">
+                    ${photoUrl ? 
+                        `<div class="compact-added-photo">
+                            <img src="${photoUrl}" alt="${produk.sku}" 
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                 loading="lazy">
+                            <div class="compact-added-photo-placeholder" style="display: none;">
+                                <i class="bi bi-box"></i>
+                            </div>
+                        </div>` : 
+                        `<div class="compact-added-photo-placeholder">
+                            <i class="bi bi-box"></i>
+                        </div>`
+                    }
+                    <div class="compact-added-content">
+                        <div class="compact-added-row">
+                            <span class="compact-added-sku-barcode">${produk.sku}</span>
+                            <span class="compact-added-sku-barcode">${produk.barcode || ''}</span>
+                        </div>
+                        <div class="compact-added-name">${produk.nama || ''}</div>
+                        <div class="compact-added-brand-variant">
+                            ${produk.brand ? `<span class="compact-added-brand">${produk.brand}</span>` : ''}
+                            ${produk.variant ? `<span class="compact-added-variant">${produk.variant}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="compact-qty-controls">
+                    <button type="button" class="compact-qty-btn btn-minus">-</button>
+                    <input type="number" name="produk_qty[]" class="compact-qty-input" value="1" min="1">
+                    <button type="button" class="compact-qty-btn btn-plus">+</button>
+                </div>
+                <button type="button" class="compact-remove-btn btn-remove">
+                    <i class="bi bi-x"></i>
+                </button>
+                <input type="hidden" name="produk_sku[]" value="${produk.sku}">
+            </div>
+        `;
+        $('#produk-list').append(itemHtml);
+        checkProductList();
+    }
+    
+    // Pencarian produk dengan debouncing
+    let searchTimeout;
+    $('#produk_search').on('keyup', function() {
+        clearTimeout(searchTimeout);
+        let keyword = $(this).val();
+        if (keyword.length < 2) {
+            hideDropdown();
+            return;
+        }
+
+        searchTimeout = setTimeout(() => {
+            $.getJSON("{% url 'inventory:produk_lookup' %}", { q: keyword, mode:'manual' }, function(data) {
+                let $results = $('#search-result-box').empty().show();
+                
+                // Position dropdown using fixed positioning to prevent cutoff
+                const searchInput = $('#produk_search')[0];
+                const searchBox = $('#search-result-box');
+                const inputRect = searchInput.getBoundingClientRect();
+                const viewportHeight = window.innerHeight;
+                const dropdownHeight = Math.min(300, viewportHeight * 0.5);
+                
+                // Calculate position
+                const spaceBelow = viewportHeight - inputRect.bottom;
+                const spaceAbove = inputRect.top;
+                
+                let topPosition;
+                if (spaceBelow >= dropdownHeight + 20) {
+                    // Show below input
+                    topPosition = inputRect.bottom + 5;
+                } else if (spaceAbove >= dropdownHeight + 20) {
+                    // Show above input
+                    topPosition = inputRect.top - dropdownHeight - 5;
+                } else {
+                    // Center in viewport
+                    topPosition = Math.max(20, (viewportHeight - dropdownHeight) / 2);
+                }
+                
+                // Apply positioning
+                searchBox.css({
+                    'top': topPosition + 'px',
+                    'left': '1rem',
+                    'right': '1rem',
+                    'width': 'calc(100vw - 2rem)',
+                    'max-height': dropdownHeight + 'px'
+                });
+                
+                // Show backdrop
+                $('#search-backdrop').show();
+                
+                 if (data.length > 0) {
+                    data.forEach(p => {
+                        const photoUrl = p.photo_url ? p.photo_url : null;
+                        
+                        let resultHtml = `
+                            <div class="compact-product-item" data-produk='${JSON.stringify(p)}'>
+                                <div class="compact-product-top">
+                                    ${photoUrl ? 
+                                        `<div class="compact-product-photo">
+                                            <img src="${photoUrl}" alt="${p.sku}" 
+                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                                 loading="lazy">
+                                            <div class="compact-product-photo-placeholder" style="display: none;">
+                                                <i class="bi bi-box"></i>
+                                            </div>
+                                        </div>` : 
+                                        `<div class="compact-product-photo-placeholder">
+                                            <i class="bi bi-box"></i>
+                                        </div>`
+                                    }
+                                    <div class="compact-product-content">
+                                        <div class="compact-product-row">
+                                            <span class="compact-product-sku-barcode">${p.sku}</span>
+                                            <span class="compact-product-sku-barcode">${p.barcode || ''}</span>
+                                        </div>
+                                        <div class="compact-product-name">${p.nama || ''}</div>
+                                        <div class="compact-product-brand-variant">
+                                            ${p.brand ? `<span class="compact-product-brand">${p.brand}</span>` : ''}
+                                            ${p.variant ? `<span class="compact-product-variant">${p.variant}</span>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        $results.append(resultHtml);
+                    });
+                 } else {
+                    $results.append('<div class="text-center py-3 text-muted">Produk tidak ditemukan</div>');
+                }
+            });
+        }, 300);
+    });
+
+    // Hide dropdown function
+    function hideDropdown() {
+        $('#search-result-box').hide();
+        $('#search-backdrop').hide();
+    }
+
+    // Click outside to hide search results
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#produk_search, #search-result-box').length) {
+            hideDropdown();
+        }
+    });
+
+    // Click backdrop to hide dropdown
+    $('#search-backdrop').on('click', function() {
+        hideDropdown();
+    });
+
+    // Hide dropdown on scroll or resize
+    $(window).on('scroll resize', function() {
+        hideDropdown();
+    });
+    
+    // Menambahkan produk dari hasil pencarian
+    $('#search-result-box').on('click', '.compact-product-item', function(e) {
+        e.preventDefault();
+        const produk = $(this).data('produk');
+        tambahProdukKeList(produk);
+        $('#produk_search').val('');
+        hideDropdown();
+    });
+
+    // Kontrol kuantitas dan hapus produk
+    $('#produk-list').on('click', '.btn-plus', function() {
+        let input = $(this).siblings('.compact-qty-input');
+        input.val(parseInt(input.val()) + 1);
+    });
+
+    $('#produk-list').on('click', '.btn-minus', function() {
+        let input = $(this).siblings('.compact-qty-input');
+        let val = parseInt(input.val());
+        if (val > 1) {
+            input.val(val - 1);
+        }
+    });
+
+    $('#produk-list').on('click', '.btn-remove', function() {
+        $(this).closest('.compact-added-product').remove();
+        checkProductList();
+    });
+
+    // Form submission handler
+    $('#add-inbound-form').on('submit', function(e) {
+        const fromWarehouse = $('#from_warehouse').val();
+        const toWarehouse = $('#to_warehouse').val();
+        
+        if (!fromWarehouse || !toWarehouse) {
+            alert('Dari Gudang dan Ke Gudang wajib diisi.');
+            e.preventDefault();
+            return;
+        }
+
+        const $submitButton = $('#save-btn');
+        if ($submitButton.prop('disabled')) {
+            e.preventDefault();
+            return false; 
+        }
+
+        $submitButton.prop('disabled', true);
+        $submitButton.html('<div class="spinner-border spinner-border-sm"></div>');
+    });
+
+    // Initial check
+    checkProductList();
+});
+</script>
+{% endblock %} 

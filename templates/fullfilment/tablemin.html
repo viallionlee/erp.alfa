@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AG Grid Table</title>
+    <!-- AG Grid CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-grid.css">
+    <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/styles/ag-theme-alpine.css">
+    <!-- AG Grid JS -->
+    <script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.js"></script>
+</head>
+<body>
+    <h1>Orders Table</h1>
+    <div id="myGrid" class="ag-theme-alpine" style="height: 500px; width: 100%;"></div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Column definitions
+        const columnDefs = [
+            { headerName: "Status Stock", field: "status_stock" },
+            { headerName: "Product ID", field: "product_id" },
+            { headerName: "Tanggal Pembuatan", field: "tanggal_pembuatan" },
+            { headerName: "Channel", field: "channel" },
+            { headerName: "Nama Toko", field: "nama_toko" },
+            { headerName: "ID Pesanan", field: "id_pesanan" },
+            { headerName: "SKU", field: "sku" },
+            { headerName: "Nama Produk", field: "nama_produk" },
+            { headerName: "Variant Produk", field: "variant_produk" },
+            { headerName: "Brand", field: "brand" },
+            { headerName: "Jumlah", field: "jumlah" },
+            { headerName: "Kurir", field: "kurir" },
+            { headerName: "Metode Pengiriman", field: "metode_pengiriman" },
+            { headerName: "Kirim Sebelum", field: "kirim_sebelum" },
+            { headerName: "Order Type", field: "order_type" },
+        ];
+
+        // Grid options
+        const gridOptions = {
+            columnDefs: columnDefs,
+            rowData: [], // Data will be fetched dynamically
+            defaultColDef: {
+                sortable: true,
+                filter: true,
+                resizable: true,
+            },
+        };
+
+        // Initialize the grid
+        const gridDiv = document.querySelector('#myGrid');
+        agGrid.createGrid(gridDiv, gridOptions);
+
+        // Fetch data from the backend
+        fetch('/fullfilment/orders/data/')
+            .then(response => response.json())
+            .then(data => {
+                // Filter data based on rules
+                const filteredData = data.filter(row => {
+                    return row.status && row.status.toLowerCase() === 'lunas' && (!row.batchlist_id || row.batchlist_id === null);
+                });
+                gridOptions.api.setRowData(filteredData);
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    });
+    </script>
+</body>
+</html>

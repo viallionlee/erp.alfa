@@ -1,0 +1,78 @@
+# Python
+*.py[cod]
+__pycache__/
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+venv/
+env/
+ENV/
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+/media/
+/staticfiles/
+/static/admin/
+/static/rest_framework/
+
+# IDE
+.vscode/
+.cursor/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Certificates & Keys
+*.crt
+*.key
+*.pem
+
+# Logs
+logs/
+*.log
+nginx/logs/
+nginx/temp/
+
+# Batch files
+*.bat
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
+
+# Executables
+*.exe
+
+# Test files
+test_*.py
+test_*.html
+
+# Documentation (optional - comment out if you want to include)
+# *.md
+
+# Specific files
+mkcert.exe
+tunnel.py
+check_*.py
+fix_settings.py
+alt_k_to_l.ahk
+erp_alfa.conf
+

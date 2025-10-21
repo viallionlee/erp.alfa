@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Finance Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Finance Dashboard</h1>
+        </div>
+    </div>
+
+    <!-- Financial Summary Cards -->
+    <div class="row mb-4">
+        <!-- Assets -->
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Assets</h5>
+                    <h2 class="mb-0">Rp {{ total_assets|floatformat:0|intcomma }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liabilities -->
+        <div class="col-md-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h5 class="card-title">Total Liabilities</h5>
+                    <h2 class="mb-0">Rp {{ total_liabilities|floatformat:0|intcomma }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Equity -->
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Total Equity</h5>
+                    <h2 class="mb-0">Rp {{ total_equity|floatformat:0|intcomma }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Net Income -->
+        <div class="col-md-3">
+            <div class="card text-white {% if net_income >= 0 %}bg-success{% else %}bg-danger{% endif %}">
+                <div class="card-body">
+                    <h5 class="card-title">Net Income (This Month)</h5>
+                    <h2 class="mb-0">Rp {{ net_income|floatformat:0|intcomma }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue & Expense -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Revenue This Month</h5>
+                </div>
+                <div class="card-body">
+                    <h2>Rp {{ revenue_this_month|floatformat:0|intcomma }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Expense This Month</h5>
+                </div>
+                <div class="card-body">
+                    <h2>Rp {{ expense_this_month|floatformat:0|intcomma }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cash Flow -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Cash Flow This Month</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h6>Cash Inflow</h6>
+                                <h4 class="text-success">Rp {{ cash_inflow|floatformat:0|intcomma }}</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h6>Cash Outflow</h6>
+                                <h4 class="text-danger">Rp {{ cash_outflow|floatformat:0|intcomma }}</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h6>Net Cash Flow</h6>
+                                <h4 class="{% if net_cash_flow >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    Rp {{ net_cash_flow|floatformat:0|intcomma }}
+                                </h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Status -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Active Budgets</h5>
+                </div>
+                <div class="card-body">
+                    {% if active_budgets %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Budget Name</th>
+                                    <th>Account</th>
+                                    <th>Budget</th>
+                                    <th>Actual</th>
+                                    <th>Variance</th>
+                                    <th>Usage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for budget in active_budgets %}
+                                <tr>
+                                    <td>{{ budget.name }}</td>
+                                    <td>{{ budget.account.code }}</td>
+                                    <td>Rp {{ budget.budget_amount|floatformat:0|intcomma }}</td>
+                                    <td>Rp {{ budget.actual_amount|floatformat:0|intcomma }}</td>
+                                    <td class="{% if budget.variance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        Rp {{ budget.variance|floatformat:0|intcomma }}
+                                    </td>
+                                    <td>
+                                        <div class="progress">
+                                            <div class="progress-bar {% if budget.utilization_percentage <= 80 %}bg-success{% elif budget.utilization_percentage <= 100 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                 role="progressbar" 
+                                                 style="width: {{ budget.utilization_percentage }}%">
+                                                {{ budget.utilization_percentage|floatformat:1 }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No active budgets</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Expenses -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Top Expenses This Month</h5>
+                </div>
+                <div class="card-body">
+                    {% if top_expenses %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Account</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for account in top_expenses %}
+                                <tr>
+                                    <td>{{ account.code }}</td>
+                                    <td>{{ account.name }}</td>
+                                    <td class="text-danger">Rp {{ account.expense_amount|floatformat:0|intcomma }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No expenses this month</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Journal Entries -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Journal Entries</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_entries %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Entry Number</th>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Reference</th>
+                                    <th>Total Debit</th>
+                                    <th>Total Credit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in recent_entries %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'finance:journal_entry_detail' entry.id %}">
+                                            {{ entry.entry_number }}
+                                        </a>
+                                    </td>
+                                    <td>{{ entry.entry_date }}</td>
+                                    <td>{{ entry.description|truncatewords:10 }}</td>
+                                    <td>{{ entry.reference|default:"-" }}</td>
+                                    <td class="text-success">Rp {{ entry.total_debit|floatformat:0|intcomma }}</td>
+                                    <td class="text-danger">Rp {{ entry.total_credit|floatformat:0|intcomma }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'finance:journal_entry_list' %}" class="btn btn-primary">View All Journal Entries</a>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No recent journal entries</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'finance:journal_entry_create' %}" class="btn btn-primary">New Journal Entry</a>
+                        <a href="{% url 'finance:cash_flow_create' %}" class="btn btn-success">New Cash Flow</a>
+                        <a href="{% url 'finance:budget_create' %}" class="btn btn-info">New Budget</a>
+                        <a href="{% url 'finance:chart_of_accounts' %}" class="btn btn-secondary">Chart of Accounts</a>
+                        <a href="{% url 'finance:trial_balance' %}" class="btn btn-warning">Trial Balance</a>
+                        <a href="{% url 'finance:profit_loss_statement' %}" class="btn btn-danger">P&L Statement</a>
+                        <a href="{% url 'finance:balance_sheet' %}" class="btn btn-dark">Balance Sheet</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

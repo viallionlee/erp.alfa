@@ -1,0 +1,900 @@
+{% extends 'base_mobile.html' %}
+{% load static %}
+
+{% block title %}Opname Rak - Mobile{% endblock %}
+
+{% block extra_head %}
+<style>
+    .content-wrapper {
+        padding-bottom: 80px;
+    }
+    
+    .opname-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem;
+        border-radius: 8px;
+        margin-bottom: 0.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .header-content h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+    
+    .header-content p {
+        margin: 0.1rem 0 0 0;
+        opacity: 0.9;
+        font-size: 0.7rem;
+    }
+    
+    .header-btn {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        border-radius: 6px;
+        padding: 0.4rem 0.6rem;
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 0.3rem 0.2rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+        font-size: 0.6rem;
+    }
+    
+    .stat-value {
+        font-weight: 700;
+        font-size: 0.9rem;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.55rem;
+        line-height: 1;
+        margin-top: 0.1rem;
+    }
+    
+    .stat-draft .stat-value {
+        color: #ffc107;
+    }
+    
+    .stat-berlangsung .stat-value {
+        color: #17a2b8;
+    }
+    
+    .stat-selesai .stat-value {
+        color: #28a745;
+    }
+    
+    .stat-selisih .stat-value {
+        color: #dc3545;
+    }
+    
+    .session-list {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+    }
+    
+    .session-card {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-bottom: 0.25rem;
+        border-left: 4px solid #0d6efd;
+        position: relative;
+    }
+    
+    .session-card:last-child {
+        margin-bottom: 0;
+    }
+    
+    .session-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.3rem;
+    }
+    
+    .session-code {
+        font-weight: 700;
+        font-size: 0.8rem;
+        color: #0d6efd;
+    }
+    
+    .session-status {
+        font-size: 0.6rem;
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+    
+    .status-draft {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-berlangsung {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .status-selesai {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-dibatalkan {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .audit-icon {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        color: #dc3545;
+        font-size: 1.2rem;
+        z-index: 10;
+    }
+    
+    .session-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+    
+         .detail-row {
+         display: flex;
+         align-items: center;
+         gap: 0.3rem;
+         font-size: 0.65rem;
+         line-height: 1.2;
+     }
+     
+     .detail-row:not(:last-child) {
+         justify-content: space-between;
+     }
+     
+     .detail-item {
+         display: flex;
+         align-items: center;
+         gap: 0.3rem;
+         flex: 1;
+     }
+     
+     .detail-icon {
+         width: 12px;
+         color: #6c757d;
+         font-size: 0.7rem;
+     }
+     
+     .detail-label {
+         font-weight: 600;
+         color: #495057;
+         min-width: 35px;
+     }
+     
+     .detail-value {
+         color: #6c757d;
+         flex: 1;
+         word-wrap: break-word;
+     }
+    
+    .session-actions {
+        display: flex;
+        gap: 0.25rem;
+        margin-top: 0.3rem;
+    }
+    
+    .action-btn {
+        padding: 0.2rem 0.4rem;
+        border: none;
+        border-radius: 4px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-decoration: none;
+        text-align: center;
+        cursor: pointer;
+        flex: 1;
+    }
+    
+    .btn-primary {
+        background: #0d6efd;
+        color: white;
+    }
+    
+    .btn-info {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .sticky-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #dee2e6;
+        padding: 0.5rem;
+        z-index: 1000;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .sticky-actions {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+    }
+    
+    .action-icon-btn {
+        background: none;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 8px;
+        color: #6c757d;
+        font-size: 1.2rem;
+        min-width: 44px;
+        min-height: 44px;
+    }
+    
+    .btn-back {
+        color: #6c757d;
+    }
+    
+    .btn-filter {
+        color: #6c757d;
+    }
+    
+    .btn-add {
+        color: #28a745;
+    }
+    
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: white;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 3000;
+        max-width: 300px;
+        display: none;
+    }
+    
+    .notification.success {
+        border-left: 4px solid #28a745;
+    }
+    
+    .notification.error {
+        border-left: 4px solid #dc3545;
+    }
+    
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 2000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 400px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        flex-shrink: 0;
+    }
+    
+    .modal-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #495057;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 0.2rem;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+    
+    .modal-close:hover {
+        background: #f8f9fa;
+        color: #495057;
+    }
+    
+    .modal-body {
+        padding: 1rem 1.5rem;
+        overflow-y: auto;
+        flex: 1;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #495057;
+        font-size: 0.8rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        background: white;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .form-text {
+        font-size: 0.7rem;
+        color: #6c757d;
+        margin-top: 0.2rem;
+    }
+    
+    .modal-footer {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e9ecef;
+        background: white;
+        border-radius: 0 0 16px 16px;
+        flex-shrink: 0;
+    }
+    
+    .btn-modal {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.8rem;
+    }
+    
+    .btn-modal-primary {
+        background: #0d6efd;
+        color: white;
+    }
+    
+    .btn-modal-primary:hover {
+        background: #0056b3;
+    }
+    
+    .btn-modal-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-modal-secondary:hover {
+        background: #495057;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #ffffff;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 0.5rem;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="content-wrapper">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="opname-header">
+            <div class="header-content">
+                <h4><i class="bi bi-clipboard-check"></i> Opname Rak</h4>
+                <p>Kelola sesi opname rak dalam sistem</p>
+            </div>
+            <div class="header-action">
+                <a href="{% url 'inventory:rak_stock' %}" class="header-btn">
+                    <i class="bi bi-arrow-left"></i> Stok Rak
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-card">
+            <div class="stats-grid">
+                <div class="stat-item stat-draft">
+                    <div class="stat-value" id="sesiDraft">-</div>
+                    <div class="stat-label">Sesi Draft</div>
+                </div>
+                <div class="stat-item stat-berlangsung">
+                    <div class="stat-value" id="sesiBerlangsung">-</div>
+                    <div class="stat-label">Sedang Berlangsung</div>
+                </div>
+                <div class="stat-item stat-selesai">
+                    <div class="stat-value" id="sesiSelesai">-</div>
+                    <div class="stat-label">Sesi Selesai</div>
+                </div>
+                <div class="stat-item stat-selisih">
+                    <div class="stat-value" id="totalSelisih">-</div>
+                    <div class="stat-label">Total Selisih</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session List -->
+        <div class="session-list">
+            <div id="sessionItems">
+                <!-- Session items will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sticky Action Bar -->
+<div class="sticky-action-bar">
+    <div class="sticky-actions">
+        <a href="{% url 'mobile_home' %}" class="action-icon-btn btn-back">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <button class="action-icon-btn btn-filter" onclick="showFilterModal()">
+            <i class="bi bi-funnel"></i>
+        </button>
+        <button class="action-icon-btn btn-add" onclick="showCreateModal()">
+            <i class="bi bi-plus-circle"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Filter Modal -->
+<div id="filterModal" class="modal-overlay" onclick="closeModal('filterModal')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="bi bi-funnel"></i> Filter Sesi
+            </div>
+            <button class="modal-close" onclick="closeModal('filterModal')">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="statusFilter" class="form-label">Status</label>
+                <select id="statusFilter" class="form-control">
+                    <option value="">Semua Status</option>
+                    <option value="draft">Draft</option>
+                    <option value="in_progress">Sedang Berlangsung</option>
+                    <option value="completed">Selesai</option>
+                    <option value="cancelled">Dibatalkan</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="rakFilter" class="form-label">Rak</label>
+                <select id="rakFilter" class="form-control">
+                    <option value="">Semua Rak</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('filterModal')">Batal</button>
+            <button class="btn-modal btn-modal-primary" onclick="applyFilters()">Terapkan</button>
+        </div>
+    </div>
+</div>
+
+<!-- Create Session Modal -->
+<div id="createModal" class="modal-overlay" onclick="closeModal('createModal')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="bi bi-plus-circle"></i> Buat Sesi Opname
+            </div>
+            <button class="modal-close" onclick="closeModal('createModal')">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="createSessionForm">
+                <div class="form-group">
+                    <label for="modal_rak_id" class="form-label">
+                        Pilih Rak <span style="color: #dc3545;">*</span>
+                    </label>
+                    <select name="rak_id" id="modal_rak_id" class="form-control" required>
+                        <option value="">-- Pilih Rak --</option>
+                    </select>
+                    <div class="form-text">Pilih rak yang akan diopname</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="modal_catatan" class="form-label">Catatan (Opsional)</label>
+                    <textarea name="catatan" id="modal_catatan" class="form-control" rows="3" 
+                              placeholder="Catatan tambahan untuk sesi opname ini..."></textarea>
+                    <div class="form-text">Catatan akan membantu mengidentifikasi tujuan opname</div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-modal-secondary" onclick="closeModal('createModal')">Batal</button>
+            <button class="btn-modal btn-modal-primary" onclick="createNewSession()">Buat Sesi</button>
+        </div>
+    </div>
+</div>
+
+<!-- Notification -->
+<div id="notification" class="notification"></div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+let currentFilters = {
+    status: '',
+    rak: ''
+};
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadSummaryData();
+    loadRakOptions();
+    loadSessionData();
+});
+
+function loadSummaryData() {
+    fetch("{% url 'inventory:opname_rak_summary' %}")
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('sesiDraft').textContent = data.sesi_draft || 0;
+            document.getElementById('sesiBerlangsung').textContent = data.sesi_berlangsung || 0;
+            document.getElementById('sesiSelesai').textContent = data.sesi_selesai || 0;
+            document.getElementById('totalSelisih').textContent = data.total_selisih || 0;
+        })
+        .catch(error => {
+            console.error('Error loading summary data:', error);
+        });
+}
+
+function loadRakOptions() {
+    fetch("{% url 'inventory:rak_data' %}?get_rak_options=true")
+        .then(response => response.json())
+        .then(data => {
+            const rakFilter = document.getElementById('rakFilter');
+            const modalRakId = document.getElementById('modal_rak_id');
+            
+            if (data.rak_options) {
+                // Populate filter dropdown
+                rakFilter.innerHTML = '<option value="">Semua Rak</option>';
+                data.rak_options.forEach(rak => {
+                    rakFilter.innerHTML += `<option value="${rak.id}">${rak.kode_rak} - ${rak.nama_rak}</option>`;
+                });
+                
+                // Populate modal dropdown
+                modalRakId.innerHTML = '<option value="">-- Pilih Rak --</option>';
+                data.rak_options.forEach(rak => {
+                    modalRakId.innerHTML += `<option value="${rak.id}">${rak.kode_rak} - ${rak.nama_rak}</option>`;
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading rak options:', error);
+        });
+}
+
+function loadSessionData() {
+    const sessionItems = document.getElementById('sessionItems');
+    sessionItems.innerHTML = '<div style="text-align: center; padding: 2rem;"><span class="loading-spinner"></span>Loading...</div>';
+    
+    let url = "{% url 'inventory:opname_rak_list' %}?draw=1&start=0&length=50";
+    
+    if (currentFilters.status) {
+        url += `&status=${currentFilters.status}`;
+    }
+    
+    if (currentFilters.rak) {
+        url += `&rak=${currentFilters.rak}`;
+    }
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            sessionItems.innerHTML = '';
+            
+            if (data.data && data.data.length > 0) {
+                data.data.forEach(session => {
+                    const sessionItem = createSessionElement(session);
+                    sessionItems.appendChild(sessionItem);
+                });
+            } else {
+                sessionItems.innerHTML = '<div style="text-align: center; padding: 2rem; color: #6c757d;">Tidak ada sesi opname</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading session data:', error);
+            sessionItems.innerHTML = '<div style="text-align: center; padding: 2rem; color: #dc3545;">Error loading data</div>';
+        });
+}
+
+function createSessionElement(session) {
+    const div = document.createElement('div');
+    div.className = 'session-card';
+    
+    // Check if session needs audit based on selisih
+    const selisih = parseInt(session.total_selisih) || 0;
+    const needsAudit = Math.abs(selisih) > 20; // Threshold untuk audit
+    
+    let statusClass = '';
+    let statusText = '';
+    
+    // Override status to 'perlu_audit' if completed session has high selisih
+    let displayStatus = session.status;
+    if (session.status === 'completed' && needsAudit) {
+        displayStatus = 'perlu_audit';
+    }
+    
+    switch(displayStatus) {
+        case 'draft':
+            statusClass = 'status-draft';
+            statusText = 'Draft';
+            break;
+        case 'in_progress':
+            statusClass = 'status-berlangsung';
+            statusText = 'Sedang Berlangsung';
+            break;
+        case 'completed':
+            statusClass = 'status-selesai';
+            statusText = 'Selesai';
+            break;
+        case 'perlu_audit':
+            statusClass = 'status-dibatalkan'; // Gunakan warna merah untuk audit
+            statusText = 'Perlu Audit';
+            break;
+        case 'cancelled':
+            statusClass = 'status-dibatalkan';
+            statusText = 'Dibatalkan';
+            break;
+        default:
+            statusClass = 'status-draft';
+            statusText = session.status;
+    }
+    
+    // Add audit icon if needed
+    let auditIcon = '';
+    if (displayStatus === 'perlu_audit') {
+        auditIcon = '<i class="bi bi-exclamation-triangle-fill audit-icon" title="Perlu Audit - Selisih: ' + selisih + '"></i>';
+    }
+    
+    let actionButtons = '';
+    if (displayStatus === 'draft') {
+        actionButtons = `
+            <a href="/inventory/opname-rak/${session.id}/work/" class="action-btn btn-primary">
+                <i class="bi bi-pencil"></i> Kerja
+            </a>
+            <a href="/inventory/opname-rak/${session.id}/cancel/" class="action-btn btn-danger">
+                <i class="bi bi-x-circle"></i> Batal
+            </a>
+        `;
+    } else if (displayStatus === 'completed') {
+        actionButtons = `
+            <a href="/inventory/opname-rak/${session.id}/detail/" class="action-btn btn-info">
+                <i class="bi bi-eye"></i> Detail
+            </a>
+        `;
+    } else if (displayStatus === 'perlu_audit') {
+        actionButtons = `
+            <a href="/inventory/opname-rak/${session.id}/detail/" class="action-btn btn-danger">
+                <i class="bi bi-exclamation-triangle"></i> Audit
+            </a>
+        `;
+    }
+    
+    div.innerHTML = `
+        ${auditIcon}
+        <div class="session-header">
+            <div class="session-code">${session.session_code}</div>
+            <div class="session-status ${statusClass}">${statusText}</div>
+        </div>
+                 <div class="session-details">
+             <div class="detail-row">
+                 <div class="detail-item">
+                     <i class="bi bi-box detail-icon"></i>
+                     <span class="detail-label">Rak:</span>
+                     <span class="detail-value">${session.rak_lokasi}</span>
+                 </div>
+                 <div class="detail-item">
+                     <i class="bi bi-person detail-icon"></i>
+                     <span class="detail-label">Oleh:</span>
+                     <span class="detail-value">${session.created_by_username}</span>
+                 </div>
+             </div>
+             <div class="detail-row">
+                 <div class="detail-item">
+                     <i class="bi bi-list-ul detail-icon"></i>
+                     <span class="detail-label">Items:</span>
+                     <span class="detail-value">${session.total_items}</span>
+                 </div>
+                 <div class="detail-item">
+                     <i class="bi bi-exclamation-triangle detail-icon"></i>
+                     <span class="detail-label">Selisih:</span>
+                     <span class="detail-value">${session.total_selisih}</span>
+                 </div>
+             </div>
+             <div class="detail-row">
+                 <i class="bi bi-calendar detail-icon"></i>
+                 <span class="detail-label">Tanggal:</span>
+                 <span class="detail-value">${session.tanggal_mulai}</span>
+             </div>
+         </div>
+        <div class="session-actions">
+            ${actionButtons}
+        </div>
+    `;
+    
+    return div;
+}
+
+// Modal Functions
+function showFilterModal() {
+    document.getElementById('filterModal').style.display = 'flex';
+}
+
+function showCreateModal() {
+    document.getElementById('createModal').style.display = 'flex';
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+function applyFilters() {
+    const statusFilter = document.getElementById('statusFilter');
+    const rakFilter = document.getElementById('rakFilter');
+    
+    currentFilters.status = statusFilter.value;
+    currentFilters.rak = rakFilter.value;
+    
+    closeModal('filterModal');
+    loadSessionData();
+    
+    showNotification('✅ Filter berhasil diterapkan!', 'success');
+}
+
+function createNewSession() {
+    const form = document.getElementById('createSessionForm');
+    const formData = new FormData(form);
+    
+    const rakId = formData.get('rak_id');
+    if (!rakId) {
+        showNotification('❌ Silakan pilih rak terlebih dahulu', 'error');
+        return;
+    }
+    
+    // Show loading state
+    const submitBtn = document.querySelector('#createModal .btn-modal-primary');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = '🔄 Membuat...';
+    submitBtn.disabled = true;
+    
+    fetch("{% url 'inventory:opname_rak_create' %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            rak_id: rakId,
+            catatan: formData.get('catatan').trim()
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('✅ Sesi opname berhasil dibuat!', 'success');
+            closeModal('createModal');
+            form.reset();
+            loadSessionData();
+            loadSummaryData();
+            
+            // Redirect to work page if needed
+            if (data.redirect_url) {
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 1500);
+            }
+        } else {
+            showNotification('❌ ' + (data.message || 'Gagal membuat sesi'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error creating session:', error);
+        showNotification('❌ Terjadi kesalahan saat membuat sesi', 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+function showNotification(message, type) {
+    const notification = document.getElementById('notification');
+    notification.textContent = message;
+    notification.className = `notification ${type}`;
+    notification.style.display = 'block';
+    
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, 3000);
+}
+</script>
+{% endblock %}

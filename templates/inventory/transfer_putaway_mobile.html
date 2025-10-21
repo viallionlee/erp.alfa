@@ -1,0 +1,1131 @@
+{% extends 'base_mobile.html' %}
+{% load static %}
+
+{% block title %}Transfer Putaway - Mobile{% endblock %}
+
+{% block extra_head %}
+<style>
+    .content-wrapper {
+        padding-bottom: 80px; /* Space for sticky bar */
+    }
+    
+    .scan-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem;
+        border-radius: 8px;
+        margin-bottom: 0.25rem;
+        text-align: center;
+    }
+    
+    .scan-header h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+    
+    .scan-header p {
+        margin: 0.1rem 0 0 0;
+        opacity: 0.9;
+        font-size: 0.7rem;
+    }
+    
+    .session-info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 8px;
+        padding: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .session-info h6 {
+        margin: 0 0 0.25rem 0;
+        color: #1976d2;
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+    
+    .session-info p {
+        margin: 0 0 0.1rem 0;
+        font-size: 0.75rem;
+        color: #424242;
+    }
+    
+    .step-card {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+        border-left: 4px solid;
+    }
+    
+    .step-card.step-1 {
+        border-left-color: #0d6efd;
+    }
+    
+    .step-card.step-2 {
+        border-left-color: #198754;
+    }
+    
+    .step-card.step-3 {
+        border-left-color: #fd7e14;
+    }
+    
+    .step-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+    
+    .step-number {
+        background: #0d6efd;
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        margin-right: 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .step-2 .step-number {
+        background: #198754;
+    }
+    
+    .step-3 .step-number {
+        background: #fd7e14;
+    }
+    
+    .scan-input {
+        width: 100%;
+        padding: 0.5rem;
+        border: 2px solid #e9ecef;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+        background: #f8f9fa;
+    }
+    
+    .scan-input:focus {
+        border-color: #0d6efd;
+        outline: none;
+        background: white;
+    }
+    
+    .scan-btn {
+        width: 100%;
+        padding: 0.5rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: white;
+        transition: all 0.2s;
+    }
+    
+    .scan-btn:active {
+        transform: scale(0.98);
+    }
+    
+    .btn-primary-scan {
+        background: #0d6efd;
+    }
+    
+    .btn-success-scan {
+        background: #198754;
+    }
+    
+    .btn-warning-scan {
+        background: #fd7e14;
+    }
+    
+    .rak-info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .rak-info h6 {
+        margin: 0 0 0.25rem 0;
+        color: #1976d2;
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+    
+    .rak-info p {
+        margin: 0 0 0.1rem 0;
+        font-size: 0.75rem;
+        color: #424242;
+    }
+    
+    .product-info {
+        background: #e8f5e8;
+        border: 1px solid #c8e6c9;
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .product-info h6 {
+        margin: 0 0 0.25rem 0;
+        color: #2e7d32;
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+    
+    .product-info p {
+        margin: 0 0 0.1rem 0;
+        font-size: 0.75rem;
+        color: #424242;
+    }
+    
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .qty-btn {
+        width: 40px;
+        height: 40px;
+        border: 2px solid #e9ecef;
+        background: white;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    
+    .qty-btn:active {
+        transform: scale(0.95);
+    }
+    
+    .qty-input {
+        width: 60px;
+        height: 40px;
+        border: 2px solid #e9ecef;
+        border-radius: 6px;
+        text-align: center;
+        font-size: 1rem;
+        font-weight: 700;
+        background: #f8f9fa;
+    }
+    
+    .qty-input:focus {
+        border-color: #0d6efd;
+        outline: none;
+        background: white;
+    }
+    
+    .max-btn {
+        padding: 0.5rem 0.75rem;
+        border: 2px solid #6c757d;
+        background: white;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        color: #6c757d;
+        transition: all 0.2s;
+    }
+    
+    .max-btn:active {
+        transform: scale(0.95);
+    }
+    
+    .cart-item {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .cart-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.25rem;
+    }
+    
+    .cart-sku {
+        font-weight: 700;
+        color: #0d6efd;
+        font-size: 0.85rem;
+    }
+    
+    .cart-qty {
+        background: #198754;
+        color: white;
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 0.75rem;
+    }
+    
+    .cart-name {
+        font-size: 0.75rem;
+        color: #495057;
+        margin-bottom: 0.25rem;
+    }
+    
+    .remove-btn {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 0.15rem 0.4rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .status-message {
+        padding: 0.5rem;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    
+    .status-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .status-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .status-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+    
+    .hidden {
+        display: none !important;
+    }
+    
+    /* Sticky Action Bar */
+    .sticky-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #e9ecef;
+        padding: 0.5rem;
+        z-index: 100;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .session-info-sticky {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.75rem;
+        color: #1976d2;
+        font-weight: 600;
+        text-align: center;
+    }
+    
+    .rak-info-sticky {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.75rem;
+        color: #1976d2;
+        font-weight: 600;
+        text-align: center;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    
+    .rak-info-sticky:hover {
+        background: #bbdefb;
+    }
+    
+    .cart-info-sticky {
+        background: #e8f5e8;
+        border: 1px solid #c8e6c9;
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.75rem;
+        color: #2e7d32;
+        font-weight: 600;
+        text-align: center;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .action-btn {
+        flex: 1;
+        padding: 0.5rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: white;
+        transition: all 0.2s;
+    }
+    
+    .btn-back {
+        background: #6c757d;
+    }
+    
+    .btn-save {
+        background: #198754;
+    }
+    
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        max-width: 90%;
+        max-height: 80%;
+        overflow-y: auto;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        animation: modalSlideIn 0.3s ease-out;
+    }
+    
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 12px 12px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modal-title {
+        font-weight: 700;
+        font-size: 1rem;
+        margin: 0;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background 0.2s;
+    }
+    
+    .modal-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .modal-item {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .modal-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .modal-item-sku {
+        font-weight: 700;
+        color: #0d6efd;
+        font-size: 0.9rem;
+    }
+    
+    .modal-item-qty {
+        background: #198754;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+    
+    .modal-item-name {
+        font-size: 0.8rem;
+        color: #495057;
+        margin-bottom: 0.25rem;
+    }
+    
+    .modal-item-putaway {
+        font-size: 0.75rem;
+        color: #6c757d;
+        font-style: italic;
+    }
+    
+    .modal-section {
+        margin-top: 1rem;
+        border-top: 1px solid #e9ecef;
+        padding-top: 1rem;
+    }
+    
+    .modal-section-title {
+        font-weight: 700;
+        color: #495057;
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .loading-item {
+        text-align: center;
+        padding: 1rem;
+        color: #6c757d;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .empty-items {
+        text-align: center;
+        padding: 1rem;
+        color: #6c757d;
+        font-size: 0.8rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .empty-items i {
+        font-size: 2rem;
+        opacity: 0.5;
+    }
+    
+    .error-items {
+        text-align: center;
+        padding: 1rem;
+        color: #dc3545;
+        font-size: 0.8rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .error-items i {
+        font-size: 2rem;
+        opacity: 0.7;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="content-wrapper">
+        <!-- Header -->
+        <div class="scan-header">
+            <h4><i class="bi bi-arrow-left-right"></i> Transfer Putaway</h4>
+            <p>Scan rak dan produk untuk proses transfer putaway</p>
+        </div>
+
+        <!-- Session Info -->
+        <div class="session-info">
+            <h6><i class="bi bi-info-circle"></i> Informasi Transfer</h6>
+            <p><strong>Sesi:</strong> {{ transfer_session.session_code }}</p>
+            <p><strong>Dari:</strong> {{ transfer_session.rak_asal.kode_rak }} → <strong>Ke:</strong> {{ transfer_session.rak_tujuan.kode_rak }}</p>
+            <p><strong>Tanggal:</strong> {{ transfer_session.tanggal_transfer|date:"d/m/Y H:i" }}</p>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="status-messages"></div>
+
+        <!-- Step 1: Scan Rak Tujuan -->
+        <div class="step-card step-1" id="step-1">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <div>Scan Rak Tujuan</div>
+            </div>
+            
+            <input type="text" id="kode-rak-input" class="scan-input" 
+                   placeholder="Scan barcode rak tujuan atau ketik kode rak..." autofocus>
+            
+            <button class="scan-btn btn-primary-scan" onclick="scanRak()">
+                <i class="bi bi-search"></i> Cari Rak
+            </button>
+            
+            <div id="rak-result"></div>
+        </div>
+
+        <!-- Step 2: Scan Produk -->
+        <div class="step-card step-2 hidden" id="step-2">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <div>Scan Barcode Produk</div>
+            </div>
+            
+            <input type="text" id="barcode-input" class="scan-input" 
+                   placeholder="Scan barcode produk...">
+            
+            <button class="scan-btn btn-success-scan" onclick="scanProduct()">
+                <i class="bi bi-search"></i> Cari Produk
+            </button>
+            
+            <div id="product-scan-detail" class="hidden">
+                <div class="quantity-controls">
+                    <button class="qty-btn" onclick="decreaseScannedQuantity()">
+                        <i class="bi bi-dash-lg"></i>
+                    </button>
+                    <input type="number" id="scanned-quantity-input" class="qty-input" 
+                           value="1" min="1" readonly>
+                    <button class="qty-btn" onclick="increaseScannedQuantity()">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                    <button class="max-btn" onclick="setMaxScannedQuantity()">MAX</button>
+                </div>
+                
+                <button class="scan-btn btn-success-scan" onclick="addProductToCart()">
+                    <i class="bi bi-plus-circle"></i> Tambahkan ke Daftar
+                </button>
+            </div>
+            
+            <div id="product-result"></div>
+        </div>
+
+        <!-- Step 3: Daftar Transfer Putaway -->
+        <div class="step-card step-3 hidden" id="step-3">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <div>Daftar Produk untuk Transfer Putaway</div>
+            </div>
+            
+            <div id="transfer-cart-body">
+                <!-- Items will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sticky Action Bar -->
+<div class="sticky-action-bar">
+    <div id="session-info-sticky" class="session-info-sticky">
+        <i class="bi bi-arrow-left-right"></i> {{ transfer_session.session_code }}
+    </div>
+    <div id="rak-info-sticky" class="rak-info-sticky" style="display: none;" onclick="showRakModal()">
+        <!-- Rak info will be displayed here -->
+    </div>
+    <div id="cart-info-sticky" class="cart-info-sticky" style="display: none;">
+        <!-- Cart info will be displayed here -->
+    </div>
+    <div class="action-buttons">
+        <button class="action-btn btn-back" onclick="goBack()" id="back-btn">
+            <i class="bi bi-arrow-left"></i> Kembali
+        </button>
+        <button class="action-btn btn-save" onclick="saveTransferPutaway()" id="save-transfer-btn" disabled>
+            <i class="bi bi-check-circle"></i> Simpan
+        </button>
+    </div>
+</div>
+
+<!-- Modal for Rak Info -->
+<div id="rak-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="bi bi-box"></i> Informasi Rak</h3>
+            <button class="modal-close" onclick="closeModal('rak-modal')">&times;</button>
+        </div>
+        <div class="modal-body" id="rak-modal-body">
+            <!-- Rak details will be displayed here -->
+        </div>
+    </div>
+</div>
+
+<!-- Audio Elements for Feedback Sounds -->
+<audio id="dingSound" src="{% static 'sounds/ding.mp3' %}" preload="auto"></audio>
+<audio id="errorSound" src="{% static 'sounds/errorsound.mp3' %}" preload="auto"></audio>
+<audio id="completedSound" src="{% static 'sounds/completedsound.mp3' %}" preload="auto"></audio>
+
+<script>
+let currentRak = null;
+let scannedProduct = null;
+let transferCart = [];
+let currentStep = 1;
+let transferSessionId = {{ transfer_session.id }};
+
+// CSRF Token
+const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+function showStatus(message, type = 'info') {
+    const statusDiv = document.getElementById('status-messages');
+    statusDiv.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+    
+    setTimeout(() => {
+        statusDiv.innerHTML = '';
+    }, 3000);
+}
+
+function playSound(soundId) {
+    const audio = document.getElementById(soundId);
+    if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(e => console.log('Audio play failed:', e));
+    }
+}
+
+function goBack() {
+    if (currentStep > 1) {
+        currentStep--;
+        showStep(currentStep);
+        
+        // Hide cart info sticky if going back to step 1
+        if (currentStep === 1) {
+            const cartInfoSticky = document.getElementById('cart-info-sticky');
+            cartInfoSticky.style.display = 'none';
+            
+            // Hide rak info sticky as well
+            const rakInfoSticky = document.getElementById('rak-info-sticky');
+            rakInfoSticky.style.display = 'none';
+        }
+    } else {
+        window.location.href = '/inventory/putaway/';
+    }
+}
+
+function showStep(step) {
+    // Hide all steps
+    document.querySelectorAll('.step-card').forEach(card => {
+        card.classList.add('hidden');
+    });
+    
+    // Show current step
+    document.getElementById(`step-${step}`).classList.remove('hidden');
+    
+    // Update back button
+    const backBtn = document.getElementById('back-btn');
+    if (step === 1) {
+        backBtn.innerHTML = '<i class="bi bi-arrow-left"></i> Kembali';
+    } else {
+        backBtn.innerHTML = '<i class="bi bi-arrow-left"></i> Sebelumnya';
+    }
+    
+    currentStep = step;
+}
+
+function scanRak() {
+    const inputValue = document.getElementById('kode-rak-input').value.trim();
+    if (!inputValue) {
+        showStatus('Masukkan kode rak tujuan terlebih dahulu', 'error');
+        return;
+    }
+
+    // Check if scanned rak matches the transfer destination
+    const expectedRak = '{{ transfer_session.rak_tujuan.kode_rak }}';
+    if (inputValue !== expectedRak) {
+        showStatus(`Rak tujuan harus ${expectedRak}, bukan ${inputValue}`, 'error');
+        playSound('errorSound');
+        return;
+    }
+
+    // Set current rak
+    currentRak = {
+        id: {{ transfer_session.rak_tujuan.id }},
+        kode_rak: '{{ transfer_session.rak_tujuan.kode_rak }}',
+        nama_rak: '{{ transfer_session.rak_tujuan.nama_rak }}'
+    };
+
+    document.getElementById('rak-result').innerHTML = `
+        <div class="rak-info">
+            <h6><i class="bi bi-check-circle"></i> Rak Tujuan Benar</h6>
+            <p><strong>Kode Rak:</strong> ${currentRak.kode_rak}</p>
+            <p><strong>Nama Rak:</strong> ${currentRak.nama_rak}</p>
+        </div>
+    `;
+    
+    // Show rak info in sticky bar
+    const stickyInfo = document.getElementById('rak-info-sticky');
+    stickyInfo.innerHTML = `<i class="bi bi-box"></i> ${currentRak.kode_rak} - ${currentRak.nama_rak || 'N/A'}`;
+    stickyInfo.style.display = 'block';
+    
+    currentStep = 2;
+    showStep(2);
+    document.getElementById('barcode-input').focus();
+    playSound('dingSound');
+    showStatus('Rak tujuan benar! Silakan scan produk', 'success');
+}
+
+function scanProduct() {
+    const barcode = document.getElementById('barcode-input').value.trim();
+    if (!barcode) {
+        showStatus('Masukkan barcode produk terlebih dahulu', 'error');
+        return;
+    }
+
+    if (!currentRak) {
+        showStatus('Scan rak tujuan terlebih dahulu', 'error');
+        return;
+    }
+
+    // Check if product is in transfer session
+    fetch(`/inventory/transfer-putaway/scan-product/?barcode=${encodeURIComponent(barcode)}&session_id=${transferSessionId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                scannedProduct = data.product;
+                document.getElementById('product-scan-detail').classList.remove('hidden');
+                
+                // Reset quantity to 1
+                document.getElementById('scanned-quantity-input').value = 1;
+                
+                playSound('dingSound');
+                showStatus('Produk berhasil ditemukan!', 'success');
+            } else {
+                document.getElementById('product-result').innerHTML = `
+                    <div class="status-message status-error">
+                        <i class="bi bi-exclamation-triangle"></i> ${data.error}
+                    </div>
+                `;
+                playSound('errorSound');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showStatus('Terjadi kesalahan saat mencari produk', 'error');
+            playSound('errorSound');
+        });
+}
+
+function decreaseScannedQuantity() {
+    const input = document.getElementById('scanned-quantity-input');
+    const currentValue = parseInt(input.value);
+    if (currentValue > 1) {
+        input.value = currentValue - 1;
+    }
+}
+
+function increaseScannedQuantity() {
+    const input = document.getElementById('scanned-quantity-input');
+    const currentValue = parseInt(input.value);
+    const maxQty = scannedProduct ? scannedProduct.qty_transfer : 1;
+    if (currentValue < maxQty) {
+        input.value = currentValue + 1;
+    }
+}
+
+function setMaxScannedQuantity() {
+    if (scannedProduct) {
+        document.getElementById('scanned-quantity-input').value = scannedProduct.qty_transfer;
+    }
+}
+
+function addProductToCart() {
+    if (!scannedProduct) {
+        showStatus('Scan produk terlebih dahulu', 'error');
+        return;
+    }
+
+    const quantity = parseInt(document.getElementById('scanned-quantity-input').value);
+    
+    // Check if product already in cart
+    const existingIndex = transferCart.findIndex(item => item.sku === scannedProduct.sku);
+    
+    if (existingIndex >= 0) {
+        transferCart[existingIndex].quantity += quantity;
+    } else {
+        transferCart.push({
+            sku: scannedProduct.sku,
+            nama_produk: scannedProduct.nama_produk,
+            quantity: quantity,
+            qty_transfer: scannedProduct.qty_transfer
+        });
+    }
+    
+    updateCartDisplay();
+    clearProductScan();
+    
+    // Show step 3
+    currentStep = 3;
+    showStep(3);
+    
+    playSound('dingSound');
+    showStatus('Produk berhasil ditambahkan ke daftar', 'success');
+}
+
+function updateCartDisplay() {
+    const cartBody = document.getElementById('transfer-cart-body');
+    const saveBtn = document.getElementById('save-transfer-btn');
+    
+    if (transferCart.length === 0) {
+        cartBody.innerHTML = '<p class="text-muted text-center" style="font-size: 0.8rem;">Belum ada produk di daftar</p>';
+        saveBtn.disabled = true;
+        updateCartInfoSticky();
+        return;
+    }
+    
+    cartBody.innerHTML = transferCart.map((item, index) => `
+        <div class="cart-item">
+            <div class="cart-item-header">
+                <div class="cart-sku">${item.sku}</div>
+                <div class="cart-qty">${item.quantity}</div>
+            </div>
+            <div class="cart-name">${item.nama_produk}</div>
+            <button class="remove-btn" onclick="removeFromCart(${index})">
+                <i class="bi bi-trash"></i> Hapus
+            </button>
+        </div>
+    `).join('');
+    
+    saveBtn.disabled = false;
+    updateCartInfoSticky();
+}
+
+function updateCartInfoSticky() {
+    const cartInfoSticky = document.getElementById('cart-info-sticky');
+    
+    if (transferCart.length === 0) {
+        cartInfoSticky.style.display = 'none';
+        return;
+    }
+    
+    const totalItems = transferCart.length;
+    const totalQuantity = transferCart.reduce((sum, item) => sum + item.quantity, 0);
+    
+    cartInfoSticky.innerHTML = `<i class="bi bi-cart-check"></i> ${totalItems} item (${totalQuantity} pcs)`;
+    cartInfoSticky.style.display = 'block';
+}
+
+function removeFromCart(index) {
+    transferCart.splice(index, 1);
+    updateCartDisplay();
+    
+    if (transferCart.length === 0) {
+        currentStep = 2;
+        showStep(2);
+    }
+}
+
+function clearProductScan() {
+    document.getElementById('barcode-input').value = '';
+    document.getElementById('product-scan-detail').classList.add('hidden');
+    document.getElementById('product-result').innerHTML = '';
+    scannedProduct = null;
+    document.getElementById('barcode-input').focus();
+}
+
+function saveTransferPutaway() {
+    if (transferCart.length === 0) {
+        showStatus('Tidak ada produk untuk disimpan', 'error');
+        return;
+    }
+
+    const saveBtn = document.getElementById('save-transfer-btn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Menyimpan...';
+
+    const transferData = {
+        session_id: transferSessionId,
+        rak_id: currentRak.id,
+        items: transferCart.map(item => ({
+            sku: item.sku,
+            quantity: item.quantity
+        }))
+    };
+
+    fetch('/inventory/transfer-putaway/save/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify(transferData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            playSound('completedSound');
+            showStatus('Transfer putaway berhasil disimpan!', 'success');
+            
+            // Reset everything
+            setTimeout(() => {
+                window.location.href = '/inventory/putaway/';
+            }, 2000);
+        } else {
+            showStatus(data.error || 'Gagal menyimpan transfer putaway', 'error');
+            playSound('errorSound');
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> Simpan';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showStatus('Terjadi kesalahan saat menyimpan', 'error');
+        playSound('errorSound');
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> Simpan';
+    });
+}
+
+// Keyboard shortcuts
+document.getElementById('kode-rak-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        scanRak();
+    }
+});
+
+document.getElementById('barcode-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        scanProduct();
+    }
+});
+
+// Modal functions
+function showRakModal() {
+    if (!currentRak) return;
+    
+    const modalBody = document.getElementById('rak-modal-body');
+    modalBody.innerHTML = `
+        <div class="modal-item">
+            <div class="modal-item-header">
+                <div class="modal-item-sku">${currentRak.kode_rak}</div>
+            </div>
+            <div class="modal-item-name"><strong>Nama Rak:</strong> ${currentRak.nama_rak || 'N/A'}</div>
+            <div class="modal-item-putaway"><strong>Lokasi:</strong> ${currentRak.lokasi || 'N/A'}</div>
+        </div>
+        
+        <div class="modal-section">
+            <div class="modal-section-title">
+                <i class="bi bi-boxes"></i> Item di Rak Ini
+            </div>
+            <div id="rak-items-list">
+                <div class="loading-item">
+                    <i class="bi bi-hourglass-split"></i> Memuat data item...
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('rak-modal').style.display = 'flex';
+    
+    // Load rak items
+    loadRakItems();
+}
+
+function loadRakItems() {
+    if (!currentRak) return;
+    
+    fetch(`/inventory/rak/${currentRak.id}/items/`)
+        .then(response => response.json())
+        .then(data => {
+            const itemsList = document.getElementById('rak-items-list');
+            
+            if (data.success && data.items && data.items.length > 0) {
+                itemsList.innerHTML = data.items.map(item => `
+                    <div class="modal-item">
+                        <div class="modal-item-header">
+                            <div class="modal-item-sku">${item.sku}</div>
+                            <div class="modal-item-qty">${item.quantity}</div>
+                        </div>
+                        <div class="modal-item-name">${item.nama_produk}</div>
+                        ${item.variant_produk ? `<div class="modal-item-putaway">Variant: ${item.variant_produk}</div>` : ''}
+                        ${item.brand ? `<div class="modal-item-putaway">Brand: ${item.brand}</div>` : ''}
+                    </div>
+                `).join('');
+            } else {
+                itemsList.innerHTML = `
+                    <div class="empty-items">
+                        <i class="bi bi-box"></i>
+                        <div>Tidak ada item di rak ini</div>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading rak items:', error);
+            const itemsList = document.getElementById('rak-items-list');
+            itemsList.innerHTML = `
+                <div class="error-items">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <div>Gagal memuat data item</div>
+                </div>
+            `;
+        });
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('modal-overlay')) {
+        e.target.style.display = 'none';
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.style.display = 'none';
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,454 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Scan Putaway{% endblock %}
+{% block content %}
+
+<input type="hidden" id="csrf_token_input" value="{{ csrf_token }}">
+
+<div class="container py-4">
+    <h2 class="mb-4"><i class="bi bi-box-arrow-up"></i> Scan Putaway (Desktop)</h2>
+
+    <!-- Step 1: Scan Rak -->
+    <div class="card mb-3">
+        <div class="card-header bg-primary text-white">
+            <strong>1. Scan Kode Rak</strong>
+        </div>
+        <div class="card-body">
+            <div class="input-group">
+                <input type="text" id="kode-rak-input" class="form-control" placeholder="Scan atau ketik kode rak..." autofocus>
+                <button class="btn btn-primary" type="button" onclick="scanRak()">Cari</button>
+            </div>
+            <div id="rak-result" class="mt-2"></div>
+        </div>
+    </div>
+
+    <!-- Step 2: Scan Produk dan Tambah ke Daftar -->
+    <div class="card mb-3" id="step-produk" style="display: none;">
+        <div class="card-header bg-success text-white">
+            <strong>2. Scan Barcode Produk</strong>
+        </div>
+        <div class="card-body">
+            <div class="input-group mb-3">
+                <input type="text" id="barcode-input" class="form-control" placeholder="Scan barcode produk...">
+                <button class="btn btn-success" type="button" onclick="scanProduct()">Cari</button>
+            </div>
+            <div id="product-scan-detail" class="mt-2" style="display: none;">
+                <p class="mb-1"><strong>SKU:</strong> <span id="scanned-sku"></span></p>
+                <p class="mb-1"><strong>Nama:</strong> <span id="scanned-nama"></span></p>
+                <p class="mb-1"><strong>Qty Tersedia Putaway:</strong> <span id="scanned-qty-putaway"></span></p>
+                
+
+
+                <div class="row g-2 align-items-center mt-2">
+                    <div class="col-auto">
+                        <button class="btn btn-outline-danger" onclick="decreaseScannedQuantity()"><i class="bi bi-dash-lg"></i></button>
+                    </div>
+                    <div class="col-auto">
+                        <input type="number" id="scanned-quantity-input" class="form-control text-center" value="1" min="1" readonly style="width: 80px;">
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-outline-success" onclick="increaseScannedQuantity()"><i class="bi bi-plus-lg"></i></button>
+                    </div>
+                    <div class="col-auto"> {# NEW: Tombol MAX #}
+                        <button class="btn btn-outline-secondary" onclick="setMaxScannedQuantity()">MAX</button>
+                    </div>
+                    <div class="col">
+                        <button class="btn btn-info w-100" onclick="addProductToCart()">
+                            <i class="bi bi-plus-circle"></i> Tambahkan ke Daftar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="product-result" class="mt-2"></div> <!-- Untuk pesan error produk -->
+        </div>
+    </div>
+
+    <!-- Step 3: Daftar Produk untuk Putaway -->
+    <div class="card mb-3" id="step-daftar-putaway" style="display: none;">
+        <div class="card-header bg-warning text-dark">
+            <strong>3. Daftar Produk untuk Putaway</strong>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="putaway-cart-table" class="table table-striped table-hover" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Nama Produk</th>
+                            <th>Qty</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="putaway-cart-body">
+                        <!-- Items will be added here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-grid mt-3">
+                <button class="btn btn-primary btn-lg" onclick="savePutaway()">
+                    <i class="bi bi-check-circle"></i> Simpan Semua Putaway
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Messages -->
+    <div id="status-messages"></div>
+</div>
+
+<!-- Audio Elements for Feedback Sounds -->
+<audio id="dingSound" src="{% static 'sounds/ding.mp3' %}" preload="auto"></audio>
+<audio id="errorSound" src="{% static 'sounds/errorsound.mp3' %}" preload="auto"></audio>
+<audio id="completedSound" src="{% static 'sounds/completedsound.mp3' %}" preload="auto"></audio>
+
+<!-- Modal Sukses Putaway -->
+<div class="modal fade" id="putawaySuccessModal" tabindex="-1" aria-labelledby="putawaySuccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="putawaySuccessModalLabel"><i class="bi bi-check-circle"></i> Putaway Berhasil!</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="bi bi-box-arrow-up-right display-1 text-success"></i>
+                <p class="mt-3 fs-5">Semua produk berhasil disimpan ke Rak <strong id="modalRakKode"></strong>!</p>
+                <p class="text-muted">Anda dapat melanjutkan scan untuk rak yang sama atau ganti rak.</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="resetForm()">Ganti Rak</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="continuePutawaySameRak()">Lanjutkan Putaway di Rak Ini</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentRak = null;
+let currentScannedProduct = null; // Produk yang baru saja di-scan
+let maxScannedQuantity = 0;
+
+let putawayCart = []; // Array untuk menyimpan produk yang akan di-putaway
+
+// Load sound elements
+const dingSound = document.getElementById('dingSound');
+const errorSound = document.getElementById('errorSound');
+const completedSound = document.getElementById('completedSound');
+
+document.getElementById('kode-rak-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') scanRak();
+});
+document.getElementById('barcode-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') scanProduct();
+});
+
+function playSound(soundElement) {
+    soundElement.currentTime = 0; // Rewind to start
+    soundElement.play().catch(e => console.error("Error playing sound:", e));
+}
+
+function scanRak() {
+    const kodeRak = document.getElementById('kode-rak-input').value.trim();
+    if (!kodeRak) {
+        showMessage('Masukkan kode rak', 'warning');
+        playSound(errorSound); // Play error sound
+        return;
+    }
+    fetch(`/inventory/putaway/scan-rak/?kode_rak=${encodeURIComponent(kodeRak)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentRak = data.rak;
+                document.getElementById('rak-result').innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>Rak ditemukan:</strong><br>
+                        Kode: ${data.rak.kode_rak}<br>
+                        Nama: ${data.rak.nama_rak}<br>
+                        Lokasi: ${data.rak.lokasi || '-'}
+                    </div>
+                `;
+                document.getElementById('step-produk').style.display = 'block';
+                document.getElementById('step-daftar-putaway').style.display = 'block';
+                document.getElementById('barcode-input').focus();
+                showMessage('Rak berhasil dipilih, silakan scan produk', 'success');
+                playSound(dingSound); // Play ding sound on successful rak scan
+
+                document.getElementById('rak-result').insertAdjacentHTML('beforeend', `
+                    <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="resetForm()">
+                        <i class="bi bi-arrow-counterclockwise"></i> Ganti Rak
+                    </button>
+                `);
+
+            } else {
+                document.getElementById('rak-result').innerHTML = `
+                    <div class="alert alert-danger">${data.error}</div>
+                `;
+                document.getElementById('step-produk').style.display = 'none';
+                document.getElementById('step-daftar-putaway').style.display = 'none';
+                playSound(errorSound); // Play error sound
+            }
+        })
+        .catch(error => {
+            showMessage('Terjadi kesalahan: ' + error, 'danger');
+            playSound(errorSound); // Play error sound
+        });
+}
+
+function scanProduct() {
+    const barcode = document.getElementById('barcode-input').value.trim();
+    if (!barcode) {
+        showMessage('Masukkan barcode produk', 'warning');
+        playSound(errorSound); // Play error sound
+        return;
+    }
+    if (!currentRak) {
+        showMessage('Pilih rak terlebih dahulu', 'warning');
+        playSound(errorSound); // Play error sound
+        return;
+    }
+    
+    document.getElementById('product-scan-detail').style.display = 'none';
+    document.getElementById('product-result').innerHTML = '';
+
+    fetch(`/inventory/putaway/scan-product/?barcode=${encodeURIComponent(barcode)}&rak_id=${currentRak.id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentScannedProduct = data.product;
+                maxScannedQuantity = data.product.quantity_putaway;
+
+                if (maxScannedQuantity <= 0) {
+                    showMessage(`Produk ${data.product.sku} tidak memiliki stok yang perlu di-putaway (Qty Putaway: 0).`, 'warning');
+                    document.getElementById('product-scan-detail').style.display = 'none';
+                    currentScannedProduct = null;
+                    playSound(errorSound); // Play error sound
+                    return;
+                }
+
+                document.getElementById('scanned-sku').textContent = data.product.sku;
+                document.getElementById('scanned-nama').textContent = data.product.nama_produk;
+                document.getElementById('scanned-qty-putaway').textContent = data.product.quantity_putaway;
+                document.getElementById('scanned-quantity-input').value = 1;
+                document.getElementById('scanned-quantity-input').max = maxScannedQuantity;
+                document.getElementById('product-scan-detail').style.display = 'block';
+
+                showMessage('Produk berhasil ditemukan, silakan input quantity dan tambahkan ke daftar', 'success');
+                playSound(dingSound); // Play ding sound on successful product scan
+            } else {
+                document.getElementById('product-result').innerHTML = `
+                    <div class="alert alert-danger">${data.error}</div>
+                `;
+                document.getElementById('product-scan-detail').style.display = 'none';
+                currentScannedProduct = null;
+                playSound(errorSound); // Play error sound
+            }
+        })
+        .catch(error => {
+            showMessage('Terjadi kesalahan: ' + error, 'danger');
+            document.getElementById('product-scan-detail').style.display = 'none';
+            currentScannedProduct = null;
+            playSound(errorSound); // Play error sound
+        });
+}
+
+function increaseScannedQuantity() {
+    const input = document.getElementById('scanned-quantity-input');
+    let current = parseInt(input.value);
+    if (current < maxScannedQuantity) {
+        input.value = current + 1;
+    }
+}
+function decreaseScannedQuantity() {
+    const input = document.getElementById('scanned-quantity-input');
+    let current = parseInt(input.value);
+    if (current > 1) {
+        input.value = current - 1;
+    }
+}
+
+function setMaxScannedQuantity() {
+    const input = document.getElementById('scanned-quantity-input');
+    input.value = maxScannedQuantity;
+}
+
+
+
+function addProductToCart() {
+    if (!currentScannedProduct) {
+        showMessage('Silakan scan produk terlebih dahulu.', 'warning');
+        playSound(errorSound); // Play error sound
+        return;
+    }
+    const qty = parseInt(document.getElementById('scanned-quantity-input').value);
+
+    if (qty <= 0 || qty > maxScannedQuantity) {
+        showMessage('Kuantitas yang dimasukkan tidak valid atau melebihi stok yang tersedia.', 'danger');
+        playSound(errorSound); // Play error sound
+        return;
+    }
+
+    const existingItemIndex = putawayCart.findIndex(item => item.product.id === currentScannedProduct.id);
+
+    if (existingItemIndex > -1) {
+        const newQty = putawayCart[existingItemIndex].quantity + qty;
+        if (newQty > maxScannedQuantity) {
+             showMessage(`Total kuantitas untuk ${currentScannedProduct.sku} melebihi stok yang tersedia (${maxScannedQuantity}).`, 'danger');
+             playSound(errorSound); // Play error sound
+             return;
+        }
+        putawayCart[existingItemIndex].quantity = newQty;
+        showMessage(`Kuantitas untuk ${currentScannedProduct.sku} diperbarui menjadi ${newQty}.`, 'info');
+        playSound(dingSound); // Play ding sound on successful add/update
+    } else {
+        putawayCart.push({
+            product: currentScannedProduct,
+            quantity: qty
+        });
+        showMessage(`${qty} unit ${currentScannedProduct.sku} ditambahkan ke daftar putaway.`, 'success');
+        playSound(dingSound); // Play ding sound on successful add/update
+    }
+
+    renderPutawayCart();
+    
+    document.getElementById('barcode-input').value = '';
+    document.getElementById('product-scan-detail').style.display = 'none';
+    document.getElementById('product-result').innerHTML = '';
+    currentScannedProduct = null;
+    document.getElementById('barcode-input').focus();
+}
+
+function removeProductFromCart(productId) {
+    putawayCart = putawayCart.filter(item => item.product.id !== productId);
+    renderPutawayCart();
+    showMessage('Produk dihapus dari daftar.', 'info');
+}
+
+function renderPutawayCart() {
+    const tbody = document.getElementById('putaway-cart-body');
+    tbody.innerHTML = '';
+
+    if (putawayCart.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center">Belum ada produk di daftar putaway.</td></tr>`;
+        return;
+    }
+
+    putawayCart.forEach(item => {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td>${item.product.sku}</td>
+            <td>${item.product.nama_produk}</td>
+            <td>${item.quantity}</td>
+            <td>
+                <button class="btn btn-sm btn-danger" onclick="removeProductFromCart(${item.product.id})">
+                    <i class="bi bi-x-circle"></i> Hapus
+                </button>
+            </td>
+        `;
+    });
+}
+
+function savePutaway() {
+    if (putawayCart.length === 0) {
+        showMessage('Daftar putaway kosong. Silakan tambahkan produk terlebih dahulu.', 'warning');
+        playSound(errorSound); // Play error sound
+        return;
+    }
+    if (!currentRak) {
+        showMessage('Rak belum discan. Silakan scan rak terlebih dahulu.', 'warning');
+        playSound(errorSound); // Play error sound
+        return;
+    }
+
+    const csrfToken = document.getElementById('csrf_token_input').value;
+    
+    const itemsToSave = putawayCart.map(item => ({
+        product_id: item.product.id,
+        quantity: item.quantity
+    }));
+
+    const payload = {
+        rak_id: currentRak.id,
+        items: itemsToSave
+    };
+
+    fetch('/inventory/putaway/save/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            playSound(completedSound); // Play completed sound
+            // Tampilkan modal sukses
+            $('#modalRakKode').text(currentRak.kode_rak);
+            var myModal = new bootstrap.Modal(document.getElementById('putawaySuccessModal'));
+            myModal.show();
+            // Tidak perlu showMessage di sini karena modal lebih utama
+        } else {
+            showMessage(data.error, 'danger');
+            playSound(errorSound); // Play error sound
+        }
+    })
+    .catch(error => {
+        showMessage('Terjadi kesalahan saat menyimpan putaway: ' + error, 'danger');
+        playSound(errorSound); // Play error sound
+    });
+}
+
+// Fungsi untuk melanjutkan putaway di rak yang sama (setelah sukses)
+function continuePutawaySameRak() {
+    putawayCart = []; // Kosongkan daftar produk saja
+    renderPutawayCart(); // Render ulang keranjang kosong
+    currentScannedProduct = null;
+    maxScannedQuantity = 0;
+
+    document.getElementById('barcode-input').value = '';
+    document.getElementById('scanned-quantity-input').value = '1';
+    document.getElementById('product-result').innerHTML = '';
+    document.getElementById('product-scan-detail').style.display = 'none';
+    document.getElementById('status-messages').innerHTML = '';
+    document.getElementById('barcode-input').focus(); // Fokus ke input barcode untuk scan produk baru
+}
+
+function resetForm() {
+    currentRak = null;
+    currentScannedProduct = null;
+    maxScannedQuantity = 0;
+    putawayCart = [];
+    renderPutawayCart();
+
+    document.getElementById('kode-rak-input').value = '';
+    document.getElementById('barcode-input').value = '';
+    document.getElementById('scanned-quantity-input').value = '1';
+
+    document.getElementById('rak-result').innerHTML = '';
+    document.getElementById('product-result').innerHTML = '';
+    document.getElementById('product-scan-detail').style.display = 'none';
+    document.getElementById('step-produk').style.display = 'none';
+    document.getElementById('step-daftar-putaway').style.display = 'none';
+    document.getElementById('status-messages').innerHTML = '';
+
+    document.getElementById('kode-rak-input').focus();
+}
+
+function showMessage(message, type) {
+    const statusDiv = document.getElementById('status-messages');
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    statusDiv.appendChild(alertDiv);
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+
+{% endblock %} 

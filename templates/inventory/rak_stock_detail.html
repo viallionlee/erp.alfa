@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Stok Rak: {{ rak.kode_rak }}{% endblock %}
+
+{% block extra_head %}
+    <!-- SweetAlert2 CSS for toast messages -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.0/dist/sweetalert2.min.css">
+    <style>
+        /* Custom styles for minimalist DataTables */
+        #historyLogTable.dataTable tbody td {
+            padding: 0.4rem 0.75rem; /* Mengurangi padding vertikal */
+        }
+        #historyLogTable.dataTable {
+            font-size: 0.85rem; /* Mengurangi ukuran font tabel */
+        }
+        #historyLogTable.dataTable thead th {
+            font-size: 0.9rem; /* Mengurangi ukuran font header tabel */
+        }
+        /* Style khusus untuk teks Catatan */
+        .log-notes-text {
+            font-size: 0.75rem; /* Ukuran font lebih kecil untuk catatan */
+        }
+        /* Optional: Mengurangi padding di modal body jika terlalu banyak ruang */
+        .modal-body .table-responsive {
+            margin-bottom: 0;
+        }
+        .modal-body {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+    <h2 class="mb-4">
+        <i class="bi bi-box-seam"></i> Stok Rak: {{ rak.kode_rak }} ({{ rak.nama_rak }})
+    </h2>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Informasi Rak</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Kode Rak:</strong> {{ rak.kode_rak }}</p>
+                    <p><strong>Nama Rak:</strong> {{ rak.nama_rak }}</p>
+                    <p><strong>Lokasi:</strong> {{ rak.lokasi|default:"-" }}</p>
+                    <p><strong>Keterangan:</strong> {{ rak.keterangan|default:"-" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Dimensi (P x L x T):</strong> {{ rak.panjang_cm|default:"-" }} x {{ rak.lebar_cm|default:"-" }} x {{ rak.tinggi_cm|default:"-" }} cm</p>
+                    <p><strong>Kapasitas:</strong> {{ rak.kapasitas_kg|default:"-" }} kg</p>
+                    <p><strong>Dibuat Pada:</strong> {{ rak.created_at|date:"d M Y H:i" }}</p>
+                    <p><strong>Terakhir Diperbarui:</strong> {{ rak.updated_at|date:"d M Y H:i" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Daftar Produk di Rak Ini</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="productsInRakTable" class="table table-striped table-hover" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Nama Produk</th>
+                            <th>Barcode</th>
+                            <th>Qty di Rak</th>
+                            <th>Brand</th>
+                            <th>Variant</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in stok_di_rak %}
+                        <tr>
+                            <td>{{ item.product.sku }}</td>
+                            <td>{{ item.product.nama_produk }}</td>
+                            <td>{{ item.product.barcode }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.product.brand|default:"-" }}</td>
+                            <td>{{ item.product.variant_produk|default:"-" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">Tidak ada produk di rak ini.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#historyLogModal">
+            <i class="bi bi-clock-history"></i> Show History Log
+        </button>
+        <a href="{% url 'inventory:rak_list' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Kembali ke Daftar Rak
+        </a>
+    </div>
+
+</div>
+
+<!-- Modal History Log -->
+<div class="modal fade" id="historyLogModal" tabindex="-1" aria-labelledby="historyLogModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="historyLogModalLabel">History Log Rak: {{ rak.kode_rak }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table id="historyLogTable" class="table table-striped table-hover" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>Waktu</th>
+                                <th>Produk</th>
+                                <th>SKU</th>
+                                <th>Barcode</th>
+                                <th>Variant</th>
+                                <th>Qty Perubahan</th>
+                                <th>Qty Awal Rak</th>
+                                <th>Qty Akhir Rak</th>
+                                <th>Tipe Pergerakan</th>
+                                <th>User</th>
+                                <th>Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data akan dimuat via AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+    <script type="text/javascript" src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+    <script type="text/javascript" src=""></script>
+    <script>
+        $(document).ready(function() {
+            // DataTable untuk daftar produk di rak (yang sudah ada)
+            $('#productsInRakTable').DataTable({
+                "language": {
+                    "url": "https://cdn.datatables.net/plug-ins/2.0.8/i18n/id.json"
+                },
+                "paging": true,
+                "searching": true,
+                "ordering": true,
+                "info": true
+            });
+
+            // DataTable untuk History Log di modal (server-side)
+            var historyLogTable = $('#historyLogTable').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "autoWidth": false, {# Tambahkan ini untuk mematikan auto-lebar #}
+                "ajax": {
+                    "url": "{% url 'inventory:api_rak_stock_log_data' rak_id=rak.id %}",
+                    "type": "GET"
+                },
+                "columns": [
+                    { "data": "waktu_buat", "width": "120px" },
+                    {   "data": "produk__nama_produk",
+                        "width": "250px", {# Lebar kolom Produk diperbesar lagi #}
+                        "render": function(data, type, row) {
+                            // Hapus logika substr, biarkan DataTables menangani overflow
+                            return `<span title="${data}">${data}</span>`;
+                        }
+                    },
+                    { "data": "produk__sku", "width": "80px" },
+                    { "data": "product_barcode", "width": "100px" },
+                    { "data": "product_variant", "width": "120px" },
+                    {   "data": "qty",
+                        "width": "80px",
+                        "render": function(data, type, row) {
+                            let colorClass = '';
+                            if (data > 0) {
+                                colorClass = 'text-success';
+                            } else if (data < 0) {
+                                colorClass = 'text-danger';
+                            }
+                            return `<span class="${colorClass}">${data}</span>`;
+                        }
+                    },
+                    { "data": "qty_awal", "width": "70px" },
+                    { "data": "qty_akhir", "width": "70px" },
+                    {   "data": "tipe_pergerakan_display",
+                        "width": "120px",
+                        "render": function(data, type, row) {
+                            let colorClass = '';
+                            if (row.qty > 0) {
+                                colorClass = 'text-success';
+                            } else if (row.qty < 0) {
+                                colorClass = 'text-danger';
+                            }
+                            return `<span class="${colorClass}">${data}</span>`;
+                        }
+                    },
+                    { "data": "user__username", "width": "80px" },
+                    {   "data": "catatan",
+                        "width": "300px", {# Lebar kolom Catatan diperbesar lagi #}
+                        "render": function(data, type, row) {
+                            // Hapus logika substr, pastikan kelas CSS untuk font kecil terpasang
+                            return `<span class="log-notes-text" title="${data}">${data}</span>`;
+                        }
+                    }
+                ],
+                "language": {
+                    "url": "https://cdn.datatables.net/plug-ins/2.0.8/i18n/id.json"
+                },
+                "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                "pageLength": 25,
+                "order": [[ 0, "desc" ]]
+            });
+
+            // Ketika modal history tertutup, panggil ulang DataTables agar data selalu segar
+            $('#historyLogModal').on('hidden.bs.modal', function () {
+                historyLogTable.ajax.reload(null, false); // Reload tanpa reset posisi page
+            });
+        });
+    </script>
+{% endblock %} 

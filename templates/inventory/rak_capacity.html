@@ -1,0 +1,1365 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Rak Capacity - ERP ALFA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .capacity-card {
+        border-left: 4px solid #007bff;
+    }
+    .capacity-high {
+        border-left-color: #28a745;
+    }
+    .capacity-medium {
+        border-left-color: #ffc107;
+    }
+    .capacity-low {
+        border-left-color: #dc3545;
+    }
+    .utilization-bar {
+        height: 8px;
+        border-radius: 4px;
+        background-color: #e9ecef;
+        overflow: hidden;
+    }
+    .utilization-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+        transition: width 0.3s ease;
+    }
+    .summary-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    /* Enhanced Modal Styles */
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    }
+    
+    .modal-xl {
+        max-width: 95%;
+    }
+    
+    .modal-content {
+        border-radius: 12px;
+    }
+    
+    .modal-header {
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .table th {
+        font-weight: 600;
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        border-bottom: 1px solid #f8f9fa;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+        transition: background-color 0.2s ease;
+    }
+    
+    .badge {
+        font-weight: 500;
+    }
+    
+    .progress {
+        background-color: #e9ecef;
+    }
+    
+    .card {
+        border-radius: 8px;
+    }
+    
+    .btn-close-white {
+        filter: brightness(0) invert(1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="bi bi-grid-3x3-gap"></i> Rak Capacity
+            </h1>
+            <p class="text-muted mb-0">Monitoring kapasitas front space rak</p>
+        </div>
+        <div>
+            <button class="btn btn-primary" onclick="updateBatchCapacity()">
+                <i class="bi bi-arrow-clockwise"></i> Update Batch Capacity
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card summary-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-white-50">Total Rak</h6>
+                            <h3 class="mb-0">{{ total_raks }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-grid-3x3-gap text-white-50" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card summary-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-white-50">Tersedia</h6>
+                            <h3 class="mb-0">{{ total_available_front|floatformat:1 }} cm</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-arrow-up-circle text-white-50" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card summary-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-white-50">Terpakai</h6>
+                            <h3 class="mb-0">{{ total_used_front|floatformat:1 }} cm</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-arrow-down-circle text-white-50" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card summary-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-white-50">Avg Utilization</h6>
+                            <h3 class="mb-0">{{ avg_utilization|floatformat:1 }}%</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-pie-chart text-white-50" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Box -->
+    <div class="alert alert-info mb-4">
+        <div class="row">
+            <div class="col-md-8">
+                <h6 class="alert-heading">
+                    <i class="bi bi-info-circle"></i> Penjelasan Dimensi Rak
+                </h6>
+                <p class="mb-2">
+                    Format dimensi rak menggunakan sistem <strong>Lebar (l) × Panjang (p) × Tinggi (t)</strong> dalam centimeter (cm):
+                </p>
+                <ul class="mb-0">
+                    <li><strong>Lebar (l)</strong> = <strong>Front</strong> - Ruang depan yang terlihat dan terukur</li>
+                    <li><strong>Panjang (p)</strong> = <strong>Depth</strong> - Kedalaman rak dari depan ke belakang</li>
+                    <li><strong>Tinggi (t)</strong> = <strong>Height</strong> - Tinggi rak untuk stacking produk</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="border rounded p-3 bg-light">
+                        <strong>Contoh:</strong><br>
+                        <code>200.0cm × 50.0cm × 20.0cm</code><br>
+                        <small class="text-muted">Lebar × Panjang × Tinggi</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Capacity Table -->
+    <div class="card">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-table"></i> Detail Kapasitas Rak
+                    </h5>
+                </div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="filterRakCode" class="form-label">Filter Kode Rak:</label>
+                            <select class="form-select" id="filterRakCode">
+                                <option value="">Semua Rak</option>
+                                {% for capacity in rak_capacities %}
+                                    <option value="{{ capacity.rak.kode_rak }}">{{ capacity.rak.kode_rak }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="filterUtilization" class="form-label">Filter Utilization:</label>
+                            <select class="form-select" id="filterUtilization">
+                                <option value="">Semua</option>
+                                <option value="high">Tinggi (>80%)</option>
+                                <option value="medium">Sedang (20-80%)</option>
+                                <option value="low">Rendah (<20%)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="capacityTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Kode Rak</th>
+                            <th>Nama Rak</th>
+                            <th>Lokasi</th>
+                            <th>Dimensi Rak (l × p × t)</th>
+                            <th>Total SKU</th>
+                            <th>Total Barang</th>
+                            <th>Tersedia</th>
+                            <th>Terpakai</th>
+                            <th>Utilization</th>
+                            <th>Last Updated</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for capacity in rak_capacities %}
+                        <tr>
+                            <td>
+                                <strong>{{ capacity.rak.kode_rak }}</strong>
+                            </td>
+                            <td>{{ capacity.rak.nama_rak }}</td>
+                            <td>{{ capacity.rak.lokasi|default:"-" }}</td>
+                            <td>{{ capacity.rak.dimensions_display }}</td>
+                            <td>
+                                <span class="badge bg-info">
+                                    {{ capacity.total_sku }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">
+                                    {{ capacity.total_items }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if capacity.available_front > 50 %}bg-success{% elif capacity.available_front > 20 %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ capacity.available_front|floatformat:1 }} cm
+                                </span>
+                            </td>
+                            <td>{{ capacity.used_front|floatformat:1 }} cm</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="utilization-bar me-2" style="width: 60px;">
+                                        <div class="utilization-fill" style="width: {{ capacity.utilization_percentage }}%;"></div>
+                                    </div>
+                                    <small>{{ capacity.utilization_percentage|floatformat:1 }}%</small>
+                                </div>
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    {{ capacity.last_updated|date:"d/m/Y H:i" }}
+                                </small>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-sm btn-outline-info" onclick="showRakDetail('{{ capacity.rak.kode_rak }}', '{{ capacity.rak.nama_rak }}')">
+                                        <i class="bi bi-list-ul"></i> Detail
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning" onclick="editRakDimensions('{{ capacity.rak.kode_rak }}', '{{ capacity.rak.nama_rak }}', '{{ capacity.rak.lebar_cm|default:"" }}', '{{ capacity.rak.panjang_cm|default:"" }}', '{{ capacity.rak.tinggi_cm|default:"" }}')">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="updateSingleRakCapacity('{{ capacity.rak.kode_rak }}', this)">
+                                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="11" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                <p class="mt-2 mb-0">Belum ada data rak capacity</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detail Rak -->
+<div class="modal fade" id="rakDetailModal" tabindex="-1" aria-labelledby="rakDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-gradient-primary text-white border-0">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="bi bi-box-seam" style="font-size: 2rem;"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title mb-0" id="rakDetailModalLabel">
+                            Detail Item Rak: <span id="rakCode" class="fw-bold"></span>
+                        </h4>
+                        <small class="text-white-75">Informasi lengkap produk di rak</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body p-4">
+                <!-- Rak Info Section -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-tag text-primary me-2"></i>
+                                    <h6 class="mb-0 fw-bold">Nama Rak</h6>
+                                </div>
+                                <p class="mb-0 fs-5" id="rakName"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-arrows-angle-expand text-primary me-2"></i>
+                                        <h6 class="mb-0 fw-bold">Dimensi Rak</h6>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-primary" id="editRakDimensionsBtn" title="Edit Dimensi Rak">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </div>
+                                <p class="mb-0 fs-5" id="rakDimensions"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Items Table Section -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-list-ul text-primary me-2"></i>
+                                Daftar Item di Rak
+                            </h5>
+                            <span class="badge bg-primary fs-6" id="itemCount">0 item</span>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="itemDetailTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="border-0" style="width: 120px;">Foto</th>
+                                        <th class="border-0">SKU</th>
+                                        <th class="border-0">Nama Produk</th>
+                                        <th class="border-0">Variant</th>
+                                        <th class="border-0">Brand</th>
+                                        <th class="border-0">Dimensi Produk</th>
+                                        <th class="border-0 text-center">Quantity</th>
+                                        <th class="border-0 text-center">Used Width</th>
+                                        <th class="border-0 text-center">% of Rak</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemDetailBody">
+                                    <!-- Data akan diisi via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Dimensi Rak -->
+<div class="modal fade" id="editRakModal" tabindex="-1" aria-labelledby="editRakModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editRakModalLabel">
+                    <i class="bi bi-pencil"></i> Edit Dimensi Rak: <span id="editRakCode"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editRakForm">
+                    <input type="hidden" id="editRakId" name="rak_id">
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Nama Rak:</strong></label>
+                        <span id="editRakName" class="form-control-plaintext"></span>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="editRakWidth" class="form-label">Lebar (cm) <small class="text-muted">(Depan)</small></label>
+                            <input type="text" class="form-control" id="editRakWidth" name="lebar_cm" placeholder="0.00">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="editRakLength" class="form-label">Panjang (cm) <small class="text-muted">(Dalam)</small></label>
+                            <input type="text" class="form-control" id="editRakLength" name="panjang_cm" placeholder="0.00">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="editRakHeight" class="form-label">Tinggi (cm) <small class="text-muted">(Height)</small></label>
+                            <input type="text" class="form-control" id="editRakHeight" name="tinggi_cm" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Info:</strong> Setelah mengubah dimensi rak, kapasitas akan otomatis dihitung ulang berdasarkan dimensi baru.
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="saveRakDimensions()">
+                    <i class="bi bi-check"></i> Simpan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Dimensi Produk -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-gradient-primary text-white border-0">
+                <div class="d-flex align-items-center">
+                    <div class="icon-wrapper me-3" style="background-color: rgba(255,255,255,0.2); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-pencil text-white"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title mb-0" id="editProductModalLabel">Edit Dimensi Produk</h5>
+                        <small class="opacity-75">Update ukuran produk untuk perhitungan kapasitas rak</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="editProductForm">
+                    <input type="hidden" id="editProductId" name="product_id">
+                    
+                    <!-- Product Info Section -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <img id="editProductPhoto" src="" alt="Product Photo" 
+                                     class="img-fluid rounded shadow-sm" 
+                                     style="width: 120px; height: 120px; object-fit: contain; border: 2px solid #e9ecef;">
+                                <div class="mt-2">
+                                    <small class="text-muted">Foto Produk</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-primary">
+                                        <i class="bi bi-upc-scan me-1"></i>SKU
+                                    </label>
+                                    <div class="form-control-plaintext bg-light rounded p-2" id="editProductSku"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-primary">
+                                        <i class="bi bi-tag me-1"></i>Brand
+                                    </label>
+                                    <div class="form-control-plaintext bg-light rounded p-2" id="editProductBrand"></div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-bold text-primary">
+                                        <i class="bi bi-box me-1"></i>Nama Produk
+                                    </label>
+                                    <div class="form-control-plaintext bg-light rounded p-2" id="editProductName"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dimensions Section -->
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title fw-bold text-primary mb-3">
+                                <i class="bi bi-rulers me-2"></i>Dimensi Produk (cm)
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="editProductWidth" class="form-label fw-semibold">
+                                        <i class="bi bi-arrows-horizontal me-1"></i>Lebar
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control border-0 shadow-sm" 
+                                               id="editProductWidth" name="lebar_cm" 
+                                               placeholder="0.00" 
+                                               style="border-radius: 8px;">
+                                        <span class="input-group-text bg-white border-0">cm</span>
+                                    </div>
+                                    <small class="text-muted">Ukuran lebar produk</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="editProductLength" class="form-label fw-semibold">
+                                        <i class="bi bi-arrows-horizontal me-1"></i>Panjang
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control border-0 shadow-sm" 
+                                               id="editProductLength" name="panjang_cm" 
+                                               placeholder="0.00" 
+                                               style="border-radius: 8px;">
+                                        <span class="input-group-text bg-white border-0">cm</span>
+                                    </div>
+                                    <small class="text-muted">Ukuran panjang produk</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="editProductHeight" class="form-label fw-semibold">
+                                        <i class="bi bi-arrows-vertical me-1"></i>Tinggi
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control border-0 shadow-sm" 
+                                               id="editProductHeight" name="tinggi_cm" 
+                                               placeholder="0.00" 
+                                               style="border-radius: 8px;">
+                                        <span class="input-group-text bg-white border-0">cm</span>
+                                    </div>
+                                    <small class="text-muted">Ukuran tinggi produk</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Posisi Tidur Section -->
+                            <div class="mt-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="editProductPosisiTidur" name="posisi_tidur">
+                                    <label class="form-check-label fw-semibold" for="editProductPosisiTidur">
+                                        <i class="bi bi-arrow-clockwise me-1"></i>Posisi Tidur (Hybrid Stacking)
+                                    </label>
+                                    <small class="text-muted d-block">Produk dapat diposisikan tidur untuk optimasi ruang</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3 border-0 bg-info bg-opacity-10">
+                        <i class="bi bi-info-circle text-info"></i>
+                        <strong>Info:</strong> Setelah mengubah dimensi produk, kapasitas rak akan otomatis dihitung ulang.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Batal
+                </button>
+                <button type="button" class="btn btn-primary shadow-sm" onclick="saveProductDimensions()">
+                    <i class="bi bi-check-circle me-1"></i>Simpan Perubahan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+</style>
+
+{% block extra_script %}
+<script>
+function updateBatchCapacity() {
+    // Show loading
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Updating All...';
+    btn.disabled = true;
+    
+    fetch('{% url "inventory:update_rak_capacity" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: data.message,
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                // Reload page
+                location.reload();
+            });
+        } else {
+            throw new Error(data.error);
+        }
+    })
+    .catch(error => {
+        // Show error message
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: error.message || 'Terjadi kesalahan saat update capacity',
+        });
+    })
+    .finally(() => {
+        // Restore button
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+function updateSingleRakCapacity(rakCode, btn) {
+    // Show loading
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Updating...';
+    btn.disabled = true;
+    
+    fetch('{% url "inventory:update_single_rak_capacity" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            rak_code: rakCode
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update row data without reload
+            const row = btn.closest('tr');
+            const availableFrontCell = row.querySelector('td:nth-child(7) span');
+            const usedFrontCell = row.querySelector('td:nth-child(8)');
+            const utilizationCell = row.querySelector('td:nth-child(9) .progress-bar');
+            
+            if (data.new_capacity && availableFrontCell) {
+                availableFrontCell.textContent = data.new_capacity.available_front.toFixed(1) + ' cm';
+            }
+            if (data.new_capacity && usedFrontCell) {
+                usedFrontCell.textContent = data.new_capacity.used_front.toFixed(1) + ' cm';
+            }
+            if (data.new_capacity && utilizationCell) {
+                utilizationCell.style.width = data.new_capacity.utilization.toFixed(1) + '%';
+                utilizationCell.textContent = data.new_capacity.utilization.toFixed(1) + '%';
+            }
+            
+            // Show success message
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: data.message,
+                timer: 1500,
+                showConfirmButton: false
+            });
+        } else {
+            throw new Error(data.error);
+        }
+    })
+    .catch(error => {
+        // Show error message
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: error.message || 'Terjadi kesalahan saat update capacity',
+        });
+    })
+    .finally(() => {
+        // Restore button
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+// Initialize DataTable
+$(document).ready(function() {
+    var table = $('#capacityTable').DataTable({
+        pageLength: 25,
+        order: [[0, 'asc']],
+        language: {
+            url: '{% static "datatables/Indonesian.json" %}'
+        }
+    });
+
+    // Filter by Rak Code
+    $('#filterRakCode').on('change', function() {
+        var selectedRak = $(this).val();
+        if (selectedRak) {
+            table.column(0).search(selectedRak).draw();
+        } else {
+            table.column(0).search('').draw();
+        }
+    });
+
+    // Filter by Utilization
+    $('#filterUtilization').on('change', function() {
+        var selectedUtil = $(this).val();
+        if (selectedUtil) {
+            // Custom filter for utilization column
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                var utilization = parseFloat(data[6].replace('%', '')); // Column 6 is utilization
+                
+                if (selectedUtil === 'high' && utilization > 80) return true;
+                if (selectedUtil === 'medium' && utilization >= 20 && utilization <= 80) return true;
+                if (selectedUtil === 'low' && utilization < 20) return true;
+                return false;
+            });
+        } else {
+            // Remove custom filter
+            $.fn.dataTable.ext.search.pop();
+        }
+        table.draw();
+    });
+});
+
+// Function to show rak detail
+function showRakDetail(rakCode, rakName) {
+    // Show loading
+    Swal.fire({
+        title: 'Loading...',
+        text: 'Mengambil data detail rak',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // Fetch rak detail data
+    fetch(`{% url 'inventory:rak_detail_data' %}?rak_code=${rakCode}`, {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        Swal.close();
+        
+        if (data.success) {
+            // Populate modal
+            document.getElementById('rakCode').textContent = rakCode;
+            document.getElementById('rakName').textContent = rakName;
+            document.getElementById('rakDimensions').textContent = data.rak_dimensions;
+            
+            // Store rak data for edit button
+            window.currentRakData = {
+                code: rakCode,
+                name: rakName,
+                dimensions: data.rak_dimensions,
+                lebar_cm: data.rak_lebar_cm,
+                panjang_cm: data.rak_panjang_cm,
+                tinggi_cm: data.rak_tinggi_cm
+            };
+            
+            // Add event listener for edit rak dimensions button
+            const editBtn = document.getElementById('editRakDimensionsBtn');
+            if (editBtn) {
+                editBtn.onclick = function() {
+                    editRakDimensionsFromModal();
+                };
+            }
+            
+            // Populate table
+            const tbody = document.getElementById('itemDetailBody');
+            tbody.innerHTML = '';
+            
+            if (data.items && data.items.length > 0) {
+                // Update item count
+                document.getElementById('itemCount').textContent = `${data.items.length} item`;
+                
+                data.items.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = 'align-middle';
+                    row.innerHTML = `
+                        <td class="text-center">
+                            ${item.photo ? 
+                                `<img src="${item.photo}" alt="Photo" style="width:80px; height:80px; object-fit:contain; border-radius:8px; border:2px solid #e9ecef;">` : 
+                                `<div style="width:80px; height:80px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border:2px solid #dee2e6; border-radius:8px; margin:0 auto;">
+                                    <i class="bi bi-box" style="font-size:32px; color:#6c757d;"></i>
+                                </div>`
+                            }
+                        </td>
+                        <td>
+                            <div class="fw-bold text-primary">${item.sku}</div>
+                            <small class="text-muted">${item.barcode || ''}</small>
+                        </td>
+                        <td>
+                            <div class="fw-semibold">${item.nama_produk}</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">${item.variant_produk || '-'}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">${item.brand || '-'}</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="me-2">
+                                    ${item.has_dimensions ? 
+                                        `<small class="text-success fw-bold">${item.product_dimensions}</small>` : 
+                                        `<small class="text-danger fw-bold">${item.product_dimensions}</small>`
+                                    }
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary" title="Edit Dimensi Produk" onclick="editProductDimensions('${item.sku}', ${item.product_id}, '${item.nama_produk}', '${item.brand || ''}', '${item.photo || ''}')">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-primary fs-6 px-3 py-2">${item.quantity}</span>
+                        </td>
+                        <td class="text-center">
+                            <div class="fw-bold text-success">${item.used_width} cm</div>
+                        </td>
+                        <td class="text-center">
+                            <div class="mb-2">
+                                <span class="fw-bold ${item.percentage > 80 ? 'text-danger' : item.percentage > 50 ? 'text-warning' : 'text-success'}">
+                                    ${item.percentage.toFixed(1)}%
+                                </span>
+                            </div>
+                            <div class="progress" style="height: 8px; border-radius: 4px;">
+                                <div class="progress-bar ${item.percentage > 80 ? 'bg-danger' : item.percentage > 50 ? 'bg-warning' : 'bg-success'}" 
+                                     role="progressbar" style="width: ${item.percentage}%;" 
+                                     aria-valuenow="${item.percentage}" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } else {
+                document.getElementById('itemCount').textContent = '0 item';
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="bi bi-inbox" style="font-size: 3rem; color: #dee2e6;"></i>
+                                <div class="mt-3 fs-5">Tidak ada item di rak ini</div>
+                                <small>Rak ini masih kosong</small>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('rakDetailModal'));
+            modal.show();
+            
+        } else {
+            throw new Error(data.error || 'Terjadi kesalahan saat mengambil data');
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: error.message || 'Terjadi kesalahan saat mengambil detail rak',
+        });
+    });
+}
+
+// Function to edit rak dimensions from modal detail
+function editRakDimensionsFromModal() {
+    if (!window.currentRakData) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: 'Data rak tidak tersedia'
+        });
+        return;
+    }
+    
+    const rakData = window.currentRakData;
+    
+    // Populate edit modal
+    document.getElementById('editRakCode').textContent = rakData.code;
+    document.getElementById('editRakName').textContent = rakData.name;
+    document.getElementById('editRakId').value = rakData.code;
+    
+    // Set current values
+    document.getElementById('editRakWidth').value = rakData.lebar_cm || '';
+    document.getElementById('editRakLength').value = rakData.panjang_cm || '';
+    document.getElementById('editRakHeight').value = rakData.tinggi_cm || '';
+    
+    // Close detail modal and show edit modal
+    const detailModal = bootstrap.Modal.getInstance(document.getElementById('rakDetailModal'));
+    detailModal.hide();
+    
+    // Show edit modal
+    const editModal = new bootstrap.Modal(document.getElementById('editRakModal'));
+    editModal.show();
+}
+
+// Function to refresh rak detail and show modal
+function refreshRakDetailAndShowModal() {
+    if (!window.currentRakData) {
+        // If no current rak data, just reload page
+        location.reload();
+        return;
+    }
+    
+    const rakCode = window.currentRakData.code;
+    const rakName = window.currentRakData.name;
+    
+    // Show loading
+    Swal.fire({
+        title: 'Memperbarui Data...',
+        text: 'Mengambil data terbaru',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // Fetch updated rak detail data
+    fetch(`{% url 'inventory:rak_detail_data' %}?rak_code=${rakCode}`, {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        Swal.close();
+        
+        if (data.success) {
+            // Update current rak data
+            window.currentRakData = {
+                code: rakCode,
+                name: rakName,
+                dimensions: data.rak_dimensions,
+                lebar_cm: data.rak_lebar_cm,
+                panjang_cm: data.rak_panjang_cm,
+                tinggi_cm: data.rak_tinggi_cm
+            };
+            
+            // Populate modal with updated data
+            document.getElementById('rakCode').textContent = rakCode;
+            document.getElementById('rakName').textContent = rakName;
+            document.getElementById('rakDimensions').textContent = data.rak_dimensions;
+            
+            // Populate table with updated items
+            const tbody = document.getElementById('itemDetailBody');
+            tbody.innerHTML = '';
+            
+            if (data.items && data.items.length > 0) {
+                // Update item count
+                document.getElementById('itemCount').textContent = `${data.items.length} item`;
+                
+                data.items.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = 'align-middle';
+                    row.innerHTML = `
+                        <td class="text-center">
+                            ${item.photo ? 
+                                `<img src="${item.photo}" alt="Photo" style="width:80px; height:80px; object-fit:contain; border-radius:8px; border:2px solid #e9ecef;">` : 
+                                `<div style="width:80px; height:80px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border:2px solid #dee2e6; border-radius:8px; margin:0 auto;">
+                                    <i class="bi bi-box" style="font-size:32px; color:#6c757d;"></i>
+                                </div>`
+                            }
+                        </td>
+                        <td>
+                            <div class="fw-bold text-primary">${item.sku}</div>
+                            <small class="text-muted">${item.barcode || ''}</small>
+                        </td>
+                        <td>
+                            <div class="fw-semibold">${item.nama_produk}</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">${item.variant_produk || '-'}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">${item.brand || '-'}</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="me-2">
+                                    ${item.has_dimensions ? 
+                                        `<small class="text-success fw-bold">${item.product_dimensions}</small>` : 
+                                        `<small class="text-danger fw-bold">${item.product_dimensions}</small>`
+                                    }
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary" title="Edit Dimensi Produk" onclick="editProductDimensions('${item.sku}', ${item.product_id}, '${item.nama_produk}', '${item.brand || ''}', '${item.photo || ''}')">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-primary fs-6 px-3 py-2">${item.quantity}</span>
+                        </td>
+                        <td class="text-center">
+                            <div class="fw-bold text-success">${item.used_width} cm</div>
+                        </td>
+                        <td class="text-center">
+                            <div class="mb-2">
+                                <span class="fw-bold ${item.percentage > 80 ? 'text-danger' : item.percentage > 50 ? 'text-warning' : 'text-success'}">
+                                    ${item.percentage.toFixed(1)}%
+                                </span>
+                            </div>
+                            <div class="progress" style="height: 8px; border-radius: 4px;">
+                                <div class="progress-bar ${item.percentage > 80 ? 'bg-danger' : item.percentage > 50 ? 'bg-warning' : 'bg-success'}" 
+                                     role="progressbar" style="width: ${item.percentage}%;" 
+                                     aria-valuenow="${item.percentage}" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } else {
+                document.getElementById('itemCount').textContent = '0 item';
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                            <p class="mt-2 mb-0">Tidak ada item di rak ini</p>
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            // Show detail modal with updated data
+            const detailModal = new bootstrap.Modal(document.getElementById('rakDetailModal'));
+            detailModal.show();
+            
+        } else {
+            // If failed to refresh, reload page
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error refreshing rak detail:', error);
+        Swal.close();
+        // If error, reload page
+        location.reload();
+    });
+}
+
+// Function to edit rak dimensions from list
+function editRakDimensions(rakCode, rakName, width, length, height) {
+    // Populate modal
+    document.getElementById('editRakCode').textContent = rakCode;
+    document.getElementById('editRakName').textContent = rakName;
+    document.getElementById('editRakId').value = rakCode;
+    
+    // Set current values
+    document.getElementById('editRakWidth').value = width || '';
+    document.getElementById('editRakLength').value = length || '';
+    document.getElementById('editRakHeight').value = height || '';
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('editRakModal'));
+    modal.show();
+}
+
+// Function to save rak dimensions
+function saveRakDimensions() {
+    const rakCode = document.getElementById('editRakId').value;
+    const width = document.getElementById('editRakWidth').value;
+    const length = document.getElementById('editRakLength').value;
+    const height = document.getElementById('editRakHeight').value;
+    
+    // Validate inputs
+    if (!width && !length && !height) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Peringatan!',
+            text: 'Minimal satu dimensi harus diisi!'
+        });
+        return;
+    }
+    
+    // Show loading
+    Swal.fire({
+        title: 'Menyimpan...',
+        text: 'Mengupdate dimensi rak',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // Send data to server
+    fetch('{% url "inventory:update_rak_dimensions" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            rak_code: rakCode,
+            lebar_cm: width || null,
+            panjang_cm: length || null,
+            tinggi_cm: height || null
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        Swal.close();
+        
+        if (data.success) {
+            // Show success message
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: data.message,
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                // Close edit modal
+                const editModal = bootstrap.Modal.getInstance(document.getElementById('editRakModal'));
+                editModal.hide();
+                
+                // Refresh data and return to detail modal
+                refreshRakDetailAndShowModal();
+            });
+        } else {
+            throw new Error(data.error || 'Terjadi kesalahan saat menyimpan');
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: error.message || 'Terjadi kesalahan saat menyimpan dimensi rak',
+        });
+    });
+}
+
+// Add input validation for dimension fields
+$(document).ready(function() {
+    $('#editRakWidth, #editRakLength, #editRakHeight').on('input', function() {
+        var input = $(this);
+        var value = input.val();
+        
+        // Allow only numbers, decimal points, and commas
+        var cleanValue = value.replace(/[^0-9.,]/g, '');
+        
+        // Convert comma to dot for consistency
+        var parts = cleanValue.split('.');
+        if (parts.length > 2) {
+            cleanValue = parts[0] + '.' + parts.slice(1).join('');
+        }
+        
+        if (cleanValue !== value) {
+            input.val(cleanValue);
+        }
+    });
+    
+    // Convert comma to dot when user finishes typing (blur event)
+    $('#editRakWidth, #editRakLength, #editRakHeight').on('blur', function() {
+        var input = $(this);
+        var value = input.val();
+        
+        // Convert comma to dot
+        if (value.includes(',')) {
+            value = value.replace(',', '.');
+            input.val(value);
+        }
+    });
+});
+
+// Function to edit product dimensions
+function editProductDimensions(sku, productId, productName, brand, photo) {
+    // Populate modal
+    document.getElementById('editProductSku').textContent = sku;
+    document.getElementById('editProductName').textContent = productName;
+    document.getElementById('editProductBrand').textContent = brand || '-';
+    document.getElementById('editProductId').value = productId;
+    
+    // Set product photo
+    const photoElement = document.getElementById('editProductPhoto');
+    if (photo && photo !== '/static/images/no-image.png') {
+        photoElement.src = photo;
+        photoElement.style.display = 'block';
+    } else {
+        photoElement.src = '/static/images/no-image.png';
+        photoElement.style.display = 'block';
+    }
+    
+    // Load existing dimensions from backend
+    fetch(`/inventory/product/${sku}/dimensions/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.dimensions) {
+                // Set existing values from data.dimensions
+                document.getElementById('editProductWidth').value = data.dimensions.lebar_cm || '';
+                document.getElementById('editProductLength').value = data.dimensions.panjang_cm || '';
+                document.getElementById('editProductHeight').value = data.dimensions.tinggi_cm || '';
+                document.getElementById('editProductPosisiTidur').checked = data.dimensions.posisi_tidur || false;
+            } else {
+                // Clear values if no data
+                document.getElementById('editProductWidth').value = '';
+                document.getElementById('editProductLength').value = '';
+                document.getElementById('editProductHeight').value = '';
+                document.getElementById('editProductPosisiTidur').checked = false;
+            }
+            
+            // Show modal after data is loaded
+            const modal = new bootstrap.Modal(document.getElementById('editProductModal'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Error loading product dimensions:', error);
+            // Clear values on error
+            document.getElementById('editProductWidth').value = '';
+            document.getElementById('editProductLength').value = '';
+            document.getElementById('editProductHeight').value = '';
+            document.getElementById('editProductPosisiTidur').checked = false;
+            
+            // Show modal anyway
+            const modal = new bootstrap.Modal(document.getElementById('editProductModal'));
+            modal.show();
+        });
+}
+
+// Function to save product dimensions
+function saveProductDimensions() {
+    const productId = document.getElementById('editProductId').value;
+    const width = document.getElementById('editProductWidth').value;
+    const length = document.getElementById('editProductLength').value;
+    const height = document.getElementById('editProductHeight').value;
+    const posisiTidur = document.getElementById('editProductPosisiTidur').checked;
+    
+    // Validate inputs
+    if (!width && !length && !height) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Peringatan!',
+            text: 'Minimal satu dimensi harus diisi!'
+        });
+        return;
+    }
+    
+    // Show loading
+    Swal.fire({
+        title: 'Menyimpan...',
+        text: 'Mengupdate dimensi produk',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // Send data to server
+    fetch('/inventory/product/update-dimensions/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            sku: document.getElementById('editProductSku').textContent,
+            lebar_cm: width || null,
+            panjang_cm: length || null,
+            tinggi_cm: height || null,
+            posisi_tidur: posisiTidur
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        Swal.close();
+        
+        if (data.success) {
+            // Show success message
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: data.message,
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                // Close edit modal
+                const editModal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
+                editModal.hide();
+                
+                // Refresh data and return to detail modal
+                refreshRakDetailAndShowModal();
+            });
+        } else {
+            throw new Error(data.error || 'Terjadi kesalahan saat menyimpan');
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: error.message || 'Terjadi kesalahan saat menyimpan dimensi produk',
+        });
+    });
+}
+
+// Add input validation for product dimension fields
+$(document).ready(function() {
+    $('#editProductWidth, #editProductLength, #editProductHeight').on('input', function() {
+        var input = $(this);
+        var value = input.val();
+        
+        // Allow only numbers, decimal points, and commas
+        var cleanValue = value.replace(/[^0-9.,]/g, '');
+        
+        // Convert comma to dot for consistency
+        var parts = cleanValue.split('.');
+        if (parts.length > 2) {
+            cleanValue = parts[0] + '.' + parts.slice(1).join('');
+        }
+        
+        if (cleanValue !== value) {
+            input.val(cleanValue);
+        }
+    });
+    
+    // Convert comma to dot when user finishes typing (blur event)
+    $('#editProductWidth, #editProductLength, #editProductHeight').on('blur', function() {
+        var input = $(this);
+        var value = input.val();
+        
+        // Convert comma to dot
+        if (value.includes(',')) {
+            value = value.replace(',', '.');
+            input.val(value);
+        }
+    });
+});
+</script>
+{% endblock %}

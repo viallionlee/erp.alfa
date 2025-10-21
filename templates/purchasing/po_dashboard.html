@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Dashboard Purchase Order{% endblock %}
+{% block content %}
+<h2 class="text-center mb-4"><i class="bi bi-graph-up"></i> Dashboard Purchase Order</h2>
+
+<div class="d-flex justify-content-between mb-4">
+    <a href="{% url 'purchasing:po_list' %}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
+    <a href="{% url 'purchasing:po_create' %}" class="btn btn-success"><i class="bi bi-plus-circle"></i> Buat PO Baru</a>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total PO</h5>
+                <h2 class="mb-0">{{ total_po }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">Draft</h5>
+                <h2 class="mb-0">{{ draft_po }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Pending</h5>
+                <h2 class="mb-0">{{ pending_po }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Received</h5>
+                <h2 class="mb-0">{{ received_po }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Total Amount</h5>
+                <h4 class="mb-0">Rp {{ total_amount|floatformat:0|intcomma }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent PO & Top Suppliers -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Recent Purchase Orders</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nomor PO</th>
+                                <th>Supplier</th>
+                                <th>Tanggal</th>
+                                <th>Status</th>
+                                <th>Total</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for po in recent_pos %}
+                            <tr>
+                                <td>{{ po.nomor_po }}</td>
+                                <td>{{ po.supplier.nama_supplier }}</td>
+                                <td>{{ po.tanggal_po|date:"d M Y" }}</td>
+                                <td>
+                                    {% if po.status == 'draft' %}
+                                    <span class="badge bg-warning">Draft</span>
+                                    {% elif po.status == 'pending' %}
+                                    <span class="badge bg-info">Pending</span>
+                                    {% elif po.status == 'received' %}
+                                    <span class="badge bg-success">Received</span>
+                                    {% endif %}
+                                </td>
+                                <td>Rp {{ po.total_amount|floatformat:0|intcomma }}</td>
+                                <td>
+                                    <a href="{% url 'purchasing:po_detail' po.id %}" class="btn btn-sm btn-info">Detail</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">Tidak ada data</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Top Suppliers</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Supplier</th>
+                            <th class="text-center">PO</th>
+                            <th class="text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for supplier in top_suppliers %}
+                        <tr>
+                            <td>{{ supplier.supplier__nama_supplier }}</td>
+                            <td class="text-center">{{ supplier.count }}</td>
+                            <td class="text-right">Rp {{ supplier.total|floatformat:0|intcomma }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center">Tidak ada data</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

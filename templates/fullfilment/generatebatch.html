@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% load django_tables2 %}
+{% load static %}
+{% block title %}OMS - Generate Batch{% endblock %}
+{% block extra_head %}
+{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center mb-3 justify-content-between">
+    <a href="/orders/" class="btn  btn-primary d-flex align-items-center" style="font-weight:bold;">
+        <i class="bi bi-arrow-right-circle-fill ms-2"></i> Orders
+    </a>
+    <h2 class="flex-grow-1 text-center mb-0">Generate Batchlist</h2>
+    <a href="{% url 'fullfilment_index' %}" class="btn btn-primary ms-3 d-flex align-items-center" style="font-weight:bold;">
+        BATCHLIST <i class="bi bi-arrow-right-circle-fill ms-2"></i>
+    </a>
+</div>
+
+{% if perms.fullfilment.change_generatebatch %}
+<form method="get" class="mb-3" id="filter-form">
+    <div class="card p-3 mb-0">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label mb-1">{{ filter.form.kirim_sebelum.label }}</label>
+                <div class="d-flex align-items-stretch">
+                    {{ filter.form.kirim_sebelum }}
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label mb-1">{{ filter.form.kurir.label }}</label>
+                <div class="d-flex align-items-stretch">
+                    {{ filter.form.kurir }}
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label mb-1">{{ filter.form.nama_toko.label }}</label>
+                <div class="d-flex align-items-stretch">
+                    {{ filter.form.nama_toko }}
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label mb-1">{{ filter.form.brand.label }}</label>
+                <div class="d-flex align-items-stretch">
+                    {{ filter.form.brand }}
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label mb-1">{{ filter.form.order_type.label }}</label>
+                <div class="d-flex align-items-stretch">
+                    {{ filter.form.order_type }}
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label mb-1">{{ filter.form.id_pesanan.label }}</label>
+                <div class="d-flex align-items-stretch">
+                    {{ filter.form.id_pesanan }}
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endif %}
+<style>
+    #filter-form select {
+        min-height: 110px;
+        width: 100%;
+        font-size: 1rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.375rem;
+        border: 1px solid #ced4da;
+    }
+</style>
+{% if perms.fullfilment.change_generatebatch %}
+<div id="stock-summary" class="mb-3 text-center" style="display:none">
+    <span class="badge bg-success fs-4" id="stock-cukup"></span>
+    <span class="badge bg-danger fs-4 ms-2" id="stock-tidak-cukup"></span>
+    <span class="badge bg-secondary fs-4 ms-2" id="stock-total"></span>
+</div>
+{% endif %}
+
+<div class="row mb-3 align-items-center">
+    <div class="col-auto">
+        <span class="badge bg-success fs-6" style="font-weight:bold">Total Order valid = {{ total_order_valid }}</span>
+        <span class="badge bg-info fs-6" style="font-weight:bold">Total Order Filter = {{ total_order_filter }}</span>
+        <span class="badge bg-danger fs-6 ms-2" style="font-weight:bold; min-width:180px;">
+          SKU Not Found = {{ sku_not_found_count }}
+          {% if sku_not_found_count > 0 %}
+            <a href="#" id="showSkuNotFound" class="ms-2 text-white text-decoration-underline" style="cursor:pointer;">detail</a>
+          {% endif %}
+        </span>
+        <span class="badge bg-warning fs-6 ms-2" style="font-weight:bold; min-width:180px;">
+          SKU No Name = {{ sku_no_name_filtered_data|length }}
+          {% if sku_no_name_filtered_data|length > 0 %}
+            <a href="#" id="showSkuNoName" class="ms-2 text-dark text-decoration-underline" style="cursor:pointer;">detail</a>
+          {% endif %}
+        </span>
+    </div>
+    <div class="col"></div>
+    <div class="col-auto text-end d-flex gap-2">
+        {% if perms.fullfilment.change_generatebatch %}
+            <button type="submit" form="filter-form" class="btn btn-primary">Filter</button>
+            <a href="/fullfilment/generatebatch/" class="btn btn-secondary">Clear</a>
+            <button id="check-stock-btn" class="btn btn-warning">Check Stock</button>
+            <button id="generate-batchlist-btn" class="btn btn-success">Generate Batchlist</button>
+        {% endif %}
+        <button id="show-id-pesanan-btn" class="btn btn-info">CEK ID</button>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            {% render_table table %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal SKU Not Found -->
+<div class="modal fade" id="skuNotFoundModal" tabindex="-1" aria-labelledby="skuNotFoundModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="skuNotFoundModalLabel">SKU Not Found List</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul style="word-break:break-all;">
+          {% for sku in sku_not_found_list %}
+            <li>{{ sku }}</li>
+          {% empty %}
+            <li>Tidak ada SKU Not Found</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal SKU No Name -->
+<div class="modal fade" id="skuNoNameModal" tabindex="-1" aria-labelledby="skuNoNameModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="skuNoNameModalLabel">SKU No Name List</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul style="word-break:break-all;">
+          {% for sku in sku_no_name_filtered_data %}
+            <li>{{ sku }}</li>
+          {% empty %}
+            <li>Tidak ada SKU No Name</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+const skuNoNameList = {{ sku_no_name_filtered_data|safe }};
+
+$(function() {
+    $('#showSkuNotFound').on('click', function(e) {
+        e.preventDefault();
+        $('#skuNotFoundModal').modal('show');
+    });
+    $('#showSkuNoName').on('click', function(e) {
+        e.preventDefault();
+        $('#skuNoNameModal').modal('show');
+    });
+    $('#check-stock-btn').on('click', function() {
+        var params = $('#filter-form').serialize();
+        $.get('/fullfilment/generatebatch/check_stock/?' + params, function(resp) {
+            if (resp && resp.summary) {
+                $('#stock-cukup').text('Stock Cukup: ' + resp.summary.stock_cukup);
+                $('#stock-tidak-cukup').text('Stock Tidak Cukup: ' + resp.summary.stock_tidak_cukup);
+                $('#stock-total').text('Total Order: ' + resp.summary.total);
+                $('#stock-summary').show();
+            }
+        });
+    });
+    $('#generate-batchlist-btn').on('click', async function() {
+        if (skuNoNameList && skuNoNameList.length > 0) {
+            await Swal.fire({
+                icon: 'warning',
+                title: 'Tidak bisa generate batch',
+                html: 'Masih ada <b>SKU No Name</b> pada hasil filter.<br>Silakan perbaiki SKU yang belum jelas sebelum generate batch.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+        let params = $('#filter-form').serialize();
+        let checkStockResp = await $.get('/fullfilment/generatebatch/check_stock/?' + params);
+        if (!checkStockResp || !checkStockResp.result) {
+            Swal.fire('Gagal', 'Gagal ambil data check_stock dari server', 'error');
+            return;
+        }
+        const { value: ambil } = await Swal.fire({
+            title: 'Ambil data?',
+            input: 'radio',
+            inputOptions: {
+                'cukup': 'Stock Cukup',
+                'tidak cukup': 'Stock Tidak Cukup',
+                'semua': 'Semua'
+            },
+            inputValidator: v => !v && 'Pilih salah satu!'
+        });
+        if (!ambil) return;
+        const { value: mode } = await Swal.fire({
+            title: 'Buat batchlist baru atau update?',
+            input: 'radio',
+            inputOptions: {
+                'create': 'Buat Batchlist Baru',
+                'update': 'Update Batchlist Lama'
+            },
+            inputValidator: v => !v && 'Pilih salah satu!'
+        });
+        if (!mode) return;
+        let nama_batch = '';
+        if (mode === 'create') {
+            const { value } = await Swal.fire({
+                title: 'Nama Batchlist Baru',
+                input: 'text',
+                inputPlaceholder: 'Masukkan nama batchlist',
+                inputValidator: async (val) => {
+                    if (!val) return 'Wajib diisi!';
+                    let exists = false;
+                    try {
+                        let resp = await $.get('/fullfilment/batchlist/check_duplicate/?nama_batch=' + encodeURIComponent(val));
+                        exists = resp.exists;
+                    } catch {}
+                    if (exists) return 'Nama batchlist sudah ada!';
+                }
+            });
+            if (!value) return;
+            nama_batch = value;
+        } else {
+            let resp = await $.get('/fullfilment/batchlist/list_open/');
+            let options = {};
+            (resp.batchlists || []).forEach(b => options[b] = b);
+            const { value } = await Swal.fire({
+                title: 'Pilih Batchlist Lama',
+                input: 'select',
+                inputOptions: options,
+                inputPlaceholder: 'Pilih batchlist',
+                inputValidator: v => !v && 'Wajib pilih!'
+            });
+            if (!value) return;
+            nama_batch = value;
+        }
+        let postData = {
+            ambil: ambil,
+            mode: mode,
+            nama_batch: nama_batch,
+            filters: params
+        };
+        let result = await $.ajax({
+            url: '/fullfilment/generatebatch/update_batchlist/',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(postData)
+        });
+        if (result.success) {
+            Swal.fire('Sukses', 'Batchlist berhasil diupdate!', 'success').then(() => window.location.reload());
+        } else {
+            Swal.fire('Gagal', result.message || 'Gagal update batchlist', 'error');
+        }
+    });
+    $('#show-id-pesanan-btn').on('click', function() {
+        var params = $('#filter-form').serialize();
+        $.get('/fullfilment/generatebatch/check_stock/?' + params, function(resp) {
+            if (resp && resp.result) {
+                let cukupIds = Object.keys(resp.result).filter(id => resp.result[id] === 'cukup');
+                if (cukupIds.length === 0) {
+                    Swal.fire('Info', 'Tidak ada id_pesanan dengan stock cukup.', 'info');
+                } else {
+                    Swal.fire({
+                        title: 'id_pesanan dengan stock cukup',
+                        html: '<pre style="text-align:left">' + cukupIds.join('<br>') + '</pre>',
+                        width: 600
+                    });
+                }
+            } else {
+                Swal.fire('Gagal', 'Gagal ambil data dari server', 'error');
+            }
+        });
+    });
+    // Dynamic AJAX filter for all dropdowns
+    const filterFields = [
+        'nama_toko', 'brand', 'order_type', 'kirim_sebelum', 'kurir', 'id_pesanan'
+    ];
+    filterFields.forEach(function(field) {
+        $('#id_' + field).on('change', function() {
+            let data = {};
+            filterFields.forEach(function(f) {
+                data[f + '[]'] = $('#id_' + f).val();
+            });
+            $.get('/fullfilment/ajax/filter-options/', data, function(resp) {
+                filterFields.forEach(function(f) {
+                    if (f !== field) { // Jangan update dropdown yang sedang diubah user
+                        let $el = $('#id_' + f);
+                        let current = $el.val() || [];
+                        $el.empty();
+                        $.each(resp[f], function(i, val) {
+                            $el.append($('<option>', { value: val, text: val, selected: current.includes(val) }));
+                        });
+                    }
+                });
+            });
+        });
+    });
+});
+
+$(document).ready(function() {
+    // Cari dropdown filter untuk kurir
+    var courierSelect = $('#id_kurir'); // 'id_kurir' adalah ID default yang dibuat oleh django-filters
+
+    // Loop melalui setiap <option> di dalam dropdown tersebut
+    courierSelect.find('option').each(function() {
+        var option = $(this);
+        var courierName = option.text().toLowerCase();
+
+        // Cek apakah teks opsi mengandung kata "instant"
+        if (courierName.includes('instant')) {
+            // Jika ya, tambahkan style untuk membuatnya tebal dan berwarna
+            option.css({
+                'font-weight': 'bold',
+                'color': '#0d6efd' // Warna biru primer Bootstrap
+            });
+        }
+    });
+});
+
+// Fungsi untuk memberi warna pada kurir prioritas
+function highlightPriorityCouriers() {
+    const courierSelect = document.querySelector('select[name="kurir"]');
+    if (courierSelect) {
+        const priorityKeywords = ['instant', 'gojek', 'grab', 'same day', 'sameday'];
+        
+        Array.from(courierSelect.options).forEach(option => {
+            const courierName = option.text.toLowerCase();
+            
+            // Cek apakah kurir mengandung kata kunci prioritas
+            for (let keyword of priorityKeywords) {
+                if (courierName.includes(keyword)) {
+                    option.style.backgroundColor = '#ffeb3b';  // Kuning untuk prioritas
+                    option.style.fontWeight = 'bold';
+                    break;
+                }
+            }
+        });
+    }
+}
+
+// Panggil fungsi saat halaman dimuat
+document.addEventListener('DOMContentLoaded', function() {
+    highlightPriorityCouriers();
+});
+</script>
+{% endblock %}

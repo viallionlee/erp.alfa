@@ -1,0 +1,374 @@
+{% extends 'base_mobile.html' %}
+{% block title %}Detail Purchase{% endblock %}
+{% block content %}
+<style>
+    .mobile-container {
+        max-width: 100%;
+        padding: 10px;
+    }
+    
+    .mobile-header {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .mobile-header h2 {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin: 0;
+        color: #333;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .card-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #666;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-size: 0.85rem;
+        color: #666;
+    }
+    
+    .info-value {
+        font-size: 0.85rem;
+        color: #333;
+        font-weight: 500;
+    }
+    
+    .product-card {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        position: relative;
+    }
+    
+    .product-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+    
+    .product-photo-placeholder {
+        width: 60px;
+        height: 60px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: #adb5bd;
+    }
+    
+    .product-photo-placeholder i {
+        font-size: 24px;
+    }
+    
+    .product-content {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .product-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+    
+    .product-sku-barcode {
+        font-size: 0.75rem;
+        color: #adb5bd;
+        font-weight: 400;
+    }
+    
+    .product-name {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #212529;
+        margin-bottom: 6px;
+        line-height: 1.3;
+    }
+    
+    .product-brand-variant {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-bottom: 6px;
+    }
+    
+    .product-brand {
+        font-size: 0.7rem;
+        color: #198754;
+        font-weight: 500;
+    }
+    
+    .product-variant {
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);
+        color: #c2185b;
+        font-weight: 500;
+    }
+    
+    .product-qty-price {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-top: 6px;
+    }
+    
+    .product-qty {
+        font-size: 0.75rem;
+        color: #495057;
+        font-weight: 600;
+        background: #e9ecef;
+        padding: 3px 8px;
+        border-radius: 5px;
+    }
+    
+    .product-price {
+        font-size: 0.75rem;
+        color: #495057;
+        font-weight: 600;
+        background: #e9ecef;
+        padding: 3px 8px;
+        border-radius: 5px;
+    }
+    
+    .product-subtotal {
+        font-size: 0.75rem;
+        color: #198754;
+        font-weight: 600;
+        margin-top: 4px;
+        text-align: right;
+    }
+    
+    .summary-card {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 0.9rem;
+    }
+    
+    .summary-row.total {
+        border-top: 2px solid #333;
+        padding-top: 10px;
+        margin-top: 5px;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    
+    .action-buttons button,
+    .action-buttons a {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-align: center;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    
+    .btn-success { background: #28a745; color: white; }
+    .btn-info { background: #17a2b8; color: white; }
+    .btn-primary { background: #007bff; color: white; }
+    .btn-danger { background: #dc3545; color: white; }
+    .btn-secondary { background: #6c757d; color: white; }
+    
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .badge-primary { background: #007bff; color: white; }
+    .badge-dark { background: #343a40; color: white; }
+    .badge-warning { background: #ffc107; color: #333; }
+    .badge-success { background: #28a745; color: white; }
+    .badge-info { background: #17a2b8; color: white; }
+    .badge-danger { background: #dc3545; color: white; }
+</style>
+
+<div class="mobile-container">
+    <!-- Header -->
+    <div class="mobile-header">
+        <h2><i class="bi bi-cart-check"></i> Detail Purchase</h2>
+        <a href="{% url 'purchasing:purchase_list' %}" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.85rem;">
+            <i class="bi bi-arrow-left"></i> Kembali
+        </a>
+    </div>
+    
+    <!-- Info Purchase -->
+    <div class="info-card">
+        <div class="card-title">Info Purchase</div>
+        <div class="info-row">
+            <span class="info-label">Nomor Purchase:</span>
+            <span class="info-value">{{ purchase.nomor_purchase|default:"DRAFT" }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Tanggal:</span>
+            <span class="info-value">{{ purchase.tanggal_purchase|date:"d M Y, H:i" }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Supplier:</span>
+            <span class="info-value">{{ purchase.supplier.nama_supplier }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Status:</span>
+            <span class="status-badge badge-{{ purchase.status }}">
+                {{ purchase.get_status_display }}
+            </span>
+        </div>
+        {% if purchase.po %}
+        <div class="info-row">
+            <span class="info-label">PO Reference:</span>
+            <span class="info-value">{{ purchase.po.nomor_po }}</span>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Produk -->
+    <div class="product-card">
+        <div class="card-title">Produk ({{ items|length }})</div>
+        {% for item in items %}
+        <div class="product-header">
+            <!-- Photo Placeholder -->
+            <div class="product-photo-placeholder">
+                <i class="bi bi-image"></i>
+            </div>
+            
+            <!-- Product Content -->
+            <div class="product-content">
+                <!-- SKU & Barcode -->
+                <div class="product-row">
+                    <span class="product-sku-barcode">{{ item.product.sku }}</span>
+                    <span class="product-sku-barcode">|</span>
+                    <span class="product-sku-barcode">{{ item.product.barcode }}</span>
+                </div>
+                
+                <!-- Product Name -->
+                <div class="product-name">{{ item.product.nama_produk }}</div>
+                
+                <!-- Brand & Variant -->
+                <div class="product-brand-variant">
+                    {% if item.product.brand %}
+                    <span class="product-brand">{{ item.product.brand }}</span>
+                    {% endif %}
+                    {% if item.product.variant_produk %}
+                    <span class="product-variant">{{ item.product.variant_produk }}</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Qty & Price -->
+                <div class="product-qty-price">
+                    <span class="product-qty">Qty: {{ item.quantity }}</span>
+                    <span class="product-price">Rp {{ item.harga_beli|floatformat:0 }}</span>
+                </div>
+                
+                <!-- Subtotal -->
+                <div class="product-subtotal">
+                    Subtotal: Rp {{ item.subtotal|floatformat:0 }}
+                </div>
+            </div>
+        </div>
+        {% if not forloop.last %}
+        <hr style="margin: 15px 0; border: none; border-top: 1px solid #f0f0f0;">
+        {% endif %}
+        {% endfor %}
+    </div>
+    
+    <!-- Summary -->
+    <div class="summary-card">
+        <div class="card-title">Summary</div>
+        {% with total=0 %}
+            {% for item in items %}
+                {% widthratio item.quantity 1 item.harga_beli as item_total %}
+                {% with total=total|add:item_total %}
+                {% endwith %}
+            {% endfor %}
+            <div class="summary-row total">
+                <span>Total Amount:</span>
+                <span>Rp {{ purchase.total_amount|floatformat:0 }}</span>
+            </div>
+        {% endwith %}
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        {% if purchase.status == 'pending' and perms.purchasing.purchase_finance %}
+        <a href="{% url 'purchasing:purchase_verify' purchase.id %}" class="btn-info">
+            <i class="bi bi-check-circle"></i> Verify
+        </a>
+        {% endif %}
+        
+        {% if purchase.status == 'verified' and perms.purchasing.purchase_warehouse %}
+        <a href="{% url 'purchasing:purchase_receive' purchase.id %}" class="btn-success">
+            <i class="bi bi-box-arrow-in-down"></i> Receive
+        </a>
+        {% endif %}
+        
+        {% if purchase.status == 'draft' or purchase.status == 'pending' %}
+            {% if perms.purchasing.purchase_warehouse %}
+            <a href="{% url 'purchasing:purchase_edit' purchase.id %}" class="btn-primary">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
+            {% endif %}
+        {% endif %}
+        
+        <a href="{% url 'purchasing:purchase_list' %}" class="btn-secondary">
+            <i class="bi bi-arrow-left"></i> Kembali
+        </a>
+    </div>
+</div>
+{% endblock %}
+

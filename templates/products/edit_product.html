@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4" style="max-width:600px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>Edit Produk</h4>
+        <div>
+            <a href="/purchasing/price-history/?sku={{ product.sku }}" class="btn btn-outline-success btn-sm me-2">
+                <i class="bi bi-graph-up me-1"></i> History Harga
+            </a>
+            <a href="{% url 'products:product_edit_logs_detail' product.id %}" class="btn btn-outline-info btn-sm">
+                <i class="bi bi-clock-history me-1"></i> Log Perubahan
+            </a>
+        </div>
+    </div>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-2">
+            <label class="form-label">SKU</label>
+            <input type="text" name="sku" class="form-control" value="{{ product.sku }}" required>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Barcode</label>
+            <input type="text" name="barcode" class="form-control" value="{{ product.barcode }}" required>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Nama Produk</label>
+            <input type="text" name="nama_produk" class="form-control" value="{{ product.nama_produk }}" required>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Variant</label>
+            <input type="text" name="variant_produk" class="form-control" value="{{ product.variant_produk }}">
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Brand</label>
+            <input type="text" name="brand" class="form-control" value="{{ product.brand }}">
+        </div>
+
+        
+        <!-- Dimensi Produk -->
+        <div class="row">
+            <div class="col-md-6 mb-2">
+                <label class="form-label">Panjang (cm)</label>
+                <input type="text" name="panjang_cm" class="form-control" value="{% if product.panjang_cm %}{{ product.panjang_cm }}{% endif %}" placeholder="0.00">
+            </div>
+            <div class="col-md-6 mb-2">
+                <label class="form-label">Lebar (cm)</label>
+                <input type="text" name="lebar_cm" class="form-control" value="{% if product.lebar_cm %}{{ product.lebar_cm }}{% endif %}" placeholder="0.00">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-2">
+                <label class="form-label">Tinggi (cm)</label>
+                <input type="text" name="tinggi_cm" class="form-control" value="{% if product.tinggi_cm %}{{ product.tinggi_cm }}{% endif %}" placeholder="0.00">
+            </div>
+            <div class="col-md-6 mb-2">
+                <label class="form-label">Berat (gram)</label>
+                <input type="text" name="berat_gram" class="form-control" value="{% if product.berat_gram %}{{ product.berat_gram }}{% endif %}" placeholder="0.00">
+            </div>
+        </div>
+        
+        <!-- Posisi Tidur -->
+        <div class="mb-3">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="posisi_tidur" id="posisi_tidur" {% if product.posisi_tidur %}checked{% endif %}>
+                <label class="form-check-label" for="posisi_tidur">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Posisi Tidur (Hybrid Stacking)
+                </label>
+                <small class="form-text text-muted d-block">
+                    Centang jika produk dapat diposisikan tidur untuk optimasi ruang rak
+                </small>
+            </div>
+        </div>
+        
+        <div class="mb-2">
+            <label class="form-label">Photo Produk</label><br>
+            {% if product.photo %}
+                <img src="{{ product.photo.url }}" alt="Photo" style="max-width:80px; max-height:80px; object-fit:contain; border-radius:6px; margin-bottom:8px;">
+                <br>
+            {% endif %}
+            <input type="file" name="photo" class="form-control" accept="image/*">
+        </div>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+        <a href="{% url 'products:index' %}" class="btn btn-secondary">Batal</a>
+    </form>
+
+    <hr class="my-4">
+
+    <h5 class="mb-3">Extra Barcode</h5>
+    <div id="extra-barcode-card" class="card mb-3" data-product-id="{{ product.id }}">
+        <div class="card-body">
+            <h6 class="card-title mb-2">Tambah Barcode Baru</h6>
+            <div class="input-group mb-3">
+                <input type="text" id="new-extra-barcode-input" class="form-control" placeholder="Masukkan Barcode Tambahan">
+                <button class="btn btn-success" type="button" id="add-extra-barcode-btn">Tambah</button>
+            </div>
+            <hr>
+            <h6 class="card-title mb-2">Daftar Extra Barcode</h6>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped table-hover table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Barcode</th>
+                            <th style="width: 1%;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="extra-barcode-list">
+                        {# Data extra barcode akan diisi oleh JavaScript #}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script src="{% static 'js/edit_product.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // Handle dimension input formatting
+    $('input[name="panjang_cm"], input[name="lebar_cm"], input[name="tinggi_cm"], input[name="berat_gram"]').each(function() {
+        var input = $(this);
+        var value = input.val();
+        
+        console.log('Processing input:', input.attr('name'), 'Value:', value);
+        
+        // Only clear if value is actually None, empty, or invalid
+        if (value === 'None' || value === '' || value === null) {
+            input.val('');
+            console.log('Cleared invalid value for:', input.attr('name'));
+        } else {
+            // Keep all valid values as they are
+            console.log('Keeping valid value for:', input.attr('name'), ':', value);
+        }
+    });
+    
+    // Add input validation for numeric fields
+    $('input[name="panjang_cm"], input[name="lebar_cm"], input[name="tinggi_cm"], input[name="berat_gram"]').on('input', function() {
+        var input = $(this);
+        var value = input.val();
+        
+        // Allow only numbers, decimal points, and commas
+        var cleanValue = value.replace(/[^0-9.,]/g, '');
+        
+        // Convert comma to dot for consistency
+        cleanValue = cleanValue.replace(',', '.');
+        
+        // Ensure only one decimal point
+        var parts = cleanValue.split('.');
+        if (parts.length > 2) {
+            cleanValue = parts[0] + '.' + parts.slice(1).join('');
+        }
+        
+        if (cleanValue !== value) {
+            input.val(cleanValue);
+        }
+    });
+    
+    // Handle form submission to ensure proper number format
+    $('form').on('submit', function() {
+        $('input[name="panjang_cm"], input[name="lebar_cm"], input[name="tinggi_cm"], input[name="berat_gram"]').each(function() {
+            var input = $(this);
+            var value = input.val();
+            
+            if (value && value !== '') {
+                // Convert comma to dot
+                var cleanValue = value.replace(',', '.');
+                var numValue = parseFloat(cleanValue);
+                if (!isNaN(numValue)) {
+                    input.val(numValue);
+                } else {
+                    input.val('');
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

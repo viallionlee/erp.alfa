@@ -1,0 +1,735 @@
+{% extends 'base_mobile.html' %}
+{% load static %}
+
+{% block title %}Scan Shipping - Mobile{% endblock %}
+
+{% block extra_head %}
+<style>
+    .content-wrapper {
+        padding-bottom: 80px; /* Space for sticky bar */
+    }
+    
+    .shipping-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem;
+        border-radius: 8px;
+        margin-bottom: 0.25rem;
+        text-align: center;
+    }
+    
+    .shipping-header h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+    
+    .shipping-header p {
+        margin: 0.1rem 0 0 0;
+        opacity: 0.9;
+        font-size: 0.7rem;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+    }
+    
+         .stats-grid {
+         display: grid;
+         grid-template-columns: repeat(4, 1fr);
+         gap: 0.25rem;
+         margin-bottom: 0.5rem;
+     }
+    
+         .stat-item {
+         text-align: center;
+         padding: 0.3rem 0.2rem;
+         background: #f8f9fa;
+         border-radius: 6px;
+         font-size: 0.6rem;
+     }
+     
+     .stat-value {
+         font-weight: 700;
+         font-size: 0.9rem;
+         color: #0d6efd;
+         line-height: 1;
+     }
+     
+     .stat-label {
+         color: #6c757d;
+         font-size: 0.55rem;
+         line-height: 1;
+         margin-top: 0.1rem;
+     }
+    
+    .motivational-message {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.75rem;
+        color: #8b4513;
+        text-align: center;
+        font-weight: 600;
+    }
+    
+    .courier-selection {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+    }
+    
+    .courier-title {
+        font-weight: 700;
+        font-size: 0.8rem;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+    
+    .courier-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.25rem;
+        justify-items: center;
+    }
+    
+    
+    
+         .courier-btn {
+         border: none;
+         background: #ffffff;
+         border-radius: 16px;
+         padding: 0.8rem 0.4rem;
+         font-size: 0.7rem;
+         font-weight: 600;
+         color: #333;
+         transition: all 0.3s ease;
+         display: flex;
+         flex-direction: column;
+         align-items: center;
+         justify-content: space-between;
+         width: 90px;
+         height: 90px;
+         position: relative;
+         overflow: hidden;
+         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+         cursor: pointer;
+     }
+    
+    .courier-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        opacity: 0.1;
+        z-index: 1;
+        transition: opacity 0.3s ease;
+    }
+    
+    /* Background images for each courier */
+    .courier-btn[data-courier="LEX"]::before {
+        background-image: url("{% static 'icons/lex.png' %}");
+    }
+    
+    .courier-btn[data-courier="Shopee Xpress"]::before {
+        background-image: url("{% static 'icons/shopee.png' %}");
+    }
+    
+    .courier-btn[data-courier="Ninja Pusat"]::before,
+    .courier-btn[data-courier="Ninja Agen"]::before {
+        background-image: url("{% static 'icons/ninja.png' %}");
+    }
+    
+    .courier-btn[data-courier="JNE"]::before {
+        background-image: url("{% static 'icons/jne.png' %}");
+    }
+    
+    .courier-btn[data-courier="J&T"]::before {
+        background-image: url("{% static 'icons/jnt.png' %}");
+    }
+    
+    .courier-btn[data-courier="GTL"]::before {
+        background-image: url("{% static 'icons/gtl.png' %}");
+    }
+    
+    .courier-btn[data-courier="CARGO"]::before {
+        background-image: url("{% static 'icons/cargo.png' %}");
+    }
+    
+    .courier-btn[data-courier="instant"]::before {
+        background-image: url("{% static 'icons/instant.png' %}");
+    }
+    
+    .courier-btn[data-courier="all"]::before {
+        background: linear-gradient(45deg, #4CAF50, #8BC34A);
+        opacity: 0.2;
+    }
+    
+         .courier-btn span {
+         position: relative;
+         z-index: 2;
+         background: rgba(255,255,255,0.95);
+         padding: 0.2rem 0.4rem;
+         border-radius: 6px;
+         font-weight: 700;
+         font-size: 0.6rem;
+         text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+         margin-top: auto;
+         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+     }
+    
+         .courier-btn img {
+         height: 32px;
+         width: auto;
+         position: relative;
+         z-index: 2;
+         filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+         margin-bottom: auto;
+     }
+    
+    .courier-btn i {
+        font-size: 2rem;
+        color: #28a745;
+        position: relative;
+        z-index: 2;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        margin-bottom: auto;
+    }
+    
+    .courier-btn.active {
+        border: 2px solid #1976d2;
+        box-shadow: 0 4px 16px rgba(25, 118, 210, 0.3);
+        transform: translateY(-2px);
+        background: #e3f2fd;
+    }
+    
+    .courier-btn.active::before {
+        opacity: 0.25;
+    }
+    
+    .courier-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .scan-card {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+    }
+    
+    .scan-header {
+        background: #17a2b8;
+        color: white;
+        padding: 0.4rem;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+        text-align: center;
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+    
+    .scan-input {
+        width: 100%;
+        padding: 0.5rem;
+        border: 2px solid #e9ecef;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+        background: #f8f9fa;
+    }
+    
+    .scan-input:focus {
+        border-color: #17a2b8;
+        outline: none;
+        background: white;
+    }
+    
+    .scan-btn {
+        width: 100%;
+        padding: 0.5rem;
+        background: #17a2b8;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+    
+    .scan-btn:active {
+        transform: scale(0.98);
+    }
+    
+    .scan-btn:disabled {
+        background: #6c757d;
+        opacity: 0.6;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #ffffff;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 0.5rem;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .notification-area {
+        margin-top: 0.5rem;
+    }
+    
+    .alert {
+        padding: 0.5rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .alert-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+    
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .alert-danger {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .history-card {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+    }
+    
+    .history-title {
+        font-weight: 700;
+        font-size: 0.8rem;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .history-link {
+        font-size: 0.7rem;
+        color: #0d6efd;
+        text-decoration: none;
+    }
+    
+    .history-item {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 0.4rem;
+        margin-bottom: 0.25rem;
+        font-size: 0.7rem;
+    }
+    
+    .history-time {
+        color: #6c757d;
+        font-size: 0.65rem;
+    }
+    
+    .history-order {
+        font-weight: 600;
+        color: #0d6efd;
+    }
+    
+    .history-courier {
+        color: #28a745;
+        font-weight: 600;
+    }
+    
+    .history-user {
+        color: #6c757d;
+        font-style: italic;
+    }
+    
+    /* Sticky Action Bar */
+    .sticky-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #e9ecef;
+        padding: 0.5rem;
+        z-index: 100;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .action-btn {
+        flex: 1;
+        padding: 0.5rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: white;
+        transition: all 0.2s;
+    }
+    
+         .btn-all {
+         background: #28a745;
+     }
+     
+     .btn-focus {
+         background: #17a2b8;
+     }
+     
+     .btn-history {
+         background: #0d6efd;
+     }
+    
+    .hidden {
+        display: none !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="content-wrapper">
+        
+
+                 <!-- Motivational Message -->
+         {% if motivational_message %}
+         <div class="motivational-message">
+             {{ motivational_message|safe }}
+         </div>
+         {% endif %}
+
+         <!-- Stats Card -->
+         <div class="stats-card">
+             <div class="stats-grid">
+                 <div class="stat-item">
+                     <div class="stat-value">{{ user_ships_today }}</div>
+                     <div class="stat-label">Ship Hari Ini</div>
+                 </div>
+                 <div class="stat-item">
+                     <div class="stat-value">{{ user_rank_today }}</div>
+                     <div class="stat-label">Rank Hari Ini</div>
+                 </div>
+                 <div class="stat-item">
+                     <div class="stat-value">{{ total_shippers_today }}</div>
+                     <div class="stat-label">Total Shipper</div>
+                 </div>
+                 <div class="stat-item">
+                     <div class="stat-value">{{ ships_per_hour|floatformat:1 }}</div>
+                     <div class="stat-label">Ship/Jam</div>
+                 </div>
+             </div>
+             {% if total_batched and total_shipped %}
+             <div style="text-align: center; margin-top: 0.5rem; font-size: 0.7rem; color: #6c757d;">
+                 <strong>Progress:</strong> {{ total_shipped }}/{{ total_batched }} Order Shipped
+             </div>
+             {% endif %}
+         </div>
+
+                 <!-- Courier Selection -->
+         <div class="courier-selection">
+             <div class="courier-grid">
+                 <!-- Baris 1: Instant, GTL, CARGO -->
+                 <button type="button" class="courier-btn" data-courier="instant" style="background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%);">
+                     <img src="{% static 'icons/instant.png' %}" alt="Instant">
+                     <span>Instant</span>
+                 </button>
+                 <button type="button" class="courier-btn" data-courier="GTL" style="background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);">
+                     <img src="{% static 'icons/gtl.png' %}" alt="GTL">
+                     <span>GTL</span>
+                 </button>
+                 <button type="button" class="courier-btn" data-courier="CARGO" style="background: linear-gradient(135deg, #f9fbe7 0%, #f0f4c3 100%);">
+                     <img src="{% static 'icons/cargo.png' %}" alt="CARGO">
+                     <span>CARGO</span>
+                 </button>
+                 
+                 <!-- Baris 2: JNE, Ninja Pusat, Ninja Agen -->
+                 <button type="button" class="courier-btn" data-courier="JNE" style="background: linear-gradient(135deg, #e3e3e3 0%, #bdbdbd 100%);">
+                     <img src="{% static 'icons/jne.png' %}" alt="JNE">
+                     <span>JNE</span>
+                 </button>
+                 <button type="button" class="courier-btn" data-courier="Ninja Pusat" style="background: linear-gradient(135deg, #f3eaff 0%, #e1bee7 100%);">
+                     <img src="{% static 'icons/ninja.png' %}" alt="Ninja Pusat">
+                     <span>Ninja Pusat</span>
+                 </button>
+                 <button type="button" class="courier-btn" data-courier="Ninja Agen" style="background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);">
+                     <img src="{% static 'icons/ninja.png' %}" alt="Ninja Agen">
+                     <span>Ninja Agen</span>
+                 </button>
+                 
+                 <!-- Baris 3: J&T, Shopee, LEX -->
+                 <button type="button" class="courier-btn" data-courier="J&T" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);">
+                     <img src="{% static 'icons/jnt.png' %}" alt="J&T">
+                     <span>J&T</span>
+                 </button>
+                 <button type="button" class="courier-btn" data-courier="Shopee Xpress" style="background: linear-gradient(135deg, #ffe5e0 0%, #ffccbc 100%);">
+                     <img src="{% static 'icons/shopee.png' %}" alt="Shopee Xpress">
+                     <span>Shopee</span>
+                 </button>
+                 <button type="button" class="courier-btn" data-courier="LEX" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);">
+                     <img src="{% static 'icons/lex.png' %}" alt="LEX">
+                     <span>LEX</span>
+                 </button>
+             </div>
+            <input type="hidden" id="courierInput" name="courier" required>
+        </div>
+
+        <!-- Scan Card -->
+        <div class="scan-card">
+            <div class="scan-header">
+                <i class="bi bi-upc-scan"></i> Scan ID Pesanan atau Resi
+            </div>
+            <form id="scanForm" method="POST">
+                {% csrf_token %}
+                <input type="text" id="scanInput" class="scan-input" 
+                       placeholder="Scan atau ketik di sini..." autofocus>
+                <button type="submit" class="scan-btn">
+                    <i class="bi bi-check-circle"></i> Konfirmasi Pengiriman
+                </button>
+            </form>
+            <div id="notificationArea" class="notification-area"></div>
+        </div>
+
+        <!-- Recent History -->
+        {% if last_10_shipping %}
+        <div class="history-card">
+            <div class="history-title">
+                <span>10 Pengiriman Terakhir</span>
+                <a href="{% url 'shipping_history' %}" class="history-link">
+                    <i class="bi bi-clock-history"></i> Semua Riwayat
+                </a>
+            </div>
+            {% for s in last_10_shipping %}
+            <div class="history-item">
+                <div class="history-time">{{ s.waktu_ship|date:"d M Y, H:i"|default:"N/A" }}</div>
+                <div class="history-order">{{ s.order.id_pesanan }}</div>
+                <div class="history-courier">{{ s.order.kurir|default:"N/A" }}</div>
+                <div class="history-user">{{ s.user.username }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+ <!-- Sticky Action Bar -->
+ <div class="sticky-action-bar">
+     <div class="action-buttons">
+         <button class="action-btn btn-all" onclick="selectAllCouriers()">
+             <i class="bi bi-check-all"></i> Pilih Semua
+         </button>
+         <button class="action-btn btn-focus" onclick="focusInput()">
+             <i class="bi bi-search"></i> Focus
+         </button>
+                   <button class="action-btn btn-history" onclick="goToHistory()">
+              <i class="bi bi-clock-history"></i> History
+          </button>
+     </div>
+ </div>
+
+<script>
+let selectedCourier = '';
+
+// Load sounds
+function playSound(type) {
+    if (type === 'success') {
+        new Audio('/static/sounds/ding.mp3').play();
+    } else if (type === 'error') {
+        new Audio('/static/sounds/wrong_barcode.mp3').play();
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+         // Load saved courier preference
+     const savedCourier = localStorage.getItem('selectedCourier') || 'all';
+     const courierBtn = document.querySelector(`.courier-btn[data-courier="${savedCourier}"]`);
+     if (courierBtn && savedCourier !== 'all') {
+         courierBtn.click();
+     } else {
+         // Default to "all" couriers
+         selectedCourier = 'all';
+         document.getElementById('courierInput').value = selectedCourier;
+     }
+    
+    // Add courier button event listeners
+    document.querySelectorAll('.courier-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.courier-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            selectedCourier = this.getAttribute('data-courier');
+            document.getElementById('courierInput').value = selectedCourier;
+            
+            // Save preference to localStorage
+            localStorage.setItem('selectedCourier', selectedCourier);
+        });
+    });
+    
+    // Add form submit event listener
+    const form = document.getElementById('scanForm');
+    const scanInput = document.getElementById('scanInput');
+    const notificationArea = document.getElementById('notificationArea');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const orderId = scanInput.value.trim();
+        
+        if (!orderId) {
+            showNotification('⚠️ Input kosong! Silakan scan atau ketik ID Pesanan/Resi. 📱📦🚚📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦', 'danger');
+            playSound('error');
+            return;
+        }
+        
+        if (!selectedCourier) {
+            showNotification('⚠️ Kurir belum dipilih! Silakan pilih kurir di atas. 🚚📦📱📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦', 'danger');
+            playSound('error');
+            return;
+        }
+        
+        showNotification('⏳ Memproses scan ID: ' + orderId + ' dengan kurir ' + selectedCourier + '... 🔄📦🚚📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦', 'info');
+        
+        // Disable button and show loading
+        const submitBtn = document.querySelector('.scan-btn');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="loading-spinner"></span>Memproses...';
+        
+        fetch("{% url 'scanshipping' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ 
+                'order_id': orderId,
+                'courier': selectedCourier
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Re-enable button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            
+            if (data.success) {
+                showNotification('✅ Berhasil! ' + data.message + ' 🎉🚚📦📱📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦', 'success');
+                playSound('success');
+                
+                // Clear input and focus
+                scanInput.value = '';
+                scanInput.focus();
+                
+                // Refresh page after 2 seconds
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            } else {
+                showNotification('❌ Gagal! ' + data.message + ' 😔📦🚚📱📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦', 'danger');
+                playSound('error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Re-enable button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            showNotification('❌ Gagal! Terjadi kesalahan koneksi. Silakan coba lagi. 😔📡📦🚚📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦📦', 'danger');
+            playSound('error');
+        });
+    });
+    
+    // Add keyboard event listener for Enter key
+    scanInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            form.dispatchEvent(new Event('submit'));
+        }
+    });
+});
+
+function showNotification(message, type) {
+    const notificationArea = document.getElementById('notificationArea');
+    notificationArea.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+    
+    // Auto-hide notifications
+    if (type === 'success') {
+        setTimeout(() => {
+            notificationArea.innerHTML = '';
+        }, 3000);
+    } else if (type === 'info') {
+        // Don't auto-hide info notifications (loading)
+    } else {
+        // Auto-hide error notifications after 5 seconds
+        setTimeout(() => {
+            notificationArea.innerHTML = '';
+        }, 5000);
+    }
+}
+
+ function selectAllCouriers() {
+     // Remove active class from all courier buttons
+     document.querySelectorAll('.courier-btn').forEach(b => b.classList.remove('active'));
+     
+     // Set selectedCourier to 'all'
+     selectedCourier = 'all';
+     document.getElementById('courierInput').value = selectedCourier;
+     
+     // Save preference to localStorage
+     localStorage.setItem('selectedCourier', selectedCourier);
+     
+     // Show notification
+     showNotification('✅ Semua kurir dipilih! 🚚📦', 'success');
+ }
+ 
+ function focusInput() {
+     const scanInput = document.getElementById('scanInput');
+     scanInput.focus();
+     scanInput.select();
+     
+     // Show notification
+     showNotification('📱 Input scan sudah difokuskan!', 'info');
+ }
+ 
+ function goToHistory() {
+     window.location.href = "{% url 'shipping_history' %}";
+ }
+</script>
+{% endblock %} 

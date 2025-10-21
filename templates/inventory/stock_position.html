@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Posisi Stock di Rak{% endblock %}
+
+{% block extra_head %}
+<style>
+    .table-container {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .table thead th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 8px;
+        text-align: center;
+    }
+    
+    .table tbody td {
+        padding: 8px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f3f4;
+        font-size: 0.875rem;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .quantity-cell {
+        text-align: center;
+        font-weight: 600;
+    }
+    
+    .quantity-opname {
+        color: #fd7e14;
+        font-weight: bold;
+    }
+    
+    .quantity-normal {
+        color: #28a745;
+    }
+    
+    .status-ok {
+        color: #28a745;
+        font-weight: bold;
+    }
+    
+    .status-overstock {
+        color: #dc3545;
+        font-weight: bold;
+        background-color: #f8d7da;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+    
+    .summary-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .summary-card h4 {
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+    
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .summary-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    
+    .summary-label {
+        font-weight: 500;
+    }
+    
+    .summary-value {
+        font-weight: 700;
+        font-size: 1.1em;
+    }
+    
+    .overstock-warning {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    
+    .filter-section {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .opname-sessions-simple {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    
+    .opname-session-badge {
+        background: #e3f2fd;
+        color: #1976d2;
+        border: 1px solid #bbdefb;
+        border-radius: 12px;
+        padding: 2px 8px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+    
+    .opname-session-badge:hover {
+        background: #bbdefb;
+        color: #0d47a1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="bi bi-box-seam"></i> Posisi Stock di Rak
+        </h2>
+        <div class="d-flex gap-2">
+            <a href="{% url 'inventory:rak_stock' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Kembali ke Stok Rak
+            </a>
+            <button type="button" class="btn btn-success" onclick="window.print()">
+                <i class="bi bi-printer"></i> Print
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <form method="GET" action="{% url 'inventory:stock_position_view' %}">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="rak_filter" class="form-label">Filter Rak:</label>
+                    <select name="rak_filter" id="rak_filter" class="form-select">
+                        <option value="">Semua Rak</option>
+                        {% for rak in all_raks %}
+                        <option value="{{ rak.id }}" {% if selected_rak == rak.id|stringformat:"s" %}selected{% endif %}>
+                            {{ rak.lokasi }} ({{ rak.kode_rak }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Cari:</label>
+                    <input type="text" name="search" id="search" class="form-control" 
+                           placeholder="Cari SKU, nama produk, barcode, variant, brand, atau rak..." 
+                           value="{{ search_query|default:'' }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search"></i> Cari
+                        </button>
+                        <a href="{% url 'inventory:stock_position_view' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise"></i> Reset
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="summary-card">
+                <h4><i class="bi bi-bar-chart"></i> Ringkasan Posisi Stock</h4>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="summary-item">
+                            <span class="summary-label">Total Rak:</span>
+                            <span class="summary-value">{{ summary.total_raks }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="summary-item">
+                            <span class="summary-label">Total Produk:</span>
+                            <span class="summary-value">{{ summary.total_products }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="summary-item">
+                            <span class="summary-label">Total Quantity:</span>
+                            <span class="summary-value">{{ summary.total_quantity|floatformat:0 }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="summary-item">
+                            <span class="summary-label">Total Opname:</span>
+                            <span class="summary-value">{{ summary.total_quantity_opname|floatformat:0 }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="summary-item">
+                            <span class="summary-label">Produk dengan Opname Aktif:</span>
+                            <span class="summary-value">{{ summary.products_with_opname }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="summary-item">
+                            <span class="summary-label">Produk Overstock:</span>
+                            <span class="summary-value">{{ summary.overstock_count }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overstock Warning -->
+    {% if summary.overstock_count > 0 %}
+    <div class="overstock-warning">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <strong>PERHATIAN!</strong> Ada {{ summary.overstock_count }} produk dengan status OVERSTOCK 
+        (total quantity melebihi stock master)
+    </div>
+    {% endif %}
+
+    <!-- Stock Position Table -->
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Rak</th>
+                        <th>SKU</th>
+                        <th>Barcode</th>
+                        <th>Nama Produk</th>
+                        <th>Variant Produk</th>
+                        <th>Brand</th>
+                        <th>Quantity</th>
+                        <th>Quantity Opname</th>
+                        <th>Total Quantity</th>
+                        <th>Stock Master</th>
+                        <th>Status</th>
+                        <th>Opname Sessions</th>
+                        <th>Terakhir Update</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in stock_data %}
+                    <tr>
+                        <td><strong>{{ item.rak_lokasi }}</strong></td>
+                        <td><code>{{ item.product_sku }}</code></td>
+                        <td><small>{{ item.product_barcode }}</small></td>
+                        <td>{{ item.product_name }}</td>
+                        <td><small>{{ item.product_variant }}</small></td>
+                        <td><small>{{ item.product_brand }}</small></td>
+                        <td class="quantity-cell quantity-normal">{{ item.quantity|floatformat:0 }}</td>
+                        <td class="quantity-cell quantity-opname">{{ item.quantity_opname|floatformat:0 }}</td>
+                        <td class="quantity-cell">
+                            <strong>{{ item.total_quantity|floatformat:0 }}</strong>
+                        </td>
+                        <td class="quantity-cell">{{ item.master_quantity|floatformat:0 }}</td>
+                        <td class="text-center">
+                            {% if item.status == 'OK' %}
+                                <span class="status-ok">✓ OK</span>
+                            {% else %}
+                                <span class="status-overstock">⚠ OVERSTOCK</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.has_active_opname %}
+                                <div class="opname-sessions-simple">
+                                    {% for session in item.opname_sessions %}
+                                    <span class="opname-session-badge">{{ session.session_code }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td><small>{{ item.last_updated }}</small></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="13" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox"></i> Tidak ada data stock di rak
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="mt-3">
+        <small class="text-muted">
+            <strong>Keterangan:</strong><br>
+            • <span class="quantity-normal">Quantity</span> = Stock yang sudah final di rak<br>
+            • <span class="quantity-opname">Quantity Opname</span> = Stock yang sedang dalam proses opname<br>
+            • <span class="status-ok">OK</span> = Total quantity tidak melebihi stock master<br>
+            • <span class="status-overstock">OVERSTOCK</span> = Total quantity melebihi stock master<br>
+            • <strong>Opname Sessions</strong> = Kode sesi opname aktif untuk produk tersebut
+        </small>
+    </div>
+</div>
+{% endblock %}

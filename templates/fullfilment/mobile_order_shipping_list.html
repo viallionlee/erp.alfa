@@ -1,0 +1,694 @@
+{% extends 'base_mobile.html' %}
+{% load static %}
+
+{% block title %}Order Shipping List - Mobile{% endblock %}
+
+{% block extra_head %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --glass-bg: rgba(255, 255, 255, 0.95);
+    --glass-blur: blur(10px);
+    --shadow-soft: 0 4px 15px rgba(0,0,0,0.1);
+    --shadow-hover: 0 6px 20px rgba(102, 126, 234, 0.3);
+}
+
+body {
+    background: var(--primary-gradient);
+    min-height: 100vh;
+}
+
+.modern-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: none;
+    border-radius: 20px;
+    box-shadow: var(--shadow-soft);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.modern-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: var(--shadow-hover);
+}
+
+.order-item {
+    background: #ffffff;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    border-left: 3px solid #667eea;
+    max-height: 75px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 75px;
+}
+
+.order-item .text-muted {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.order-id {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: #495057;
+    background: #f8f9fa;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    border: 1px solid #dee2e6;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.status-badge {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.status-shipped {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.shipper-name {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+    padding: 0.15rem 0.3rem;
+    border-radius: 3px;
+    font-size: 0.65rem;
+    font-weight: 500;
+}
+
+.courier-badge {
+    background: #e3f2fd;
+    color: #1976d2;
+    border: 1px solid #bbdefb;
+    padding: 0.15rem 0.3rem;
+    border-radius: 3px;
+    font-size: 0.65rem;
+    font-weight: 500;
+}
+
+.awb-number {
+    font-family: 'Courier New', monospace;
+    font-size: 0.6rem;
+    color: #6c757d;
+    background: #f8f9fa;
+    padding: 0.1rem 0.3rem;
+    border-radius: 2px;
+    border: 1px solid #e9ecef;
+}
+
+.sticky-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    display: none;
+}
+
+.refresh-btn {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #1976d2;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    font-size: 1.5rem;
+    border: none;
+    transition: background 0.2s;
+    z-index: 1000;
+}
+
+.refresh-btn:hover {
+    background: #1565c0;
+}
+
+.btn-outline-primary {
+    border: 2px solid #667eea;
+    color: #667eea;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.data-table-mobile {
+    display: none;
+    padding-bottom: 100px; /* Space for sticky bar */
+}
+
+@media (max-width: 768px) {
+    .data-table-mobile {
+        display: block;
+    }
+    .sticky-bar {
+        display: block;
+    }
+    
+    .data-table-desktop {
+        display: none;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="modern-card mb-3">
+    <div class="card-body p-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-1 fw-bold text-dark">Order Shipping List</h5>
+                <small class="text-muted">Daftar order yang sudah di-shipping</small>
+            </div>
+            <div class="d-flex gap-1">
+                <a href="{% url 'order_shipping_report' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-graph-up me-1"></i>Report
+                </a>
+                <a href="/fullfilment/scanshipping/" class="btn btn-primary btn-sm">
+                    <i class="bi bi-truck me-1"></i>Scan
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid px-3" style="padding-bottom: 100px;">
+
+    <!-- Sticky Bar -->
+    <div class="sticky-bar">
+        <div class="d-flex gap-2 align-items-center">
+            <button class="btn btn-outline-primary btn-sm" id="searchBtn">
+                <i class="bi bi-search me-1"></i>Search
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" id="filterBtn">
+                <i class="bi bi-funnel me-1"></i>Filter
+            </button>
+            <div id="filterStatus" class="ms-auto text-muted small" style="display: none;">
+                <i class="bi bi-funnel-fill me-1"></i>Filtered
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Modal -->
+    <div class="modal fade" id="searchModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Search Order</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Search Term</label>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Cari Order ID, Kurir, Shipper, atau AWB...">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="searchSubmitBtn">Search</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Filter Order</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Filter by Date</label>
+                        <input type="date" id="dateFilter" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Filter by Shipper</label>
+                        <select id="shipperFilter" class="form-select">
+                            <option value="">All Shippers</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Filter by Courier</label>
+                        <select id="courierFilter" class="form-select">
+                            <option value="">All Couriers</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-warning" id="clearFilterBtn">Clear</button>
+                    <button type="button" class="btn btn-primary" id="applyFilterBtn">Apply Filter</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Data Display -->
+    <div class="data-table-mobile" id="mobileDataContainer">
+        <!-- Data will be loaded here -->
+    </div>
+
+    <!-- Desktop DataTable (hidden on mobile) -->
+    <div class="data-table-desktop">
+        <div class="card table-container">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="orderShippingTable" class="table table-hover w-100">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Waktu Ship</th>
+                                <th>Order ID</th>
+                                <th>Nama Toko</th>
+                                <th>User</th>
+                                <th>Kurir</th>
+                                <th>AWB/Tracking</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be loaded via AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Refresh Button -->
+<button class="refresh-btn" id="refreshBtn" title="Refresh Data">
+    <i class="bi bi-arrow-clockwise"></i>
+</button>
+{% endblock %}
+
+{% block extra_script %}
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+$(document).ready(function() {
+    let table;
+    let currentPage = 1;
+    let pageSize = 25; // Maksimal 25 item per load
+    let allData = [];
+    let filteredData = [];
+    let isLoading = false;
+    let hasMoreData = true;
+    let currentSearchTerm = '';
+    let currentFilters = {
+        date: '',
+        shipper: '',
+        courier: ''
+    };
+
+    // Initialize DataTable for desktop
+    if (window.innerWidth > 768) {
+        table = $('#orderShippingTable').DataTable({
+            processing: true,
+            serverSide: true,
+            pageLength: 25,
+            ajax: {
+                url: '/fullfilment/api/order-shipping-list/',
+                type: 'GET',
+                data: function(d) {
+                    return d;
+                }
+            },
+            columns: [
+                { data: 'id', visible: false },
+                { data: 'waktu_ship', title: 'Waktu Ship', className: 'text-nowrap' },
+                { 
+                    data: 'order_id_pesanan',
+                    title: 'Order ID',
+                    render: function(data) {
+                        return '<span class="order-id">' + data + '</span>';
+                    }
+                },
+                { data: 'nama_toko', title: 'Nama Toko' },
+                { 
+                    data: 'user',
+                    title: 'User',
+                    render: function(data) {
+                        return '<div class="user-info">' +
+                               '<div class="user-avatar">' + data.charAt(0).toUpperCase() + '</div>' +
+                               '<span>' + data + '</span>' +
+                               '</div>';
+                    }
+                },
+                { 
+                    data: 'kurir',
+                    title: 'Kurir',
+                    render: function(data) {
+                        return '<span class="courier-badge">' + data + '</span>';
+                    }
+                },
+                { 
+                    data: 'awb_no_tracking',
+                    title: 'AWB/Tracking',
+                    render: function(data) {
+                        return data !== 'N/A' ? '<span class="awb-number">' + data + '</span>' : '<span class="text-muted">-</span>';
+                    }
+                },
+                { 
+                    data: null,
+                    title: 'Status',
+                    render: function(data, type, row) {
+                        return '<span class="status-badge status-shipped">Shipped</span>';
+                    }
+                }
+            ],
+            order: [[1, 'desc']],
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                 '<"row"<"col-sm-12"tr>>' +
+                 '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            language: {
+                processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
+                search: "Cari:",
+                lengthMenu: "Tampilkan _MENU_ data per halaman",
+                zeroRecords: "Tidak ada data yang ditemukan",
+                info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+                infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
+                infoFiltered: "(difilter dari _MAX_ total data)",
+                paginate: {
+                    first: "Pertama",
+                    last: "Terakhir",
+                    next: "Selanjutnya",
+                    previous: "Sebelumnya"
+                }
+            }
+        });
+    }
+
+    // Load mobile data
+    function loadMobileData(reset = false) {
+        if (isLoading) return;
+        
+        isLoading = true;
+        
+        if (reset) {
+            currentPage = 1;
+            allData = [];
+            hasMoreData = true;
+        }
+        
+        const start = (currentPage - 1) * pageSize;
+        
+        fetch(`/fullfilment/api/order-shipping-list/?start=${start}&length=${pageSize}`)
+            .then(response => response.json())
+            .then(data => {
+                const newData = data.data || [];
+                
+                if (reset) {
+                    allData = newData;
+                } else {
+                    allData = [...allData, ...newData];
+                }
+                
+                filteredData = [...allData];
+                
+                // Check if there's more data
+                hasMoreData = newData.length === pageSize && newData.length > 0;
+                
+                // Populate filter options and apply current filters
+                populateFilterOptions();
+                applyFilters();
+                isLoading = false;
+            })
+            .catch(error => {
+                console.error('Error loading data:', error);
+                isLoading = false;
+                hasMoreData = false;
+            });
+    }
+
+    // Render mobile data
+    function renderMobileData() {
+        const container = document.getElementById('mobileDataContainer');
+        if (!filteredData || filteredData.length === 0) {
+            if (isLoading) {
+                // Don't show anything while loading
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = `
+                <div class="modern-card">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-inbox display-4 text-muted mb-3"></i>
+                        <p class="text-muted">Tidak ada data yang ditemukan</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const pageData = filteredData.slice(startIndex, endIndex);
+
+        let html = '';
+        pageData.forEach(item => {
+            html += `
+                <div class="order-item">
+                    <!-- Row 1: ID Pesanan - Kurir -->
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="order-id" style="font-size: 0.8rem;">${item.order_id_pesanan}</span>
+                            <span class="text-muted" style="font-size: 0.7rem;">- ${item.kurir || 'N/A'}</span>
+                        </div>
+                    </div>
+                    <!-- Row 2: Nama Shipper - Status - Date Time -->
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="shipper-name">${item.user || 'N/A'}</span>
+                            <span class="status-badge status-shipped">Shipped</span>
+                        </div>
+                        <small class="text-muted" style="font-size: 0.7rem;">${item.waktu_ship || 'N/A'}</small>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Add Load More button or status message
+        if (hasMoreData && allData.length > 0) {
+            html += `
+                <div class="d-flex justify-content-center mt-3">
+                    <button class="btn btn-outline-primary" onclick="loadMoreData()">
+                        <i class="bi bi-arrow-down-circle me-1"></i>Load More (${allData.length} loaded)
+                    </button>
+                </div>
+            `;
+        } else if (allData.length > 0) {
+            html += `
+                <div class="d-flex justify-content-center mt-3">
+                    <small class="text-muted">All data loaded (${allData.length} items)</small>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+    }
+
+    // Load more data for mobile
+    window.loadMoreData = function() {
+        if (!isLoading && hasMoreData) {
+            currentPage++;
+            loadMobileData(false);
+        }
+    };
+
+    // Populate filter options
+    function populateFilterOptions() {
+        if (allData && allData.length > 0) {
+            // Get unique shippers
+            const shippers = [...new Set(allData.map(item => item.user).filter(user => user && user !== 'N/A'))];
+            const shipperSelect = document.getElementById('shipperFilter');
+            shipperSelect.innerHTML = '<option value="">All Shippers</option>';
+            shippers.forEach(shipper => {
+                shipperSelect.innerHTML += `<option value="${shipper}">${shipper}</option>`;
+            });
+
+            // Get unique couriers
+            const couriers = [...new Set(allData.map(item => item.kurir).filter(courier => courier && courier !== 'N/A'))];
+            const courierSelect = document.getElementById('courierFilter');
+            courierSelect.innerHTML = '<option value="">All Couriers</option>';
+            couriers.forEach(courier => {
+                courierSelect.innerHTML += `<option value="${courier}">${courier}</option>`;
+            });
+        }
+    }
+
+    // Apply filters
+    function applyFilters() {
+        if (!allData || allData.length === 0) {
+            filteredData = [];
+            return;
+        }
+
+        let filtered = [...allData];
+
+        // Apply search filter
+        if (currentSearchTerm) {
+            filtered = filtered.filter(item => 
+                item.order_id_pesanan.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
+                item.kurir.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
+                item.user.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
+                (item.awb_no_tracking && item.awb_no_tracking.toLowerCase().includes(currentSearchTerm.toLowerCase()))
+            );
+        }
+
+        // Apply date filter
+        if (currentFilters.date) {
+            filtered = filtered.filter(item => {
+                if (!item.waktu_ship || item.waktu_ship === 'N/A') return false;
+                const itemDate = item.waktu_ship.split(' ')[0]; // Get date part
+                const filterDate = currentFilters.date.split('-').reverse().join('-'); // Convert to DD-MM-YYYY
+                return itemDate === filterDate;
+            });
+        }
+
+        // Apply shipper filter
+        if (currentFilters.shipper) {
+            filtered = filtered.filter(item => item.user === currentFilters.shipper);
+        }
+
+        // Apply courier filter
+        if (currentFilters.courier) {
+            filtered = filtered.filter(item => item.kurir === currentFilters.courier);
+        }
+
+        filteredData = filtered;
+        
+        // Show/hide filter status
+        const filterStatus = document.getElementById('filterStatus');
+        const hasActiveFilters = currentSearchTerm || currentFilters.date || currentFilters.shipper || currentFilters.courier;
+        if (hasActiveFilters) {
+            filterStatus.style.display = 'block';
+        } else {
+            filterStatus.style.display = 'none';
+        }
+        
+        renderMobileData();
+    }
+
+    // Event handlers for modals and buttons
+    document.getElementById('searchBtn').addEventListener('click', function() {
+        const searchModal = new bootstrap.Modal(document.getElementById('searchModal'));
+        searchModal.show();
+    });
+
+    document.getElementById('filterBtn').addEventListener('click', function() {
+        populateFilterOptions();
+        const filterModal = new bootstrap.Modal(document.getElementById('filterModal'));
+        filterModal.show();
+    });
+
+    document.getElementById('searchSubmitBtn').addEventListener('click', function() {
+        currentSearchTerm = document.getElementById('searchInput').value;
+        applyFilters();
+        const searchModal = bootstrap.Modal.getInstance(document.getElementById('searchModal'));
+        searchModal.hide();
+    });
+
+    // Enter key support for search
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            currentSearchTerm = this.value;
+            applyFilters();
+            const searchModal = bootstrap.Modal.getInstance(document.getElementById('searchModal'));
+            searchModal.hide();
+        }
+    });
+
+    document.getElementById('applyFilterBtn').addEventListener('click', function() {
+        currentFilters.date = document.getElementById('dateFilter').value;
+        currentFilters.shipper = document.getElementById('shipperFilter').value;
+        currentFilters.courier = document.getElementById('courierFilter').value;
+        applyFilters();
+        const filterModal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
+        filterModal.hide();
+    });
+
+    document.getElementById('clearFilterBtn').addEventListener('click', function() {
+        document.getElementById('dateFilter').value = '';
+        document.getElementById('shipperFilter').value = '';
+        document.getElementById('courierFilter').value = '';
+        currentFilters = { date: '', shipper: '', courier: '' };
+        currentSearchTerm = '';
+        document.getElementById('searchInput').value = '';
+        applyFilters();
+    });
+
+    // Refresh button
+    document.getElementById('refreshBtn').addEventListener('click', function() {
+        if (window.innerWidth > 768 && table) {
+            table.ajax.reload();
+        } else {
+            loadMobileData(true); // Reset data
+        }
+    });
+
+    // Adjust padding for sticky bar
+    function adjustPaddingForStickyBar() {
+        if (window.innerWidth <= 768) {
+            const stickyBar = document.querySelector('.sticky-bar');
+            if (stickyBar) {
+                const stickyBarHeight = stickyBar.offsetHeight;
+                document.querySelector('.container-fluid').style.paddingBottom = (stickyBarHeight + 20) + 'px';
+            }
+        }
+    }
+
+    // Initial load
+    // Load data immediately
+    loadMobileData(true);
+    
+    // Adjust padding on load and resize
+    adjustPaddingForStickyBar();
+    window.addEventListener('resize', adjustPaddingForStickyBar);
+
+    // Refresh data every 30 seconds
+    setInterval(function() {
+        if (window.innerWidth > 768 && table) {
+            table.ajax.reload(null, false);
+        } else if (window.innerWidth <= 768) {
+            loadMobileData(true); // Reset data
+        }
+    }, 30000);
+});
+</script>
+{% endblock %}

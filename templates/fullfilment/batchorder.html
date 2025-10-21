@@ -1,0 +1,383 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Daftar Order pada Batch: <span class="text-primary">{{ nama_batch }}</span></h2>
+        <div>
+            {% if perms.fullfilment.change_batchlist %}
+            <a href="{% url 'batch_order_logs_specific' nama_batch=nama_batch %}" class="btn btn-info me-2">
+                <i class="bi bi-clock-history"></i> View Logs
+            </a>
+            {% endif %}
+            <a href="{% url 'fullfilment_index' %}" class="btn btn-outline-secondary">&larr; Back to Batchlist</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="batchOrderTable" class="table table-hover table-sm" style="width:100%">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID Pesanan</th>
+                            <th>Tanggal Pembuatan</th>
+                            <th>Kirim Sebelum</th>
+                            <th>SKU</th>
+                            <th>Barcode</th>
+                            <th>Nama Produk</th>
+                            <th>Variant Produk</th>
+                            <th>Brand</th>
+                            <th>Jumlah</th>
+                            <th>Order Type</th>
+                            <th>Status</th>
+                            <th>Status Order</th>
+                            <th class="no-sort">Aksi</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+    /* Custom badge styling untuk status */
+    .badge {
+        font-size: 0.85rem;
+        font-weight: 600;
+        padding: 0.35em 0.65em;
+        text-transform: capitalize;
+    }
+    
+    /* Highlighted status untuk cancel */
+    .badge.bg-danger {
+        animation: pulse-danger 2s infinite;
+    }
+    
+    @keyframes pulse-danger {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    
+    /* Custom purple badge untuk packed status */
+    .badge.bg-purple {
+        background-color: #6f42c1 !important;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block extra_script %}
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script src=""></script>
+
+<script>
+$(document).ready(function() {
+    // Variabel global untuk status batch
+    const batchStatus = "{{ batch_status }}";
+    const isBatchClosed = batchStatus === 'closed';
+    const hasChangePermission = {{ perms.fullfilment.change_batchlist|yesno:"true,false" }};
+    
+    // Fungsi untuk menampilkan pesan error jika batch closed
+    function showBatchClosedError(actionName) {
+        Swal.fire({
+            title: 'Aksi Ditolak!',
+            text: `Tidak dapat melakukan ${actionName} karena batch sudah berstatus closed.`,
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    }
+    // Inisialisasi filter header
+    $('#batchOrderTable thead').append('<tr class="filters"></tr>');
+    $('#batchOrderTable thead tr:eq(0) th').each(function () {
+        var title = $(this).text();
+        if (!$(this).hasClass('no-sort')) {
+            $('#batchOrderTable .filters').append('<th><input type="text" placeholder="Cari ' + title + '" class="form-control form-control-sm"></th>');
+        } else {
+            $('#batchOrderTable .filters').append('<th></th>');
+        }
+    });
+
+    var tglCell = $('#batchOrderTable .filters th').eq(1);
+    tglCell.html(`<select class="form-select form-select-sm"><option value="">Semua</option>{% for tgl in unique_tanggals %}<option value="{{ tgl }}">{{ tgl }}</option>{% endfor %}</select>`);
+
+    var kirimCell = $('#batchOrderTable .filters th').eq(2);
+    kirimCell.html(`<select class="form-select form-select-sm"><option value="">Semua</option>{% for tgl in unique_kirims %}<option value="{{ tgl }}">{{ tgl }}</option>{% endfor %}</select>`);
+
+    var table = $('#batchOrderTable').DataTable({
+        "processing": true,
+        "serverSide": true,
+        "ajax": "{% url 'batchorder_api' nama_batch=nama_batch %}",
+        "orderCellsTop": true,
+        "columns": [
+            { "data": 0 }, { "data": 1 }, { "data": 2 }, { "data": 3 },
+            { "data": 4 }, { "data": 5 }, { "data": 6 }, { "data": 7 },
+            { "data": 8 }, { "data": 9 }, { "data": 10 }, { "data": 11 },
+            {
+                "data": null, // Data tidak terikat, hanya untuk render tombol
+                "orderable": false, "searchable": false
+            }
+        ],
+        "language": { "url": "{% static 'datatables/Indonesian.json' %}" },
+        "columnDefs": [
+            {
+                targets: 10, // Kolom Status - tambahkan badge warna
+                render: function(data, type, row) {
+                    const status = data ? data.toLowerCase() : '';
+                    let badgeClass = 'bg-secondary';
+                    let iconClass = 'bi-question-circle';
+                    let tooltipText = 'Status tidak diketahui';
+                    
+                    if (status.includes('cancel') || status.includes('batal')) {
+                        badgeClass = 'bg-danger';
+                        iconClass = 'bi-x-circle';
+                        tooltipText = 'Order dibatalkan - Tidak valid untuk fulfillment';
+                    } else if (status === 'awaiting payment' || status === 'pending') {
+                        badgeClass = 'bg-warning text-dark';
+                        iconClass = 'bi-clock';
+                        tooltipText = 'Menunggu pembayaran';
+                    } else if (status === 'on process' || status === 'processing') {
+                        badgeClass = 'bg-info';
+                        iconClass = 'bi-gear';
+                        tooltipText = 'Order sedang diproses';
+                    } else if (status === 'delivered' || status === 'completed') {
+                        badgeClass = 'bg-success';
+                        iconClass = 'bi-check-circle';
+                        tooltipText = 'Order sudah dikirim/selesai';
+                    }
+                    
+                    return `<span class="badge ${badgeClass}" data-bs-toggle="tooltip" title="${tooltipText}">
+                                <i class="bi ${iconClass} me-1"></i>${data || '-'}
+                            </span>`;
+                }
+            },
+            {
+                targets: 11, // Kolom Status Order - tambahkan badge warna
+                render: function(data, type, row) {
+                    const statusOrder = data ? data.toLowerCase() : 'pending';
+                    let badgeClass = 'bg-secondary';
+                    let iconClass = 'bi-circle';
+                    
+                    if (statusOrder === 'pending') {
+                        badgeClass = 'bg-warning text-dark';
+                        iconClass = 'bi-hourglass-split';
+                    } else if (statusOrder === 'printed') {
+                        badgeClass = 'bg-info';
+                        iconClass = 'bi-printer';
+                    } else if (statusOrder === 'picked') {
+                        badgeClass = 'bg-primary';
+                        iconClass = 'bi-box-seam';
+                    } else if (statusOrder === 'packed') {
+                        badgeClass = 'bg-purple';
+                        iconClass = 'bi-box';
+                    } else if (statusOrder === 'shipped') {
+                        badgeClass = 'bg-success';
+                        iconClass = 'bi-truck';
+                    } else if (statusOrder.includes('cancel')) {
+                        badgeClass = 'bg-danger';
+                        iconClass = 'bi-x-circle';
+                    }
+                    
+                    return `<span class="badge ${badgeClass}">
+                                <i class="bi ${iconClass} me-1"></i>${data || 'pending'}
+                            </span>`;
+                }
+            },
+            {
+                targets: 12, // Kolom Aksi
+                orderable: false,
+                render: function(data, type, row, meta) {
+                    const idPesanan = row[0];
+                    const status = row[10] ? row[10].toLowerCase() : ''; // Status dari order
+                    const statusOrder = row[11] ? row[11].toLowerCase() : 'pending';
+                    const orderPk = row[12];
+                    const allowedStatuses = ['pending', 'printed'];
+                    const nama_batch = "{{ nama_batch|escapejs }}";
+                    const isBatchClosed = "{{ batch_status }}" === 'closed';
+
+                    // Jika batch closed atau tidak ada permission, nonaktifkan semua aksi
+                    if (isBatchClosed || !hasChangePermission) {
+                        const reason = isBatchClosed ? 'Batch sudah closed' : 'Tidak ada permission';
+                        return `
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" disabled>Aksi</button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><span class="dropdown-item text-muted disabled"><i class="bi bi-info-circle me-2"></i>${reason}</span></li>
+                                </ul>
+                            </div>
+                        `;
+                    }
+
+                    let eraseButtonHtml = '';
+                    if (allowedStatuses.includes(statusOrder)) {
+                        eraseButtonHtml = `
+                            <li>
+                                <a class="dropdown-item text-warning btn-erase" href="#" data-id-pesanan="${idPesanan}">
+                                    <i class="bi bi-trash me-2"></i>Hapus dari Batch
+                                </a>
+                            </li>
+                        `;
+                    }
+
+                    return `
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                Aksi
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                ${eraseButtonHtml}
+                            </ul>
+                        </div>
+                    `;
+                }
+            }
+        ]
+    });
+
+    // Terapkan aksi filter
+    $('.filters th').each(function(i) {
+        var searchInput = $(this).find('input, select');
+        searchInput.on('keyup change clear', function() {
+            if (table.column(i).search() !== this.value) {
+                table.column(i).search(this.value).draw();
+            }
+        });
+    });
+
+    // Fungsi AJAX Umum
+    function performAjaxAction(url, data, successMessage) {
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: data,
+            success: function(response) {
+                if (response.status === 'success') {
+                    Swal.fire('Berhasil!', response.message || successMessage, 'success');
+                    table.ajax.reload();
+                } else {
+                    Swal.fire('Gagal!', response.message, 'error');
+                }
+            },
+            error: function(xhr, status, error) {
+                let errorMsg = 'Terjadi kesalahan saat menghubungi server.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                }
+                Swal.fire('Error!', errorMsg, 'error');
+            }
+        });
+    }
+
+    // --- HAPUS DARI BATCH ---
+    $('#batchOrderTable tbody').on('click', '.btn-erase', function() {
+        // Validasi permission dan status batch
+        if (!hasChangePermission) {
+            Swal.fire('Akses Ditolak!', 'Anda tidak memiliki permission untuk melakukan aksi ini.', 'error');
+            return;
+        }
+        if (isBatchClosed) {
+            showBatchClosedError('hapus dari batch');
+            return;
+        }
+        
+        const idPesanan = $(this).data('id-pesanan');
+        Swal.fire({
+            title: 'Anda yakin?',
+            html: `Anda akan menghapus semua item dari pesanan <strong>${idPesanan}</strong> dari batch ini.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                performAjaxAction(
+                    "{% url 'erase_order_from_batch' %}",
+                    { 'id_pesanan': idPesanan, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+                    'Pesanan berhasil dihapus dari batch.'
+                );
+            }
+        });
+    });
+
+    // --- TRANSFER KE BATCH LAIN ---
+    $('#batchOrderTable tbody').on('click', '.btn-transfer', async function() {
+        // Validasi permission dan status batch
+        if (!hasChangePermission) {
+            Swal.fire('Akses Ditolak!', 'Anda tidak memiliki permission untuk melakukan aksi ini.', 'error');
+            return;
+        }
+        if (isBatchClosed) {
+            showBatchClosedError('transfer pesanan');
+            return;
+        }
+        
+        const idPesanan = $(this).data('id-pesanan');
+        try {
+            const { value: mode } = await Swal.fire({
+                title: 'Pilih Mode Transfer', input: 'radio',
+                inputOptions: { 'existing': 'Ke Batch yang Sudah Ada', 'new': 'Buat Batch Baru' },
+                inputValidator: (v) => !v && 'Pilih salah satu!',
+                showCancelButton: true, confirmButtonText: 'Lanjutkan &rarr;',
+            });
+            if (!mode) return;
+
+            let target_batch = '';
+            if (mode === 'existing') {
+                const response = await fetch("{% url 'batchlist_list_open' %}");
+                const data = await response.json();
+                let batchOptions = {};
+                data.batchlists.forEach(b => { if (b !== '{{ nama_batch }}') batchOptions[b] = b; });
+                
+                const { value: selectedBatch } = await Swal.fire({
+                    title: 'Pilih Batch Tujuan', input: 'select', inputOptions: batchOptions,
+                    inputPlaceholder: 'Pilih batch...',
+                    inputValidator: (v) => !v && 'Pilih batch!', showCancelButton: true,
+                });
+                if (!selectedBatch) return;
+                target_batch = selectedBatch;
+            } else {
+                const { value: newBatchName } = await Swal.fire({
+                    title: 'Masukkan Nama Batch Baru', input: 'text',
+                    inputValidator: async (v) => {
+                        if (!v) return 'Nama tidak boleh kosong!';
+                        const r = await fetch(`/fullfilment/batchlist/check_duplicate/?nama_batch=${encodeURIComponent(v)}`);
+                        const d = await r.json();
+                        if (d.exists) return 'Nama batch sudah ada!';
+                    }, showCancelButton: true,
+                });
+                if (!newBatchName) return;
+                target_batch = newBatchName;
+            }
+
+            performAjaxAction(
+                "{% url 'transfer_order_item' %}",
+                { 'id_pesanan': idPesanan, 'target_batch': target_batch, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+                'Pesanan berhasil ditransfer.'
+            );
+        } catch (error) {
+            if (!error.dismiss) Swal.fire('Error!', 'Terjadi kesalahan.', 'error');
+        }
+    });
+
+    
+    // Initialize Bootstrap tooltips for status badges
+    $(document).on('draw.dt', function() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+
+});
+</script>
+{% endblock %}

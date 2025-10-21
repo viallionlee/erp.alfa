@@ -1,0 +1,329 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>{% block title %}ERP Mobile{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"/>
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="icon" href="{% static 'icons/alfaicon.png' %}" type="image/png">
+    <link rel="stylesheet" href="{% static 'css/mobile.css' %}">
+    {% block extra_head %}{% endblock %}
+    <style>
+        body { background: #f6f8fa; font-size: 1.08em; }
+        .navbar { border-radius: 0 0 12px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); min-height: 48px; }
+        .container-fluid { padding-bottom: 60px; }
+        .btn, .form-control, .badge, .list-group-item { font-size: 1em; }
+
+        h3, h4, h5 { font-size: 1.1em; }
+        .navbar-brand { font-weight: bold; font-size: 1.1em; }
+        .nav-mobile {
+            display: flex;
+            justify-content: space-between;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            margin: 0 0 16px 0;
+            padding: 12px 20px;
+        }
+        .nav-mobile a {
+            flex: 0 0 auto;
+            text-align: center;
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Icon-only buttons (Home and Logout) */
+        .nav-mobile a[title="Home"],
+        .nav-mobile a[title="Logout"],
+        .nav-mobile a[title="Login"] {
+            padding: 8px 12px; /* Reduced padding for icon-only buttons */
+            min-width: 40px; /* Ensure minimum width for touch targets */
+        }
+        
+        .nav-mobile a[title="Home"] i,
+        .nav-mobile a[title="Logout"] i,
+        .nav-mobile a[title="Login"] i {
+            font-size: 1.2em; /* Slightly larger icons for better visibility */
+        }
+        .nav-mobile a.active, .nav-mobile a:active {
+            background: #e9ecef;
+            color: #0d6efd;
+        }
+        
+        /* Recent Tabs Center Styling */
+        .recent-tabs-center {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            max-width: 280px; /* Increased from 200px to give more space */
+        }
+        .recent-tab {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px; /* Slightly more rounded */
+            padding: 6px 12px; /* Increased padding for better touch targets */
+            text-decoration: none;
+            color: #495057;
+            font-size: 0.85em; /* Slightly larger font */
+            display: flex;
+            align-items: center;
+            gap: 6px; /* Increased gap between icon and text */
+            transition: all 0.2s;
+            max-width: 120px; /* Increased from 90px to allow more text */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 500; /* Slightly bolder text */
+        }
+        .recent-tab:hover {
+            background: #e9ecef;
+            color: #0d6efd;
+            text-decoration: none;
+        }
+        .recent-tab i {
+            font-size: 0.7em;
+            flex-shrink: 0;
+        }
+        .nav-link.active {
+            background-color: #0d6efd !important;
+            color: white !important;
+        }
+        #mobileNavMenu {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: #fff;
+            z-index: 9999;
+            padding: 1.5rem 1rem;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+        }
+        #mobileNavMenu a {
+            display: block;
+            padding: 1rem 0;
+            font-size: 1.2rem;
+            color: #1976d2;
+            text-decoration: none;
+            border-bottom: 1px solid #eee;
+        }
+        
+        /* Mobile-specific modal styling */
+        @media (max-width: 768px) {
+            .modal-dialog {
+                margin: 1rem;
+                max-width: calc(100% - 2rem);
+            }
+            .modal-content {
+                border-radius: 12px;
+            }
+            .modal-header {
+                border-radius: 12px 12px 0 0;
+            }
+            .modal-footer {
+                border-radius: 0 0 12px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-mobile mb-2">
+        <a href="{% url 'mobile_home' %}" class="{% if request.path == '/mobile/' %}active{% endif %}" title="Home">
+            <i class="bi bi-house-door"></i>
+        </a>
+        
+        <!-- Recent Tabs in Center -->
+        <div id="recentTabs" class="recent-tabs-center" style="display: none;">
+            <!-- Recent tabs will be populated by JavaScript -->
+        </div>
+        
+        {% if user.is_authenticated %}
+            <a href="#" id="logoutBtn" style="color: #dc3545;" title="Logout">
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
+        {% else %}
+            <a href="{% url 'login' %}" style="color: #198754;" title="Login">
+                <i class="bi bi-box-arrow-in-right"></i>
+            </a>
+        {% endif %}
+    </div>
+    {% csrf_token %}
+    {% block content %}{% endblock %}
+    
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 12px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title" id="logoutModalLabel">
+                        <i class="bi bi-box-arrow-right text-danger me-2"></i>Konfirmasi Logout
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-0">
+                    <p class="mb-0">Apakah Anda yakin ingin keluar dari sistem?</p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Batal
+                    </button>
+                    <a href="{% url 'logout' %}" class="btn btn-danger">
+                        <i class="bi bi-box-arrow-right me-1"></i>Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- jQuery (required for DataTables and other plugins) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Comment script yang mengganggu -->
+    <!--
+    <script>
+    // Kode ini mencoba mengakses elemen dengan ID 'mobileMenuBtn' yang mungkin tidak ada.
+    // Jika Anda tidak menggunakan tombol menu mobile terpisah, Anda bisa menghapusnya.
+    // Jika Anda punya tombol menu, pastikan ID 'mobileMenuBtn' sudah diterapkan di HTML Anda.
+    document.addEventListener('DOMContentLoaded', function() {
+        var mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        if (mobileMenuBtn) {
+            mobileMenuBtn.onclick = function() {
+                var nav = document.getElementById('mobileNavMenu');
+                if (nav) {
+                    nav.style.display = (nav.style.display === 'none' || nav.style.display === '') ? 'block' : 'none';
+                }
+            };
+        }
+    });
+    </script>
+    -->
+    {% block extra_script %}{% endblock %}
+    
+    <script>
+    // Recent Tabs Management
+    document.addEventListener('DOMContentLoaded', function() {
+        const recentTabsKey = 'mobile_recent_tabs';
+        const maxRecentTabs = 2;
+        
+        // Define page configurations
+        const pageConfigs = {
+            '/mobile/': { title: 'Home', icon: 'bi-house-door' },
+            '/fullfilment/': { title: 'Batchlist', icon: 'bi-box-seam' },
+            '/fullfilment/order-packing-list/': { title: 'Order Packing List', icon: 'bi-list-check' },
+            '/fullfilment/order-shipping-list/': { title: 'Order Shipping List', icon: 'bi-truck-flatbed' },
+            '/fullfilment/generatebatch/': { title: 'Generate Batch', icon: 'bi-gear' },
+            '/inventory/inbound/': { title: 'Inbound', icon: 'bi-box-arrow-in-down' },
+            '/inventory/putaway/': { title: 'Putaway', icon: 'bi-archive' },
+            '/inventory/rak-stock/': { title: 'Stock Rak', icon: 'bi-boxes' },
+            '/inventory/opname-rak/': { title: 'Opname Rak', icon: 'bi-clipboard-check' },
+            '/inventory/full-opname/': { title: 'Full Opname', icon: 'bi-clipboard-data' },
+            '/scanpicking/': { title: 'Order Picking', icon: 'bi-upc-scan' },
+            '/scanpacking/': { title: 'Order Packing', icon: 'bi-bag-check' },
+            '/scanshipping/': { title: 'Order Shipping', icon: 'bi-truck' },
+            '/fullfilment/order-cancel-log/': { title: 'Order Cancel Log', icon: 'bi-x-circle' },
+            '/fullfilment/returnlist/': { title: 'Return List', icon: 'bi-arrow-return-left' }
+        };
+        
+        // Get current page info
+        function getCurrentPageInfo() {
+            const currentPath = window.location.pathname;
+            const config = pageConfigs[currentPath];
+            
+            if (config) {
+                return {
+                    path: currentPath,
+                    title: config.title,
+                    icon: config.icon
+                };
+            }
+            
+            // Fallback for unknown pages
+            return {
+                path: currentPath,
+                title: document.title || 'Page',
+                icon: 'bi-file-earmark'
+            };
+        }
+        
+        // Save recent tab
+        function saveRecentTab() {
+            const currentPage = getCurrentPageInfo();
+            
+            // Skip home page and logout
+            if (currentPage.path === '/mobile/' || currentPage.path === '/logout/') {
+                return;
+            }
+            
+            let recentTabs = JSON.parse(localStorage.getItem(recentTabsKey) || '[]');
+            
+            // Remove if already exists
+            recentTabs = recentTabs.filter(tab => tab.path !== currentPage.path);
+            
+            // Add to beginning
+            recentTabs.unshift(currentPage);
+            
+            // Keep only maxRecentTabs
+            recentTabs = recentTabs.slice(0, maxRecentTabs);
+            
+            localStorage.setItem(recentTabsKey, JSON.stringify(recentTabs));
+        }
+        
+        // Load and display recent tabs
+        function loadRecentTabs() {
+            const recentTabs = JSON.parse(localStorage.getItem(recentTabsKey) || '[]');
+            const recentTabsContainer = document.getElementById('recentTabs');
+            
+            if (recentTabs.length === 0) {
+                recentTabsContainer.style.display = 'none';
+                return;
+            }
+            
+            recentTabsContainer.innerHTML = '';
+            
+            recentTabs.forEach(tab => {
+                const tabElement = document.createElement('a');
+                tabElement.href = tab.path;
+                tabElement.className = 'recent-tab';
+                tabElement.innerHTML = `<i class="${tab.icon}"></i>${tab.title}`;
+                recentTabsContainer.appendChild(tabElement);
+            });
+            
+            recentTabsContainer.style.display = 'flex';
+        }
+        
+        // Initialize
+        saveRecentTab();
+        loadRecentTabs();
+        
+        // Update on page navigation (for SPA-like behavior)
+        window.addEventListener('beforeunload', saveRecentTab);
+    });
+    
+    // Logout Confirmation Modal Handler
+    document.addEventListener('DOMContentLoaded', function() {
+        const logoutBtn = document.getElementById('logoutBtn');
+        const logoutModal = new bootstrap.Modal(document.getElementById('logoutModal'));
+        
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', function(e) {
+                e.preventDefault(); // Prevent default link behavior
+                logoutModal.show(); // Show confirmation modal
+            });
+        }
+    });
+    </script>
+</body>
+</html>

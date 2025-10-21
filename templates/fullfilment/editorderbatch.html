@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+{% block title %}Edit Order Batch{% endblock %}
+{% block content %}
+<style>
+    .modern-form-label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 4px;
+    }
+    .modern-form-row {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-end;
+        margin-bottom: 1.2rem;
+        flex-wrap: wrap;
+    }
+    .modern-form-row > .form-group {
+        flex: 1 1 0;
+        min-width: 180px;
+    }
+    .modern-form-row .input-group {
+        width: 100%;
+    }
+    .modern-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.07);\
+        padding: 2rem 2.5rem 1.5rem 2.5rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    #search-result-box {
+        min-width: 320px;
+        font-size: 0.95em;
+    }
+    @media (max-width: 600px) {
+        .modern-card { padding: 1rem; }
+        .modern-form-row { flex-direction: column; gap: 0.5rem; }
+    }
+    .customer-warning {
+        box-shadow: 0 0 8px rgba(25, 135, 84, 0.8) !important;
+        border-color: #198754 !important;
+    }
+</style>
+<div class="container mt-4">
+    <h2 class="mb-4 text-center">Edit Order di Batch: <b>{{ nama_batch }}</b></h2>
+    <div class="modern-card">
+    <div id="form-error-message" class="alert alert-danger" style="display:none;"></div>
+    <form method="post" id="edit-batch-order-form">
+        {% csrf_token %}
+        <!-- Row 1: ID Pesanan saja (Tanggal dan Customer dihapus) -->
+        <div class="modern-form-row">
+            <div class="form-group" style="flex:unset; min-width:unset;"> {# Sesuaikan styling jika perlu #}
+                <label class="modern-form-label" for="id_pesanan">ID Pesanan</label>
+                <input type="text" name="id_pesanan" id="id_pesanan" class="form-control" readonly required value="{% if order %}{{ order.id_pesanan }}{% endif %}" data-original-order-pk="{{ order.pk }}">
+            </div>
+            {# Tanggal Pembuatan dan Nama Customer dihapus #}
+        </div>
+        <!-- Row 2: Keterangan -->
+        <div class="modern-form-row">
+            <div class="form-group" style="flex:2;">
+                <label class="modern-form-label" for="keterangan">Keterangan</label>
+                {# Keterangan kini dapat diedit (readonly dihapus) #}
+                <textarea name="keterangan" id="keterangan" class="form-control" rows="1" placeholder="Keterangan tambahan (opsional)">{% if order %}{{ order.catatan_pembeli|default:'' }}{% endif %}</textarea>
+            </div>
+        </div>
+        <!-- Row 3: Cari Produk -->
+        <div class="modern-form-row">
+            <div class="form-group" style="flex:2; position:relative;">
+                <label class="modern-form-label" for="produk_search">Cari Produk</label>
+                <div class="input-group mb-1">
+                    <input type="text" id="produk_search" class="form-control" placeholder="Cari SKU / Barcode / Nama / Brand / Variant" autocomplete="off" aria-label="Cari Produk">
+                    <button class="btn btn-outline-secondary" type="button" id="produk_search_btn" aria-label="Cari Produk">Cari</button>
+                </div>
+                <div id="search-result-box" class="border rounded mt-1 bg-white shadow-sm" style="display:none; position:absolute; z-index:10; min-width:100%; max-width:100vw; overflow-x:auto; max-height:180px; overflow-y:auto;">
+                  <!-- Kolom judul agar lebih jelas -->
+                  <table class="table table-sm mb-0"><thead><tr style="background:#f8f9fa;"><th>SKU</th><th>Barcode</th><th>Nama</th><th>Variant</th><th>Brand</th></tr></thead><tbody></tbody></table>
+                </div>
+            </div>
+        </div>
+        <!-- Produk Table -->
+        <div class="table-responsive mt-3">
+            <table class="table table-bordered align-middle" id="produk-table">
+                <thead class="table-light">
+                    <tr>
+                        <th>SKU</th>
+                        <th>Barcode</th>
+                        <th>Nama Produk</th>
+                        <th>Variant</th>
+                        <th>Brand</th>
+                        <th>Stok</th>
+                        <th>Jumlah</th>
+                        <th>Harga</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {# Data item produk akan di-render di sini #}
+                    {% for item in detail_items %}
+                    <tr data-sku="{{ item.sku }}" data-order-pk="{{ item.order_pk }}">
+                        <td><input type="hidden" name="produk_sku[]" value="{{ item.sku }}">{{ item.sku }}</td>
+                        <td>{{ item.barcode }}</td>
+                        <td>{{ item.nama_produk }}</td>
+                        <td>{{ item.variant }}</td>
+                        <td>{{ item.brand }}</td>
+                        <td>{{ item.stok }}</td>
+                        <td><input type="number" name="produk_qty[]" class="form-control qty-input" value="{{ item.jumlah }}" min="1" style="width:70px;"></td>
+                        <td><input type="number" name="produk_harga[]" class="form-control harga-input" value="{{ item.harga|stringformat:'.0f' }}" min="0" style="width:100px;"></td>
+                        <td><button type="button" class="btn btn-danger btn-sm hapus-row">Hapus</button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-3 text-center">
+            <button type="submit" class="btn btn-primary px-4">Update Order Batch</button>
+            <a href="/fullfilment/batchorder/{{ nama_batch }}/" class="btn btn-secondary ms-2">Batal</a>
+        </div>
+    </form>
+    </div>
+</div>
+
+{# Modal Pilih Customer dan Tambah Customer Baru disembunyikan/dihapus karena tidak relevan untuk edit batch order #}
+{# <div class="modal fade" id="customerModal" tabindex="-1" aria-labelledby="customerModalLabel" aria-hidden="true"> ... </div> #}
+{# <div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true"> ... </div> #}
+
+{# Pastikan SweetAlert2 dimuat di sini #}
+<script>
+// ----- global state untuk navigasi -----\
+let selectedIdx = -1;
+let currentRows = [];
+
+function updateSearchResultHighlight() {
+  // hapus highlight di semua baris
+  currentRows.forEach(r => r.classList.remove('table-active'));
+  // tambahkan highlight di baris terpilih
+  if (selectedIdx >= 0 && selectedIdx < currentRows.length) {
+    currentRows[selectedIdx].classList.add('table-active');
+  }
+}
+
+// Hapus bagian ini karena tanggal pembuatan tidak lagi relevan di form edit batch
+// $(function() {
+//     let now = new Date();
+//     let pad = n => n < 10 ? '0'+n : n;
+//     let tglStr = pad(now.getDate()) + '-' + pad(now.getMonth()+1) + '-' + now.getFullYear() + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+//     $('#tanggal_pembuatan').val(tglStr);
+//     $.get('/orders/datatable/?draw=1&start=0&length=1', function(resp) {
+//         let nextId = (resp.recordsTotal || 0) + 1;
+//         let id = `ORD-${pad(now.getDate())}${pad(now.getMonth()+1)}${now.getFullYear().toString().slice(-2)}${String(nextId).padStart(3, '0')}`;
+//         $('#id_pesanan').val(id);
+//     });
+// });
+
+// --- SEARCH PRODUK DENGAN SEARCH-RESULT-BOX (SAMA DENGAN INBOUND) ---
+function searchProdukManual(keyword, callback) {
+  $.getJSON('/inventory/produk-lookup', {q: keyword, mode: 'manual', page_size: 1000}, function(data) {
+    callback(data);
+  }).fail(function() {
+    callback([]);
+  });
+}
+
+function tambahAtauUpdateProduk(produk, stok) {
+  // Cek apakah produk sudah ada di tabel edit, jika ya, tambahkan jumlahnya
+  // atau jika ini adalah produk yang sama dari order awal, biarkan seperti itu.
+  let $existingRow = $(`#produk-table tbody tr[data-sku="${produk.sku}"]`);
+  let originalOrderPk = $("#tanggal_pembuatan").data("original-order-pk");
+
+  // Jika produk sudah ada di baris yang sedang diedit (dengan order_pk yang sama)
+  // Atau jika produk baru ditambahkan dan sudah ada baris untuk SKU itu
+  let $rowWithSameSku = $(`#produk-table tbody tr[data-sku="${produk.sku}"]`);
+  if ($rowWithSameSku.length) {
+      // Jika ini adalah item baru yang ditambahkan dan SKU sudah ada di tabel, tambahkan kuantitasnya
+      let $qtyInput = $rowWithSameSku.find('.qty-input');
+      $qtyInput.val(parseInt($qtyInput.val()) + 1);
+  } else {
+      // Jika SKU belum ada di tabel, tambahkan baris baru
+      $('#produk-table tbody').append(`
+        <tr data-sku="${produk.sku}" data-order-pk=""> {# order_pk kosong karena ini item baru #}
+          <td><input type="hidden" name="produk_sku[]" value="${produk.sku}">${produk.sku}</td>
+          <td>${produk.barcode}</td>
+          <td>${produk.nama}</td>
+          <td>${produk.variant}</td>
+          <td>${produk.brand}</td>
+          <td>${stok || 0}</td>
+          <td><input type="number" name="produk_qty[]" class="form-control qty-input" value="1" min="1" style="width:70px;"></td>
+          <td><input type="number" name="produk_harga[]" class="form-control harga-input" value="0" min="0" style="width:100px;"></td>
+          <td><button type="button" class="btn btn-danger btn-sm hapus-row">Hapus</button></td>
+        </tr>
+      `);
+  }
+}
+
+function renderSearchResultBox(list) {
+  const $searchResultBox = $('#search-result-box tbody');
+  $searchResultBox.empty(); // Kosongkan hasil sebelumnya
+  if (list.length === 0) {
+    $searchResultBox.append('<tr><td colspan="5" class="text-center">Tidak ada hasil ditemukan.</td></tr>');
+    $('#search-result-box').show();
+    return;
+  }
+
+  list.forEach((produk, index) => {
+    // Escape HTML entities to prevent XSS
+    const sku = $('<div>').text(produk.sku).html();
+    const barcode = $('<div>').text(produk.barcode).html();
+    const nama = $('<div>').text(produk.nama).html();
+    const variant = $('<div>').text(produk.variant).html();
+    const brand = $('<div>').text(produk.brand).html();
+
+    $searchResultBox.append(`
+      <tr data-index="${index}" data-produk='${JSON.stringify(produk)}' data-stok="${produk.stok || 0}">
+        <td>${sku}</td>
+        <td>${barcode}</td>
+        <td>${nama}</td>
+        <td>${variant}</td>
+        <td>${brand}</td>
+      </tr>
+    `);
+  });
+  currentRows = Array.from($searchResultBox.find('tr'));
+  selectedIdx = -1; // Reset selection
+  $('#search-result-box').show();
+}
+
+// Event handler untuk input pencarian produk
+$('#produk_search').on('input', function() {
+  let keyword = $(this).val().trim();
+  if (keyword.length >= 2) {
+    searchProdukManual(keyword, renderSearchResultBox);
+  } else {
+    $('#search-result-box').hide().find('tbody').empty();
+  }
+});
+
+// Event handler untuk tombol cari produk
+$('#produk_search_btn').on('click', function() {
+  let keyword = $('#produk_search').val().trim();
+  if (keyword.length >= 2) {
+    searchProdukManual(keyword, renderSearchResultBox);
+  } else {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Input Kurang',
+      text: 'Kata kunci pencarian minimal 2 karakter.'
+    });
+  }
+});
+
+// Pilih produk dari hasil pencarian (klik baris)
+$('#search-result-box tbody').on('click', 'tr', function() {
+  let produk = $(this).data('produk');
+  let stok = $(this).data('stok');
+  tambahAtauUpdateProduk(produk, stok);
+  $('#produk_search').val('').focus();
+  $('#search-result-box').hide().find('tbody').empty();
+});
+
+// Hapus baris produk
+$('#produk-table tbody').on('click', '.hapus-row', function() {
+  $(this).closest('tr').remove();
+});
+
+// Handle form submission
+$('#edit-batch-order-form').on('submit', function(e) {
+    e.preventDefault(); // Mencegah submit form default
+
+    const form = $(this);
+    const formData = new FormData(form[0]);
+    const originalOrderPk = $("#tanggal_pembuatan").data("original-order-pk");
+    const namaBatch = "{{ nama_batch|escapejs }}";
+
+    // Kumpulkan data produk yang akan dikirim (sku, qty, harga, dan order_pk)
+    const produkData = [];
+    $('#produk-table tbody tr').each(function() {
+        const sku = $(this).data('sku');
+        const qty = $(this).find('.qty-input').val();
+        const harga = $(this).find('.harga-input').val();
+        const orderPkItem = $(this).data('order-pk'); // PK dari item order jika sudah ada
+
+        produkData.push({
+            sku: sku,
+            jumlah: parseInt(qty),
+            harga: parseFloat(harga),
+            order_pk_item: orderPkItem // Ini bisa kosong jika item baru ditambahkan
+        });
+    });
+
+    // Validasi dasar: pastikan ada produk
+    if (produkData.length === 0) {
+        Swal.fire('Gagal!', 'Tidak ada produk di dalam order.', 'error');
+        return;
+    }
+
+    // Kirim data ke backend via AJAX
+    fetch('/fullfilment/edit_order_batch_submit/', { // Endpoint baru untuk submit edit order batch
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': $('[name="csrfmiddlewaretoken"]').val(),
+        },
+        body: JSON.stringify({
+            nama_batch: namaBatch,
+            original_order_id_pesanan: $('#id_pesanan').val(), // ID Pesanan yang diedit
+            original_order_pk: originalOrderPk, // PK dari OrdersList (jika ada)
+            tanggal_pembuatan: $('#tanggal_pembuatan').val(),
+            keterangan: $('#keterangan').val(),
+            produk_data: produkData
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire('Berhasil!', data.message, 'success').then(() => {
+                window.location.href = `/fullfilment/batchorder/${namaBatch}/`; // Kembali ke halaman batchorder
+            });
+        } else {
+            Swal.fire('Gagal!', data.error || 'Terjadi kesalahan.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire('Error Jaringan!', 'Tidak dapat menghubungi server.', 'error');
+    });
+});
+
+</script>
+{% endblock %} 

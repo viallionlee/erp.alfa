@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Detail Order {{ order.id_pesanan }}{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4 text-center">Detail Order <span class="text-primary">{{ order.id_pesanan }}</span></h2>
+    <div class="mb-3 d-flex gap-2">
+        <a href="{% url 'orders_list' %}" class="btn btn-secondary">Kembali ke Daftar Order</a>
+        {% if not nama_batch %}
+        <a href="{% url 'orders_listedit' id_pesanan=order.id_pesanan|urlencode %}" class="btn btn-primary">Edit Order</a>
+        {% endif %}
+    </div>
+
+    {% if nama_batch %}
+    <div class="alert alert-warning" role="alert">
+      <strong>Informasi:</strong> Pesanan ini sudah masuk ke dalam batch <strong>'{{ nama_batch }}'</strong> dan tidak dapat diedit lagi.
+    </div>
+    {% endif %}
+    
+    <form autocomplete="off" class="needs-validation" novalidate>
+        <div class="row g-2 align-items-center mb-2">
+            <div class="col-md-3">
+                <label class="form-label mb-1">ID Pesanan</label>
+                <input type="text" class="form-control" value="{{ order.id_pesanan }}" readonly>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label mb-1">Tanggal</label>
+                <input type="text" class="form-control" value="{{ order.tanggal_pembuatan|date:'d-m-Y H:i' }}" readonly>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label mb-1">Customer</label>
+                <input type="text" class="form-control" value="{{ order.customer.nama_customer }}" readonly>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label mb-1">Total Item</label>
+                <input type="text" class="form-control" value="{{ total_item }}" readonly>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-md-12">
+                <label class="form-label mb-1">Keterangan</label>
+                <textarea class="form-control" rows="2" readonly>{{ order.keterangan|default:'-' }}</textarea>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-md-12">
+                <label class="form-label mb-1">Detail Produk</label>
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle" id="produk-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>SKU</th>
+                                <th>Barcode</th>
+                                <th>Nama Produk</th>
+                                <th>Variant</th>
+                                <th>Brand</th>
+                                <th>Stok</th>
+                                <th>Jumlah</th>
+                                <th>Harga Promosi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in detail_items %}
+                            <tr>
+                                <td>{{ item.sku }}</td>
+                                <td>{{ item.barcode }}</td>
+                                <td>{{ item.nama_produk }}</td>
+                                <td>{{ item.variant_produk }}</td>
+                                <td>{{ item.brand }}</td>
+                                <td>{{ item.stok }}</td>
+                                <td>{{ item.jumlah }}</td>
+                                <td>{{ item.harga_promosi|floatformat:0 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="8" class="text-center">Tidak ada detail produk.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

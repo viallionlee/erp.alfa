@@ -1,0 +1,1294 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Dashboard Return List</h3>
+        <div>
+            <button class="btn btn-outline-secondary btn-sm me-2" id="expandAllBtn">Expand All</button>
+            <button class="btn btn-outline-secondary btn-sm" id="collapseAllBtn">Collapse All</button>
+        </div>
+    </div>
+
+    <!-- New Segment: Return List & Overstock Batch -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center p-2">
+                    <h5 class="mb-0">
+                        <a href="#collapseReturnList" class="text-decoration-none text-dark d-block p-1"
+                           data-bs-toggle="collapse" role="button" aria-expanded="true"
+                           aria-controls="collapseReturnList">
+                            <i class="fas fa-chevron-down toggle-icon me-2"></i>Daftar Return List (<span class="text-primary">Total: {{ return_sessions_count }}</span>)
+                        </a>
+                    </h5>
+                    <!-- Button for Terima Return -->
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#sessionModal">
+                        Mulai Proses Retur
+                    </button>
+                </div>
+                <div class="collapse show" id="collapseReturnList">
+                    <div class="card-body p-2">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped table-hover small-text" id="returnListTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 15%;">ID Sesi</th>
+                                        <th style="width: 20%;">Dibuat Oleh</th>
+                                        <th style="width: 15%;">Tgl Dibuat</th>
+                                        <th style="width: 10%;">Item</th>
+                                        <th style="width: 20%;">Status</th>
+                                        <th style="width: 20%;">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for session in return_sessions %}
+                                    <tr>
+                                        <td>{{ session.kode }}</td>
+                                        <td>{{ session.created_by.username|default:"N/A" }}</td>
+                                        <td>{{ session.created_at|date:"Y-m-d H:i" }}</td>
+                                        <td>
+                                            <span class="fw-bold">{{ session.jumlah_item }}</span>
+                                            {% if session.completed_putaway_count > 0 %}
+                                                <span class="text-muted">/ {{ session.completed_putaway_count }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if session.status == 'open' %}warning{% else %}success{% endif %}">
+                                                {{ session.status|title }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-info ms-1 btn-detail"
+                                                    data-session-id="{{ session.id }}"
+                                                    data-session-code="{{ session.kode }}">
+                                                Detail
+                                            </button>
+                                            {% if session.status == 'open' %}
+                                            <button class="btn btn-sm btn-primary ms-1 btn-update-session"
+                                                    data-session-id="{{ session.id }}"
+                                                    data-session-code="{{ session.kode }}">
+                                                Update
+                                            </button>
+                                            {% comment %} Hanya tampilkan tombol Putaway jika masih ada item yang belum completed putaway {% endcomment %}
+                                            {% if not session.all_items_putaway_completed %}
+                                            <a href="{% url 'putaway_return_session' session.id %}" 
+                                               class="btn btn-sm btn-warning ms-1">
+                                                Putaway
+                                            </a>
+                                            {% else %}
+                                            {% comment %} Hanya tampilkan tombol Close jika semua item sudah completed putaway {% endcomment %}
+                                            <button class="btn btn-sm btn-warning ms-1 btn-close-session"
+                                                    data-session-id="{{ session.id }}"
+                                                    data-session-code="{{ session.kode }}">
+                                                Close
+                                            </button>
+                                            {% endif %}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center">Tidak ada Sesi Retur aktif.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center p-2">
+                    <h5 class="mb-0">
+                        <a href="#collapseOverstockBatch" class="text-decoration-none text-dark d-block p-1"
+                           data-bs-toggle="collapse" role="button" aria-expanded="true"
+                           aria-controls="collapseOverstockBatch">
+                            <i class="fas fa-chevron-down toggle-icon me-2"></i>Overstock Batch Belum Return (<span class="text-primary">Total: {{ overstock_batch_belum_return_count }}</span>)
+                        </a>
+                    </h5>
+                </div>
+                <div class="collapse show" id="collapseOverstockBatch">
+                    <div class="card-body p-2">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped table-hover small-text" id="overstockBatchTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 30%;">Nama Batch</th>
+                                        <th style="width: 20%;">Total SKU</th>
+                                        <th style="width: 20%;">Total Qty Overstock</th>
+                                        <th style="width: 15%;">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for batch in overstock_batch_belum_return %}
+                                    <tr>
+                                        <td>{{ batch.nama_batch }}</td>
+                                        <td>{{ batch.total_sku }}</td>
+                                        <td>{{ batch.total_qty }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-info btn-overstock-detail" data-batch-id="{{ batch.id }}" data-batch-name="{{ batch.nama_batch }}">Detail</button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">Tidak ada batch overstock yang belum direturn.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Existing Segment: Order Cancel Tables (now below the new segment) -->
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center p-2">
+                    <h5 class="mb-0">
+                        <a href="#collapseOrderCancelSystem" class="text-decoration-none text-dark d-block p-1"
+                           data-bs-toggle="collapse" role="button" aria-expanded="true"
+                           aria-controls="collapseOrderCancelSystem">
+                            <i class="fas fa-chevron-down toggle-icon me-2"></i>Order Cancel Belum Return (By System) (<span class="text-primary">Total: {{ order_cancel_by_system_count }}</span>)
+                        </a>
+                    </h5>
+                </div>
+                <div class="collapse show" id="collapseOrderCancelSystem">
+                    <div class="card-body p-2">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped table-hover small-text" id="orderCancelSystemTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 30%;">Order ID</th>
+                                        <th style="width: 30%;">Toko</th>
+                                        <th style="width: 20%;">Tgl Order</th>
+                                        <th style="width: 20%;">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in order_cancel_by_system_belum_return %}
+                                    <tr>
+                                        <td>{{ order.id_pesanan }}</td>
+                                        <td>{{ order.nama_toko|default:"None" }}</td>
+                                        <td>{{ order.tanggal_pembuatan|date:"Y-m-d" }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-success process-source-btn" data-source-type="order_cancel" data-source-value="{{ order.id_pesanan }}">Proses</button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">Tidak ada order cancel by system yang belum direturn.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center p-2">
+                    <h5 class="mb-0">
+                        <a href="#collapseOrderCancelUser" class="text-decoration-none text-dark d-block p-1"
+                           data-bs-toggle="collapse" role="button" aria-expanded="true"
+                           aria-controls="collapseOrderCancelUser">
+                            <i class="fas fa-chevron-down toggle-icon me-2"></i>Order Cancel Belum Return (By User) (<span class="text-primary">Total: {{ order_cancel_by_user_count }}</span>)
+                        </a>
+                    </h5>
+                </div>
+                <div class="collapse show" id="collapseOrderCancelUser">
+                    <div class="card-body p-2">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped table-hover small-text" id="orderCancelUserTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 25%;">Order ID</th>
+                                        <th style="width: 25%;">Scanner</th>
+                                        <th style="width: 20%;">Tgl Scan</th>
+                                        <th style="width: 15%;">Status Retur</th>
+                                        <th style="width: 15%;">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in order_cancel_by_user_belum_return %}
+                                    <tr>
+                                        <td>{{ log.order_id_scanned }}</td>
+                                        <td>{{ log.user.username }}</td>
+                                        <td>{{ log.scan_time|date:"Y-m-d" }}</td>
+                                        <td><span class="badge bg-info">{{ log.linked_order_status_retur|default:"N/A" }}</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-success process-source-btn" data-source-type="order_cancel" data-source-value="{{ log.order_id_scanned }}">Proses</button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center">Tidak ada order cancel by user yang belum direturn.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center p-2">
+                    <h5 class="mb-0">
+                        <a href="#collapseOrderCancelShipping" class="text-decoration-none text-dark d-block p-1"
+                           data-bs-toggle="collapse" role="button" aria-expanded="true"
+                           aria-controls="collapseOrderCancelShipping">
+                            <i class="fas fa-chevron-down toggle-icon me-2"></i>Order Cancel Belum Return (Tahap Shipping) (<span class="text-primary">Total: {{ order_cancel_shipping_count }}</span>)
+                        </a>
+                    </h5>
+                </div>
+                <div class="collapse show" id="collapseOrderCancelShipping">
+                    <div class="card-body p-2">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped table-hover small-text" id="orderCancelShippingTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 20%;">Order ID</th>
+                                        <th style="width: 20%;">Ekspedisi</th>
+                                        <th style="width: 15%;">Shipped Jam</th>
+                                        <th style="width: 15%;">Scanner</th>
+                                        <th style="width: 10%;">Status Retur</th>
+                                        <th style="width: 10%;">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in order_cancel_shipping_belum_return %}
+                                    <tr>
+                                        <td>{{ order.id_pesanan }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% with expedition_name=order.grouped_courier_name %}
+                                                    {% if 'Shopee Xpress' in expedition_name %}
+                                                        <img src="{% static 'icons/shopee.png' %}" alt="{{ expedition_name }}" style="height:20px; margin-right: 6px;">
+                                                    {% elif 'J&T Express' in expedition_name %}
+                                                        <img src="{% static 'icons/jnt.png' %}" alt="{{ expedition_name }}" style="height:20px; margin-right: 6px;">
+                                                    {% elif 'JNE' in expedition_name %}
+                                                        <img src="{% static 'icons/jne.png' %}" alt="{{ expedition_name }}" style="height:20px; margin-right: 6px;">
+                                                    {% endif %}
+                                                    <span><strong>{{ expedition_name }}</strong></span>
+                                                {% endwith %}
+                                            </div>
+                                        </td>
+                                        <td>{{ order.shipping_time|date:"Y-m-d H:i"|default:"N/A" }}</td>
+                                        <td>{{ order.shipping_scanner_username|default:"N/A" }}</td>
+                                        <td><span class="badge bg-info">{{ order.status_retur|default:"N/A" }}</span></td>
+                                        <td>
+                                            <button class="btn btn-success btn-sm process-source-btn" data-source-type="order_cancel" data-source-value="{{ order.id_pesanan }}">Proses</button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">Tidak ada order cancel tahap shipping yang belum direturn.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Pilih Sumber Retur -->
+    <div class="modal fade" id="sourceModal" tabindex="-1" aria-labelledby="sourceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="sourceModalLabel">Pilih Sumber Update Return</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="currentSessionId">
+                    <p>Sesi Return: <strong id="currentSessionKode"></strong></p>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-info btn-lg" id="orderCancelSourceBtn">Order Cancel</button>
+                        <button class="btn btn-success btn-lg" id="batchOverstockSourceBtn">Batch Overstock</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal untuk Detail ID -->
+    <div class="modal fade" id="detailIdModal" tabindex="-1" aria-labelledby="detailIdModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailIdModalLabel">Detail Order IDs & Batch IDs untuk Sesi: <span id="modalSessionCode"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="searchOrderIdInput" placeholder="Cari Order ID atau Batch ID...">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped table-hover small-text">
+                            <thead>
+                                <tr>
+                                    <th>ID / Batch</th>
+                                    <th>Tipe</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailIdTableBody">
+                                <!-- Data akan dimuat di sini melalui AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center" id="detailIdPagination">
+                            <!-- Pagination akan dimuat di sini melalui AJAX -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW Modal for Action Detail -->
+    <div class="modal fade" id="actionDetailModal" tabindex="-1" aria-labelledby="actionDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="actionDetailModalLabel">Pilihan Detail untuk Sesi: <span id="actionModalSessionCode"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="actionModalSessionId">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-info btn-lg" id="actionDetailHistoryBtn">Detail History</button>
+                        <button class="btn btn-info btn-lg" id="actionDetailIdBtn">Detail ID</button>
+                        <button class="btn btn-info btn-lg" id="actionDetailItemBtn">Detail Item</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW Modal for History -->
+    <div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 70%; width: 70%;">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="historyModalLabel">
+                        <i class="fas fa-history me-2"></i>
+                        History Return Source Log: <span id="historySessionCode" class="fw-bold"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchHistoryInput" 
+                                       placeholder="Cari Order ID, SKU, Barcode, Nama Produk, Batch, Notes, atau User...">
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <span class="badge bg-info" id="historyTotalCount">Total: 0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive" style="max-height: 60vh; overflow-y: auto;">
+                        <table class="table table-sm table-striped table-hover table-bordered">
+                            <thead class="table-dark sticky-top">
+                                <tr>
+                                    <th style="width: 8%;">Order ID</th>
+                                    <th style="width: 8%;">SKU</th>
+                                    <th style="width: 10%;">Barcode</th>
+                                    <th style="width: 20%;">Nama Produk</th>
+                                    <th style="width: 12%;">Variant</th>
+                                    <th style="width: 8%;">Batch</th>
+                                    <th style="width: 5%;">Qty</th>
+                                    <th style="width: 15%;">Notes</th>
+                                    <th style="width: 8%;">Dibuat Oleh</th>
+                                    <th style="width: 6%;">Waktu</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody">
+                                <!-- Data akan dimuat di sini melalui AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <nav aria-label="Page navigation" class="mt-3">
+                        <ul class="pagination justify-content-center" id="historyPagination">
+                            <!-- Pagination akan dimuat di sini melalui AJAX -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Pilih Sesi (Mulai Proses Retur) -->
+    <div class="modal fade" id="sessionModal" tabindex="-1" aria-labelledby="sessionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="sessionModalLabel">Mulai Proses Retur</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Step 1: Pilih jenis sesi -->
+                    <div id="sessionStep">
+                        <p class="mb-3">Pilih jenis sesi yang ingin Anda buat:</p>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary btn-lg" id="createSessionBtn">
+                                <i class="fas fa-plus me-2"></i>Buat Sesi Baru
+                            </button>
+                            <button class="btn btn-info btn-lg" id="selectSessionBtn">
+                                <i class="fas fa-list me-2"></i>Pilih Sesi yang Ada
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Form buat sesi baru -->
+                    <div id="createSessionForm" style="display: none;">
+                        <div class="mb-3">
+                            <label for="newSessionName" class="form-label">Nama Sesi Baru:</label>
+                            <input type="text" class="form-control" id="newSessionName" 
+                                   placeholder="Masukkan nama sesi (contoh: Sesi Retur 001)" maxlength="50">
+                            <div class="form-text">Maksimal 50 karakter</div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-secondary" id="backToSessionStep1">
+                                <i class="fas fa-arrow-left me-1"></i>Kembali
+                            </button>
+                            <button class="btn btn-primary" id="submitCreateSessionBtn">
+                                <i class="fas fa-check me-1"></i>Buat Sesi
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Form pilih sesi yang ada -->
+                    <div id="selectSessionForm" style="display: none;">
+                        <div class="mb-3">
+                            <label for="existingSessionSelect" class="form-label">Pilih Sesi yang Ada:</label>
+                            <select class="form-select" id="existingSessionSelect">
+                                <option value="">Pilih Sesi...</option>
+                            </select>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-secondary" id="backToSessionStep2">
+                                <i class="fas fa-arrow-left me-1"></i>Kembali
+                            </button>
+                            <button class="btn btn-primary" id="submitSelectSessionBtn" disabled>
+                                <i class="fas fa-check me-1"></i>Pilih Sesi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END Modal: Pilih Sesi (Mulai Proses Retur) -->
+
+</div>
+{% endblock %}
+
+{% block extra_script %}
+{{ block.super }}
+
+<script>
+$(document).ready(function() {
+  // Delay untuk memastikan semua library ter-load
+  setTimeout(function() {
+    initializeDataTables();
+  }, 100);
+});
+
+function initializeDataTables() {
+  let currentSessionId = null;
+  let currentSessionKode = null;
+  let currentPage = 1;
+  const itemsPerPage = 50;
+
+  // Inisialisasi DataTable untuk tabel utama
+  try {
+    // Cek apakah tabel memiliki data sebelum inisialisasi DataTable
+    const returnListTable = $('#returnListTable');
+    const hasReturnListData = returnListTable.find('tbody tr').length > 0 && 
+                             !returnListTable.find('tbody tr td[colspan]').length;
+    
+    if (hasReturnListData) {
+      returnListTable.DataTable({
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        language: {
+          search: "Cari:",
+          lengthMenu: "Tampilkan _MENU_ session per halaman",
+          info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ session",
+          infoEmpty: "Menampilkan 0 sampai 0 dari 0 session",
+          infoFiltered: "(disaring dari _MAX_ total session)",
+          paginate: {
+            first: "Pertama",
+            last: "Terakhir",
+            next: "Selanjutnya",
+            previous: "Sebelumnya"
+          }
+        },
+        order: [[2, 'desc']], // Sort by tanggal dibuat (desc)
+        columnDefs: [
+          { orderable: false, targets: 5 } // Disable sorting untuk kolom Aksi
+        ],
+        responsive: true,
+        autoWidth: false
+      });
+    } else {
+      console.log('returnListTable is empty, skipping DataTable initialization');
+    }
+  } catch (error) {
+    console.error('Error initializing returnListTable:', error);
+  }
+
+  // Inisialisasi DataTable untuk tabel Overstock Batch
+  try {
+    // Cek apakah tabel memiliki data sebelum inisialisasi DataTable
+    const overstockTable = $('#overstockBatchTable');
+    const hasOverstockData = overstockTable.find('tbody tr').length > 0 && 
+                           !overstockTable.find('tbody tr td[colspan]').length;
+    
+    if (hasOverstockData) {
+      overstockTable.DataTable({
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        language: {
+          search: "Cari:",
+          lengthMenu: "Tampilkan _MENU_ batch per halaman",
+          info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ batch",
+          infoEmpty: "Menampilkan 0 sampai 0 dari 0 batch",
+          infoFiltered: "(disaring dari _MAX_ total batch)",
+          paginate: {
+            first: "Pertama",
+            last: "Terakhir",
+            next: "Selanjutnya",
+            previous: "Sebelumnya"
+          }
+        },
+        order: [[0, 'asc']], // Sort by nama batch (asc)
+        columnDefs: [
+          { orderable: false, targets: 3 } // Disable sorting untuk kolom Aksi
+        ],
+        responsive: true,
+        autoWidth: false
+      });
+    } else {
+      console.log('overstockBatchTable is empty, skipping DataTable initialization');
+    }
+  } catch (error) {
+    console.error('Error initializing overstockBatchTable:', error);
+  }
+
+  // Inisialisasi DataTable untuk tabel Order Cancel (By System)
+  try {
+    // Cek apakah tabel memiliki data sebelum inisialisasi DataTable
+    const systemTable = $('#orderCancelSystemTable');
+    const hasSystemData = systemTable.find('tbody tr').length > 0 && 
+                         !systemTable.find('tbody tr td[colspan]').length;
+    
+    if (hasSystemData) {
+      systemTable.DataTable({
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        language: {
+          search: "Cari:",
+          lengthMenu: "Tampilkan _MENU_ order per halaman",
+          info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ order",
+          infoEmpty: "Menampilkan 0 sampai 0 dari 0 order",
+          infoFiltered: "(disaring dari _MAX_ total order)",
+          paginate: {
+            first: "Pertama",
+            last: "Terakhir",
+            next: "Selanjutnya",
+            previous: "Sebelumnya"
+          }
+        },
+        order: [[2, 'desc']], // Sort by tanggal order (desc)
+        columnDefs: [
+          { orderable: false, targets: 3 } // Disable sorting untuk kolom Aksi
+        ],
+        responsive: true,
+        autoWidth: false
+      });
+    } else {
+      console.log('orderCancelSystemTable is empty, skipping DataTable initialization');
+    }
+  } catch (error) {
+    console.error('Error initializing orderCancelSystemTable:', error);
+  }
+
+  // Inisialisasi DataTable untuk tabel Order Cancel (By User)
+  try {
+    // Cek apakah tabel memiliki data sebelum inisialisasi DataTable
+    const userTable = $('#orderCancelUserTable');
+    const hasUserData = userTable.find('tbody tr').length > 0 && 
+                       !userTable.find('tbody tr td[colspan]').length;
+    
+    if (hasUserData) {
+      userTable.DataTable({
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        language: {
+          search: "Cari:",
+          lengthMenu: "Tampilkan _MENU_ order per halaman",
+          info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ order",
+          infoEmpty: "Menampilkan 0 sampai 0 dari 0 order",
+          infoFiltered: "(disaring dari _MAX_ total order)",
+          paginate: {
+            first: "Pertama",
+            last: "Terakhir",
+            next: "Selanjutnya",
+            previous: "Sebelumnya"
+          }
+        },
+        order: [[2, 'desc']], // Sort by tanggal scan (desc)
+        columnDefs: [
+          { orderable: false, targets: 4 } // Disable sorting untuk kolom Aksi
+        ],
+        responsive: true,
+        autoWidth: false
+      });
+    } else {
+      console.log('orderCancelUserTable is empty, skipping DataTable initialization');
+    }
+  } catch (error) {
+    console.error('Error initializing orderCancelUserTable:', error);
+  }
+
+  // Inisialisasi DataTable untuk tabel Order Cancel (Shipping)
+  try {
+    // Cek apakah tabel memiliki data sebelum inisialisasi DataTable
+    const shippingTable = $('#orderCancelShippingTable');
+    const hasData = shippingTable.find('tbody tr').length > 0 && 
+                   !shippingTable.find('tbody tr td[colspan]').length;
+    
+    if (hasData) {
+      shippingTable.DataTable({
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        language: {
+          search: "Cari:",
+          lengthMenu: "Tampilkan _MENU_ order per halaman",
+          info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ order",
+          infoEmpty: "Menampilkan 0 sampai 0 dari 0 order",
+          infoFiltered: "(disaring dari _MAX_ total order)",
+          paginate: {
+            first: "Pertama",
+            last: "Terakhir",
+            next: "Selanjutnya",
+            previous: "Sebelumnya"
+          }
+        },
+        order: [[2, 'desc']], // Sort by shipped jam (desc)
+        columnDefs: [
+          { orderable: false, targets: 5 } // Disable sorting untuk kolom Aksi (kolom ke-6, index 5)
+        ],
+        responsive: true,
+        autoWidth: false
+      });
+    } else {
+      console.log('orderCancelShippingTable is empty, skipping DataTable initialization');
+    }
+  } catch (error) {
+    console.error('Error initializing orderCancelShippingTable:', error);
+  }
+
+  // --- Modal Sesi (Mulai Proses Retur) ---
+  $('#createSessionBtn').on('click', function() {
+    $('#sessionStep').hide();
+    $('#createSessionForm').show();
+    $('#selectSessionForm').hide();
+    $('#newSessionName').val('');
+  });
+  $('#selectSessionBtn').on('click', function() {
+    $('#sessionStep').hide();
+    $('#createSessionForm').hide();
+    $('#selectSessionForm').show();
+    loadExistingSessions();
+  });
+  $('#backToSessionStep1, #backToSessionStep2').on('click', function() {
+    $('#sessionStep').show();
+    $('#createSessionForm').hide();
+    $('#selectSessionForm').hide();
+  });
+
+  // Buat sesi baru
+  $('#submitCreateSessionBtn').on('click', function() {
+    const kode = $('#newSessionName').val().trim();
+    if (!kode) return Swal.fire('Error', 'Nama sesi tidak boleh kosong', 'error');
+    $.post({
+      url: '/fullfilment/api/create-returnlist-new/',
+      headers: {'X-CSRFToken': getCookie('csrftoken')},
+      data: JSON.stringify({kode}),
+      contentType: 'application/json',
+      success: function(data) {
+        if (data.success) {
+          currentSessionId = data.returnlist_id;
+          currentSessionKode = kode;
+          $('#sessionModal').modal('hide');
+          showSourceModal();
+        } else {
+          Swal.fire('Error', data.message, 'error');
+        }
+      }
+    });
+  });
+
+  // Pilih sesi lama
+  $('#existingSessionSelect').on('change', function() {
+    $('#submitSelectSessionBtn').prop('disabled', !this.value);
+  });
+  $('#submitSelectSessionBtn').on('click', function() {
+    const selected = $('#existingSessionSelect').val();
+    if (!selected) return;
+    currentSessionId = selected;
+    currentSessionKode = $('#existingSessionSelect option:selected').text();
+    $('#sessionModal').modal('hide');
+    showSourceModal();
+  });
+
+  // Tampilkan modal sumber
+  function showSourceModal() {
+    $('#currentSessionId').val(currentSessionId);
+    $('#currentSessionKode').text(currentSessionKode);
+    $('#sourceModal').modal('show');
+  }
+
+  // Tombol "Mulai Proses Retur"
+  $('[data-bs-target="#sessionModal"]').on('click', function() {
+    $('#sessionStep').show();
+    $('#createSessionForm').hide();
+    $('#selectSessionForm').hide();
+    $('#sessionModal').modal('show');
+  });
+
+  // --- Action Detail Modal Logic (NEW) ---
+  $('.btn-detail').on('click', function() {
+    currentSessionId = $(this).data('session-id');
+    currentSessionKode = $(this).data('session-code');
+    $('#actionModalSessionId').val(currentSessionId);
+    $('#actionModalSessionCode').text(currentSessionKode);
+    $('#actionDetailModal').modal('show');
+  });
+
+  // Handler tombol update
+  $(document).on('click', '.btn-update-session', function() {
+    currentSessionId = $(this).data('session-id');
+    currentSessionKode = $(this).data('session-code');
+    $('#currentSessionId').val(currentSessionId);
+    $('#currentSessionKode').text(currentSessionKode);
+    $('#sourceModal').modal('show');
+  });
+
+  // Ganti id tombol di modal detail
+  $('#actionDetailHistoryBtn').on('click', function() {
+    $('#actionDetailModal').modal('hide');
+    // Logic untuk menampilkan modal history
+    currentHistorySessionId = currentSessionId;
+    currentHistorySessionKode = currentSessionKode;
+    $('#historySessionCode').text(currentHistorySessionKode);
+    $('#searchHistoryInput').val('');
+    currentHistoryPage = 1;
+    loadHistoryData(currentHistorySessionId, currentHistoryPage, '');
+    $('#historyModal').modal('show');
+  });
+  $('#actionDetailIdBtn').on('click', function() {
+    $('#actionDetailModal').modal('hide');
+    $('#modalSessionCode').text(currentSessionKode);
+    currentPage = 1;
+    $('#searchOrderIdInput').val('');
+    loadDetailIdData(currentSessionId, currentPage, '');
+    $('#detailIdModal').modal('show');
+  });
+  $('#actionDetailItemBtn').on('click', function() {
+    $('#actionDetailModal').modal('hide');
+    window.location.href = `/fullfilment/return/session/${currentSessionId}/detail/`;
+  });
+
+  // --- Modal Sumber (#sourceModal) Logic ---
+  $('#orderCancelSourceBtn').on('click', function() {
+    if (currentSessionId) {
+      window.location.href = `/fullfilment/return/session/${currentSessionId}/ordercancel/`;
+            } else {
+      Swal.fire('Error', 'Sesi Retur belum dipilih. Silakan mulai proses retur terlebih dahulu.', 'error');
+    }
+  });
+  $('#batchOverstockSourceBtn').on('click', function() {
+    if (currentSessionId) window.location.href = `/fullfilment/scanretur/${currentSessionId}/`;
+  });
+
+  // --- Detail ID Modal Logic ---
+  // Fungsi loadDetailIdData dan renderPagination tetap sama seperti sebelumnya
+  // Event listener untuk input pencarian
+  let searchTimeout = null;
+  $('#searchOrderIdInput').on('keyup', function() {
+    clearTimeout(searchTimeout);
+    const searchValue = $(this).val();
+    searchTimeout = setTimeout(() => {
+      currentPage = 1; // Reset halaman ke 1 saat pencarian baru
+      loadDetailIdData(currentSessionId, currentPage, searchValue);
+    }, 300); // Debounce 300ms
+  });
+
+  function loadDetailIdData(sessionId, page, searchQuery) {
+    $.get(`/fullfilment/api/return/session/${sessionId}/order-ids/`, {
+      page: page,
+      limit: itemsPerPage,
+      search: searchQuery // Kirim query pencarian ke backend
+    }, function(data) {
+      const $tableBody = $('#detailIdTableBody');
+      $tableBody.empty();
+
+      if (data.success && data.order_ids.length) {
+        data.order_ids.forEach(item => {
+          // Tentukan tipe berdasarkan source_type
+          let typeText = 'Unknown';
+          let typeClass = 'badge bg-secondary';
+          
+          if (item.source_type === 'order_cancel') {
+            typeText = 'Order Cancel';
+            typeClass = 'badge bg-danger';
+          } else if (item.source_type === 'batch_overstock') {
+            typeText = 'Batch Overstock';
+            typeClass = 'badge bg-warning';
+          }
+          
+          $tableBody.append(`
+            <tr>
+              <td>${item.order_id}</td>
+              <td><span class="${typeClass}">${typeText}</span></td>
+            </tr>
+          `);
+        });
+        renderPagination(data.total_pages, data.current_page, sessionId, searchQuery);
+      } else {
+        $tableBody.append('<tr><td colspan="2" class="text-center">Tidak ada Order ID atau Batch ID yang ditemukan.</td></tr>');
+        $('#detailIdPagination').empty();
+      }
+    }).fail(function() {
+      Swal.fire('Error', 'Gagal memuat data Order ID atau Batch ID.', 'error');
+      $('#detailIdPagination').empty();
+    });
+  }
+
+  function renderPagination(totalPages, currentPage, sessionId, searchQuery) {
+    const $pagination = $('#detailIdPagination');
+    $pagination.empty();
+
+    if (totalPages <= 1) return; // Tidak perlu pagination jika hanya 1 halaman atau kurang
+
+    // Previous button
+    $pagination.append(`
+      <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+        <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+      </li>
+    `);
+
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+      $pagination.append(`
+        <li class="page-item ${i === currentPage ? 'active' : ''}">
+          <a class="page-link" href="#" data-page="${i}">${i}</a>
+        </li>
+      `);
+    }
+
+    // Next button
+    $pagination.append(`
+      <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+        <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+      </li>
+    `);
+
+    // Event listener untuk klik pagination
+    $pagination.off('click', '.page-link').on('click', '.page-link', function(e) {
+      e.preventDefault();
+      const newPage = parseInt($(this).data('page'));
+      if (newPage > 0 && newPage <= totalPages) {
+        currentPage = newPage;
+        loadDetailIdData(sessionId, currentPage, searchQuery);
+      }
+    });
+  }
+
+  // AJAX load sesi lama
+  function loadExistingSessions() {
+    $.get('/fullfilment/api/get-returnlists/', function(data) {
+      const $sel = $('#existingSessionSelect');
+      $sel.html('<option value="">Pilih Sesi</option>');
+      if (data.success && data.returnlists.length) {
+                        data.returnlists.forEach(item => {
+          $sel.append(`<option value="${item.id}">${item.kode}</option>`);
+                        });
+                    } else {
+        $sel.append('<option value="" disabled>Tidak ada sesi aktif</option>');
+      }
+    });
+  }
+
+  // Helper CSRF
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+  // --- History Modal Logic ---
+  let currentHistoryPage = 1;
+  const historyPerPage = 50;
+  let currentHistorySessionId = null;
+  let currentHistorySessionKode = null;
+
+  // Event: Klik tombol History
+  $('.btn-history').on('click', function() {
+    currentHistorySessionId = $(this).data('session-id');
+    currentHistorySessionKode = $(this).data('session-code');
+    $('#historySessionCode').text(currentHistorySessionKode);
+    $('#searchHistoryInput').val('');
+    currentHistoryPage = 1;
+    loadHistoryData(currentHistorySessionId, currentHistoryPage, '');
+    $('#historyModal').modal('show');
+  });
+
+  // Event: Pencarian di modal history
+  let historySearchTimeout = null;
+  $('#searchHistoryInput').on('keyup', function() {
+    clearTimeout(historySearchTimeout);
+    const searchValue = $(this).val();
+    historySearchTimeout = setTimeout(() => {
+      currentHistoryPage = 1;
+      loadHistoryData(currentHistorySessionId, currentHistoryPage, searchValue);
+    }, 300);
+  });
+
+  // Fungsi load data history
+  function loadHistoryData(sessionId, page, searchQuery) {
+    console.log(`DEBUG: Loading history data for session ${sessionId}, page ${page}, search: "${searchQuery}"`);
+    
+    $.get(`/fullfilment/api/return/session/${sessionId}/history/`, {
+      page: page,
+      limit: historyPerPage,
+      search: searchQuery
+    }, function(data) {
+      console.log('DEBUG: Received response:', data);
+      
+      const $tableBody = $('#historyTableBody');
+      $tableBody.empty();
+
+      if (data.success && data.logs && data.logs.length > 0) {
+        console.log(`DEBUG: Found ${data.logs.length} history records`);
+        
+        // Update total count - gunakan total records dari pagination
+        const totalRecords = data.total_pages * historyPerPage;
+        $('#historyTotalCount').text(`Total: ${data.logs.length} dari ${totalRecords} records`);
+        
+        data.logs.forEach(item => {
+          $tableBody.append(`
+            <tr>
+              <td>${item.order_id || ''}</td>
+              <td>${item.sku || ''}</td>
+              <td>${item.barcode || ''}</td>
+              <td>${item.nama_produk || ''}</td>
+              <td>${item.variant_produk || ''}</td>
+              <td>${item.batch || ''}</td>
+              <td>${item.qty}</td>
+              <td>${item.notes || ''}</td>
+              <td>${item.created_by || ''}</td>
+              <td style="white-space: pre-line;">${item.created_at || ''}</td>
+            </tr>
+          `);
+        });
+        renderHistoryPagination(data.total_pages, data.current_page, sessionId, searchQuery);
+      } else {
+        console.log('DEBUG: No history data found or empty response');
+        $('#historyTotalCount').text('Total: 0 records');
+        $tableBody.append('<tr><td colspan="10" class="text-center">Tidak ada history ditemukan.</td></tr>');
+        $('#historyPagination').empty();
+      }
+    }).fail(function(xhr, status, error) {
+      console.error('DEBUG: AJAX request failed:', {xhr, status, error});
+      console.error('DEBUG: Response text:', xhr.responseText);
+      
+      try {
+        const errorData = JSON.parse(xhr.responseText);
+        Swal.fire('Error', `Gagal memuat data history: ${errorData.message || error}`, 'error');
+      } catch (e) {
+        Swal.fire('Error', `Gagal memuat data history: ${error}`, 'error');
+      }
+      $('#historyPagination').empty();
+    });
+  }
+
+  // Fungsi render pagination history
+  function renderHistoryPagination(totalPages, currentPage, sessionId, searchQuery) {
+    const $pagination = $('#historyPagination');
+    $pagination.empty();
+
+    if (totalPages <= 1) return;
+
+    $pagination.append(`
+      <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+        <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+      </li>
+    `);
+
+    for (let i = 1; i <= totalPages; i++) {
+      $pagination.append(`
+        <li class="page-item ${i === currentPage ? 'active' : ''}">
+          <a class="page-link" href="#" data-page="${i}">${i}</a>
+        </li>
+      `);
+    }
+
+    $pagination.append(`
+      <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+        <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+      </li>
+    `);
+
+    $pagination.off('click', '.page-link').on('click', '.page-link', function(e) {
+      e.preventDefault();
+      const newPage = parseInt($(this).data('page'));
+      if (newPage > 0 && newPage <= totalPages) {
+        currentHistoryPage = newPage;
+        loadHistoryData(sessionId, currentHistoryPage, searchQuery);
+      }
+    });
+  }
+
+  // Event handler untuk tombol Detail Overstock
+  $(document).on('click', '.btn-overstock-detail', function() {
+    const batchId = $(this).data('batch-id');
+    const batchName = $(this).data('batch-name');
+    
+    // Tampilkan loading
+    Swal.fire({
+      title: 'Memuat data...',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+    
+    // Ambil data overstock detail
+    $.get(`/fullfilment/api/batch/${batchId}/overstock-detail/`, function(data) {
+      Swal.close();
+      
+      if (data.success) {
+        let tableContent = `
+          <div class="table-responsive">
+            <table class="table table-sm table-striped">
+              <thead>
+                <tr>
+                  <th>Photo</th>
+                  <th>SKU</th>
+                  <th>Barcode</th>
+                  <th>Nama Produk</th>
+                  <th>Variant Produk</th>
+                  <th>Brand</th>
+                  <th>Butuh</th>
+                  <th>Ambil</th>
+                  <th>Overstock</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+        
+        data.overstock_items.forEach(item => {
+          const photoHtml = item.photo_url ? 
+            `<img src="${item.photo_url}" alt="${item.product_name}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">` : 
+            '<div style="width: 40px; height: 40px; background-color: #f8f9fa; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 12px;">No Image</div>';
+          
+          tableContent += `
+            <tr>
+              <td>${photoHtml}</td>
+              <td><strong>${item.sku}</strong></td>
+              <td><code>${item.barcode}</code></td>
+              <td>${item.product_name}</td>
+              <td>${item.variant_produk}</td>
+              <td><span class="badge bg-info">${item.brand}</span></td>
+              <td>${item.needed_qty}</td>
+              <td>${item.picked_qty}</td>
+              <td><span class="badge bg-warning">${item.overstock_qty}</span></td>
+            </tr>
+          `;
+        });
+        
+        tableContent += `
+              </tbody>
+            </table>
+          </div>
+        `;
+        
+        Swal.fire({
+          title: `Detail Overstock - ${data.batch_name}`,
+          html: tableContent,
+          width: '95%',
+          maxWidth: '1400px',
+          confirmButtonText: 'Tutup',
+          confirmButtonColor: '#3085d6',
+          customClass: {
+            popup: 'swal-wide-popup'
+          }
+        });
+        
+        // Tambahkan CSS untuk modal yang lebih lebar
+        $('<style>')
+          .prop('type', 'text/css')
+          .html(`
+            .swal-wide-popup {
+              max-width: 1400px !important;
+            }
+            .swal-wide-popup .swal2-html-container {
+              max-height: 70vh;
+              overflow-y: auto;
+            }
+            .swal-wide-popup .table th,
+            .swal-wide-popup .table td {
+              white-space: nowrap;
+              vertical-align: middle;
+            }
+            .swal-wide-popup .table th:nth-child(1),
+            .swal-wide-popup .table td:nth-child(1) {
+              width: 60px;
+            }
+            .swal-wide-popup .table th:nth-child(2),
+            .swal-wide-popup .table td:nth-child(2) {
+              width: 120px;
+            }
+            .swal-wide-popup .table th:nth-child(3),
+            .swal-wide-popup .table td:nth-child(3) {
+              width: 120px;
+            }
+            .swal-wide-popup .table th:nth-child(4),
+            .swal-wide-popup .table td:nth-child(4) {
+              width: 200px;
+              white-space: normal;
+            }
+            .swal-wide-popup .table th:nth-child(5),
+            .swal-wide-popup .table td:nth-child(5) {
+              width: 150px;
+            }
+            .swal-wide-popup .table th:nth-child(6),
+            .swal-wide-popup .table td:nth-child(6) {
+              width: 100px;
+            }
+            .swal-wide-popup .table th:nth-child(7),
+            .swal-wide-popup .table td:nth-child(7),
+            .swal-wide-popup .table th:nth-child(8),
+            .swal-wide-popup .table td:nth-child(8),
+            .swal-wide-popup .table th:nth-child(9),
+            .swal-wide-popup .table td:nth-child(9) {
+              width: 80px;
+              text-align: center;
+            }
+          `)
+          .appendTo('head');
+      } else {
+        Swal.fire('Error', data.message || 'Gagal memuat data overstock', 'error');
+      }
+    }).fail(function(xhr, status, error) {
+      Swal.close();
+      Swal.fire('Error', 'Gagal memuat data overstock', 'error');
+    });
+  });
+
+  // Handler tombol Close Session
+  $(document).on('click', '.btn-close-session', function() {
+    const sessionId = $(this).data('session-id');
+    const sessionCode = $(this).data('session-code');
+    
+    Swal.fire({
+      title: 'Konfirmasi Tutup Session',
+      html: `
+        <p>Apakah Anda yakin ingin menutup session <strong>${sessionCode}</strong>?</p>
+        <p class="text-muted">Session yang ditutup tidak dapat diedit lagi.</p>
+      `,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#f39c12',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Ya, Tutup Session',
+      cancelButtonText: 'Batal'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Kirim request untuk menutup session
+        $.ajax({
+          url: `/fullfilment/api/return/session/${sessionId}/close/`,
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+          },
+          success: function(response) {
+            if (response.success) {
+              Swal.fire({
+                title: 'Berhasil!',
+                text: response.message,
+                icon: 'success',
+                confirmButtonColor: '#28a745'
+              }).then(() => {
+                // Reload halaman untuk update status
+                location.reload();
+              });
+            } else {
+              Swal.fire('Error', response.message, 'error');
+            }
+          },
+          error: function(xhr) {
+            let errorMessage = 'Terjadi kesalahan saat menutup session';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+              errorMessage = xhr.responseJSON.message;
+            }
+            Swal.fire('Error', errorMessage, 'error');
+          }
+        });
+      }
+    });
+  });
+
+  // Handler tombol di modal
+  $('#orderCancelSourceBtn').on('click', function() {
+    if (currentSessionId) {
+      window.location.href = `/fullfilment/return/session/${currentSessionId}/ordercancel/`;
+    } else {
+      Swal.fire('Error', 'Sesi Retur belum dipilih. Silakan mulai proses retur terlebih dahulu.', 'error');
+    }
+  });
+  $('#batchOverstockSourceBtn').on('click', function() {
+    if (currentSessionId) {
+      window.location.href = `/fullfilment/scanretur/${currentSessionId}/`;
+    }
+  });
+} // End of initializeDataTables function
+</script>
+{% endblock %}

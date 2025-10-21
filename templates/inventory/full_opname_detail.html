@@ -1,0 +1,754 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ full_session.nama_opname }} - Detail{% endblock %}
+
+{% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+<style>
+    .session-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        height: 150px;
+        overflow: hidden;
+    }
+    
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    
+    .status-draft { background: #fff3cd; color: #856404; }
+    .status-in_progress { background: #d1ecf1; color: #0c5460; }
+    .status-completed { background: #d4edda; color: #155724; }
+    
+    .progress-section {
+        background: rgba(255,255,255,0.1);
+        padding: 15px;
+        border-radius: 8px;
+        margin: 15px 0;
+    }
+    
+    .progress-bar {
+        height: 10px;
+        background: rgba(255,255,255,0.3);
+        border-radius: 5px;
+        overflow: hidden;
+        margin: 10px 0;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #28a745, #20c997);
+        transition: width 0.3s ease;
+    }
+    
+    .session-header h2 {
+        font-size: 1.5rem;
+        margin-bottom: 8px;
+        line-height: 1.2;
+    }
+    
+    .session-header p {
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+        line-height: 1.3;
+    }
+    
+    .session-header .text-end {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 15px;
+        height: 150px;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        text-align: center;
+        transition: transform 0.2s;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .stat-value.text-danger {
+        color: #dc3545 !important;
+    }
+    
+    .stat-value.text-warning {
+        color: #fd7e14 !important;
+    }
+    
+    .stat-value.text-success {
+        color: #28a745 !important;
+    }
+    
+    .action-buttons {
+        margin-bottom: 20px;
+    }
+    
+    .main-table-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-top: 20px;
+    }
+    
+    .main-table-card .card-header {
+        background: #495057;
+        color: white;
+        padding: 15px 20px;
+        border: none;
+    }
+    
+    .main-table-card .card-body {
+        padding: 0;
+    }
+    
+    .table {
+        margin-bottom: 0;
+    }
+    
+    .table thead th {
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 12px 8px;
+    }
+    
+    .table tbody td {
+        padding: 12px 8px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .status-badge-table {
+        font-size: 0.75rem;
+        padding: 3px 8px;
+    }
+    
+    /* Custom Progress Bar Styles */
+    .progress-container {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .progress-custom {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .progress-fill-custom {
+        height: 100%;
+        border-radius: 12px;
+        position: relative;
+        transition: width 0.6s ease, background 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 30px;
+    }
+    
+    .progress-text {
+        color: white;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        z-index: 2;
+        position: relative;
+    }
+
+    /* DataTable styling */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+        margin-bottom: 15px;
+    }
+    
+    .dataTables_wrapper .dataTables_info {
+        padding-top: 10px;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate {
+        padding-top: 10px;
+    }
+    
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Navigation Buttons -->
+    <div class="action-buttons">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <a href="{% url 'inventory:full_opname_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Kembali ke Full Opname
+                </a>
+            </div>
+            <div class="d-flex gap-2">
+                {% if progress_verifikasi == 100 and rak_selesai == total_rak and total_rak > 0 and full_session.status == 'in_progress' %}
+                <button type="button" class="btn btn-success" onclick="finishFullOpname({{ full_session.id }})">
+                    <i class="bi bi-check-circle"></i> Selesai Full Opname
+                </button>
+                {% endif %}
+                {% if full_session.status == 'draft' and can_delete_full_opname %}
+                <button type="button" class="btn btn-danger" onclick="deleteFullOpnameSession({{ full_session.id }}, '{{ full_session.nama_opname }}')">
+                    <i class="bi bi-trash"></i> Hapus
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Header and Stats Row -->
+    <div class="row">
+        <!-- Session Header (Left) -->
+        <div class="col-md-8">
+            <div class="session-header position-relative">
+                <div class="text-end">
+                    <span class="status-badge status-{{ full_session.status }}">
+                        {{ full_session.get_status_display }}
+                    </span>
+                </div>
+                <div class="mt-3">
+                    <h2 class="mb-2">{{ full_session.nama_opname }}</h2>
+                    <p class="mb-1">
+                        <i class="bi bi-calendar"></i> {{ full_session.tanggal_mulai|date:"d/m/Y H:i" }}
+                        {% if full_session.tanggal_selesai %}
+                            - {{ full_session.tanggal_selesai|date:"d/m/Y H:i" }}
+                        {% endif %}
+                    </p>
+                    <p class="mb-1">
+                        <i class="bi bi-person"></i> Created by: {{ full_session.created_by.username }}
+                        {% if full_session.supervisor %}
+                            | Supervisor: {{ full_session.supervisor.username }}
+                        {% endif %}
+                    </p>
+                    <p class="mb-0">
+                        <i class="bi bi-tag"></i> {{ full_session.session_code }}
+                    </p>
+                </div>
+                
+                {% if full_session.status == 'in_progress' %}
+                <div class="progress-section">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Progress Verifikasi</span>
+                        <span>{{ full_session.progress_percentage|floatformat:1 }}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ full_session.progress_percentage }}%"></div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Stats Cards (Right) -->
+        <div class="col-md-4">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">{{ total_rak }}</div>
+                    <div class="stat-label">Total Rak</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ rak_selesai }}</div>
+                    <div class="stat-label">Rak Selesai</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ progress_verifikasi|floatformat:0 }}%</div>
+                    <div class="stat-label">Progress Verifikasi</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ total_rak }}</div>
+                    <div class="stat-label">Sesi Rak</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value {% if total_selisih > 0 %}text-danger{% elif total_selisih < 0 %}text-warning{% else %}text-success{% endif %}">
+                        {% if total_selisih > 0 %}
+                            lebih {{ total_selisih|floatformat:0 }}
+                        {% elif total_selisih < 0 %}
+                            kurang {{ total_selisih|floatformat:0|slice:"1:" }}
+                        {% else %}
+                            {{ total_selisih|floatformat:0 }}
+                        {% endif %}
+                    </div>
+                    <div class="stat-label">Total Selisih</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Table - Sesi Opname Rak -->
+    <div class="main-table-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-list-ul"></i> Sesi Opname Rak
+            </h5>
+            <span class="badge bg-light text-dark">{{ rak_sessions.count }} sesi</span>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="fullOpnameRakSessionsTable" class="table table-hover" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Kode Sesi</th>
+                            <th>Rak</th>
+                            <th>Status</th>
+                            <th>Total Items</th>
+                            <th>Progress</th>
+                            <th>Total Selisih</th>
+                            <th>Dibuat Oleh</th>
+                            <th>Tanggal Selesai</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rak_session in rak_sessions %}
+                        <tr>
+                            <td><code>{{ rak_session.session_code }}</code></td>
+                            <td><strong>{{ rak_session.rak.kode_rak }}</strong> - {{ rak_session.rak.lokasi }}</td>
+                            <td>
+                                {% if rak_session.status == 'draft' %}
+                                    <span class="badge bg-warning status-badge-table">Draft</span>
+                                {% elif rak_session.status == 'in_progress' %}
+                                    <span class="badge bg-info status-badge-table">Sedang Berlangsung</span>
+                                {% elif rak_session.status == 'selesai' or rak_session.status == 'completed' %}
+                                    <span class="badge bg-success status-badge-table">Selesai</span>
+                                {% else %}
+                                    <span class="badge bg-secondary status-badge-table">{{ rak_session.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">{{ rak_session.total_items }}</td>
+                            <td>
+                                {% if rak_session.status == 'draft' %}
+                                    <span class="badge bg-secondary status-badge-table">Belum Dimulai</span>
+                                {% elif rak_session.status == 'in_progress' %}
+                                    <div class="progress-container">
+                                        <div class="progress-custom" style="height: 24px;">
+                                            <div class="progress-fill-custom" 
+                                                 style="width: {{ rak_session.progress_percentage }}%; 
+                                                        background: {% if rak_session.progress_percentage == 100 %}linear-gradient(90deg, #28a745, #20c997){% else %}linear-gradient(90deg, #007bff, #0056b3){% endif %};">
+                                                <span class="progress-text">{{ rak_session.progress_percentage|floatformat:0 }}%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% elif rak_session.status == 'selesai' or rak_session.status == 'completed' %}
+                                    <div class="progress-container">
+                                        <div class="progress-custom" style="height: 24px;">
+                                            <div class="progress-fill-custom" 
+                                                 style="width: 100%; 
+                                                        background: linear-gradient(90deg, #28a745, #20c997);">
+                                                <span class="progress-text">100%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <span class="badge bg-secondary status-badge-table">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if rak_session.status == 'selesai' or rak_session.status == 'completed' %}
+                                    <span class="badge {% if rak_session.total_selisih > 0 %}bg-danger{% elif rak_session.total_selisih < 0 %}bg-warning{% else %}bg-success{% endif %} status-badge-table">
+                                        {% if rak_session.total_selisih > 0 %}
+                                            lebih {{ rak_session.total_selisih|floatformat:0 }}
+                                        {% elif rak_session.total_selisih < 0 %}
+                                            kurang {{ rak_session.total_selisih|floatformat:0|slice:"1:" }}
+                                        {% else %}
+                                            {{ rak_session.total_selisih|floatformat:0 }}
+                                        {% endif %}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary status-badge-table">-</span>
+                                {% endif %}
+                            </td>
+                            <td><small>{{ rak_session.created_by.username }}</small></td>
+                            <td><small>{% if rak_session.tanggal_selesai %}{{ rak_session.tanggal_selesai|date:"d/m/Y H:i" }}{% else %}-{% endif %}</small></td>
+                            <td>
+                                <div class="d-flex gap-1 flex-nowrap">
+                                    {% if rak_session.status == 'draft' %}
+                                        <a href="{% url 'inventory:opname_rak_work' rak_session.id %}" class="btn btn-sm btn-primary" title="Kerja">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    {% elif rak_session.status == 'in_progress' %}
+                                        <a href="{% url 'inventory:opname_rak_work' rak_session.id %}" class="btn btn-sm btn-primary" title="Lanjutkan">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    {% elif rak_session.status == 'selesai' or rak_session.status == 'completed' %}
+                                        <a href="{% url 'inventory:opname_rak_detail' rak_session.id %}" class="btn btn-sm btn-info" title="Detail">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox"></i> Belum ada sesi opname rak
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Catatan (minimal) -->
+    {% if full_session.catatan %}
+    <div class="mt-3">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="mb-0"><i class="bi bi-chat-text"></i> Catatan</h6>
+            </div>
+            <div class="card-body py-2">
+                <p class="mb-0 small">{{ full_session.catatan }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Target Rak Modal -->
+<div class="modal fade" id="targetRakModal" tabindex="-1" aria-labelledby="targetRakModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="targetRakModalLabel">
+                    <i class="bi bi-target me-2"></i>
+                    Target Rak untuk Opname
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Full Opname Session:</strong> {{ full_session.nama_opname }}
+                    <br>
+                    <small>Daftar rak target yang akan diopname dalam sesi ini.</small>
+                </div>
+                
+                <div class="table-responsive">
+                    <table id="targetRakTable" class="table table-striped table-hover target-rak-table">
+                        <thead>
+                            <tr>
+                                <th>Kode Rak</th>
+                                <th>Nama Rak</th>
+                                <th>Lokasi Rak</th>
+                                <th>Status Opname</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rak in full_session.target_raks.all %}
+                            {% with rak_session=rak.rak_opname_sessions.all|first %}
+                            <tr>
+                                <td><strong>{{ rak.kode_rak }}</strong></td>
+                                <td>{{ rak.nama_rak|default:"-" }}</td>
+                                <td>{{ rak.lokasi }}</td>
+                                <td>
+                                    {% if rak_session and rak_session.full_opname_session == full_session %}
+                                        <span class="badge bg-success status-badge-table">Sesi Aktif</span>
+                                        <br>
+                                        <small class="text-muted">{{ rak_session.session_code }}</small>
+                                    {% else %}
+                                        <span class="badge bg-warning status-badge-table">Belum Dimulai</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if rak_session and rak_session.full_opname_session == full_session %}
+                                        <a href="{% url 'inventory:opname_rak_work' rak_session.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i> Lanjutkan
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'inventory:opname_rak_create' %}?rak_id={{ rak.id }}&full_opname_session_id={{ full_session.id }}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-plus-circle"></i> Buat Sesi
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>
+                    Tutup
+                </button>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Select Rak Modal -->
+<div class="modal fade" id="selectRakModal" tabindex="-1" aria-labelledby="selectRakModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="selectRakModalLabel">
+                    <i class="bi bi-list-check me-2"></i>
+                    Pilih Rak untuk Opname
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Full Opname Session:</strong> {{ full_session.nama_opname }}
+                    <br>
+                    <small>Pilih rak yang akan diopname. Rak yang sudah selesai akan ditampilkan di bawah.</small>
+                </div>
+                
+                <div class="table-responsive">
+                    <table id="rakSelectionTable" class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Kode Rak</th>
+                                <th>Nama Rak</th>
+                                <th>Lokasi Rak</th>
+                                <th>Status Opname</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data akan diisi oleh DataTable -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// DataTable untuk rak selection
+var rakSelectionTable;
+
+// Initialize DataTable when modal opens
+$('#selectRakModal').on('show.bs.modal', function() {
+    if (rakSelectionTable) {
+        rakSelectionTable.destroy();
+    }
+    
+    rakSelectionTable = $('#rakSelectionTable').DataTable({
+        ajax: {
+            url: '{% url "inventory:full_opname_rak_list" full_session.id %}',
+            type: 'GET',
+            dataSrc: 'raks'
+        },
+        columns: [
+            { data: 'kode_rak' },
+            { data: 'nama_rak' },
+            { data: 'lokasi' },
+            { 
+                data: 'status',
+                render: function(data, type, row) {
+                    if (data === 'selesai') {
+                        return '<span class="badge bg-success">Selesai</span>';
+                    } else if (data === 'draft') {
+                        return '<span class="badge bg-warning">Draft</span>';
+                    } else if (data === 'in_progress') {
+                        return '<span class="badge bg-info">Sedang Dikerjakan</span>';
+                    } else {
+                        return '<span class="badge bg-secondary">Belum Dimulai</span>';
+                    }
+                }
+            },
+            {
+                data: null,
+                render: function(data, type, row) {
+                    if (row.rak_session_id) {
+                        return '<button class="btn btn-sm btn-primary" onclick="selectRakSession(' + row.rak_session_id + ')">' +
+                               '<i class="bi bi-pencil"></i> Lanjutkan</button>';
+                    } else {
+                        return '<a href="{% url "inventory:opname_rak_create" %}?rak_id=' + row.rak_id + '&full_opname_session_id={{ full_session.id }}" class="btn btn-sm btn-success">' +
+                               '<i class="bi bi-plus-circle"></i> Buat Sesi</a>';
+                    }
+                }
+            }
+        ],
+        order: [[3, 'asc']], // Sort by status (belum dimulai first, selesai last)
+        pageLength: 25,
+        language: {
+            url: '//cdn.datatables.net/plug-ins/2.0.8/i18n/id.json'
+        },
+        responsive: true,
+        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+             '<"row"<"col-sm-12"tr>>' +
+             '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>'
+    });
+});
+
+function selectRakSession(rakSessionId) {
+    // Redirect ke opname rak work dengan session ID
+    window.location.href = '{% url "inventory:full_opname_rak_work" full_session.id 0 %}'.replace('0', rakSessionId);
+}
+
+// Handle target rak modal events
+$('#targetRakModal').on('show.bs.modal', function() {
+    // Initialize DataTable for target rak table
+    if ($.fn.DataTable.isDataTable('#targetRakTable')) {
+        $('#targetRakTable').DataTable().destroy();
+    }
+    
+    $('#targetRakTable').DataTable({
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua"]],
+        language: {
+            url: '//cdn.datatables.net/plug-ins/2.0.8/i18n/id.json'
+        },
+        responsive: true,
+        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+             '<"row"<"col-sm-12"tr>>' +
+             '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+        order: [[0, 'asc']], // Sort by kode rak
+        columnDefs: [
+            {
+                targets: [4], // Aksi column
+                orderable: false,
+                searchable: false
+            }
+        ]
+    });
+});
+
+// Handle modal transitions
+$('#targetRakModal').on('hidden.bs.modal', function() {
+    // Destroy DataTable when modal is closed to prevent conflicts
+    if ($.fn.DataTable.isDataTable('#targetRakTable')) {
+        $('#targetRakTable').DataTable().destroy();
+    }
+});
+
+// Initialize DataTable for full opname rak sessions table
+$(document).ready(function() {
+    if ($('#fullOpnameRakSessionsTable').length) {
+        $('#fullOpnameRakSessionsTable').DataTable({
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua"]],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/2.0.8/i18n/id.json'
+            },
+            responsive: true,
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                 '<"row"<"col-sm-12"tr>>' +
+                 '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            order: [[6, 'desc']], // Sort by tanggal mulai (newest first)
+            columnDefs: [
+                {
+                    targets: [7], // Aksi column
+                    orderable: false,
+                    searchable: false
+                }
+            ]
+        });
+    }
+});
+
+function deleteFullOpnameSession(sessionId, sessionName) {
+    if (confirm('Apakah Anda yakin ingin menghapus Full Opname Session "' + sessionName + '"?\n\nTindakan ini akan menghapus:\n- Full Opname Session\n- Semua sesi opname rak yang terkait (jika masih draft)\n- Semua data opname yang belum selesai\n\nTindakan ini tidak dapat dibatalkan!')) {
+        // Create form untuk delete
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "inventory:full_opname_delete" 0 %}'.replace('0', sessionId);
+        
+        // Add CSRF token
+        var csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrfmiddlewaretoken';
+        csrfToken.value = '{{ csrf_token }}';
+        form.appendChild(csrfToken);
+        
+        // Submit form
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function finishFullOpname(sessionId) {
+    if (confirm('Apakah Anda yakin ingin menyelesaikan Full Opname Session ini?\n\nTindakan ini akan:\n- Mengubah status menjadi "Selesai"\n- Menutup semua sesi opname rak\n- Menyimpan hasil final opname\n\nTindakan ini tidak dapat dibatalkan!')) {
+        // Create form untuk finish
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "inventory:full_opname_complete" 0 %}'.replace('0', sessionId);
+        
+        // Add CSRF token
+        var csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrfmiddlewaretoken';
+        csrfToken.value = '{{ csrf_token }}';
+        form.appendChild(csrfToken);
+        
+        // Submit form
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+
+{% block extra_script %}
+<script type="text/javascript" src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script type="text/javascript" src=""></script>
+<script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+{% endblock %}
+{% endblock %}

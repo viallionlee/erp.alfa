@@ -1,0 +1,459 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load custom_filters %}
+{% block title %}History Harga{% endblock %}
+{% block extra_head %}
+<style>
+    .filter-box {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .filter-box .form-control {
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .filter-box .form-control:focus {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .stats-box {
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .stats-box .stat-item {
+        text-align: center;
+        padding: 10px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .stats-box .stat-item:hover {
+        background: #f8f9fa;
+        transform: translateY(-2px);
+    }
+    
+    .stats-box .stat-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 5px;
+    }
+    
+    .stats-box .stat-label {
+        font-size: 11px;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+    
+    .table-container {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .table thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .table thead th {
+        border: none;
+        padding: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .table tbody tr:hover {
+        background: #f8f9fa;
+        transform: scale(1.005);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .table tbody td {
+        padding: 12px;
+        font-size: 13px;
+        vertical-align: middle;
+    }
+    
+    .badge-po {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(240, 147, 251, 0.3);
+    }
+    
+    .badge-po:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(240, 147, 251, 0.4);
+    }
+    
+    .badge-sku {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(79, 172, 254, 0.3);
+    }
+    
+    .pagination-wrapper {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .page-link {
+        color: #667eea;
+        border-color: #e0e0e0;
+    }
+    
+    .page-link:hover {
+        color: #764ba2;
+        background-color: #f8f9fa;
+        border-color: #667eea;
+    }
+    
+    .page-item.active .page-link {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+    }
+    
+    .hpp-summary-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 20px rgba(240, 147, 251, 0.4);
+        color: white;
+    }
+    
+    .hpp-summary-card h5 {
+        font-size: 14px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 15px;
+        color: rgba(255,255,255,0.9);
+    }
+    
+    .hpp-card-value {
+        font-size: 32px;
+        font-weight: 800;
+        margin-bottom: 5px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .hpp-card-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: rgba(255,255,255,0.85);
+        margin-bottom: 10px;
+    }
+    
+    .hpp-sub-stat {
+        background: rgba(255,255,255,0.15);
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 8px;
+        backdrop-filter: blur(10px);
+    }
+    
+    .hpp-sub-stat-value {
+        font-size: 18px;
+        font-weight: 700;
+    }
+    
+    .hpp-sub-stat-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: rgba(255,255,255,0.8);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .info-badge {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        display: inline-block;
+        margin-left: 8px;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>History Harga</h4>
+        <a href="{% url 'products:index' %}" class="btn btn-sm btn-secondary">
+            <i class="bi bi-arrow-left"></i> Kembali
+        </a>
+    </div>
+    
+    <!-- Filter -->
+    <div class="filter-box">
+        <div class="row g-2">
+            <div class="col-md-2">
+                <input type="date" id="filter-date-from" class="form-control form-control-sm" placeholder="Dari Tanggal">
+            </div>
+            <div class="col-md-2">
+                <input type="date" id="filter-date-to" class="form-control form-control-sm" placeholder="Sampai Tanggal">
+            </div>
+            <div class="col-md-2">
+                <input type="text" id="filter-sku" class="form-control form-control-sm" placeholder="Cari SKU...">
+            </div>
+            <div class="col-md-2">
+                <input type="text" id="filter-product" class="form-control form-control-sm" placeholder="Cari Nama Produk...">
+            </div>
+            <div class="col-md-2">
+                <input type="text" id="filter-supplier" class="form-control form-control-sm" placeholder="Cari Supplier...">
+            </div>
+            <div class="col-md-2">
+                <input type="text" id="filter-po" class="form-control form-control-sm" placeholder="Cari Nomor PO...">
+            </div>
+        </div>
+    </div>
+    
+    <!-- HPP Summary Card -->
+    <div class="hpp-summary-card">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <h5><i class="bi bi-calculator-fill"></i> HPP Weighted Average</h5>
+                <div class="hpp-card-value">Rp <span id="hpp-weighted-avg">0</span></div>
+                <div class="hpp-card-label">Harga Pokok Penjualan (Metode Rata-rata Tertimbang)</div>
+                <span class="info-badge" title="HPP = Total Biaya / Total Kuantitas">
+                    <i class="bi bi-info-circle"></i> Formula: Total Cost / Total Qty
+                </span>
+            </div>
+            <div class="col-md-8">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="hpp-sub-stat">
+                            <div class="hpp-sub-stat-value">Rp <span id="total-cost-display">0</span></div>
+                            <div class="hpp-sub-stat-label">Total Biaya</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="hpp-sub-stat">
+                            <div class="hpp-sub-stat-value"><span id="total-quantity-display">0</span> pcs</div>
+                            <div class="hpp-sub-stat-label">Total Kuantitas</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="hpp-sub-stat">
+                            <div class="hpp-sub-stat-value">Rp <span id="avg-price-display">0</span></div>
+                            <div class="hpp-sub-stat-label">Harga Rata-rata Simple</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats -->
+    <div class="stats-box">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <div class="stat-value" id="total-records">0</div>
+                    <div class="stat-label">Total Records</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <div class="stat-value" id="changed-products">0</div>
+                    <div class="stat-label">SKU Berubah Harga</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <div class="stat-value" id="avg-change">0%</div>
+                    <div class="stat-label">Rata-rata Perubahan</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Table -->
+    <div class="table-container">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Tanggal</th>
+                    <th>Nomor PO</th>
+                    <th>SKU</th>
+                    <th>Nama Produk</th>
+                    <th>Brand</th>
+                    <th>Supplier</th>
+                    <th class="text-center">Qty</th>
+                    <th class="text-end">Harga Beli</th>
+                    <th class="text-end">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <!-- Data akan di-load via API -->
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    <div class="pagination-wrapper">
+        <nav aria-label="Page navigation">
+            <ul class="pagination pagination-sm mb-0" id="pagination">
+                <!-- Pagination akan di-generate via JavaScript -->
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}
+{% block extra_script %}
+<script>
+let currentPage = 1;
+let totalPages = 1;
+let currentFilters = {};
+
+$(document).ready(function() {
+    loadData();
+    
+    // Filter functionality
+    $('#filter-sku, #filter-product, #filter-supplier, #filter-po, #filter-date-from, #filter-date-to').on('change keyup', function() {
+        currentFilters = {
+            date_from: $('#filter-date-from').val(),
+            date_to: $('#filter-date-to').val(),
+            sku: $('#filter-sku').val(),
+            product: $('#filter-product').val(),
+            supplier: $('#filter-supplier').val(),
+            po: $('#filter-po').val()
+        };
+        currentPage = 1;
+        loadData();
+    });
+});
+
+function loadData() {
+    $.ajax({
+        url: '/products/price-history/api/',
+        method: 'GET',
+        data: {
+            page: currentPage,
+            page_size: 50,
+            ...currentFilters
+        },
+        success: function(response) {
+            renderTable(response.data);
+            renderPagination(response.total_pages);
+            updateStatistics(response.stats);
+        },
+        error: function(xhr) {
+            console.error('Error loading data:', xhr);
+            $('#table-body').html('<tr><td colspan="9" class="text-center text-danger">Error loading data</td></tr>');
+        }
+    });
+}
+
+function renderTable(data) {
+    let html = '';
+    if (data.length === 0) {
+        html = '<tr><td colspan="9" class="text-center">Tidak ada data</td></tr>';
+    } else {
+        data.forEach(function(ph) {
+            html += `
+                <tr>
+                    <td>${ph.purchase_date}</td>
+                    <td>
+                        ${ph.po_nomor ? `<a href="/purchasing/po/${ph.po_id}/" class="badge-po">${ph.po_nomor}</a>` : '<span class="badge-po">-</span>'}
+                    </td>
+                    <td><span class="badge-sku">${ph.sku}</span></td>
+                    <td><strong>${ph.product_name}</strong></td>
+                    <td>${ph.brand || '-'}</td>
+                    <td>${ph.supplier || '-'}</td>
+                    <td class="text-center"><strong>${ph.quantity}</strong></td>
+                    <td class="text-end"><strong class="text-primary">Rp ${ph.price_formatted}</strong></td>
+                    <td class="text-end"><strong class="text-success">Rp ${ph.subtotal_formatted}</strong></td>
+                </tr>
+            `;
+        });
+    }
+    $('#table-body').html(html);
+}
+
+function renderPagination(totalPages) {
+    let html = '';
+    if (totalPages <= 1) {
+        $('#pagination').html('');
+        return;
+    }
+    
+    // Previous button
+    html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">Previous</a>
+    </li>`;
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+            html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+            </li>`;
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+            html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        }
+    }
+    
+    // Next button
+    html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">Next</a>
+    </li>`;
+    
+    $('#pagination').html(html);
+}
+
+function changePage(page) {
+    currentPage = page;
+    loadData();
+    $('html, body').animate({ scrollTop: 0 }, 300);
+}
+
+function updateStatistics(stats) {
+    $('#total-records').text(stats.total_records);
+    $('#changed-products').text(stats.changed_products);
+    $('#avg-change').text(stats.avg_change + '%');
+    
+    // Update HPP and related stats
+    $('#hpp-weighted-avg').text(formatNumber(stats.hpp_weighted_avg));
+    $('#total-cost-display').text(formatNumber(stats.total_cost));
+    $('#total-quantity-display').text(formatNumber(stats.total_quantity));
+    $('#avg-price-display').text(formatNumber(stats.avg_price));
+}
+
+function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+</script>
+{% endblock %}
+

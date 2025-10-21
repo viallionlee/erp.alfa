@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- HAPUS ALERT INFO AGAR LEBIH RAPI -->
+
+    <div class="card table-container mb-4">
+        <div class="card-body">
+            <!-- HAPUS SEMUA KODE FILTER KUSTOM DARI SINI -->
+
+            <div class="table-responsive">
+                <table id="all-orders-table" class="table table-hover w-100">
+                    <thead>
+                        <tr>
+                            <th></th> <!-- Kolom untuk tombol expand -->
+                            <th>ID Pesanan</th>
+                            <th>Tanggal</th>
+                            <th>Status Bayar</th>
+                            <th>Status Fulfillment</th>
+                            <th>Status Cancel</th>
+                            <th>Status Retur</th>
+                            <th>Status Bundle</th>
+                            <th>Nama Batch</th>
+                            <th>Channel</th>
+                            <th>Kurir</th>
+                            <th>No. Resi</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <!-- HAPUS KESELURUHAN BAGIAN <tfoot> DARI SINI -->
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css">
+<!-- Tambahkan CDN untuk SweetAlert2 -->
+<style>
+    /* Style untuk tombol expand/collapse */
+    td.details-control {
+        background: url('https://datatables.net/examples/resources/details_open.png') no-repeat center center;
+        cursor: pointer;
+    }
+    tr.details td.details-control {
+        background: url('https://datatables.net/examples/resources/details_close.png') no-repeat center center;
+    }
+    .child-table {
+        width: 100%;
+        background-color: #f9f9f9;
+    }
+    .child-table th {
+        background-color: #e9ecef;
+    }
+</style>
+{% endblock %}
+
+{% block extra_script %}
+{{ block.super }}
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script src=""></script>
+<!-- Tambahkan flatpickr untuk tanggal -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+// Fungsi untuk memformat baris anak (detail produk)
+function formatChildRow(data) {
+    let rows_html = '';
+    data.forEach(item => {
+        rows_html += `
+            <tr>
+                <td>${item.sku}</td>
+                <td>${item.barcode}</td>
+                <td>${item.nama_produk}</td>
+                <td>${item.variant_produk}</td>
+                <td>${item.brand}</td>
+                <td>${item.jumlah}</td>
+                <td>${item.jumlah_ambil}</td>
+                <td>${item.harga_promosi}</td>
+            </tr>
+        `;
+    });
+
+    return `
+        <table class="table child-table table-sm">
+            <thead class="table-light">
+                <tr><th>SKU</th><th>Barcode</th><th>Nama Produk</th><th>Variant</th><th>Brand</th><th>Jumlah</th><th>Jumlah Ambil</th><th>Harga</th></tr>
+            </thead>
+            <tbody>
+                ${rows_html}
+            </tbody>
+        </table>
+    `;
+}
+
+$(document).ready(function() {
+    // Tambahkan baris filter baru di header
+    $('#all-orders-table thead tr').clone(true).addClass('filters').appendTo('#all-orders-table thead');
+
+    var table = $('#all-orders-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: "{% url 'all_orders_data' %}",
+        orderCellsTop: true, // Beri tahu DataTables bahwa baris atas untuk sorting
+        fixedHeader: true,   // Opsional: membuat header tetap terlihat saat scroll
+        columns: [
+            {
+                className: 'details-control',
+                orderable: false,
+                data: null,
+                defaultContent: ''
+            },
+            { data: 'id_pesanan' },
+            { data: 'tanggal_pembuatan' },
+            { data: 'status' },
+            { data: 'status_order' },
+            { data: 'status_cancel' },
+            { data: 'status_retur' },
+            { data: 'status_bundle' },
+            { data: 'nama_batch' },
+            { data: 'channel' },
+            { data: 'kurir' },
+            { data: 'awb_no_tracking' },
+            {
+                data: 'id_pesanan',
+                orderable: false,
+                searchable: false,
+                render: function(data, type, row) {
+                    let editBtn = `<a href="/orders/edit-order/${data}/" class="btn btn-sm btn-outline-primary">Edit</a>`;
+                    let cancelBtn = `<button class="btn btn-sm btn-outline-danger ms-1 btn-cancel" data-idpesanan="${data}">Cancel</button>`;
+                    return editBtn + cancelBtn;
+                }
+            }
+        ],
+        // UBAH BARIS INI: dari [2, 'desc'] menjadi [1, 'desc']
+        order: [[1, 'desc']], // Mengurutkan berdasarkan ID Pesanan (indeks 1), dari terbaru (desc)
+        language: { "url": "{% static 'datatables/Indonesian.json' %}" },
+        
+        // Inisialisasi fungsi filter per kolom di baris header yang baru
+        initComplete: function () {
+            var api = this.api();
+            api.columns().every(function () {
+                var that = this;
+                var cell = $('.filters th').eq($(api.column(that.index()).header()).index());
+                var title = $(cell).text();
+                
+                // Jangan tambahkan input untuk kolom kosong
+                // Update `that.index() !== 9` menjadi `that.index() !== 12` karena ada penambahan kolom status_bundle
+                if (that.index() !== 0 && that.index() !== 12) {
+                    $(cell).html('<input type="text" class="form-control form-control-sm" placeholder="Cari ' + title + '" />');
+                    $('input', cell).on('keyup change clear', function () {
+                        if (that.search() !== this.value) {
+                            that.search(this.value).draw();
+                        }
+                    });
+                } else {
+                    $(cell).html(''); // Kosongkan sel untuk kolom expand dan aksi
+                }
+            });
+        }
+    });
+
+    // HAPUS event listener untuk #filter_button
+
+    // Event listener untuk tombol CANCEL BARU
+    $('#all-orders-table tbody').on('click', '.btn-cancel', function () {
+        var id_pesanan = $(this).data('idpesanan');
+        var tr = $(this).closest('tr');
+
+        Swal.fire({
+            title: 'Anda Yakin?',
+            text: `Order ${id_pesanan} akan dibatalkan permanen dan dihapus dari batch! Tindakan ini tidak bisa dibatalkan.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Batalkan!',
+            cancelButtonText: 'Tidak'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch("{% url 'cancel_order' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ 'id_pesanan': id_pesanan })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Berhasil!', data.message, 'success');
+                        table.draw(); // Muat ulang data tabel
+                    } else {
+                        Swal.fire('Gagal!', data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    Swal.fire('Error!', 'Terjadi kesalahan saat menghubungi server.', 'error');
+                });
+            }
+        });
+    });
+
+    // Event listener untuk membuka dan menutup detail
+    $('#all-orders-table tbody').on('click', 'td.details-control', function () {
+        var tr = $(this).closest('tr');
+        var row = table.row(tr);
+        var id_pesanan = row.data().id_pesanan;
+
+        if (row.child.isShown()) {
+            // Baris ini sudah terbuka, tutup
+            row.child.hide();
+            tr.removeClass('details');
+        } else {
+            // Buka baris ini
+            $.get("{% url 'order_details_api' %}", { id_pesanan: id_pesanan }, function(response) {
+                row.child(formatChildRow(response.data)).show();
+                tr.addClass('details');
+            });
+        }
+    });
+});
+</script>
+{% endblock %} 

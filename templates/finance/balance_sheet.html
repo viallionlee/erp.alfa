@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Balance Sheet{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Balance Sheet</h1>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row">
+                        <div class="col-md-3">
+                            <label>As of Date</label>
+                            <input type="date" name="date" class="form-control" value="{{ date }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label>&nbsp;</label><br>
+                            <button type="submit" class="btn btn-primary">Generate Report</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Balance Sheet -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Balance Sheet as of {{ date }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Assets Column -->
+                        <div class="col-md-6">
+                            <h5 class="text-success mb-3">ASSETS</h5>
+                            <table class="table table-sm">
+                                <tbody>
+                                    {% for item in assets_details %}
+                                    <tr>
+                                        <td class="pl-4">{{ item.account.code }} - {{ item.account.name }}</td>
+                                        <td class="text-right text-success">Rp {{ item.balance|floatformat:0|intcomma }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td class="pl-4 text-muted">No assets recorded</td>
+                                        <td class="text-right">-</td>
+                                    </tr>
+                                    {% endfor %}
+                                    <tr class="font-weight-bold border-top">
+                                        <td>TOTAL ASSETS</td>
+                                        <td class="text-right text-success">Rp {{ assets_total|floatformat:0|intcomma }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Liabilities & Equity Column -->
+                        <div class="col-md-6">
+                            <h5 class="text-danger mb-3">LIABILITIES</h5>
+                            <table class="table table-sm">
+                                <tbody>
+                                    {% for item in liabilities_details %}
+                                    <tr>
+                                        <td class="pl-4">{{ item.account.code }} - {{ item.account.name }}</td>
+                                        <td class="text-right text-danger">Rp {{ item.balance|floatformat:0|intcomma }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td class="pl-4 text-muted">No liabilities recorded</td>
+                                        <td class="text-right">-</td>
+                                    </tr>
+                                    {% endfor %}
+                                    <tr class="font-weight-bold border-top">
+                                        <td>TOTAL LIABILITIES</td>
+                                        <td class="text-right text-danger">Rp {{ liabilities_total|floatformat:0|intcomma }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <h5 class="text-info mb-3 mt-4">EQUITY</h5>
+                            <table class="table table-sm">
+                                <tbody>
+                                    {% for item in equity_details %}
+                                    <tr>
+                                        <td class="pl-4">{{ item.account.code }} - {{ item.account.name }}</td>
+                                        <td class="text-right text-info">Rp {{ item.balance|floatformat:0|intcomma }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td class="pl-4 text-muted">No equity recorded</td>
+                                        <td class="text-right">-</td>
+                                    </tr>
+                                    {% endfor %}
+                                    <tr class="font-weight-bold border-top">
+                                        <td>TOTAL EQUITY</td>
+                                        <td class="text-right text-info">Rp {{ equity_total|floatformat:0|intcomma }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr class="font-weight-bold border-top">
+                                        <td>TOTAL LIABILITIES & EQUITY</td>
+                                        <td class="text-right">Rp {{ total_liabilities_equity|floatformat:0|intcomma }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Balance Check -->
+                    <div class="mt-4">
+                        {% if assets_total == total_liabilities_equity %}
+                        <div class="alert alert-success">
+                            <h5><i class="fas fa-check-circle"></i> Balance Sheet is Balanced!</h5>
+                            <p class="mb-0">Total Assets = Total Liabilities & Equity = Rp {{ assets_total|floatformat:0|intcomma }}</p>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-danger">
+                            <h5><i class="fas fa-exclamation-triangle"></i> Balance Sheet is NOT Balanced!</h5>
+                            <p class="mb-0">
+                                Total Assets: Rp {{ assets_total|floatformat:0|intcomma }}<br>
+                                Total Liabilities & Equity: Rp {{ total_liabilities_equity|floatformat:0|intcomma }}<br>
+                                Difference: Rp {{ assets_total|add:total_liabilities_equity|floatformat:0|intcomma }}
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <a href="{% url 'finance:dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

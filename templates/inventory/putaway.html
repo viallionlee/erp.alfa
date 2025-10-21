@@ -1,0 +1,1780 @@
+{% extends 'base.html' %}
+{% block title %}Daftar Putaway{% endblock %}
+
+{% block extra_css %}
+<style>
+    .summary-card {
+        transition: transform 0.2s;
+    }
+    .summary-card:hover {
+        transform: translateY(-2px);
+    }
+    .table th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        font-weight: 600;
+    }
+    .nav-tabs .nav-link {
+        font-weight: 500;
+        color: #6c757d;
+        border: none;
+        border-bottom: 2px solid transparent;
+        padding: 0.75rem 1.5rem;
+    }
+    .nav-tabs .nav-link:hover {
+        color: #495057;
+        border-color: transparent;
+    }
+    .nav-tabs .nav-link.active {
+        color: #0d6efd;
+        background-color: transparent;
+        border-color: #0d6efd;
+        border-bottom: 2px solid #0d6efd;
+    }
+    .tab-content {
+        margin-top: 1rem;
+    }
+    .tab-pane .table-responsive {
+        margin-top: 0;
+    }
+    
+    /* Custom SweetAlert2 Styling */
+    .swal2-success-custom {
+        border-radius: 15px !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important;
+    }
+    
+    .swal2-title-success {
+        color: #28a745 !important;
+        font-weight: 600 !important;
+        font-size: 1.5rem !important;
+    }
+    
+    .swal2-content-success {
+        color: #6c757d !important;
+        font-size: 1rem !important;
+    }
+    
+    /* Custom animation for success */
+    .swal2-popup.swal2-show {
+        animation: swal2-show 0.3s ease-out;
+    }
+    
+    @keyframes swal2-show {
+        0% {
+            transform: scale(0.7);
+            opacity: 0;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    /* Custom icon styling */
+    .swal2-icon.swal2-success {
+        border-color: #28a745 !important;
+    }
+    
+    .swal2-icon.swal2-success [class^='swal2-success-line'] {
+        background-color: #28a745 !important;
+    }
+    
+    .swal2-icon.swal2-success .swal2-success-ring {
+        border-color: #28a745 !important;
+    }
+    
+    /* Custom width for rak items modal */
+    .swal2-popup.rak-items-modal {
+        width: 1000px !important;
+        max-width: 90vw !important;
+    }
+    
+    /* Override SweetAlert2 default width */
+    .swal2-popup {
+        max-width: none !important;
+    }
+    
+    .swal2-popup.rak-items-modal {
+        width: 1000px !important;
+        max-width: 90vw !important;
+    }
+    
+    /* Custom width for slotting modal - 30% wider than modal-lg */
+    .modal-dialog.modal-lg {
+        max-width: 1140px !important; /* modal-lg default is 800px, 30% wider = 1040px, but let's make it even wider */
+        width: 95% !important;
+    }
+    
+    /* Specific for slotting modal */
+    #slottingModal .modal-dialog {
+        max-width: 1200px !important;
+        width: 95% !important;
+    }
+    
+    /* Extra wide slotting modal */
+    .slotting-modal-wide {
+        max-width: 1300px !important;
+        width: 95% !important;
+    }
+    
+    /* More aggressive CSS for modal width */
+    .modal-dialog {
+        max-width: none !important;
+    }
+    
+    .modal-dialog.modal-lg.slotting-modal-wide {
+        max-width: 1400px !important;
+        width: 95% !important;
+        min-width: 1200px !important;
+    }
+    
+    /* Override Bootstrap modal defaults */
+    .modal.show .modal-dialog.modal-lg.slotting-modal-wide {
+        max-width: 1400px !important;
+        width: 95% !important;
+        transform: none !important;
+    }
+    
+    /* Force width on modal content */
+    #slottingModal .modal-content {
+        width: 100% !important;
+        max-width: none !important;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 1400px) {
+        .slotting-modal-wide {
+            max-width: 95% !important;
+            min-width: auto !important;
+        }
+    }
+</style>
+{% endblock %}
+{% block content %}
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+         <div>
+         <h4 class="mb-1">
+             <i class="bi bi-box-arrow-in-down text-primary"></i>
+             Daftar Putaway
+         </h4>
+         <p class="text-muted mb-0">Kelola proses putaway produk ke rak tujuan</p>
+     </div>
+         <div class="d-flex gap-2 flex-wrap">
+         <a href="{% url 'inventory:index' %}" class="btn btn-outline-secondary">
+             <i class="bi bi-arrow-left"></i> Kembali
+         </a>
+         <a href="/inventory/putaway/history/" class="btn btn-info">
+             <i class="bi bi-clock-history"></i> History Putaway
+         </a>
+         <a href="{% url 'inventory:slotting_history' %}" class="btn btn-warning">
+             <i class="bi bi-gear"></i> History Slotting
+         </a>
+         <a href="{% url 'inventory:putaway_scan' %}" class="btn btn-primary">
+             <i class="bi bi-plus-circle"></i> Mulai Putaway Item
+         </a>
+     </div>
+</div>
+
+ <!-- Summary Cards -->
+ <div class="row mb-4">
+     <div class="col-md-6">
+         <div class="card bg-primary text-white summary-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_items }}</h4>
+                        <p class="card-text">Total Produk</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-box h1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+         </div>
+     <div class="col-md-6">
+         <div class="card bg-success text-white summary-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_quantity }}</h4>
+                        <p class="card-text">Total Qty Putaway</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-123 h1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tab Navigation -->
+<ul class="nav nav-tabs" id="putawayTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="item-putaway-tab" data-bs-toggle="tab" data-bs-target="#item-putaway-pane" type="button" role="tab" aria-controls="item-putaway-pane" aria-selected="true">
+            <i class="bi bi-list-ul me-2"></i>Item Putaway
+            {% if total_items > 0 %}
+                <span class="badge bg-danger ms-2">{{ total_items }}</span>
+            {% endif %}
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="transfer-rak-tab" data-bs-toggle="tab" data-bs-target="#transfer-rak-pane" type="button" role="tab" aria-controls="transfer-rak-pane" aria-selected="false">
+            <i class="bi bi-arrow-left-right me-2"></i>Transfer Rak - Siap Putaway
+            {% if transfer_sessions|length > 0 %}
+                <span class="badge bg-danger ms-2">{{ transfer_sessions|length }}</span>
+            {% endif %}
+        </button>
+    </li>
+</ul>
+
+<!-- Tab Content -->
+<div class="tab-content" id="putawayTabContent">
+    <!-- Tab 1: Item Putaway -->
+    <div class="tab-pane fade show active" id="item-putaway-pane" role="tabpanel" aria-labelledby="item-putaway-tab">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul"></i> Item Putaway
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead>
+                                                         <tr>
+                                 <th>SKU</th>
+                                 <th>Barcode</th>
+                                 <th>Nama Produk</th>
+                                 <th>Variant</th>
+                                 <th>Brand</th>
+                                 <th>Dimensi</th>
+                                 <th>Qty</th>
+                                 <th>Ready</th>
+                                 <th>Rak Tujuan</th>
+                                 <th>Slotting By</th>
+                                 <th>Aksi</th>
+                             </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in putaway_list %}
+                                                         <tr>
+                                 <td>{{ p.sku }}</td>
+                                 <td>{{ p.barcode }}</td>
+                                 <td class="text-truncate" style="max-width: 200px;">{{ p.nama_produk }}</td>
+                                 <td class="text-truncate" style="max-width: 120px;">{{ p.variant_produk }}</td>
+                                 <td>{{ p.brand }}</td>
+                                 <td>
+                                     {% if p.lebar_cm and p.panjang_cm and p.tinggi_cm %}
+                                         <div class="d-flex align-items-center">
+                                             <span class="me-2">{{ p.lebar_cm }}x{{ p.panjang_cm }}x{{ p.tinggi_cm }} cm</span>
+                                             <button class="btn btn-sm btn-outline-secondary" onclick="editDimensions('{{ p.sku }}')" title="Edit Dimensi">
+                                                 <i class="bi bi-pencil-square"></i>
+                                             </button>
+                                         </div>
+                                     {% else %}
+                                         <div class="d-flex align-items-center">
+                                             <span class="text-danger me-2">Tidak ada dimensi</span>
+                                             <button class="btn btn-sm btn-outline-danger" onclick="editDimensions('{{ p.sku }}')" title="Edit Dimensi">
+                                                 <i class="bi bi-pencil-square"></i>
+                                             </button>
+                                         </div>
+                                     {% endif %}
+                                 </td>
+                                 <td class="fw-bold text-primary">{{ p.quantity_putaway }}</td>
+                                 <td>{{ p.quantity_ready_v2 }}</td>
+                                 <td>
+                                     {% if p.suggested_rak %}
+                                         <span class="badge bg-success">{{ p.suggested_rak.kode_rak }}</span>
+                                         <br><small class="text-muted">{{ p.suggested_rak.nama_rak }}</small>
+                                     {% else %}
+                                         <span class="badge bg-warning">Belum di-slotting</span>
+                                     {% endif %}
+                                 </td>
+                                 <td>
+                                     {% if p.putaway_by %}
+                                         <small>{{ p.putaway_by.username }}</small>
+                                         <br><small class="text-muted">{{ p.putaway_time|date:"d/m/Y H:i" }}</small>
+                                     {% else %}
+                                         <span class="text-muted">-</span>
+                                     {% endif %}
+                                 </td>
+                                 <td>
+                                     <div class="btn-group" role="group">
+                                         {% if p.suggested_rak %}
+                                             <button class="btn btn-sm btn-outline-primary" onclick="requestSlotting('{{ p.sku }}', {{ p.quantity_putaway }})" title="Edit Slotting">
+                                                 <i class="bi bi-pencil"></i> Edit
+                                             </button>
+                                         {% else %}
+                                             <button class="btn btn-sm btn-primary" onclick="autoSlotting('{{ p.sku }}', {{ p.quantity_putaway }})" title="Auto Slotting">
+                                                 <i class="bi bi-magic"></i> Auto
+                                             </button>
+                                             <button class="btn btn-sm btn-success" onclick="requestSlotting('{{ p.sku }}', {{ p.quantity_putaway }})" title="Manual Slotting">
+                                                 <i class="bi bi-gear"></i> Manual
+                                             </button>
+                                         {% endif %}
+                                     </div>
+                                 </td>
+                             </tr>
+                            {% empty %}
+                                                         <tr>
+                                 <td colspan="10" class="text-center text-muted">Tidak ada produk yang perlu di-putaway.</td>
+                             </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Transfer Rak - Siap Putaway -->
+    <div class="tab-pane fade" id="transfer-rak-pane" role="tabpanel" aria-labelledby="transfer-rak-tab">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-arrow-left-right"></i> Transfer Rak - Siap Putaway
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Kode Sesi</th>
+                                <th>Rak Asal</th>
+                                <th>Rak Tujuan</th>
+                                <th>Tanggal</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in transfer_sessions %}
+                            <tr>
+                                <td>{{ s.session_code }}</td>
+                                <td>{{ s.rak_asal__kode_rak }}</td>
+                                <td>{{ s.rak_tujuan__kode_rak }}</td>
+                                <td>{{ s.tanggal_transfer|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="startTransferPutaway({{ s.id }})">
+                                        <i class="bi bi-play-circle"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Tidak ada sesi transfer yang menunggu putaway.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+     </div>
+ </div>
+ 
+ <script>
+ function startTransferPutaway(sessionId) {
+     const url = `/inventory/transfer-rak/${sessionId}/putaway/`;
+     window.location.href = url;
+ }
+ 
+ // Slotting Functions
+ let currentSku = '';
+ let currentQuantity = 0;
+ 
+   function autoSlotting(sku, quantity) {
+      // Show confirmation dialog with Bootstrap modal
+      const confirmModal = `
+         <div class="modal fade" id="confirmAutoSlottingModal" tabindex="-1">
+             <div class="modal-dialog">
+                 <div class="modal-content">
+                     <div class="modal-header">
+                         <h5 class="modal-title">
+                             <i class="bi bi-magic"></i> Konfirmasi Auto Slotting
+                         </h5>
+                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                     </div>
+                     <div class="modal-body">
+                         <p>Auto slotting untuk <strong>${sku}</strong> (${quantity} pcs)?</p>
+                         <div class="alert alert-info">
+                             <i class="bi bi-info-circle"></i>
+                             <small>Sistem akan otomatis memilih rak terbaik berdasarkan priority dan kapasitas.</small>
+                         </div>
+                         <p class="text-muted small">Quantity putaway akan tetap ${quantity} pcs sampai proses scan putaway.</p>
+                     </div>
+                     <div class="modal-footer">
+                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                         <button type="button" class="btn btn-primary" onclick="executeAutoSlotting('${sku}', ${quantity})">
+                             <i class="bi bi-magic"></i> Lanjutkan Auto Slotting
+                         </button>
+                     </div>
+                 </div>
+             </div>
+         </div>
+      `;
+      
+      // Remove existing modal if any
+      $('#confirmAutoSlottingModal').remove();
+      
+      // Add modal to body
+      $('body').append(confirmModal);
+      
+      // Show modal
+      $('#confirmAutoSlottingModal').modal('show');
+      
+      // Remove modal after hidden
+      $('#confirmAutoSlottingModal').on('hidden.bs.modal', function() {
+         $(this).remove();
+      });
+   }
+   
+   function executeAutoSlotting(sku, quantity) {
+      // Hide confirmation modal
+      $('#confirmAutoSlottingModal').modal('hide');
+      
+      // Show loading
+      showToast(`Auto slotting ${sku}...`, 'info');
+      
+      // Send auto slotting request
+      fetch('/inventory/slotting/auto/', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': '{{ csrf_token }}'
+          },
+          body: JSON.stringify({
+              sku: sku,
+              notes: 'Auto slotting'
+          })
+      })
+     .then(response => response.json())
+     .then(data => {
+         if (data.success) {
+             showSuccessToast(data.message, 'Auto Slotting Berhasil!');
+             // Reload page to refresh data
+             setTimeout(() => location.reload(), 2000);
+         } else {
+             showToast('Error: ' + data.error, 'error');
+         }
+     })
+     .catch(error => {
+         showToast('Error: ' + error.message, 'error');
+     });
+   }
+ 
+   function showAutoSlottingInfo() {
+      const infoModal = `
+         <div class="modal fade" id="autoSlottingInfoModal" tabindex="-1">
+             <div class="modal-dialog modal-lg">
+                 <div class="modal-content">
+                     <div class="modal-header">
+                         <h5 class="modal-title">
+                             <i class="bi bi-magic"></i> Algoritma Auto Slotting
+                         </h5>
+                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                     </div>
+                     <div class="modal-body">
+                         <div class="alert alert-info">
+                             <h6><i class="bi bi-magic"></i> Algoritma Auto Slotting:</h6>
+                             <ul class="mb-0">
+                                 <li>Mencari rak dengan dimensi yang cukup untuk produk</li>
+                                 <li>Menghitung kapasitas tersedia di setiap rak</li>
+                                 <li>Memilih rak dengan kapasitas tersedia terbesar</li>
+                                 <li>Prioritas: rak yang paling kosong</li>
+                             </ul>
+                         </div>
+                         
+                         <div class="alert alert-warning">
+                             <h6><i class="bi bi-exclamation-triangle"></i> Penting:</h6>
+                             <ul class="mb-0">
+                                 <li>Slotting HANYA menentukan lokasi rak tujuan</li>
+                                 <li>Quantity putaway TIDAK berubah sampai proses scan putaway dilakukan</li>
+                                 <li>User tetap bisa memilih rak lain jika diperlukan</li>
+                             </ul>
+                         </div>
+                         
+                         <div class="row">
+                             <div class="col-md-6">
+                                 <div class="card">
+                                     <div class="card-header">
+                                         <h6 class="mb-0"><i class="bi bi-check-circle"></i> Keuntungan Auto Slotting</h6>
+                                     </div>
+                                     <div class="card-body">
+                                         <ul class="mb-0">
+                                             <li>Lebih cepat dan efisien</li>
+                                             <li>Mengurangi kesalahan manual</li>
+                                             <li>Optimasi kapasitas rak</li>
+                                             <li>Konsistensi dalam penempatan</li>
+                                         </ul>
+                                     </div>
+                                 </div>
+                             </div>
+                             <div class="col-md-6">
+                                 <div class="card">
+                                     <div class="card-header">
+                                         <h6 class="mb-0"><i class="bi bi-gear"></i> Manual Slotting</h6>
+                                     </div>
+                                     <div class="card-body">
+                                         <ul class="mb-0">
+                                             <li>Kontrol penuh atas pilihan rak</li>
+                                             <li>Informasi detail kapasitas</li>
+                                             <li>Fleksibilitas dalam penempatan</li>
+                                             <li>Cocok untuk kasus khusus</li>
+                                         </ul>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+                     <div class="modal-footer">
+                         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                             <i class="bi bi-check"></i> Mengerti
+                         </button>
+                     </div>
+                 </div>
+             </div>
+         </div>
+      `;
+      
+      // Remove existing modal if any
+      $('#autoSlottingInfoModal').remove();
+      
+      // Add modal to body
+      $('body').append(infoModal);
+      
+      // Show modal
+      $('#autoSlottingInfoModal').modal('show');
+      
+      // Remove modal after hidden
+      $('#autoSlottingInfoModal').on('hidden.bs.modal', function() {
+         $(this).remove();
+      });
+   }
+ 
+ function showToast(message, type = 'info') {
+     // SweetAlert2 notification
+     const icon = getSweetAlertIcon(type);
+     const title = getSweetAlertTitle(type);
+     
+     Swal.fire({
+         title: title,
+         text: message,
+         icon: icon,
+         confirmButtonText: 'OK',
+         confirmButtonColor: '#3085d6',
+         timer: type === 'success' ? 1000 : 3000,
+         timerProgressBar: true,
+         showConfirmButton: type !== 'success',
+         toast: false,
+         position: 'center'
+     });
+ }
+ 
+ function showSuccessToast(message, title = 'Berhasil!') {
+     // Special success SweetAlert2 with custom styling
+     Swal.fire({
+         title: title,
+         text: message,
+         icon: 'success',
+         confirmButtonText: 'OK',
+         confirmButtonColor: '#28a745',
+         timer: 1000,
+         timerProgressBar: true,
+         showConfirmButton: false,
+         toast: false,
+         position: 'center',
+         customClass: {
+             popup: 'swal2-success-custom',
+             title: 'swal2-title-success',
+             content: 'swal2-content-success'
+         }
+     });
+ }
+ 
+ function getSweetAlertIcon(type) {
+     switch(type) {
+         case 'success': return 'success';
+         case 'error': return 'error';
+         case 'warning': return 'warning';
+         case 'info': return 'info';
+         default: return 'info';
+     }
+ }
+ 
+ function getSweetAlertTitle(type) {
+     switch(type) {
+         case 'success': return 'Berhasil!';
+         case 'error': return 'Error!';
+         case 'warning': return 'Peringatan!';
+         case 'info': return 'Info';
+         default: return 'Info';
+     }
+ }
+ 
+ function requestSlotting(sku, quantity) {
+     currentSku = sku;
+     currentQuantity = quantity;
+     
+     // Reset modal state
+     $('#clearSlottingBtn').hide();
+     $('#confirmSlottingBtn').prop('disabled', true);
+     window.selectedRakId = null;
+     window.selectedRakKode = null;
+     
+     // Show loading
+     $('#slottingModal .modal-body').html('<div class="text-center"><i class="bi bi-hourglass-split"></i> Loading...</div>');
+     $('#slottingModal').modal('show');
+     
+     // Force modal width after showing
+     setTimeout(() => {
+         const modalDialog = document.querySelector('#slottingModal .modal-dialog');
+         if (modalDialog) {
+             modalDialog.style.maxWidth = '1400px';
+             modalDialog.style.width = '95%';
+             modalDialog.style.minWidth = '1200px';
+         }
+     }, 100);
+     
+     // Fetch rak options dengan quantity
+     fetch(`/inventory/slotting/options/?sku=${sku}&quantity=${quantity}`)
+         .then(response => response.json())
+         .then(data => {
+             if (data.success) {
+                 displayRakOptions(data);
+                 // Load saved notes after modal content is displayed
+                 setTimeout(() => loadSavedNotes(), 100);
+             } else {
+                 $('#slottingModal .modal-body').html(`<div class="alert alert-danger">${data.error}</div>`);
+             }
+         })
+         .catch(error => {
+             $('#slottingModal .modal-body').html(`<div class="alert alert-danger">Error: ${error.message}</div>`);
+         });
+ }
+ 
+ function getLocationBadgeColor(priority) {
+     switch(priority) {
+         case 4: return 'success';    // DEKAT - hijau
+         case 3: return 'primary';    // SEDANG - biru
+         case 2: return 'warning';    // JAUH - kuning
+         case 1: return 'secondary';  // BEDA GUDANG - abu-abu
+         default: return 'light';     // default
+     }
+ }
+ 
+ function displayRakOptions(data) {
+     const product = data.product;
+     const rakOptions = data.rak_options;
+     
+     let html = `
+         <div class="mb-3">
+             <div class="card border-primary">
+                 <div class="card-body p-3">
+                     <div class="row align-items-start">
+                         <div class="col-6">
+                             <div class="row align-items-start">
+                                 <div class="col-auto">
+                                     ${product.photo_url ? 
+                                         `<img src="${product.photo_url}" alt="Product Photo" class="rounded" style="width:80px; height:80px; object-fit:contain; border:1px solid #dee2e6;">` : 
+                                         `<div class="rounded d-flex align-items-center justify-content-center" style="width:80px; height:80px; background:#f8f9fa; border:1px solid #dee2e6;">
+                                             <i class="bi bi-box text-muted" style="font-size:2rem;"></i>
+                                         </div>`
+                                     }
+                                 </div>
+                                 <div class="col">
+                                     <div class="d-flex justify-content-between align-items-start mb-1">
+                                         <h6 class="mb-0 text-primary fw-bold">${product.sku}</h6>
+                                         <span class="badge bg-primary">${currentQuantity} pcs</span>
+                                     </div>
+                                     <h6 class="mb-1">${product.nama_produk}</h6>
+                                     <div class="row g-2 mb-2">
+                                         <div class="col-auto">
+                                             <small class="text-muted">
+                                                 <i class="bi bi-tag"></i> ${product.brand || '-'}
+                                             </small>
+                                         </div>
+                                         ${product.variant_produk ? `
+                                             <div class="col-auto">
+                                                 <small class="text-muted">
+                                                     <i class="bi bi-box-seam"></i> ${product.variant_produk}
+                                                 </small>
+                                             </div>
+                                         ` : ''}
+                                         <div class="col-auto">
+                                             <small class="text-muted">
+                                                 <i class="bi bi-upc"></i> ${product.barcode || '-'}
+                                             </small>
+                                         </div>
+                                     </div>
+                                     <small class="text-muted">
+                                         Dimensi: ${product.lebar_cm && product.panjang_cm && product.tinggi_cm ? 
+                                             `${Number(product.lebar_cm).toFixed(0)}×${Number(product.panjang_cm).toFixed(0)}×${Number(product.tinggi_cm).toFixed(0)} cm` : 
+                                             'Tidak tersedia'
+                                         }
+                                     </small>
+                                 </div>
+                             </div>
+                         </div>
+                         <div class="col-6">
+                             <div class="d-flex flex-column h-100">
+                                 <label for="notesInput" class="form-label mb-2">
+                                     <i class="bi bi-pencil-square"></i> Catatan (opsional):
+                                 </label>
+                                 <textarea class="form-control flex-grow-1" id="notesInput" rows="4" placeholder="Catatan slotting..."></textarea>
+                                 <div class="mt-2">
+                                     <button type="button" class="btn btn-sm btn-primary" onclick="saveNotes()">
+                                         <i class="bi bi-check"></i> Simpan Catatan
+                                     </button>
+                                     <small class="text-muted ms-2">Tekan Enter untuk simpan</small>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+             ${(!product.lebar_cm || !product.panjang_cm || !product.tinggi_cm) ? `
+                 <div class="alert alert-warning mt-2">
+                     <i class="bi bi-exclamation-triangle"></i>
+                     <strong>Peringatan:</strong> Dimensi produk tidak lengkap. Kapasitas rak mungkin tidak akurat.
+                 </div>
+             ` : ''}
+         </div>
+         <div class="mb-3">
+             <div class="d-flex justify-content-between align-items-center">
+                 <label class="form-label">Mode Slotting:</label>
+                 <div class="btn-group btn-group-sm" role="group">
+                     <button type="button" class="btn btn-outline-primary" onclick="showAutoSlottingInfo()">
+                         <i class="bi bi-magic"></i> Auto Slotting Info
+                     </button>
+                 </div>
+             </div>
+         </div>
+         <hr>
+         <h6>Pilih Rak Tujuan:</h6>
+         
+         <!-- Filter Buttons -->
+         <div class="mb-3">
+             <div class="btn-group" role="group">
+                 <button type="button" class="btn btn-outline-success active" id="filterCukup" onclick="filterRakOptions('cukup')">
+                     <i class="bi bi-check-circle"></i> Kapasitas Cukup
+                     <span class="badge bg-success ms-1" id="countCukup">0</span>
+                 </button>
+                 <button type="button" class="btn btn-outline-warning" id="filterTidakCukup" onclick="filterRakOptions('tidak_cukup')">
+                     <i class="bi bi-exclamation-triangle"></i> Kapasitas Tidak Cukup
+                     <span class="badge bg-warning ms-1" id="countTidakCukup">0</span>
+                 </button>
+                 <button type="button" class="btn btn-outline-primary" id="filterSameProduct" onclick="filterRakOptions('same_product')">
+                     <i class="bi bi-box-seam"></i> Rak yang Sama
+                     <span class="badge bg-primary ms-1" id="countSameProduct">0</span>
+                 </button>
+                 <button type="button" class="btn btn-outline-info" id="filterSemua" onclick="filterRakOptions('semua')">
+                     <i class="bi bi-list"></i> Semua
+                     <span class="badge bg-info ms-1" id="countSemua">0</span>
+                 </button>
+             </div>
+         </div>
+         
+         <!-- Rak dengan Kapasitas Cukup -->
+         <div id="rakCukupSection">
+             <h6 class="text-success"><i class="bi bi-check-circle"></i> Rak dengan Kapasitas Cukup:</h6>
+             <div class="table-responsive">
+                 <table class="table table-hover table-sm" id="tableRakCukup">
+                     <thead class="table-success">
+                         <tr>
+                             <th>Rak</th>
+                             <th>Info</th>
+                             <th>Kapasitas</th>
+                             <th>Level</th>
+                             <th>Stacking</th>
+                             <th>Pilih</th>
+                         </tr>
+                     </thead>
+                     <tbody id="tbodyRakCukup">
+                         <!-- Rak dengan kapasitas cukup akan ditampilkan di sini -->
+                     </tbody>
+                 </table>
+             </div>
+         </div>
+         
+         <!-- Rak dengan Kapasitas Tidak Cukup -->
+         <div id="rakTidakCukupSection" style="display: none;">
+             <h6 class="text-warning"><i class="bi bi-exclamation-triangle"></i> Rak dengan Kapasitas Tidak Cukup:</h6>
+             <div class="table-responsive">
+                 <table class="table table-hover table-sm" id="tableRakTidakCukup">
+                     <thead class="table-warning">
+                         <tr>
+                             <th>Rak</th>
+                             <th>Info</th>
+                             <th>Kapasitas</th>
+                             <th>Level</th>
+                             <th>Stacking</th>
+                             <th>Alasan</th>
+                         </tr>
+                     </thead>
+                     <tbody id="tbodyRakTidakCukup">
+                         <!-- Rak dengan kapasitas tidak cukup akan ditampilkan di sini -->
+                     </tbody>
+                 </table>
+             </div>
+         </div>
+         
+         <!-- Rak yang Sama (Sudah Ada Produk) -->
+         <div id="rakSameProductSection" style="display: none;">
+             <h6 class="text-primary"><i class="bi bi-box-seam"></i> Rak yang Sama (Sudah Ada Produk):</h6>
+             <div class="table-responsive">
+                 <table class="table table-hover table-sm" id="tableRakSameProduct">
+                     <thead class="table-primary">
+                         <tr>
+                             <th>Rak</th>
+                             <th>Info</th>
+                             <th>Kapasitas</th>
+                             <th>Level</th>
+                             <th>Stacking</th>
+                             <th>Pilih</th>
+                         </tr>
+                     </thead>
+                     <tbody id="tbodyRakSameProduct">
+                         <!-- Rak yang sama akan ditampilkan di sini -->
+                     </tbody>
+                 </table>
+             </div>
+         </div>
+         
+         <!-- Semua Rak -->
+         <div id="rakSemuaSection" style="display: none;">
+             <h6 class="text-info"><i class="bi bi-list"></i> Semua Rak:</h6>
+             <div class="table-responsive">
+                 <table class="table table-hover table-sm" id="tableRakSemua">
+                     <thead class="table-info">
+                         <tr>
+                             <th>Rak</th>
+                             <th>Info</th>
+                             <th>Kapasitas</th>
+                             <th>Level</th>
+                             <th>Stacking</th>
+                             <th>Status</th>
+                             <th>Aksi</th>
+                         </tr>
+                     </thead>
+                     <tbody id="tbodyRakSemua">
+                         <!-- Semua rak akan ditampilkan di sini -->
+                     </tbody>
+                 </table>
+             </div>
+         </div>
+     `;
+     
+     html += '</div>';
+     $('#slottingModal .modal-body').html(html);
+     
+     // Process rak options and populate tables
+     processRakOptions(rakOptions);
+ }
+ 
+ function processRakOptions(rakOptions) {
+     const rakCukup = [];
+     const rakTidakCukup = [];
+     const rakSameProduct = [];
+     
+     rakOptions.forEach(rak => {
+         // Check if rak has the same product
+         if (rak.has_same_product) {
+             rakSameProduct.push(rak);
+         }
+         
+                 // Gunakan validasi kapasitas dari backend
+        if (rak.available_front > 0 && rak.fit_score > 0 && rak.capacity_valid) {
+             rakCukup.push(rak);
+         } else {
+             rakTidakCukup.push(rak);
+         }
+     });
+     
+     // Update count badges
+     $('#countCukup').text(rakCukup.length);
+     $('#countTidakCukup').text(rakTidakCukup.length);
+     $('#countSameProduct').text(rakSameProduct.length);
+     $('#countSemua').text(rakOptions.length);
+     
+     // Populate tables
+     populateRakCukupTable(rakCukup);
+     populateRakTidakCukupTable(rakTidakCukup);
+     populateRakSameProductTable(rakSameProduct);
+     populateRakSemuaTable(rakOptions);
+     
+     // Store data for filtering
+     window.rakCukupData = rakCukup;
+     window.rakTidakCukupData = rakTidakCukup;
+     window.rakSameProductData = rakSameProduct;
+     window.rakSemuaData = rakOptions;
+ }
+ 
+ // Fungsi untuk validasi kapasitas yang akurat
+ function validateRakCapacityForQuantity(rak, quantity) {
+     if (!quantity || quantity <= 0) {
+         return true; // Jika tidak ada quantity, anggap cukup
+     }
+     
+     // Hitung berapa slot yang dibutuhkan
+     const productsPerSlot = rak.products_per_slot;
+     if (productsPerSlot <= 0) {
+         return false;
+     }
+     
+     // Hitung berapa cm yang dibutuhkan per slot
+     // Asumsi: product width = available_front / total_slots_available
+     // Atau gunakan perhitungan yang lebih sederhana
+     const productWidth = rak.available_front > 0 ? rak.available_front / productsPerSlot : 0;
+     const widthNeeded = quantity * productWidth;
+     
+     // Cek apakah available_front cukup
+     return rak.available_front >= widthNeeded;
+ }
+ 
+ function populateRakCukupTable(rakCukup) {
+    const tbody = $('#tbodyRakCukup');
+    tbody.empty();
+    
+    if (rakCukup.length === 0) {
+        tbody.html('<tr><td colspan="7" class="text-center text-muted">Tidak ada rak dengan kapasitas cukup</td></tr>');
+        return;
+    }
+    
+    rakCukup.forEach(rak => {
+        const sameProductBadge = rak.has_same_product ? '<span class="badge bg-success ms-1">🔥 SAME</span>' : '';
+        const optimizedBadge = rak.supports_hybrid ? '<span class="badge bg-info ms-1"><i class="bi bi-lightning"></i> Optimized</span>' : '';
+        
+        const row = `
+            <tr class="rak-option-row" style="cursor: pointer;">
+                <td>
+                    <strong>${rak.kode_rak}</strong><br>
+                    <small class="text-muted">${rak.nama_rak}</small>
+                    ${sameProductBadge}
+                    ${rak.has_same_product ? `
+                        <div class="mt-1">
+                            <small class="text-success">
+                                <i class="bi bi-box-seam"></i> Sudah ada: ${rak.existing_stock} pcs
+                            </small>
+                        </div>
+                    ` : ''}
+                </td>
+                 <td>
+                     <strong>${rak.lokasi || '-'}</strong><br>
+                     <small class="text-muted">
+                         ${rak.lebar_cm ? `${Number(rak.lebar_cm).toFixed(0)}×${Number(rak.panjang_cm).toFixed(0)}×${Number(rak.tinggi_cm).toFixed(0)} cm` : 'Dimensi tidak tersedia'}
+                     </small>
+                 </td>
+                 <td>
+                     <strong><i class="bi bi-boxes"></i> ${rak.products_per_slot} produk/slot</strong><br>
+                     <small class="text-muted">
+                         <i class="bi bi-grid-3x3-gap"></i> Sisa slot: ${rak.available_slots || 0} slots<br>
+                         <i class="bi bi-calculator"></i> Total produk: ${(rak.available_slots || 0) * rak.products_per_slot} pcs
+                     </small>
+                     ${optimizedBadge}
+                 </td>
+                 <td>
+                     <strong>${rak.stackable_height} level</strong><br>
+                     <small class="text-muted">(tinggi)</small>
+                     ${getStackableOptimizationBadge(rak.stackable_height)}
+                 </td>
+                 <td>
+                     <div class="btn-group btn-group-sm" role="group">
+                         <button type="button" class="btn btn-sm btn-outline-info" onclick="event.stopPropagation(); showStackingInfo('${rak.kode_rak}', '${rak.stacking_method.description}')">
+                             <i class="bi bi-info-circle"></i> Info
+                         </button>
+                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation(); showRakItems(${rak.rak_id}, '${rak.kode_rak}')">
+                             <i class="bi bi-boxes"></i> Detail
+                         </button>
+                     </div>
+                 </td>
+                 <td>
+                     <button type="button" class="btn btn-sm btn-success" onclick="selectRak(${rak.rak_id}, '${rak.kode_rak}')">
+                         <i class="bi bi-check"></i> Pilih
+                     </button>
+                 </td>
+             </tr>
+         `;
+         tbody.append(row);
+     });
+ }
+ 
+ function populateRakSameProductTable(rakSameProduct) {
+     const tbody = $('#tbodyRakSameProduct');
+     tbody.empty();
+     
+     if (rakSameProduct.length === 0) {
+         tbody.html('<tr><td colspan="7" class="text-center text-muted">Tidak ada rak yang sudah memiliki produk ini</td></tr>');
+         return;
+     }
+     
+     rakSameProduct.forEach(rak => {
+         const sameProductBadge = rak.has_same_product ? '<span class="badge bg-success ms-1">🔥 SAME</span>' : '';
+         const optimizedBadge = rak.supports_hybrid ? '<span class="badge bg-info ms-1"><i class="bi bi-lightning"></i> Optimized</span>' : '';
+         
+         const row = `
+             <tr class="rak-option-row" style="cursor: pointer;">
+                 <td>
+                     <strong>${rak.kode_rak}</strong><br>
+                     <small class="text-muted">${rak.nama_rak}</small>
+                     ${sameProductBadge}
+                     ${rak.has_same_product ? `
+                         <div class="mt-1">
+                             <small class="text-success">
+                                 <i class="bi bi-box-seam"></i> Sudah ada: ${rak.existing_stock} pcs
+                             </small>
+                         </div>
+                     ` : ''}
+                 </td>
+                 <td>
+                     <strong>${rak.lokasi || '-'}</strong><br>
+                     <small class="text-muted">
+                         ${rak.lebar_cm ? `${Number(rak.lebar_cm).toFixed(0)}×${Number(rak.panjang_cm).toFixed(0)}×${Number(rak.tinggi_cm).toFixed(0)} cm` : 'Dimensi tidak tersedia'}
+                     </small>
+                 </td>
+                 <td>
+                     <strong><i class="bi bi-boxes"></i> ${rak.products_per_slot} produk/slot</strong><br>
+                     <small class="text-muted">
+                         <i class="bi bi-grid-3x3-gap"></i> Sisa slot: ${rak.available_slots || 0} slots<br>
+                         <i class="bi bi-calculator"></i> Total produk: ${(rak.available_slots || 0) * rak.products_per_slot} pcs
+                     </small>
+                     ${optimizedBadge}
+                 </td>
+                 <td>
+                     <strong>${rak.stackable_height} level</strong><br>
+                     <small class="text-muted">(tinggi)</small>
+                     ${getStackableOptimizationBadge(rak.stackable_height)}
+                 </td>
+                 <td>
+                     <div class="btn-group btn-group-sm" role="group">
+                         <button type="button" class="btn btn-sm btn-outline-info" onclick="event.stopPropagation(); showStackingInfo('${rak.kode_rak}', '${rak.stacking_method.description}')">
+                             <i class="bi bi-info-circle"></i> Info
+                         </button>
+                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation(); showRakItems(${rak.rak_id}, '${rak.kode_rak}')">
+                             <i class="bi bi-boxes"></i> Detail
+                         </button>
+                     </div>
+                 </td>
+                 <td>
+                     <button type="button" class="btn btn-sm btn-success" onclick="selectRak(${rak.rak_id}, '${rak.kode_rak}')">
+                         <i class="bi bi-check"></i> Pilih
+                     </button>
+                 </td>
+             </tr>
+         `;
+         tbody.append(row);
+     });
+ }
+ 
+ function populateRakTidakCukupTable(rakTidakCukup) {
+     const tbody = $('#tbodyRakTidakCukup');
+     tbody.empty();
+     
+     if (rakTidakCukup.length === 0) {
+         tbody.html('<tr><td colspan="7" class="text-center text-muted">Semua rak memiliki kapasitas cukup</td></tr>');
+         return;
+     }
+     
+     rakTidakCukup.forEach(rak => {
+         const optimizedBadge = rak.supports_hybrid ? '<span class="badge bg-info ms-1"><i class="bi bi-lightning"></i> Optimized</span>' : '';
+         
+         // Determine reason for insufficient capacity
+         let alasan = '';
+         if (rak.available_front <= 0) {
+             alasan = '<span class="text-danger">Tidak ada ruang tersedia</span>';
+         } else if (rak.fit_score <= 0) {
+             alasan = '<span class="text-danger">Dimensi tidak sesuai</span>';
+         } else {
+             alasan = '<span class="text-warning">Kapasitas terbatas</span>';
+         }
+         
+         const sameProductBadge = rak.has_same_product ? '<span class="badge bg-success ms-1">🔥 SAME</span>' : '';
+         
+         const row = `
+             <tr class="text-muted">
+                 <td>
+                     <strong>${rak.kode_rak}</strong><br>
+                     <small class="text-muted">${rak.nama_rak}</small>
+                     ${sameProductBadge}
+                     ${rak.has_same_product ? `
+                         <div class="mt-1">
+                             <small class="text-success">
+                                 <i class="bi bi-box-seam"></i> Sudah ada: ${rak.existing_stock} pcs
+                             </small>
+                         </div>
+                     ` : ''}
+                 </td>
+                 <td>
+                     <strong>${rak.lokasi || '-'}</strong><br>
+                     <small class="text-muted">
+                         ${rak.lebar_cm ? `${Number(rak.lebar_cm).toFixed(0)}×${Number(rak.panjang_cm).toFixed(0)}×${Number(rak.tinggi_cm).toFixed(0)} cm` : 'Dimensi tidak tersedia'}
+                     </small>
+                 </td>
+                 <td>
+                     <strong><i class="bi bi-boxes"></i> ${rak.products_per_slot} produk/slot</strong><br>
+                     <small class="text-muted">
+                         <i class="bi bi-grid-3x3-gap"></i> Sisa slot: ${rak.available_slots || 0} slots<br>
+                         <i class="bi bi-calculator"></i> Total produk: ${(rak.available_slots || 0) * rak.products_per_slot} pcs
+                     </small>
+                     ${optimizedBadge}
+                 </td>
+                 <td>
+                     <strong>${rak.stackable_height} level</strong><br>
+                     <small class="text-muted">(tinggi)</small>
+                     ${getStackableOptimizationBadge(rak.stackable_height)}
+                 </td>
+                 <td>
+                     <button type="button" class="btn btn-sm btn-outline-secondary" onclick="showStackingInfo('${rak.kode_rak}', '${rak.stacking_method.description}')">
+                         <i class="bi bi-info-circle"></i> Info
+                     </button>
+                 </td>
+                 <td>
+                     ${alasan}
+                 </td>
+             </tr>
+         `;
+         tbody.append(row);
+     });
+ }
+ 
+ function populateRakSemuaTable(rakSemua) {
+     const tbody = $('#tbodyRakSemua');
+     tbody.empty();
+     
+     if (rakSemua.length === 0) {
+         tbody.html('<tr><td colspan="7" class="text-center text-muted">Tidak ada rak yang tersedia</td></tr>');
+         return;
+     }
+     
+     rakSemua.forEach(rak => {
+         const sameProductBadge = rak.has_same_product ? '<span class="badge bg-success ms-1">🔥 SAME</span>' : '';
+         const optimizedBadge = rak.supports_hybrid ? '<span class="badge bg-info ms-1"><i class="bi bi-lightning"></i> Optimized</span>' : '';
+         
+         // Determine status
+         let status = '';
+         let statusClass = '';
+         if (rak.available_front > 0 && rak.fit_score > 0) {
+             status = '<span class="badge bg-success">Cukup</span>';
+             statusClass = 'table-success';
+         } else {
+             status = '<span class="badge bg-warning">Tidak Cukup</span>';
+             statusClass = 'table-warning';
+         }
+         
+         const row = `
+             <tr class="${statusClass}">
+                 <td>
+                     <strong>${rak.kode_rak}</strong><br>
+                     <small class="text-muted">${rak.nama_rak}</small>
+                     ${sameProductBadge}
+                     ${rak.has_same_product ? `
+                         <div class="mt-1">
+                             <small class="text-success">
+                                 <i class="bi bi-box-seam"></i> Sudah ada: ${rak.existing_stock} pcs
+                             </small>
+                         </div>
+                     ` : ''}
+                 </td>
+                 <td>
+                     <strong>${rak.lokasi || '-'}</strong><br>
+                     <small class="text-muted">
+                         ${rak.lebar_cm ? `${Number(rak.lebar_cm).toFixed(0)}×${Number(rak.panjang_cm).toFixed(0)}×${Number(rak.tinggi_cm).toFixed(0)} cm` : 'Dimensi tidak tersedia'}
+                     </small>
+                 </td>
+                 <td>
+                     <strong><i class="bi bi-boxes"></i> ${rak.products_per_slot} produk/slot</strong><br>
+                     <small class="text-muted">
+                         <i class="bi bi-grid-3x3-gap"></i> Sisa slot: ${rak.available_slots || 0} slots<br>
+                         <i class="bi bi-calculator"></i> Total produk: ${(rak.available_slots || 0) * rak.products_per_slot} pcs
+                     </small>
+                     ${optimizedBadge}
+                 </td>
+                 <td>
+                     <strong>${rak.stackable_height} level</strong><br>
+                     <small class="text-muted">(tinggi)</small>
+                     ${getStackableOptimizationBadge(rak.stackable_height)}
+                 </td>
+                 <td>
+                     <button type="button" class="btn btn-sm btn-outline-info" onclick="showStackingInfo('${rak.kode_rak}', '${rak.stacking_method.description}')">
+                         <i class="bi bi-info-circle"></i> Info
+                     </button>
+                 </td>
+                 <td>
+                     ${status}
+                 </td>
+                 <td>
+                     ${rak.available_front > 0 && rak.fit_score > 0 ? 
+                         `<button type="button" class="btn btn-sm btn-success" onclick="selectRak(${rak.rak_id}, '${rak.kode_rak}')">
+                             <i class="bi bi-check"></i> Pilih
+                         </button>` : 
+                         '<span class="text-muted">Tidak dapat dipilih</span>'
+                     }
+                 </td>
+             </tr>
+         `;
+         tbody.append(row);
+     });
+ }
+ 
+ function filterRakOptions(filterType) {
+     // Update button states
+     $('.btn-group .btn').removeClass('active');
+     $(`#filter${filterType.charAt(0).toUpperCase() + filterType.slice(1)}`).addClass('active');
+     
+     // Hide all sections
+     $('#rakCukupSection, #rakTidakCukupSection, #rakSameProductSection, #rakSemuaSection').hide();
+     
+     // Show selected section
+     switch(filterType) {
+         case 'cukup':
+             $('#rakCukupSection').show();
+             break;
+         case 'tidak_cukup':
+             $('#rakTidakCukupSection').show();
+             break;
+         case 'same_product':
+             $('#rakSameProductSection').show();
+             break;
+         case 'semua':
+             $('#rakSemuaSection').show();
+             break;
+     }
+ }
+ 
+ function getStackableOptimizationBadge(stackableHeight) {
+     if (stackableHeight >= 8) {
+         return '<span class="badge bg-danger ms-1"><i class="bi bi-exclamation-triangle"></i> Tinggi</span>';
+     } else if (stackableHeight >= 5) {
+         return '<span class="badge bg-warning ms-1"><i class="bi bi-exclamation-circle"></i> Sedang</span>';
+     } else if (stackableHeight >= 3) {
+         return '<span class="badge bg-success ms-1"><i class="bi bi-check-circle"></i> Optimal</span>';
+     } else if (stackableHeight >= 2) {
+         return '<span class="badge bg-info ms-1"><i class="bi bi-info-circle"></i> Aman</span>';
+     } else {
+         return '<span class="badge bg-secondary ms-1"><i class="bi bi-1-circle"></i> Minimal</span>';
+     }
+ }
+ 
+ function selectRak(rakId, rakKode) {
+     // Prevent double execution
+     if (window.isSlottingInProgress) {
+         return;
+     }
+     
+     // Remove previous selection from all tables
+     $('.rak-option-row').removeClass('table-primary');
+     
+     // Add selection to clicked row in all tables
+     $(`tr:has(td:first:contains('${rakKode}'))`).addClass('table-primary');
+     
+     // Store selected rak
+     window.selectedRakId = rakId;
+     window.selectedRakKode = rakKode;
+     
+     // Directly confirm slotting without SweetAlert
+     confirmSlotting();
+ }
+ 
+ function clearSlotting() {
+     // Show confirmation dialog
+     Swal.fire({
+         title: 'Clear Slotting?',
+         text: 'Apakah Anda yakin ingin menghapus suggested rak yang sudah dipilih?',
+         icon: 'warning',
+         showCancelButton: true,
+         confirmButtonColor: '#d33',
+         cancelButtonColor: '#3085d6',
+         confirmButtonText: 'Ya, Clear!',
+         cancelButtonText: 'Batal'
+     }).then((result) => {
+         if (result.isConfirmed) {
+             // Remove selection from all tables
+             $('.rak-option-row').removeClass('table-primary');
+             
+             // Clear selected rak
+             window.selectedRakId = null;
+             window.selectedRakKode = null;
+             
+             // Hide clear button
+             $('#clearSlottingBtn').hide();
+             
+             // Show success message
+             showToast('Suggested rak berhasil di-clear', 'success');
+         }
+     });
+ }
+ 
+ function showStackingInfo(rakKode, stackingDescription) {
+     // Extract stackable height from description
+     const match = stackingDescription.match(/Level 1-(\d+)/);
+     const stackableHeight = match ? parseInt(match[1]) : 1;
+     
+     let safetyRecommendation = '';
+     if (stackableHeight >= 8) {
+         safetyRecommendation = `
+             <div class="alert alert-danger mt-3">
+                 <i class="bi bi-exclamation-triangle"></i> <strong>Peringatan Keamanan:</strong><br>
+                 Stacking ${stackableHeight} pcs terlalu tinggi dan berisiko jatuh.<br>
+                 <strong>Rekomendasi:</strong> Maksimal 5-6 pcs untuk keamanan.
+             </div>
+         `;
+     } else if (stackableHeight >= 5) {
+         safetyRecommendation = `
+             <div class="alert alert-warning mt-3">
+                 <i class="bi bi-exclamation-circle"></i> <strong>Perhatian:</strong><br>
+                 Stacking ${stackableHeight} pcs cukup tinggi.<br>
+                 <strong>Rekomendasi:</strong> Pastikan produk stabil dan tidak mudah jatuh.
+             </div>
+         `;
+     } else if (stackableHeight >= 3) {
+         safetyRecommendation = `
+             <div class="alert alert-success mt-3">
+                 <i class="bi bi-check-circle"></i> <strong>Optimal:</strong><br>
+                 Stacking ${stackableHeight} pcs adalah tinggi yang ideal.<br>
+                 <strong>Rekomendasi:</strong> Aman dan efisien untuk storage.
+             </div>
+         `;
+     } else {
+         safetyRecommendation = `
+             <div class="alert alert-info mt-3">
+                 <i class="bi bi-info-circle"></i> <strong>Aman:</strong><br>
+                 Stacking ${stackableHeight} pcs sangat aman.<br>
+                 <strong>Rekomendasi:</strong> Bisa ditambah jika diperlukan.
+             </div>
+         `;
+     }
+     
+     Swal.fire({
+         title: `Cara Stacking - Rak ${rakKode}`,
+         html: `
+             <div class="text-start">
+                 <p class="mb-2"><strong>Cara Stacking:</strong></p>
+                 <p class="text-muted">${stackingDescription}</p>
+                 ${safetyRecommendation}
+                 <hr>
+                 <div class="row mt-3">
+                     <div class="col-6">
+                         <small class="text-muted">
+                             <i class="bi bi-lightbulb"></i> <strong>Tips:</strong><br>
+                             • Pastikan produk tidak mudah jatuh<br>
+                             • Perhatikan berat produk<br>
+                             • Gunakan pallet jika diperlukan
+                         </small>
+                     </div>
+                     <div class="col-6">
+                         <small class="text-muted">
+                             <i class="bi bi-shield-check"></i> <strong>Keamanan:</strong><br>
+                             • Maksimal 6 pcs untuk produk berat<br>
+                             • Maksimal 8 pcs untuk produk ringan<br>
+                             • Selalu periksa stabilitas
+                         </small>
+                     </div>
+                 </div>
+             </div>
+         `,
+         icon: 'info',
+         confirmButtonText: 'OK',
+         confirmButtonColor: '#3085d6',
+         width: '600px'
+     });
+ }
+ 
+ function editDimensions(sku) {
+     // Show modal untuk edit dimensi
+     $('#editDimensionsModal').modal('show');
+     
+     // Set SKU untuk form
+     $('#editDimensionsSku').val(sku);
+     $('#editDimensionsSkuDisplay').text(sku);
+     
+     // Load current dimensions jika ada
+     fetch(`/inventory/product/${sku}/dimensions/`)
+         .then(response => response.json())
+         .then(data => {
+             if (data.success && data.dimensions) {
+                 // Set nilai yang ada, jangan kembalikan ke nol jika ada nilai
+                 const lebar = data.dimensions.lebar_cm;
+                 const panjang = data.dimensions.panjang_cm;
+                 const tinggi = data.dimensions.tinggi_cm;
+                 const posisiTidur = data.dimensions.posisi_tidur;
+                 
+                 console.log('Raw values from server:', { lebar, panjang, tinggi, posisiTidur });
+                 
+                 // Set nilai langsung ke input field (termasuk 0)
+                 console.log('Setting lebar to:', lebar);
+                 $('#lebarInput').val(lebar || '');
+                 
+                 console.log('Setting panjang to:', panjang);
+                 $('#panjangInput').val(panjang || '');
+                 
+                 console.log('Setting tinggi to:', tinggi);
+                 $('#tinggiInput').val(tinggi || '');
+                 
+                 console.log('Setting posisi_tidur to:', posisiTidur);
+                 $('#posisiTidurInput').prop('checked', posisiTidur || false);
+             } else {
+                 console.log('Failed to load dimensions or no data:', data.error || 'No dimensions data');
+                 // Set default values jika gagal load
+                 $('#lebarInput').val('');
+                 $('#panjangInput').val('');
+                 $('#tinggiInput').val('');
+                 $('#posisiTidurInput').prop('checked', false);
+             }
+         })
+         .catch(error => {
+             console.error('Error loading dimensions:', error);
+         });
+ }
+ 
+ function saveDimensions() {
+     const sku = $('#editDimensionsSku').val();
+     const lebar = $('#lebarInput').val();
+     const panjang = $('#panjangInput').val();
+     const tinggi = $('#tinggiInput').val();
+     const posisiTidur = $('#posisiTidurInput').is(':checked');
+     
+     // Validate input
+     if (!lebar || !panjang || !tinggi) {
+         alert('Semua dimensi harus diisi!');
+         return;
+     }
+     
+     // Disable button
+     $('#saveDimensionsBtn').prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Menyimpan...');
+     
+     // Send request
+     fetch('/inventory/product/update-dimensions/', {
+         method: 'POST',
+         headers: {
+             'Content-Type': 'application/json',
+             'X-CSRFToken': '{{ csrf_token }}'
+         },
+         body: JSON.stringify({
+             sku: sku,
+             lebar_cm: parseFloat(lebar),
+             panjang_cm: parseFloat(panjang),
+             tinggi_cm: parseFloat(tinggi),
+             posisi_tidur: posisiTidur
+         })
+     })
+     .then(response => response.json())
+     .then(data => {
+         if (data.success) {
+             $('#editDimensionsModal').modal('hide');
+             alert('Dimensi berhasil diperbarui!');
+             // Reload page to refresh data
+             location.reload();
+         } else {
+             alert('Error: ' + data.error);
+             $('#saveDimensionsBtn').prop('disabled', false).html('Simpan Dimensi');
+         }
+     })
+     .catch(error => {
+         alert('Error: ' + error.message);
+         $('#saveDimensionsBtn').prop('disabled', false).html('Simpan Dimensi');
+     });
+ }
+ 
+   function confirmSlotting() {
+      if (!window.selectedRakId) {
+          showToast('Silakan pilih rak tujuan terlebih dahulu.', 'warning');
+          return;
+      }
+      
+      // Prevent double execution
+      if (window.isSlottingInProgress) {
+          return;
+      }
+      window.isSlottingInProgress = true;
+      
+      const notes = $('#notesInput').val();
+      
+      // Send request
+      fetch('/inventory/slotting/update/', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': '{{ csrf_token }}'
+          },
+          body: JSON.stringify({
+              sku: currentSku,
+              rak_id: window.selectedRakId,
+              notes: notes
+          })
+      })
+     .then(response => response.json())
+     .then(data => {
+         if (data.success) {
+             $('#slottingModal').modal('hide');
+             showSuccessToast(data.message, 'Slotting berhasil!');
+             // Reload page to refresh data after delay
+             setTimeout(() => location.reload(), 2000);
+         } else {
+             showToast('Error: ' + data.error, 'error');
+             window.isSlottingInProgress = false;
+         }
+     })
+     .catch(error => {
+         showToast('Error: ' + error.message, 'error');
+         window.isSlottingInProgress = false;
+     });
+ }
+ 
+ // Fungsi untuk menampilkan detail produk di dalam rak
+ function showRakItems(rakId, rakKode) {
+     // Show loading
+     Swal.fire({
+         title: `Loading...`,
+         text: `Mengambil data produk di rak ${rakKode}`,
+         allowOutsideClick: false,
+         didOpen: () => {
+             Swal.showLoading();
+         }
+     });
+     
+     // Fetch data produk di rak
+     fetch(`/inventory/rak/${rakId}/items/`)
+         .then(response => response.json())
+         .then(data => {
+             if (data.success) {
+                 displayRakItemsModal(data);
+             } else {
+                 Swal.fire({
+                     icon: 'error',
+                     title: 'Error!',
+                     text: data.error || 'Gagal mengambil data produk di rak'
+                 });
+             }
+         })
+         .catch(error => {
+             Swal.fire({
+                 icon: 'error',
+                 title: 'Error!',
+                 text: `Terjadi kesalahan: ${error.message}`
+             });
+         });
+ }
+ 
+ // Fungsi untuk menampilkan modal detail produk di rak
+ function displayRakItemsModal(data) {
+     const rak = data.rak;
+     const items = data.items;
+     
+     let itemsHtml = '';
+     if (items.length === 0) {
+         itemsHtml = `
+             <div class="text-center py-4">
+                 <i class="bi bi-box text-muted" style="font-size: 3rem;"></i>
+                 <p class="text-muted mt-2">Rak ini masih kosong</p>
+             </div>
+         `;
+     } else {
+         items.forEach(item => {
+             const photoHtml = item.photo ? 
+                 `<img src="${item.photo}" alt="${item.nama_produk}" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;">` :
+                 `<div class="bg-light d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="bi bi-image text-muted"></i>
+                </div>`;
+             
+             itemsHtml += `
+                 <div class="card mb-2">
+                     <div class="card-body p-3">
+                         <div class="row align-items-center">
+                             <div class="col-auto">
+                                 ${photoHtml}
+                             </div>
+                             <div class="col">
+                                 <h6 class="mb-1">${item.sku}</h6>
+                                 <p class="mb-1 text-muted">${item.nama_produk}</p>
+                                 <small class="text-muted">
+                                     ${item.variant_produk ? `Variant: ${item.variant_produk} | ` : ''}
+                                     ${item.brand ? `Brand: ${item.brand} | ` : ''}
+                                     Barcode: ${item.barcode || '-'}
+                                 </small>
+                             </div>
+                             <div class="col-auto">
+                                 <span class="badge bg-primary fs-6">${item.quantity} pcs</span>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+             `;
+         });
+     }
+     
+     Swal.fire({
+         title: `<i class="bi bi-boxes"></i> Produk di Rak ${rak.kode_rak}`,
+         html: `
+             <div class="text-start">
+                 <div class="alert alert-info mb-3">
+                     <strong>${rak.nama_rak}</strong><br>
+                     <small class="text-muted">Lokasi: ${rak.lokasi || '-'}</small>
+                 </div>
+                 
+                 <div class="d-flex justify-content-between align-items-center mb-3">
+                     <h6 class="mb-0">Daftar Produk (${items.length} item)</h6>
+                     <span class="badge bg-success">Total: ${data.total_quantity} pcs</span>
+                 </div>
+                 
+                 <div style="max-height: 400px; overflow-y: auto;">
+                     ${itemsHtml}
+                 </div>
+             </div>
+         `,
+         width: '1000px',
+         customClass: {
+             popup: 'rak-items-modal'
+         },
+         didOpen: () => {
+             // Force apply custom width when modal opens
+             const popup = document.querySelector('.swal2-popup.rak-items-modal');
+             if (popup) {
+                 popup.style.width = '1000px';
+                 popup.style.maxWidth = '90vw';
+             }
+         },
+         confirmButtonText: 'Tutup',
+         confirmButtonColor: '#6c757d'
+     });
+ }
+ </script>
+ 
+ <!-- Slotting Modal -->
+ <div class="modal fade" id="slottingModal" tabindex="-1" aria-labelledby="slottingModalLabel" aria-hidden="true">
+     <div class="modal-dialog modal-lg slotting-modal-wide">
+         <div class="modal-content">
+             <div class="modal-header">
+                 <h5 class="modal-title" id="slottingModalLabel">
+                     <i class="bi bi-gear"></i> Slotting Putaway
+                 </h5>
+                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+             </div>
+             <div class="modal-body">
+                 <!-- Content will be loaded here -->
+             </div>
+             <div class="modal-footer">
+                 <button type="button" class="btn btn-warning" id="clearSlottingBtn" onclick="clearSlotting()" style="display: none;">
+                     <i class="bi bi-trash"></i> Clear
+                 </button>
+                 <div class="ms-auto">
+                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                 </div>
+             </div>
+         </div>
+     </div>
+ </div>
+ 
+ <!-- Edit Dimensions Modal -->
+ <div class="modal fade" id="editDimensionsModal" tabindex="-1" aria-labelledby="editDimensionsModalLabel" aria-hidden="true">
+     <div class="modal-dialog">
+         <div class="modal-content">
+             <div class="modal-header">
+                 <h5 class="modal-title" id="editDimensionsModalLabel">
+                     <i class="bi bi-pencil-square"></i> Edit Dimensi Produk
+                 </h5>
+                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+             </div>
+             <div class="modal-body">
+                 <form id="editDimensionsForm">
+                     <input type="hidden" id="editDimensionsSku">
+                     <div class="mb-3">
+                         <label class="form-label">SKU Produk:</label>
+                         <p class="form-control-plaintext" id="editDimensionsSkuDisplay"></p>
+                     </div>
+                     <div class="row">
+                         <div class="col-md-4">
+                             <label for="lebarInput" class="form-label">Lebar (cm)</label>
+                             <input type="number" class="form-control" id="lebarInput" step="0.1" min="0" required>
+                         </div>
+                         <div class="col-md-4">
+                             <label for="panjangInput" class="form-label">Panjang (cm)</label>
+                             <input type="number" class="form-control" id="panjangInput" step="0.1" min="0" required>
+                         </div>
+                         <div class="col-md-4">
+                             <label for="tinggiInput" class="form-label">Tinggi (cm)</label>
+                             <input type="number" class="form-control" id="tinggiInput" step="0.1" min="0" required>
+                         </div>
+                     </div>
+                     <div class="row mt-3">
+                         <div class="col-12">
+                             <div class="form-check">
+                                 <input class="form-check-input" type="checkbox" id="posisiTidurInput">
+                                 <label class="form-check-label" for="posisiTidurInput">
+                                     <i class="bi bi-arrow-clockwise"></i> Bisa Posisi Tidur (Hybrid Stacking)
+                                 </label>
+                             </div>
+                             <small class="form-text text-muted">
+                                 Centang jika produk bisa di-tidurkan untuk optimasi ruang rak
+                             </small>
+                         </div>
+                     </div>
+                     <div class="alert alert-info mt-3">
+                         <i class="bi bi-info-circle"></i>
+                         <small>Format: Lebar x Panjang x Tinggi (cm) | Posisi tidur memungkinkan produk diorientasikan berbeda untuk optimasi ruang</small>
+                     </div>
+                 </form>
+             </div>
+             <div class="modal-footer">
+                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                 <button type="button" class="btn btn-primary" id="saveDimensionsBtn" onclick="saveDimensions()">
+                     <i class="bi bi-check-circle"></i> Simpan Dimensi
+                 </button>
+             </div>
+         </div>
+     </div>
+ </div>
+ 
+ <script>
+      // Load saved notes when slotting modal opens
+     function loadSavedNotes() {
+         const savedNotes = sessionStorage.getItem('slotting_notes');
+         if (savedNotes) {
+             const notesInput = document.getElementById('notesInput');
+             if (notesInput) {
+                 notesInput.value = savedNotes;
+             }
+         }
+     }
+     
+     // Notes functionality
+     function saveNotes() {
+     const notesInput = document.getElementById('notesInput');
+     const notes = notesInput.value.trim();
+     
+     if (notes) {
+         // Save notes to session storage for now (will be saved to DB during slotting)
+         sessionStorage.setItem('slotting_notes', notes);
+         showToast('Catatan berhasil disimpan!', 'success');
+     } else {
+         sessionStorage.removeItem('slotting_notes');
+         showToast('Catatan kosong!', 'warning');
+     }
+ }
+ 
+ // Handle Enter key in notes textarea
+ document.addEventListener('keydown', function(e) {
+     if (e.target.id === 'notesInput' && e.key === 'Enter' && !e.shiftKey) {
+         e.preventDefault();
+         saveNotes();
+     }
+ });
+ </script>
+ 
+ {% endblock %}

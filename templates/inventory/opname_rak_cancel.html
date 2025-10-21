@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Batalkan Opname Rak - {{ session.session_code }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .warning-card {
+        border-left: 4px solid #ffc107;
+        background-color: #fff3cd;
+    }
+    .danger-card {
+        border-left: 4px solid #dc3545;
+        background-color: #f8d7da;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-1">
+                <i class="bi bi-x-circle text-danger"></i>
+                Batalkan Opname Rak
+            </h4>
+            <p class="text-muted mb-0">
+                Sesi: <strong>{{ session.session_code }}</strong> | 
+                Rak: <strong>{{ session.rak.lokasi }} ({{ session.rak.kode_rak }})</strong>
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'inventory:opname_rak_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Kembali
+            </a>
+        </div>
+    </div>
+
+    <!-- Cancel Form (PINDAH KE ATAS) -->
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-x-circle"></i> Konfirmasi Pembatalan
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="post" id="cancelForm">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label for="cancelReason" class="form-label">
+                                <strong>Alasan Pembatalan (Opsional)</strong>
+                            </label>
+                            <textarea class="form-control" id="cancelReason" name="cancel_reason" rows="3" 
+                                      placeholder="Jelaskan alasan pembatalan sesi opname ini..."></textarea>
+                        </div>
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Peringatan:</strong> Tindakan ini tidak dapat dibatalkan. Pastikan Anda benar-benar ingin membatalkan sesi opname ini.
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg" onclick="return confirmCancel()">
+                                <i class="bi bi-x-circle"></i> Batalkan Sesi Opname
+                            </button>
+                            <a href="{% url 'inventory:opname_rak_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Kembali
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Warning Card -->
+    <div class="card warning-card mb-4">
+        <div class="card-body">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill text-warning fs-1 me-3"></i>
+                <div>
+                    <h5 class="card-title text-warning">Peringatan!</h5>
+                    <p class="card-text mb-0">
+                        Anda akan membatalkan sesi opname ini. Tindakan ini tidak dapat dibatalkan dan semua data opname akan dihapus.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Info -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Status</h6>
+                    <h3>{{ session.get_status_display }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Total Items</h6>
+                    <h3>{{ session.total_items }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Dibuat Oleh</h6>
+                    <h3>{{ session.created_by.username|default:"-" }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Tanggal Mulai</h6>
+                    <h3>{{ session.tanggal_mulai|date:"d/m/Y" }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Details -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Informasi Sesi
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td width="150"><strong>Kode Sesi:</strong></td>
+                            <td>{{ session.session_code }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rak:</strong></td>
+                            <td>{{ session.rak.lokasi }} ({{ session.rak.kode_rak }})</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tanggal Mulai:</strong></td>
+                            <td>{{ session.tanggal_mulai|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dibuat Oleh:</strong></td>
+                            <td>{{ session.created_by.username|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Catatan:</strong></td>
+                            <td>{{ session.catatan|default:"-" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card danger-card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> Dampak Pembatalan
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="bi bi-x-circle text-danger me-2"></i>
+                            Sesi opname akan diubah status menjadi "Dibatalkan"
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-x-circle text-danger me-2"></i>
+                            Semua data qty fisik yang sudah diinput akan dihapus
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-x-circle text-danger me-2"></i>
+                            Stok rak tidak akan terpengaruh (tidak ada koreksi)
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-x-circle text-danger me-2"></i>
+                            Log aktivitas pembatalan akan dicatat
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-info-circle text-info me-2"></i>
+                            Anda dapat membuat sesi opname baru untuk rak yang sama
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Items Preview -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-list-ul"></i> Preview Item yang Akan Dihapus
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>SKU</th>
+                            <th>Nama Produk</th>
+                            <th>Qty Sistem</th>
+                            <th>Qty Fisik</th>
+                            <th>Selisih</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in session.items.all %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ item.product.sku }}</td>
+                            <td>{{ item.product.nama_produk }}</td>
+                            <td class="text-center">{{ item.qty_sistem }}</td>
+                            <td class="text-center">{{ item.qty_fisik|default:0 }}</td>
+                            <td class="text-center">{{ item.qty_selisih|default:0 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+    function confirmCancel() {
+        return confirm('Apakah Anda yakin ingin membatalkan sesi opname ini? Tindakan ini tidak dapat dibatalkan.');
+    }
+
+    // Prevent form submission on Enter key
+    $(document).ready(function() {
+        $('#cancelForm').on('keypress', function(e) {
+            if (e.which === 13) { // Enter key
+                e.preventDefault();
+                return false;
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+<style>
+    /* Modern web design standards 2024 */
+    .main-content-area {
+        max-width: 1400px; /* Standard modern max-width */
+        width: 100%;
+        margin: 0 auto;
+    }
+    
+    /* Font size standards - minimum 14px for readability */
+    .table, .table th, .table td {
+        font-size: 0.875rem !important; /* 14px - standard readable size */
+    }
+    
+    /* Table column widths - calculated for 1400px container */
+    .table th:nth-child(1) { width: 10%; min-width: 120px; } /* SKU Bundling */
+    .table th:nth-child(2) { width: 15%; min-width: 200px; } /* SKU Item */
+    .table th:nth-child(3) { width: 55%; min-width: 450px; } /* Detail Produk */
+    .table th:nth-child(4) { width: 5%; min-width: 50px; } /* Valid */
+    .table th:nth-child(5) { width: 15%; min-width: 100px; } /* Aksi */
+    
+    /* List items in table cells - natural sizing */
+    .table ul {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .table ul li {
+        font-size: 0.875rem !important; /* 14px - maintain readability */
+        margin-bottom: 0;
+        /* Remove min-height for natural sizing */
+        display: flex;
+        align-items: flex-start;
+    }
+    
+    /* Make sure all columns have same item count alignment */
+    .table td {
+        vertical-align: top;
+    }
+    
+    /* Better alignment for multi-line content */
+    .table tbody tr {
+        display: table-row;
+    }
+    
+    /* Smart alignment - only when content actually wraps */
+    .table tbody tr {
+        position: relative;
+    }
+    
+    /* Ensure items align naturally */
+    .table ul li:not(:last-child) {
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Badge alignment */
+    .table ul li .badge {
+        margin-top: 0.125rem;
+    }
+    
+    /* Only apply special alignment when content wraps */
+    .table tbody tr td:nth-child(3) ul li {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    /* Badge styling */
+    .badge {
+        font-size: 0.75rem; /* 12px - standard badge size */
+    }
+    
+    /* Icon button styling */
+    .btn-icon {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        border-radius: 4px;
+        border: none;
+        transition: all 0.2s ease;
+        display: inline-block;
+        margin-right: 0.25rem;
+    }
+    
+    .btn-icon:hover {
+        transform: scale(1.1);
+    }
+    
+    .btn-icon.btn-warning {
+        background-color: #ffc107;
+        color: #000;
+    }
+    
+    .btn-icon.btn-danger {
+        background-color: #dc3545;
+        color: #fff;
+    }
+    
+    /* Search button icon styling */
+    .btn-icon.btn-info {
+        background-color: #0dcaf0;
+        color: #000;
+    }
+    
+    .btn-icon.btn-secondary {
+        background-color: #6c757d;
+        color: #fff;
+    }
+    
+    /* Aksi column - keep buttons horizontal */
+    .table td:nth-child(5) {
+        text-align: center;
+        white-space: nowrap;
+    }
+    
+    .table td:nth-child(5) a {
+        display: inline-block;
+        margin: 0 0.125rem;
+    }
+    
+    /* Responsive alignment - only wrap when needed */
+    .table tbody tr td:nth-child(2) ul,
+    .table tbody tr td:nth-child(3) ul,
+    .table tbody tr td:nth-child(4) ul {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    /* Exclude Aksi column from flexbox */
+    .table tbody tr td:nth-child(5) ul {
+        display: block !important;
+    }
+    
+    /* Natural height - only expand when content wraps */
+    .table tbody tr td:nth-child(2) ul li,
+    .table tbody tr td:nth-child(3) ul li,
+    .table tbody tr td:nth-child(4) ul li {
+        display: flex;
+        align-items: flex-start;
+        padding: 0.25rem 0;
+        /* Remove min-height to allow natural sizing */
+    }
+    
+    /* Table layout untuk mencegah offside */
+    .table {
+        table-layout: fixed;
+        width: 100%;
+    }
+    
+    /* Pastikan tabel tidak melebihi container */
+    .table-responsive {
+        overflow-x: auto;
+        max-width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="fw-bold">SKU Bundling</h2>
+        <div> {# Tambahkan div untuk mengelompokkan tombol #}
+            <a href="{% url 'products:import_sku_bundling' %}" class="btn btn-info me-2">Impor Bundling</a> {# Tombol Impor #}
+            <a href="{% url 'products:sku_bundling_add' %}" class="btn btn-primary">Tambah Bundling</a>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive"> {# Wrapper untuk scroll horizontal #}
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>SKU Bundling</th>
+                        <th>SKU Item</th>
+                        <th>Detail Produk</th>
+                        <th>Valid</th>
+                        <th>Aksi</th>
+                    </tr>
+                    <form method="get" action=".">
+                    <tr>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Cari SKU Bundling" name="sku_bundling_search" value="{{ sku_bundling_search }}"></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Cari SKU Item" name="sku_list_search" value="{{ sku_list_search }}"></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Cari Detail Produk" name="detail_search" value="{{ detail_search }}"></th>
+                        <th>
+                            <select name="valid_filter" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="" {% if not valid_filter %}selected{% endif %}>Semua</option>
+                                <option value="Y" {% if valid_filter == 'Y' %}selected{% endif %}>Y</option>
+                                <option value="N" {% if valid_filter == 'N' %}selected{% endif %}>N</option>
+                            </select>
+                        </th>
+                        <th>
+                            <div class="d-flex gap-1">
+                                <button type="submit" class="btn btn-icon btn-info" title="Cari">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                                <button type="button" class="btn btn-icon btn-secondary" onclick="clearSearchAndReload()" title="Clear">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </div>
+                        </th>
+                    </tr>
+                    </form>
+                </thead>
+                <tbody>
+                    {% for bundling in bundlings %}
+                    <tr>
+                        <td class="fw-bold">{{ bundling.sku_bundling }}</td>
+                        <td>
+                            {% if bundling.parsed_sku_items %}
+                            <ul class="list-unstyled mb-0">
+                                {% for item in bundling.parsed_sku_items %}
+                                <li style="white-space: nowrap;" {% if not item.is_valid %}class="text-danger"{% endif %}> {# Tambahkan kondisi di sini #}
+                                    {{ item.sku }} (<span style="color: #3b82f6; font-weight: 500;">Jumlah: {{ item.jumlah }}</span>)
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td> {# Kolom Detail Produk #}
+                            {% if bundling.parsed_sku_items %}
+                            <ul class="list-unstyled mb-0">
+                                {% for item in bundling.parsed_sku_items %}
+                                <li>
+                                    {% if item.is_valid %}
+                                        {{ item.product_details.nama_produk|default:"" }}
+                                        {% if item.product_details.variant_produk %} - {{ item.product_details.variant_produk }}{% endif %}
+                                        {% if item.product_details.brand %} - {{ item.product_details.brand }}{% endif %}
+                                        {% if item.product_details.barcode %} - {{ item.product_details.barcode }}{% endif %}
+                                    {% else %}
+                                    <em class="text-danger">Detail tidak tersedia</em> {# Tambahkan kelas text-danger di sini #}
+                                    {% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td> {# Kolom Valid #}
+                            {% if bundling.parsed_sku_items %}
+                            <ul class="list-unstyled mb-0">
+                                {% for item in bundling.parsed_sku_items %}
+                                <li> {# Tambahkan font-size: 80% #}
+                                    {% if item.is_valid %}
+                                    <span class="badge bg-success">Y</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">N</span>
+                                    {% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'products:sku_bundling_edit' bundling.id %}" class="btn btn-icon btn-warning" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'products:sku_bundling_delete' bundling.id %}" class="btn btn-icon btn-danger" onclick="return confirm('Yakin hapus bundling ini?')" title="Hapus">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center text-muted">Belum ada data bundling.</td></tr> {# colspan diperbarui menjadi 5 #}
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div> {# Tutup wrapper scroll #}
+
+            {# Pagination controls #}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if bundlings.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page=1&sku_bundling_search={{ sku_bundling_search }}&sku_list_search={{ sku_list_search }}&detail_search={{ detail_search }}&valid_filter={{ valid_filter }}">&laquo; first</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ bundlings.previous_page_number }}&sku_bundling_search={{ sku_bundling_search }}&sku_list_search={{ sku_list_search }}&detail_search={{ detail_search }}&valid_filter={{ valid_filter }}">previous</a></li>
+                    {% endif %}
+
+                    <li class="page-item disabled"><span class="page-link">Page {{ bundlings.number }} of {{ bundlings.paginator.num_pages }}.</span></li>
+
+                    {% if bundlings.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ bundlings.next_page_number }}&sku_bundling_search={{ sku_bundling_search }}&sku_list_search={{ sku_list_search }}&detail_search={{ detail_search }}&valid_filter={{ valid_filter }}">next</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ bundlings.paginator.num_pages }}&sku_bundling_search={{ sku_bundling_search }}&sku_list_search={{ sku_list_search }}&detail_search={{ detail_search }}&valid_filter={{ valid_filter }}">last &raquo;</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<script>
+    function clearSearchAndReload() {
+        document.querySelector('input[name="sku_bundling_search"]').value = '';
+        document.querySelector('input[name="sku_list_search"]').value = '';
+        document.querySelector('input[name="detail_search"]').value = '';
+        document.querySelector('select[name="valid_filter"]').value = '';
+        
+        document.querySelector('form[method="get"]').submit();
+    }
+</script>
+{% endblock %}

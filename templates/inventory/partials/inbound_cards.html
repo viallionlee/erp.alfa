@@ -1,0 +1,19 @@
+{% for inbound in inbound_list %}
+<a href="{% url 'inventory:inbound_detail' inbound.id %}" class="inbound-card-link">
+    <div class="inbound-card" data-search-text="{{ inbound.nomor_inbound|lower }} {{ inbound.from_warehouse|lower }} {{ inbound.to_warehouse|lower }}">
+        <div class="inbound-card-header">
+            <h6>{{ inbound.nomor_inbound }}</h6>
+            <span class="badge bg-light text-dark">{{ inbound.items.count }} item</span>
+        </div>
+        <div class="inbound-card-meta">
+            <div><strong>Dari:</strong> {{ inbound.from_warehouse|default:'-' }}</div>
+            <div><strong>Ke:</strong> {{ inbound.to_warehouse|default:'-' }}</div>
+            <div><strong>Tanggal:</strong> {{ inbound.tanggal|date:"d M Y, H:i" }}</div>
+            {% if inbound.received_by %}
+            <div><strong>Received By:</strong> {{ inbound.received_by.username }}</div>
+            <div><strong>Received At:</strong> {{ inbound.received_at|date:"d M Y, H:i" }}</div>
+            {% endif %}
+        </div>
+    </div>
+</a>
+{% endfor %}

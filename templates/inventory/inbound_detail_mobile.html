@@ -1,0 +1,125 @@
+{% extends 'base_mobile.html' %}
+{% block title %}Detail Inbound{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <a href="{% url 'inventory:inbound' %}" class="btn btn-light rounded-circle shadow-sm" title="Kembali ke Daftar" style="position: fixed; top: 5rem; right: 4rem; z-index: 1050; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+        <i class="bi bi-reply-fill fs-5"></i>
+    </a>
+    
+    <h4 class="mb-3">Detail Inbound</h4>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title fs-6 mb-3">Info Inbound</h5>
+            <div class="mb-2">
+                <small class="text-muted d-block">Nomor Inbound</small>
+                <strong>{{ inbound.nomor_inbound }}</strong>
+            </div>
+            <div class="mb-2">
+                <small class="text-muted d-block">Supplier</small>
+                <strong>{{ inbound.supplier.nama_supplier|default:'-' }}</strong>
+            </div>
+            <div class="mb-2">
+                <small class="text-muted d-block">Tanggal</small>
+                <strong>{{ inbound.tanggal|date:"d M Y, H:i" }}</strong>
+            </div>
+            {% if inbound.keterangan %}
+            <div class="mb-0">
+                <small class="text-muted d-block">Keterangan</small>
+                <p class="mb-0">{{ inbound.keterangan }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card card-body">
+        <h5 class="card-title fs-6 mb-3">Produk Diterima ({{ items.count }})</h5>
+        <div id="produk-list">
+            {% for item in items %}
+            <div class="product-item">
+                {% if item.product.photo and item.product.photo.url %}
+                <img src="{{ item.product.photo.url }}" alt="{{ item.product.nama_produk }}" class="product-photo">
+                {% else %}
+                <span class="product-photo d-flex align-items-center justify-content-center">
+                    <i class="bi bi-box-seam text-muted fs-2"></i>
+                </span>
+                {% endif %}
+                <div class="product-details">
+                    <p class="product-name mb-0">{{ item.product.nama_produk }}</p>
+                    <p class="product-info mb-0">{{ item.product.variant_produk|default:'' }}</p>
+                    <p class="product-info mb-1"><strong>Brand:</strong> {{ item.product.brand|default:'-' }}</p>
+                    <p class="product-sku mb-0">SKU: {{ item.product.sku }}</p>
+                    <p class="product-sku mb-0">Barcode: {{ item.product.barcode|default:'-' }}</p>
+                </div>
+                <div class="quantity-display">
+                    <strong>{{ item.quantity }}</strong>
+                    <small>pcs</small>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted text-center">Tidak ada produk dalam inbound ini.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="d-grid gap-2 mt-4">
+        <a href="{% url 'inventory:inbound_edit' inbound.id %}" class="btn btn-primary btn-lg">Edit Inbound</a>
+        <a href="{% url 'inventory:inbound' %}" class="btn btn-secondary">Kembali ke Daftar</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<style>
+.product-photo {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 0.375rem;
+    margin-right: 12px;
+    background-color: #f8f9fa;
+}
+#produk-list .product-item { 
+    display: flex; 
+    align-items: flex-start; 
+    padding: 12px 4px; 
+    border-bottom: 1px solid #eee; 
+}
+#produk-list .product-item:last-child {
+    border-bottom: none;
+}
+#produk-list .product-details { 
+    flex-grow: 1; 
+    margin-right: 8px; 
+}
+#produk-list .product-name { 
+    font-weight: 600; 
+    font-size: 0.95rem; 
+    margin: 0; 
+    line-height: 1.2;
+}
+#produk-list .product-info {
+    font-size: 0.85rem;
+    color: #495057;
+}
+#produk-list .product-sku { 
+    font-size: 0.8rem; 
+    color: #6c757d; 
+    margin: 0; 
+    line-height: 1.2;
+}
+#produk-list .quantity-display {
+    text-align: right;
+}
+#produk-list .quantity-display strong {
+    font-size: 1.1rem;
+}
+#produk-list .quantity-display small {
+    font-size: 0.8rem;
+    color: #6c757d;
+    display: block;
+    line-height: 1;
+}
+</style>
+{% endblock %} 
