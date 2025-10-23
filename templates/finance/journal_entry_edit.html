@@ -1,0 +1,492 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Journal Entry - Finance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .form-header {
+        border-bottom: 2px solid #f8f9fa;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .form-header h2 {
+        color: #2c3e50;
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .form-group label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .journal-items {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .journal-item {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .journal-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .item-number {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .remove-item {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 5px 10px;
+        font-size: 0.8em;
+        cursor: pointer;
+    }
+    
+    .remove-item:hover {
+        background: #c82333;
+    }
+    
+    .balance-summary {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 20px;
+    }
+    
+    .balance-summary h6 {
+        color: #1976d2;
+        margin-bottom: 10px;
+    }
+    
+    .balance-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+    }
+    
+    .balance-balanced {
+        color: #28a745;
+        font-weight: bold;
+    }
+    
+    .balance-unbalanced {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    .btn-cancel {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-cancel:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+        color: white;
+    }
+    
+    .add-item-btn {
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 15px;
+    }
+    
+    .add-item-btn:hover {
+        background: #218838;
+    }
+    
+    .account-select {
+        width: 100%;
+    }
+    
+    .amount-input {
+        text-align: right;
+    }
+    
+    .entry-info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .entry-info h5 {
+        color: #1976d2;
+        margin-bottom: 10px;
+    }
+    
+    .status-badge {
+        font-size: 0.9em;
+        padding: 6px 12px;
+    }
+    
+    .warning-box {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .warning-box h6 {
+        color: #856404;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Edit Journal Entry</h1>
+            <p class="text-muted">Modify journal entry information</p>
+        </div>
+        <div>
+            <a href="{% url 'finance:journal_entry_detail' entry.id %}" class="btn btn-secondary">
+                <i class="fas fa-eye"></i> View Details
+            </a>
+            <a href="{% url 'finance:journal_entry_list' %}" class="btn btn-outline-secondary ml-2">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Entry Information -->
+            <div class="entry-info">
+                <h5><i class="fas fa-info-circle"></i> Journal Entry Information</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Entry Number:</strong> {{ entry.entry_number }}<br>
+                        <strong>Date:</strong> {{ entry.entry_date|date:"d M Y" }}<br>
+                        <strong>Reference:</strong> {{ entry.reference|default:"-" }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Status:</strong> 
+                        {% if entry.status == 'draft' %}
+                            <span class="badge badge-warning status-badge">Draft</span>
+                        {% elif entry.status == 'posted' %}
+                            <span class="badge badge-success status-badge">Posted</span>
+                        {% elif entry.status == 'reversed' %}
+                            <span class="badge badge-danger status-badge">Reversed</span>
+                        {% else %}
+                            <span class="badge badge-secondary status-badge">{{ entry.get_status_display }}</span>
+                        {% endif %}<br>
+                        <strong>Created:</strong> {{ entry.created_at|date:"d M Y, H:i" }}<br>
+                        <strong>Created By:</strong> {{ entry.created_by.get_full_name|default:entry.created_by.username }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warning for posted entries -->
+            {% if entry.status == 'posted' %}
+            <div class="warning-box">
+                <h6><i class="fas fa-exclamation-triangle"></i> Warning</h6>
+                <p class="mb-0">This journal entry is already posted. Editing posted entries may affect financial reports and require approval.</p>
+            </div>
+            {% endif %}
+
+            <div class="form-card">
+                <div class="form-header">
+                    <h2><i class="fas fa-edit text-primary"></i> Edit Journal Entry</h2>
+                </div>
+
+                <form method="post" id="journalEntryForm">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="entry_date">Entry Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="entry_date" name="entry_date" required
+                                       value="{{ entry.entry_date|date:'Y-m-d' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="reference">Reference</label>
+                                <input type="text" class="form-control" id="reference" name="reference"
+                                       value="{{ entry.reference }}" maxlength="100">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="status">Status</label>
+                                <select class="form-control" id="status" name="status" {% if entry.status == 'posted' %}disabled{% endif %}>
+                                    <option value="draft" {% if entry.status == 'draft' %}selected{% endif %}>Draft</option>
+                                    <option value="posted" {% if entry.status == 'posted' %}selected{% endif %}>Posted</option>
+                                </select>
+                                {% if entry.status == 'posted' %}
+                                <small class="form-text text-muted">Status cannot be changed for posted entries</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required>{{ entry.description }}</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2">{{ entry.notes|default:"" }}</textarea>
+                    </div>
+
+                    <!-- Journal Items -->
+                    <div class="journal-items">
+                        <h4><i class="fas fa-list"></i> Journal Entry Items</h4>
+                        <p class="text-muted">Add debit and credit entries. Total debits must equal total credits.</p>
+                        
+                        <div id="journalItems">
+                            <!-- Items will be loaded from existing data -->
+                        </div>
+                        
+                        <button type="button" class="add-item-btn" onclick="addJournalItem()">
+                            <i class="fas fa-plus"></i> Add Journal Item
+                        </button>
+                    </div>
+
+                    <!-- Balance Summary -->
+                    <div class="balance-summary">
+                        <h6><i class="fas fa-balance-scale"></i> Balance Summary</h6>
+                        <div class="balance-row">
+                            <span>Total Debits:</span>
+                            <span id="totalDebits">Rp 0</span>
+                        </div>
+                        <div class="balance-row">
+                            <span>Total Credits:</span>
+                            <span id="totalCredits">Rp 0</span>
+                        </div>
+                        <div class="balance-row">
+                            <span>Difference:</span>
+                            <span id="difference">Rp 0</span>
+                        </div>
+                        <div class="balance-row">
+                            <span>Status:</span>
+                            <span id="balanceStatus" class="balance-unbalanced">Unbalanced</span>
+                        </div>
+                    </div>
+
+                    <div class="form-actions mt-4">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="fas fa-save"></i> Update Journal Entry
+                        </button>
+                        <a href="{% url 'finance:journal_entry_detail' entry.id %}" class="btn btn-cancel ml-2">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+let itemCounter = 0;
+const accounts = {{ accounts_json|safe }};
+const existingItems = {{ existing_items_json|safe }};
+
+$(document).ready(function() {
+    // Load existing items
+    if (existingItems.length > 0) {
+        existingItems.forEach(item => {
+            addJournalItem(item);
+        });
+    } else {
+        // Add initial items if no existing items
+        addJournalItem();
+        addJournalItem();
+    }
+    
+    updateBalance();
+    
+    // Form validation
+    $('#journalEntryForm').on('submit', function(e) {
+        if (!isBalanced()) {
+            e.preventDefault();
+            alert('Journal entry must be balanced (total debits = total credits)');
+            return false;
+        }
+        
+        if (itemCounter < 2) {
+            e.preventDefault();
+            alert('At least 2 journal items are required');
+            return false;
+        }
+    });
+});
+
+function addJournalItem(item = null) {
+    itemCounter++;
+    const itemHtml = `
+        <div class="journal-item" id="item-${itemCounter}">
+            <div class="item-header">
+                <span class="item-number">Item ${itemCounter}</span>
+                <button type="button" class="remove-item" onclick="removeJournalItem(${itemCounter})">
+                    <i class="fas fa-times"></i> Remove
+                </button>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Account <span class="text-danger">*</span></label>
+                        <select class="form-control account-select" name="account" required>
+                            <option value="">Select Account</option>
+                            ${accounts.map(account => 
+                                `<option value="${account.id}" ${item && item.account_id == account.id ? 'selected' : ''}>${account.code} - ${account.name}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Debit Amount</label>
+                        <input type="number" class="form-control amount-input" name="debit" 
+                               step="0.01" min="0" placeholder="0.00" 
+                               value="${item ? item.debit : ''}" onchange="updateBalance()">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Credit Amount</label>
+                        <input type="number" class="form-control amount-input" name="credit" 
+                               step="0.01" min="0" placeholder="0.00" 
+                               value="${item ? item.credit : ''}" onchange="updateBalance()">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" class="form-control" name="item_description" 
+                               placeholder="Item description" value="${item ? item.description : ''}">
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $('#journalItems').append(itemHtml);
+    updateBalance();
+}
+
+function removeJournalItem(itemId) {
+    if (itemCounter <= 2) {
+        alert('At least 2 journal items are required');
+        return;
+    }
+    
+    $(`#item-${itemId}`).remove();
+    itemCounter--;
+    updateBalance();
+}
+
+function updateBalance() {
+    let totalDebits = 0;
+    let totalCredits = 0;
+    
+    $('.journal-item').each(function() {
+        const debit = parseFloat($(this).find('input[name="debit"]').val()) || 0;
+        const credit = parseFloat($(this).find('input[name="credit"]').val()) || 0;
+        
+        totalDebits += debit;
+        totalCredits += credit;
+    });
+    
+    const difference = totalDebits - totalCredits;
+    
+    $('#totalDebits').text('Rp ' + totalDebits.toLocaleString('id-ID'));
+    $('#totalCredits').text('Rp ' + totalCredits.toLocaleString('id-ID'));
+    $('#difference').text('Rp ' + difference.toLocaleString('id-ID'));
+    
+    if (Math.abs(difference) < 0.01) {
+        $('#balanceStatus').text('Balanced').removeClass('balance-unbalanced').addClass('balance-balanced');
+        $('#submitBtn').prop('disabled', false);
+    } else {
+        $('#balanceStatus').text('Unbalanced').removeClass('balance-balanced').addClass('balance-unbalanced');
+        $('#submitBtn').prop('disabled', true);
+    }
+}
+
+function isBalanced() {
+    let totalDebits = 0;
+    let totalCredits = 0;
+    
+    $('.journal-item').each(function() {
+        const debit = parseFloat($(this).find('input[name="debit"]').val()) || 0;
+        const credit = parseFloat($(this).find('input[name="credit"]').val()) || 0;
+        
+        totalDebits += debit;
+        totalCredits += credit;
+    });
+    
+    return Math.abs(totalDebits - totalCredits) < 0.01;
+}
+
+// Prevent both debit and credit from being filled
+$(document).on('input', 'input[name="debit"], input[name="credit"]', function() {
+    const row = $(this).closest('.journal-item');
+    const debitInput = row.find('input[name="debit"]');
+    const creditInput = row.find('input[name="credit"]');
+    
+    if ($(this).attr('name') === 'debit' && $(this).val() > 0) {
+        creditInput.val('');
+    } else if ($(this).attr('name') === 'credit' && $(this).val() > 0) {
+        debitInput.val('');
+    }
+    
+    updateBalance();
+});
+</script>
+{% endblock %}
+
+

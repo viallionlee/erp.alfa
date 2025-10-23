@@ -80,6 +80,7 @@
         .icon-return { background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); color: #3b82f6; }
         .icon-cancel { background: linear-gradient(135deg, #ffdcdc 0%, #ffadad 100%); color: #dc3545; }
         .icon-purchasing { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); color: #388e3c; }
+        .icon-finance { background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); color: #f57c00; }
 
         .card-title { 
             font-weight: 700; 
@@ -343,6 +344,51 @@
                             <div class="icon-circle icon-purchasing"><i class="bi bi-plus-circle"></i></div>
                             <h5 class="card-title">Buat PO Baru</h5>
                             <p class="card-text">Buat Purchase Order baru dengan harga beli.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Section 2.6: Finance Management -->
+        {% if perms.finance.view_account %}
+        <div class="module-section">
+            <h5 class="section-title">Finance Management</h5>
+            <div class="row justify-content-center g-3">
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'finance:dashboard' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-finance"><i class="bi bi-graph-up-arrow"></i></div>
+                            <h5 class="card-title">Finance Dashboard</h5>
+                            <p class="card-text">Dashboard keuangan dengan overview assets, liabilities, dan cash flow.</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'finance:chart_of_accounts' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-finance"><i class="bi bi-list-ul"></i></div>
+                            <h5 class="card-title">Chart of Accounts</h5>
+                            <p class="card-text">Kelola akun-akun keuangan dan klasifikasi akun.</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'finance:journal_entry_list' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-finance"><i class="bi bi-journal-bookmark"></i></div>
+                            <h5 class="card-title">Journal Entries</h5>
+                            <p class="card-text">Buat dan kelola jurnal akuntansi untuk transaksi.</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-lg-3 col-md-4 col-12">
+                    <a href="{% url 'finance:financial_reports' %}" class="modern-card text-center text-decoration-none text-reset d-block">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <div class="icon-circle icon-finance"><i class="bi bi-file-earmark-bar-graph"></i></div>
+                            <h5 class="card-title">Financial Reports</h5>
+                            <p class="card-text">Laporan keuangan: Trial Balance, P&L, Balance Sheet.</p>
                         </div>
                     </a>
                 </div>

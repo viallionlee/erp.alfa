@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Cash Flow - Finance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .form-header {
+        border-bottom: 2px solid #f8f9fa;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .form-header h2 {
+        color: #2c3e50;
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .form-group label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn-cancel {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-cancel:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+        color: white;
+    }
+    
+    .flow-type-info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 10px;
+    }
+    
+    .flow-type-info h6 {
+        color: #1976d2;
+        margin-bottom: 10px;
+    }
+    
+    .flow-type-info ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+    
+    .flow-type-info li {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Create Cash Flow</h1>
+            <p class="text-muted">Add a new cash flow transaction</p>
+        </div>
+        <div>
+            <a href="{% url 'finance:cash_flow_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="form-card">
+                <div class="form-header">
+                    <h2><i class="fas fa-money-bill-wave text-primary"></i> Cash Flow Information</h2>
+                </div>
+
+                <form method="post" id="cashFlowForm">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="transaction_date">Transaction Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="transaction_date" name="transaction_date" required
+                                       value="{% now 'Y-m-d' %}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="amount">Amount (Rp) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="amount" name="amount" required
+                                       step="0.01" min="0" placeholder="0.00">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="category">Category <span class="text-danger">*</span></label>
+                                <select class="form-control" id="category" name="category" required>
+                                    <option value="">Select Category</option>
+                                    <option value="OPERATING">Operating Activities</option>
+                                    <option value="INVESTING">Investing Activities</option>
+                                    <option value="FINANCING">Financing Activities</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="flow_type">Flow Type <span class="text-danger">*</span></label>
+                                <select class="form-control" id="flow_type" name="flow_type" required>
+                                    <option value="">Select Flow Type</option>
+                                    <option value="INFLOW">Cash Inflow (+)</option>
+                                    <option value="OUTFLOW">Cash Outflow (-)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="account">Account <span class="text-danger">*</span></label>
+                        <select class="form-control" id="account" name="account" required>
+                            <option value="">Select Account</option>
+                            {% for account in accounts %}
+                            <option value="{{ account.id }}">{{ account.code }} - {{ account.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required
+                                  placeholder="Describe the cash flow transaction..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reference">Reference</label>
+                        <input type="text" class="form-control" id="reference" name="reference"
+                               placeholder="Invoice number, PO number, etc." maxlength="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2"
+                                  placeholder="Additional notes..."></textarea>
+                    </div>
+
+                    <!-- Flow Type Information -->
+                    <div class="flow-type-info" id="flowTypeInfo" style="display: none;">
+                        <h6><i class="fas fa-info-circle"></i> Flow Type Information</h6>
+                        <div id="flowTypeContent"></div>
+                    </div>
+
+                    <div class="form-actions mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Create Cash Flow
+                        </button>
+                        <a href="{% url 'finance:cash_flow_list' %}" class="btn btn-cancel ml-2">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+$(document).ready(function() {
+    const flowTypeInfo = {
+        'INFLOW': {
+            title: 'Cash Inflow',
+            description: 'Money coming into the business:',
+            examples: [
+                'Sales revenue',
+                'Loan proceeds',
+                'Investment income',
+                'Asset sales',
+                'Customer payments'
+            ]
+        },
+        'OUTFLOW': {
+            title: 'Cash Outflow',
+            description: 'Money going out of the business:',
+            examples: [
+                'Operating expenses',
+                'Equipment purchases',
+                'Loan payments',
+                'Dividend payments',
+                'Supplier payments'
+            ]
+        }
+    };
+    
+    // Update flow type info
+    function updateFlowTypeInfo() {
+        const flowType = $('#flow_type').val();
+        const info = flowTypeInfo[flowType];
+        
+        if (info) {
+            let content = `<strong>${info.title}</strong><br>${info.description}<br><ul>`;
+            info.examples.forEach(example => {
+                content += `<li>${example}</li>`;
+            });
+            content += '</ul>';
+            $('#flowTypeContent').html(content);
+            $('#flowTypeInfo').show();
+        } else {
+            $('#flowTypeInfo').hide();
+        }
+    }
+    
+    $('#flow_type').on('change', updateFlowTypeInfo);
+    
+    // Form validation
+    $('#cashFlowForm').on('submit', function(e) {
+        const transactionDate = $('#transaction_date').val();
+        const amount = $('#amount').val();
+        const category = $('#category').val();
+        const flowType = $('#flow_type').val();
+        const account = $('#account').val();
+        const description = $('#description').val().trim();
+        
+        if (!transactionDate || !amount || !category || !flowType || !account || !description) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+            return false;
+        }
+        
+        if (parseFloat(amount) <= 0) {
+            e.preventDefault();
+            alert('Amount must be greater than 0.');
+            return false;
+        }
+    });
+    
+    // Format amount input
+    $('#amount').on('input', function() {
+        let value = this.value.replace(/[^0-9.]/g, '');
+        if (value && !isNaN(value)) {
+            this.value = parseFloat(value).toFixed(2);
+        }
+    });
+});
+</script>
+{% endblock %}
+
+

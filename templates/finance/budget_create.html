@@ -1,0 +1,360 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Budget - Finance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .form-header {
+        border-bottom: 2px solid #f8f9fa;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .form-header h2 {
+        color: #2c3e50;
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .form-group label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn-cancel {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-cancel:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+        color: white;
+    }
+    
+    .period-info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 10px;
+    }
+    
+    .period-info h6 {
+        color: #1976d2;
+        margin-bottom: 10px;
+    }
+    
+    .period-info ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+    
+    .period-info li {
+        margin-bottom: 5px;
+        font-size: 0.9em;
+    }
+    
+    .date-range {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+    }
+    
+    .date-range h6 {
+        color: #495057;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Create Budget</h1>
+            <p class="text-muted">Create a new budget for financial planning</p>
+        </div>
+        <div>
+            <a href="{% url 'finance:budget_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="form-card">
+                <div class="form-header">
+                    <h2><i class="fas fa-chart-pie text-primary"></i> Budget Information</h2>
+                </div>
+
+                <form method="post" id="budgetForm">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <label for="name">Budget Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" required
+                               placeholder="e.g., Marketing Budget 2024" maxlength="200">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"
+                                  placeholder="Describe the purpose and scope of this budget..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="account">Account <span class="text-danger">*</span></label>
+                        <select class="form-control" id="account" name="account" required>
+                            <option value="">Select Account</option>
+                            {% for account in accounts %}
+                            <option value="{{ account.id }}">{{ account.code }} - {{ account.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="period_type">Period Type <span class="text-danger">*</span></label>
+                                <select class="form-control" id="period_type" name="period_type" required>
+                                    <option value="">Select Period Type</option>
+                                    <option value="MONTHLY">Monthly</option>
+                                    <option value="QUARTERLY">Quarterly</option>
+                                    <option value="YEARLY">Yearly</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="budget_amount">Budget Amount (Rp) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="budget_amount" name="budget_amount" required
+                                       step="0.01" min="0" placeholder="0.00">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="period_start">Period Start <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="period_start" name="period_start" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="period_end">Period End <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="period_end" name="period_end" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2"
+                                  placeholder="Additional notes about this budget..."></textarea>
+                    </div>
+
+                    <!-- Period Type Information -->
+                    <div class="period-info" id="periodInfo" style="display: none;">
+                        <h6><i class="fas fa-info-circle"></i> Period Type Information</h6>
+                        <div id="periodContent"></div>
+                    </div>
+
+                    <!-- Date Range Preview -->
+                    <div class="date-range" id="dateRange" style="display: none;">
+                        <h6><i class="fas fa-calendar"></i> Budget Period</h6>
+                        <div id="dateRangeContent"></div>
+                    </div>
+
+                    <div class="form-actions mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Create Budget
+                        </button>
+                        <a href="{% url 'finance:budget_list' %}" class="btn btn-cancel ml-2">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+$(document).ready(function() {
+    const periodInfo = {
+        'MONTHLY': {
+            title: 'Monthly Budget',
+            description: 'Budget for a single month:',
+            examples: [
+                'Monthly operating expenses',
+                'Monthly marketing budget',
+                'Monthly salary budget',
+                'Monthly utility budget'
+            ]
+        },
+        'QUARTERLY': {
+            title: 'Quarterly Budget',
+            description: 'Budget for a quarter (3 months):',
+            examples: [
+                'Quarterly project budget',
+                'Quarterly equipment budget',
+                'Quarterly training budget',
+                'Quarterly maintenance budget'
+            ]
+        },
+        'YEARLY': {
+            title: 'Yearly Budget',
+            description: 'Budget for a full year:',
+            examples: [
+                'Annual operating budget',
+                'Annual capital expenditure',
+                'Annual research & development',
+                'Annual marketing campaign'
+            ]
+        }
+    };
+    
+    // Update period info
+    function updatePeriodInfo() {
+        const periodType = $('#period_type').val();
+        const info = periodInfo[periodType];
+        
+        if (info) {
+            let content = `<strong>${info.title}</strong><br>${info.description}<br><ul>`;
+            info.examples.forEach(example => {
+                content += `<li>${example}</li>`;
+            });
+            content += '</ul>';
+            $('#periodContent').html(content);
+            $('#periodInfo').show();
+        } else {
+            $('#periodInfo').hide();
+        }
+    }
+    
+    // Update date range preview
+    function updateDateRange() {
+        const startDate = $('#period_start').val();
+        const endDate = $('#period_end').val();
+        const periodType = $('#period_type').val();
+        
+        if (startDate && endDate && periodType) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            
+            let content = `
+                <strong>Period:</strong> ${start.toLocaleDateString('id-ID')} - ${end.toLocaleDateString('id-ID')}<br>
+                <strong>Duration:</strong> ${days} days<br>
+                <strong>Type:</strong> ${$('#period_type option:selected').text()}
+            `;
+            
+            $('#dateRangeContent').html(content);
+            $('#dateRange').show();
+        } else {
+            $('#dateRange').hide();
+        }
+    }
+    
+    $('#period_type').on('change', updatePeriodInfo);
+    $('#period_start, #period_end').on('change', updateDateRange);
+    
+    // Auto-calculate end date based on period type
+    $('#period_type').on('change', function() {
+        const startDate = $('#period_start').val();
+        if (startDate) {
+            const start = new Date(startDate);
+            let end = new Date(start);
+            
+            switch ($(this).val()) {
+                case 'MONTHLY':
+                    end.setMonth(end.getMonth() + 1);
+                    end.setDate(end.getDate() - 1);
+                    break;
+                case 'QUARTERLY':
+                    end.setMonth(end.getMonth() + 3);
+                    end.setDate(end.getDate() - 1);
+                    break;
+                case 'YEARLY':
+                    end.setFullYear(end.getFullYear() + 1);
+                    end.setDate(end.getDate() - 1);
+                    break;
+            }
+            
+            if ($(this).val()) {
+                $('#period_end').val(end.toISOString().split('T')[0]);
+                updateDateRange();
+            }
+        }
+    });
+    
+    // Form validation
+    $('#budgetForm').on('submit', function(e) {
+        const name = $('#name').val().trim();
+        const account = $('#account').val();
+        const periodType = $('#period_type').val();
+        const budgetAmount = $('#budget_amount').val();
+        const periodStart = $('#period_start').val();
+        const periodEnd = $('#period_end').val();
+        
+        if (!name || !account || !periodType || !budgetAmount || !periodStart || !periodEnd) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+            return false;
+        }
+        
+        if (parseFloat(budgetAmount) <= 0) {
+            e.preventDefault();
+            alert('Budget amount must be greater than 0.');
+            return false;
+        }
+        
+        const start = new Date(periodStart);
+        const end = new Date(periodEnd);
+        
+        if (end <= start) {
+            e.preventDefault();
+            alert('End date must be after start date.');
+            return false;
+        }
+    });
+    
+    // Format amount input
+    $('#budget_amount').on('input', function() {
+        let value = this.value.replace(/[^0-9.]/g, '');
+        if (value && !isNaN(value)) {
+            this.value = parseFloat(value).toFixed(2);
+        }
+    });
+    
+    // Set default start date to today
+    $('#period_start').val(new Date().toISOString().split('T')[0]);
+});
+</script>
+{% endblock %}
+
+
