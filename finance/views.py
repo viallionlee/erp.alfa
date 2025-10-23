@@ -14,47 +14,51 @@ from .models import (
     AccountType, Account, JournalEntry, JournalEntryItem,
     CashFlow, Budget, FinancialReport, FinanceSettings
 )
+# from .forms import AccountTypeForm, AccountForm, JournalEntryForm
 
 
 # ==================== DASHBOARD ====================
 
 @login_required
 def finance_dashboard(request):
-    """Finance Dashboard - Overview keuangan"""
+    """Dashboard Keuangan - Ringkasan keuangan perusahaan"""
     
     # Get current month
     today = timezone.now().date()
     month_start = today.replace(day=1)
     
-    # Total Assets
-    total_assets = Account.objects.filter(
-        account_type__type='ASSET',
-        is_active=True
-    ).aggregate(total=Sum('current_balance'))['total'] or Decimal('0')
+    # Calculate balances from journal entries instead of using current_balance property
+    from django.db.models import Sum, Q
+    
+    # Total Assets (calculate from journal entries)
+    asset_accounts = Account.objects.filter(account_type__type='ASSET', is_active=True)
+    total_assets = Decimal('0')
+    for account in asset_accounts:
+        total_assets += account.current_balance
     
     # Total Liabilities
-    total_liabilities = Account.objects.filter(
-        account_type__type='LIABILITY',
-        is_active=True
-    ).aggregate(total=Sum('current_balance'))['total'] or Decimal('0')
+    liability_accounts = Account.objects.filter(account_type__type='LIABILITY', is_active=True)
+    total_liabilities = Decimal('0')
+    for account in liability_accounts:
+        total_liabilities += account.current_balance
     
     # Total Equity
-    total_equity = Account.objects.filter(
-        account_type__type='EQUITY',
-        is_active=True
-    ).aggregate(total=Sum('current_balance'))['total'] or Decimal('0')
+    equity_accounts = Account.objects.filter(account_type__type='EQUITY', is_active=True)
+    total_equity = Decimal('0')
+    for account in equity_accounts:
+        total_equity += account.current_balance
     
     # Revenue this month
-    revenue_this_month = Account.objects.filter(
-        account_type__type='REVENUE',
-        is_active=True
-    ).aggregate(total=Sum('current_balance'))['total'] or Decimal('0')
+    revenue_accounts = Account.objects.filter(account_type__type='REVENUE', is_active=True)
+    revenue_this_month = Decimal('0')
+    for account in revenue_accounts:
+        revenue_this_month += account.current_balance
     
     # Expense this month
-    expense_this_month = Account.objects.filter(
-        account_type__type='EXPENSE',
-        is_active=True
-    ).aggregate(total=Sum('current_balance'))['total'] or Decimal('0')
+    expense_accounts = Account.objects.filter(account_type__type='EXPENSE', is_active=True)
+    expense_this_month = Decimal('0')
+    for account in expense_accounts:
+        expense_this_month += account.current_balance
     
     # Net Income
     net_income = revenue_this_month - expense_this_month
@@ -122,6 +126,7 @@ def finance_dashboard(request):
         'active_budgets': active_budgets,
         'budget_data': budget_data,
         'top_expenses': top_expenses,
+        'hide_navbar': False,  # Ensure navbar is visible
     }
     
     return render(request, 'finance/dashboard.html', context)
@@ -131,21 +136,61 @@ def finance_dashboard(request):
 
 @login_required
 def chart_of_accounts(request):
-    """Chart of Accounts - Daftar Akun"""
+    """Chart of Accounts - Daftar Akun dengan fitur lengkap"""
     
+    # Get filters
+    type_filter = request.GET.get('type', '')
+    status_filter = request.GET.get('status', '')
+    search = request.GET.get('search', '')
+    
+    # Get account types with their accounts
     account_types = AccountType.objects.filter(is_active=True).order_by('code')
     
     accounts_by_type = {}
     for acc_type in account_types:
         accounts = Account.objects.filter(
-            account_type=acc_type,
-            is_active=True
+            account_type=acc_type
         ).order_by('code')
         
-        accounts_by_type[acc_type] = accounts
+        # Apply filters
+        if type_filter and str(acc_type.id) != type_filter:
+            continue
+            
+        if status_filter:
+            if status_filter == 'active':
+                accounts = accounts.filter(is_active=True)
+            elif status_filter == 'inactive':
+                accounts = accounts.filter(is_active=False)
+        
+        if search:
+            accounts = accounts.filter(
+                Q(code__icontains=search) | 
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
+        
+        if accounts.exists():
+            accounts_by_type[acc_type] = accounts
+    
+    # Calculate summary statistics
+    all_accounts = Account.objects.all()
+    total_accounts = all_accounts.count()
+    active_accounts = all_accounts.filter(is_active=True).count()
+    
+    # Calculate total balance
+    total_balance = 0
+    for account in all_accounts:
+        if account.balance_type == 'DEBIT':
+            total_balance += float(account.current_balance or 0)
+        else:
+            total_balance -= float(account.current_balance or 0)
     
     context = {
         'accounts_by_type': accounts_by_type,
+        'account_types': account_types,
+        'total_accounts': total_accounts,
+        'active_accounts': active_accounts,
+        'total_balance': total_balance,
     }
     
     return render(request, 'finance/chart_of_accounts.html', context)
@@ -286,8 +331,12 @@ def journal_entry_detail(request, entry_id):
     
     entry = get_object_or_404(JournalEntry, id=entry_id)
     
+    # Calculate difference for template
+    difference = entry.total_debit - entry.total_credit
+    
     context = {
         'entry': entry,
+        'difference': difference,
     }
     
     return render(request, 'finance/journal_entry_detail.html', context)
@@ -763,3 +812,317 @@ def balance_sheet(request):
     }
     
     return render(request, 'finance/balance_sheet.html', context)
+
+
+# ==================== ACCOUNT TYPES ====================
+
+@login_required
+def account_type_list(request):
+    """Account Type List"""
+    
+    account_types = AccountType.objects.all().order_by('code')
+    
+    # Get stats
+    active_count = account_types.filter(is_active=True).count()
+    total_accounts = Account.objects.filter(is_active=True).count()
+    # Note: current_balance is a property, not a database field, so we can't aggregate it directly
+    # We'll calculate it in the template or use a different approach
+    total_balance = Decimal('0')  # Placeholder for now
+    
+    context = {
+        'account_types': account_types,
+        'active_count': active_count,
+        'total_accounts': total_accounts,
+        'total_balance': total_balance,
+    }
+    
+    return render(request, 'finance/account_type_list.html', context)
+
+
+@login_required
+def account_type_create(request):
+    """Create Account Type"""
+    
+    if request.method == 'POST':
+        try:
+            account_type = AccountType.objects.create(
+                code=request.POST.get('code'),
+                name=request.POST.get('name'),
+                type=request.POST.get('type'),
+                description=request.POST.get('description', ''),
+                is_active=request.POST.get('is_active') == 'on'
+            )
+            messages.success(request, f'Account Type {account_type.name} berhasil dibuat')
+            return redirect('finance:account_type_detail', account_type_id=account_type.id)
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+    
+    context = {}
+    
+    return render(request, 'finance/account_type_create.html', context)
+
+
+@login_required
+def account_type_detail(request, account_type_id):
+    """Account Type Detail"""
+    
+    account_type = get_object_or_404(AccountType, id=account_type_id)
+    
+    context = {
+        'account_type': account_type,
+    }
+    
+    return render(request, 'finance/account_type_detail.html', context)
+
+
+@login_required
+def account_type_edit(request, account_type_id):
+    """Edit Account Type"""
+    
+    account_type = get_object_or_404(AccountType, id=account_type_id)
+    
+    if request.method == 'POST':
+        try:
+            account_type.code = request.POST.get('code')
+            account_type.name = request.POST.get('name')
+            account_type.type = request.POST.get('type')
+            account_type.description = request.POST.get('description', '')
+            account_type.is_active = request.POST.get('is_active') == 'on'
+            account_type.save()
+            messages.success(request, f'Account Type {account_type.name} berhasil diupdate')
+            return redirect('finance:account_type_detail', account_type_id=account_type.id)
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+    
+    context = {
+        'account_type': account_type,
+    }
+    
+    return render(request, 'finance/account_type_edit.html', context)
+
+
+# ==================== ACCOUNTS ====================
+
+@login_required
+def account_create(request):
+    """Create Account"""
+    
+    if request.method == 'POST':
+        try:
+            account = Account.objects.create(
+                code=request.POST.get('code'),
+                name=request.POST.get('name'),
+                account_type_id=request.POST.get('account_type'),
+                parent_id=request.POST.get('parent') or None,
+                balance_type=request.POST.get('balance_type'),
+                description=request.POST.get('description', ''),
+                notes=request.POST.get('notes', ''),
+                is_active=request.POST.get('is_active') == 'on',
+                is_system=request.POST.get('is_system') == 'on'
+            )
+            messages.success(request, f'Account {account.name} berhasil dibuat')
+            return redirect('finance:account_detail', account_id=account.id)
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+    
+    account_types = AccountType.objects.filter(is_active=True).order_by('code')
+    parent_accounts = Account.objects.filter(is_active=True).order_by('code')
+    
+    context = {
+        'account_types': account_types,
+        'parent_accounts': parent_accounts,
+    }
+    
+    return render(request, 'finance/account_create.html', context)
+
+
+@login_required
+def account_edit(request, account_id):
+    """Edit Account"""
+    
+    account = get_object_or_404(Account, id=account_id)
+    
+    if request.method == 'POST':
+        try:
+            account.code = request.POST.get('code')
+            account.name = request.POST.get('name')
+            account.account_type_id = request.POST.get('account_type')
+            account.parent_id = request.POST.get('parent') or None
+            account.balance_type = request.POST.get('balance_type')
+            account.description = request.POST.get('description', '')
+            account.notes = request.POST.get('notes', '')
+            account.is_active = request.POST.get('is_active') == 'on'
+            if not account.is_system:  # Only allow editing if not system account
+                account.is_system = request.POST.get('is_system') == 'on'
+            account.save()
+            messages.success(request, f'Account {account.name} berhasil diupdate')
+            return redirect('finance:account_detail', account_id=account.id)
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+    
+    account_types = AccountType.objects.filter(is_active=True).order_by('code')
+    parent_accounts = Account.objects.filter(is_active=True).exclude(id=account_id).order_by('code')
+    
+    context = {
+        'account': account,
+        'account_types': account_types,
+        'parent_accounts': parent_accounts,
+    }
+    
+    return render(request, 'finance/account_edit.html', context)
+
+
+@login_required
+def account_detail(request, account_id):
+    """Account Detail - Enhanced version"""
+    
+    account = get_object_or_404(Account, id=account_id)
+    
+    # Get journal entries for this account
+    journal_items = JournalEntryItem.objects.filter(
+        account=account,
+        journal_entry__status='posted'
+    ).select_related('journal_entry').order_by('-journal_entry__entry_date', '-id')
+    
+    # Get date range filter
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    
+    if date_from and date_to:
+        journal_items = journal_items.filter(
+            journal_entry__entry_date__gte=date_from,
+            journal_entry__entry_date__lte=date_to
+        )
+    
+    # Paginate
+    paginator = Paginator(journal_items, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'account': account,
+        'page_obj': page_obj,
+        'date_from': date_from,
+        'date_to': date_to,
+    }
+    
+    return render(request, 'finance/account_detail.html', context)
+
+
+# ==================== JOURNAL ENTRIES - ENHANCED ====================
+
+@login_required
+def journal_entry_create(request):
+    """Create Journal Entry - Enhanced version"""
+    
+    if request.method == 'POST':
+        try:
+            entry = JournalEntry.objects.create(
+                entry_date=request.POST.get('entry_date'),
+                reference=request.POST.get('reference', ''),
+                description=request.POST.get('description'),
+                notes=request.POST.get('notes', ''),
+                status=request.POST.get('status', 'draft'),
+                created_by=request.user
+            )
+            
+            # Process items
+            accounts = request.POST.getlist('account')
+            debits = request.POST.getlist('debit')
+            credits = request.POST.getlist('credit')
+            descriptions = request.POST.getlist('item_description')
+            
+            for i in range(len(accounts)):
+                if accounts[i]:
+                    JournalEntryItem.objects.create(
+                        journal_entry=entry,
+                        account_id=accounts[i],
+                        debit=Decimal(debits[i] or 0),
+                        credit=Decimal(credits[i] or 0),
+                        description=descriptions[i]
+                    )
+            
+            messages.success(request, f'Journal Entry {entry.entry_number} berhasil dibuat')
+            return redirect('finance:journal_entry_detail', entry_id=entry.id)
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+    
+    accounts = Account.objects.filter(is_active=True).order_by('code')
+    accounts_json = json.dumps([{
+        'id': account.id,
+        'code': account.code,
+        'name': account.name
+    } for account in accounts])
+    
+    context = {
+        'accounts': accounts,
+        'accounts_json': accounts_json,
+    }
+    
+    return render(request, 'finance/journal_entry_create.html', context)
+
+
+@login_required
+def journal_entry_edit(request, entry_id):
+    """Edit Journal Entry"""
+    
+    entry = get_object_or_404(JournalEntry, id=entry_id)
+    
+    if request.method == 'POST':
+        try:
+            entry.entry_date = request.POST.get('entry_date')
+            entry.reference = request.POST.get('reference', '')
+            entry.description = request.POST.get('description')
+            entry.notes = request.POST.get('notes', '')
+            if entry.status == 'draft':  # Only allow status change for draft entries
+                entry.status = request.POST.get('status', 'draft')
+            entry.save()
+            
+            # Clear existing items
+            entry.items.all().delete()
+            
+            # Process new items
+            accounts = request.POST.getlist('account')
+            debits = request.POST.getlist('debit')
+            credits = request.POST.getlist('credit')
+            descriptions = request.POST.getlist('item_description')
+            
+            for i in range(len(accounts)):
+                if accounts[i]:
+                    JournalEntryItem.objects.create(
+                        journal_entry=entry,
+                        account_id=accounts[i],
+                        debit=Decimal(debits[i] or 0),
+                        credit=Decimal(credits[i] or 0),
+                        description=descriptions[i]
+                    )
+            
+            messages.success(request, f'Journal Entry {entry.entry_number} berhasil diupdate')
+            return redirect('finance:journal_entry_detail', entry_id=entry.id)
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+    
+    accounts = Account.objects.filter(is_active=True).order_by('code')
+    accounts_json = json.dumps([{
+        'id': account.id,
+        'code': account.code,
+        'name': account.name
+    } for account in accounts])
+    
+    existing_items = entry.items.all()
+    existing_items_json = json.dumps([{
+        'id': item.id,
+        'account_id': item.account.id,
+        'debit': float(item.debit),
+        'credit': float(item.credit),
+        'description': item.description or ''
+    } for item in existing_items])
+    
+    context = {
+        'entry': entry,
+        'accounts': accounts,
+        'accounts_json': accounts_json,
+        'existing_items_json': existing_items_json,
+    }
+    
+    return render(request, 'finance/journal_entry_edit.html', context)

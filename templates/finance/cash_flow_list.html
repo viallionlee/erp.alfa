@@ -1,0 +1,445 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Arus Kas - Keuangan{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Modern gradient backgrounds */
+    .gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .gradient-success {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .gradient-danger {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+    .gradient-warning {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    }
+    
+    /* Modern card shadows */
+    .card-modern {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+    
+    .card-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+    
+    /* Modern button styles */
+    .btn-modern {
+        border-radius: 12px;
+        padding: 12px 20px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .btn-modern:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Icon backgrounds */
+    .icon-bg {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+    
+    /* Cash flow cards */
+    .cash-flow-card {
+        border: 2px solid #f1f3f4;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background: white;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .cash-flow-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .cash-flow-card.inflow::before {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+    
+    .cash-flow-card.outflow::before {
+        background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    }
+    
+    .cash-flow-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .cash-flow-card:hover::before {
+        width: 6px;
+    }
+    
+    /* Amount styling */
+    .amount-inflow {
+        color: #28a745;
+        font-weight: bold;
+        font-size: 1.3em;
+    }
+    
+    .amount-outflow {
+        color: #dc3545;
+        font-weight: bold;
+        font-size: 1.3em;
+    }
+    
+    /* Category badges */
+    .category-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .category-operating { 
+        background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+        color: #2d5a2d;
+        border: 1px solid #c3e6cb;
+    }
+    .category-investing { 
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+    .category-financing { 
+        background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+    
+    /* Form styling */
+    .form-control-modern {
+        border: 2px solid #f1f3f4;
+        border-radius: 12px;
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control-modern:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    /* Flow type badge */
+    .flow-type-badge {
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+    
+    .empty-state .icon-bg {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-vh-100" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+    <div class="container-fluid py-5">
+        <!-- Header Section -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="display-6 fw-bold text-dark mb-2">Arus Kas</h1>
+                        <p class="text-muted fs-5 mb-0">Pantau arus kas masuk dan keluar perusahaan</p>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <a href="{% url 'finance:cash_flow_create' %}" class="btn btn-primary btn-modern">
+                            <i class="bi bi-plus-circle me-2"></i>Tambah Arus Kas
+                        </a>
+                        <a href="{% url 'finance:dashboard' %}" class="btn btn-outline-primary btn-modern">
+                            <i class="bi bi-house me-2"></i>Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row mb-5">
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card card-modern h-100">
+                    <div class="card-body gradient-success text-white p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-2 fw-medium">Total Masuk Kas</h6>
+                                <h2 class="fw-bold mb-0">+Rp {{ total_inflow|floatformat:0|intcomma }}</h2>
+                            </div>
+                            <div class="icon-bg bg-white bg-opacity-20 text-white">
+                                <i class="bi bi-arrow-down-right"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card card-modern h-100">
+                    <div class="card-body gradient-danger text-white p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-2 fw-medium">Total Keluar Kas</h6>
+                                <h2 class="fw-bold mb-0">-Rp {{ total_outflow|floatformat:0|intcomma }}</h2>
+                            </div>
+                            <div class="icon-bg bg-white bg-opacity-20 text-white">
+                                <i class="bi bi-arrow-up-right"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card card-modern h-100">
+                    <div class="card-body {% if net_flow >= 0 %}gradient-success{% else %}gradient-danger{% endif %} text-white p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-2 fw-medium">Bersih Arus Kas</h6>
+                                <h2 class="fw-bold mb-0">Rp {{ net_flow|floatformat:0|intcomma }}</h2>
+                            </div>
+                            <div class="icon-bg bg-white bg-opacity-20 text-white">
+                                <i class="bi bi-{% if net_flow >= 0 %}trending-up{% else %}trending-down{% endif %}"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="card card-modern mb-5">
+            <div class="card-header bg-white border-0 py-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title mb-0 fw-bold">Filter & Pencarian</h5>
+                        <p class="text-muted mb-0 mt-2">Saring data arus kas berdasarkan kriteria</p>
+                    </div>
+                    <div class="icon-bg bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-funnel"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="category_filter" class="form-label fw-medium">Kategori</label>
+                        <select class="form-control form-control-modern" id="category_filter" name="category">
+                            <option value="">Semua Kategori</option>
+                            <option value="OPERATING" {% if category_filter == "OPERATING" %}selected{% endif %}>Operasional</option>
+                            <option value="INVESTING" {% if category_filter == "INVESTING" %}selected{% endif %}>Investasi</option>
+                            <option value="FINANCING" {% if category_filter == "FINANCING" %}selected{% endif %}>Pendanaan</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="flow_type_filter" class="form-label fw-medium">Tipe Arus</label>
+                        <select class="form-control form-control-modern" id="flow_type_filter" name="flow_type">
+                            <option value="">Semua Tipe</option>
+                            <option value="INFLOW" {% if flow_type_filter == "INFLOW" %}selected{% endif %}>Masuk Kas</option>
+                            <option value="OUTFLOW" {% if flow_type_filter == "OUTFLOW" %}selected{% endif %}>Keluar Kas</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="date_from" class="form-label fw-medium">Dari Tanggal</label>
+                        <input type="date" class="form-control form-control-modern" id="date_from" name="date_from" value="{{ date_from }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="date_to" class="form-label fw-medium">Sampai Tanggal</label>
+                        <input type="date" class="form-control form-control-modern" id="date_to" name="date_to" value="{{ date_to }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-modern">
+                                <i class="bi bi-search me-2"></i>Filter
+                            </button>
+                            <a href="{% url 'finance:cash_flow_list' %}" class="btn btn-outline-secondary btn-modern">
+                                <i class="bi bi-x-circle me-2"></i>Reset
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Cash Flow List -->
+        <div class="row">
+            {% for cash_flow in page_obj %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="cash-flow-card {% if cash_flow.flow_type == 'INFLOW' %}inflow{% else %}outflow{% endif %}">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="category-badge category-{{ cash_flow.category|lower }}">
+                                {% if cash_flow.category == 'OPERATING' %}Operasional
+                                {% elif cash_flow.category == 'INVESTING' %}Investasi
+                                {% elif cash_flow.category == 'FINANCING' %}Pendanaan
+                                {% else %}{{ cash_flow.get_category_display }}{% endif %}
+                            </span>
+                        </div>
+                        <div class="text-end">
+                            {% if cash_flow.flow_type == 'INFLOW' %}
+                                <div class="amount-inflow">+Rp {{ cash_flow.amount|floatformat:0|intcomma }}</div>
+                            {% else %}
+                                <div class="amount-outflow">-Rp {{ cash_flow.amount|floatformat:0|intcomma }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <h6 class="mb-3 fw-semibold">{{ cash_flow.description|truncatewords:10 }}</h6>
+                    
+                    <div class="mb-2">
+                        <small class="text-muted d-flex align-items-center">
+                            <i class="bi bi-calendar3 me-2"></i>
+                            {{ cash_flow.transaction_date|date:"d M Y" }}
+                        </small>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <small class="text-muted d-flex align-items-center">
+                            <i class="bi bi-bank me-2"></i>
+                            {{ cash_flow.account.code }} - {{ cash_flow.account.name }}
+                        </small>
+                    </div>
+                    
+                    {% if cash_flow.reference %}
+                    <div class="mb-2">
+                        <small class="text-muted d-flex align-items-center">
+                            <i class="bi bi-link-45deg me-2"></i>
+                            {{ cash_flow.reference }}
+                        </small>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div>
+                            <small class="text-muted d-flex align-items-center">
+                                <i class="bi bi-person me-2"></i>
+                                {{ cash_flow.created_by.get_full_name|default:cash_flow.created_by.username }}
+                            </small>
+                        </div>
+                        <div>
+                            <span class="flow-type-badge {% if cash_flow.flow_type == 'INFLOW' %}bg-success text-white{% else %}bg-danger text-white{% endif %}">
+                                {% if cash_flow.flow_type == 'INFLOW' %}Masuk{% else %}Keluar{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="card card-modern">
+                    <div class="card-body empty-state">
+                        <div class="icon-bg" style="width: 80px; height: 80px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); color: #6c757d;">
+                            <i class="bi bi-graph-up" style="font-size: 2rem;"></i>
+                        </div>
+                        <h4 class="text-muted mb-3">Tidak Ada Data Arus Kas</h4>
+                        <p class="text-muted mb-4">Mulai dengan menambahkan data arus kas pertama Anda.</p>
+                        <a href="{% url 'finance:cash_flow_create' %}" class="btn btn-primary btn-modern">
+                            <i class="bi bi-plus-circle me-2"></i>Tambah Arus Kas
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card card-modern">
+                    <div class="card-body">
+                        <nav aria-label="Cash flow pagination">
+                            <ul class="pagination justify-content-center mb-0">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if category_filter %}&category={{ category_filter }}{% endif %}{% if flow_type_filter %}&flow_type={{ flow_type_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                                            <i class="bi bi-chevron-double-left"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if flow_type_filter %}&flow_type={{ flow_type_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                                            <i class="bi bi-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                
+                                <li class="page-item active">
+                                    <span class="page-link">
+                                        Halaman {{ page_obj.number }} dari {{ page_obj.paginator.num_pages }}
+                                    </span>
+                                </li>
+                                
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if flow_type_filter %}&flow_type={{ flow_type_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                                            <i class="bi bi-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if flow_type_filter %}&flow_type={{ flow_type_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                                            <i class="bi bi-chevron-double-right"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+$(document).ready(function() {
+    // Auto-submit form on filter change
+    $('#category_filter, #flow_type_filter').on('change', function() {
+        $(this).closest('form').submit();
+    });
+});
+</script>
+{% endblock %}

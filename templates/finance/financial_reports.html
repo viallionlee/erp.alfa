@@ -1,0 +1,560 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Laporan Keuangan - Finance{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Modern gradient backgrounds */
+    .gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .gradient-success {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .gradient-danger {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+    .gradient-warning {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    }
+    .gradient-info {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    }
+    .gradient-secondary {
+        background: linear-gradient(135deg, #bdc3c7 0%, #2c3e50 100%);
+    }
+    
+    /* Modern card shadows */
+    .card-modern {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+    
+    .card-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+    
+    /* Modern button styles */
+    .btn-modern {
+        border-radius: 12px;
+        padding: 12px 20px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .btn-modern:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Icon backgrounds */
+    .icon-bg {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+    
+    /* Report cards */
+    .report-card {
+        border: 2px solid #f1f3f4;
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 20px;
+        background: white;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+    }
+    
+    .report-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .report-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .report-card:hover::before {
+        width: 6px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    /* Report icons with gradients */
+    .icon-profit-loss { 
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+    .icon-balance-sheet { 
+        background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);
+        color: white;
+    }
+    .icon-cash-flow { 
+        background: linear-gradient(135deg, #fd7e14 0%, #e83e8c 100%);
+        color: white;
+    }
+    .icon-trial-balance { 
+        background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+        color: white;
+    }
+    .icon-general-ledger { 
+        background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+        color: white;
+    }
+    .icon-budget { 
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        color: white;
+    }
+    
+    /* Status badges */
+    .status-badge {
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-generated {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .status-pending {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+    
+    /* Quick action buttons */
+    .quick-action {
+        border: 2px solid #f1f3f4;
+        border-radius: 12px;
+        padding: 16px;
+        transition: all 0.3s ease;
+        background: white;
+        margin-bottom: 12px;
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .quick-action:hover {
+        border-color: #667eea;
+        background: #f8f9ff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.1);
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+    
+    .empty-state .icon-bg {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-vh-100" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+    <div class="container-fluid py-5">
+        <!-- Header Section -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="display-6 fw-bold text-dark mb-2">Laporan Keuangan</h1>
+                        <p class="text-muted fs-5 mb-0">Buat dan lihat laporan keuangan perusahaan</p>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <a href="{% url 'finance:dashboard' %}" class="btn btn-outline-primary btn-modern">
+                            <i class="bi bi-house me-2"></i>Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="row mb-5">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card card-modern h-100">
+                    <div class="card-body gradient-primary text-white p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-2 fw-medium">Total Laporan</h6>
+                                <h2 class="fw-bold mb-0">{{ page_obj.paginator.count|default:0 }}</h2>
+                            </div>
+                            <div class="icon-bg bg-white bg-opacity-20 text-white" style="width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                                <i class="bi bi-file-text" style="font-size: 24px;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card card-modern h-100">
+                    <div class="card-body gradient-success text-white p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-2 fw-medium">Laporan Tersedia</h6>
+                                <h2 class="fw-bold mb-0">{{ generated_reports_count|default:0 }}</h2>
+                            </div>
+                            <div class="icon-bg bg-white bg-opacity-20 text-white" style="width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                                <i class="bi bi-check-circle" style="font-size: 24px;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card card-modern h-100">
+                    <div class="card-body gradient-warning text-white p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-2 fw-medium">Menunggu</h6>
+                                <h2 class="fw-bold mb-0">{{ pending_reports_count|default:0 }}</h2>
+                            </div>
+                            <div class="icon-bg bg-white bg-opacity-20 text-white" style="width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                                <i class="bi bi-clock" style="font-size: 24px;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card card-modern h-100">
+                    <div class="card-body gradient-info text-white p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-2 fw-medium">Bulan Ini</h6>
+                                <h2 class="fw-bold mb-0">{{ this_month_reports|default:0 }}</h2>
+                            </div>
+                            <div class="icon-bg bg-white bg-opacity-20 text-white" style="width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                                <i class="bi bi-calendar3" style="font-size: 24px;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Types -->
+        <div class="row mb-5">
+            <div class="col-12 mb-4">
+                <div class="card card-modern">
+                    <div class="card-header bg-white border-0 py-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4 class="card-title mb-0 fw-bold">Jenis Laporan</h4>
+                                <p class="text-muted mb-0 mt-2">Pilih jenis laporan keuangan yang ingin Anda lihat</p>
+                            </div>
+                            <div class="icon-bg bg-primary bg-opacity-10 text-primary">
+                                <i class="bi bi-graph-up"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="report-card">
+                    <div class="icon-bg icon-profit-loss mb-3">
+                        <i class="bi bi-graph-up"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Laporan Laba Rugi</h5>
+                    <p class="text-muted mb-3">
+                        Lihat pendapatan, biaya, dan laba bersih perusahaan untuk periode tertentu. 
+                        Penting untuk memahami profitabilitas.
+                    </p>
+                    <div class="d-grid">
+                        <a href="{% url 'finance:profit_loss_statement' %}" class="btn btn-success btn-modern">
+                            <i class="bi bi-eye me-2"></i>Lihat Laporan
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="report-card">
+                    <div class="icon-bg icon-balance-sheet mb-3">
+                        <i class="bi bi-scale"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Neraca</h5>
+                    <p class="text-muted mb-3">
+                        Dapatkan gambaran posisi keuangan perusahaan yang menunjukkan aset, 
+                        kewajiban, dan modal pada titik waktu tertentu.
+                    </p>
+                    <div class="d-grid">
+                        <a href="{% url 'finance:balance_sheet' %}" class="btn btn-primary btn-modern">
+                            <i class="bi bi-eye me-2"></i>Lihat Laporan
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="report-card">
+                    <div class="icon-bg icon-cash-flow mb-3">
+                        <i class="bi bi-cash-coin"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Laporan Arus Kas</h5>
+                    <p class="text-muted mb-3">
+                        Pantau pergerakan kas masuk dan keluar dari bisnis Anda. 
+                        Monitor aktivitas operasional, investasi, dan pendanaan.
+                    </p>
+                    <div class="d-grid">
+                        <a href="{% url 'finance:cash_flow_list' %}" class="btn btn-warning btn-modern">
+                            <i class="bi bi-eye me-2"></i>Lihat Laporan
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="report-card">
+                    <div class="icon-bg icon-trial-balance mb-3">
+                        <i class="bi bi-list-check"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Neraca Saldo</h5>
+                    <p class="text-muted mb-3">
+                        Verifikasi bahwa buku Anda seimbang dengan memeriksa bahwa total debit 
+                        sama dengan total kredit untuk semua akun.
+                    </p>
+                    <div class="d-grid">
+                        <a href="{% url 'finance:trial_balance' %}" class="btn btn-info btn-modern">
+                            <i class="bi bi-eye me-2"></i>Lihat Laporan
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="report-card">
+                    <div class="icon-bg icon-general-ledger mb-3">
+                        <i class="bi bi-book"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Buku Besar</h5>
+                    <p class="text-muted mb-3">
+                        Lihat riwayat transaksi detail untuk akun individual. 
+                        Lacak semua debit dan kredit untuk akun tertentu.
+                    </p>
+                    <div class="d-grid">
+                        <a href="{% url 'finance:chart_of_accounts' %}" class="btn btn-secondary btn-modern">
+                            <i class="bi bi-eye me-2"></i>Lihat Akun
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="report-card">
+                    <div class="icon-bg icon-budget mb-3">
+                        <i class="bi bi-pie-chart"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Laporan Anggaran</h5>
+                    <p class="text-muted mb-3">
+                        Bandingkan kinerja aktual dengan jumlah yang dianggarkan. 
+                        Monitor pemanfaatan anggaran dan analisis varians.
+                    </p>
+                    <div class="d-grid">
+                        <a href="{% url 'finance:budget_list' %}" class="btn btn-dark btn-modern">
+                            <i class="bi bi-eye me-2"></i>Lihat Anggaran
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Reports -->
+        {% if page_obj %}
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card card-modern">
+                    <div class="card-header bg-white border-0 py-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4 class="card-title mb-0 fw-bold">Laporan Terbaru</h4>
+                                <p class="text-muted mb-0 mt-2">Riwayat laporan yang telah dibuat</p>
+                            </div>
+                            <div class="icon-bg bg-info bg-opacity-10 text-info">
+                                <i class="bi bi-clock-history"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
+                        {% for report in page_obj %}
+                        <div class="report-item d-flex justify-content-between align-items-center p-3 mb-3 border border-0 rounded-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                            <div class="report-info">
+                                <h6 class="fw-bold text-dark mb-1">{{ report.report_name }}</h6>
+                                <small class="text-muted d-flex align-items-center flex-wrap">
+                                    <i class="bi bi-calendar3 me-1"></i>
+                                    {{ report.period_start|date:"d M Y" }} - {{ report.period_end|date:"d M Y" }}
+                                    <span class="mx-2">•</span>
+                                    <i class="bi bi-tag me-1"></i>
+                                    {{ report.get_report_type_display }}
+                                    <span class="mx-2">•</span>
+                                    <i class="bi bi-clock me-1"></i>
+                                    {{ report.get_period_type_display }}
+                                </small>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="status-badge {% if report.is_generated %}status-generated{% else %}status-pending{% endif %}">
+                                    {% if report.is_generated %}Tersedia{% else %}Menunggu{% endif %}
+                                </span>
+                                {% if report.is_generated %}
+                                <div class="btn-group btn-group-sm">
+                                    {% if report.pdf_file %}
+                                    <a href="{{ report.pdf_file.url }}" class="btn btn-outline-danger btn-sm" target="_blank">
+                                        <i class="bi bi-file-pdf me-1"></i>PDF
+                                    </a>
+                                    {% endif %}
+                                    {% if report.excel_file %}
+                                    <a href="{{ report.excel_file.url }}" class="btn btn-outline-success btn-sm" target="_blank">
+                                        <i class="bi bi-file-excel me-1"></i>Excel
+                                    </a>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        <!-- Pagination -->
+                        {% if page_obj.has_other_pages %}
+                        <div class="mt-4">
+                            <nav aria-label="Reports pagination">
+                                <ul class="pagination justify-content-center mb-0">
+                                    {% if page_obj.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=1">
+                                                <i class="bi bi-chevron-double-left"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                                <i class="bi bi-chevron-left"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    <li class="page-item active">
+                                        <span class="page-link">
+                                            Halaman {{ page_obj.number }} dari {{ page_obj.paginator.num_pages }}
+                                        </span>
+                                    </li>
+                                    
+                                    {% if page_obj.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                                <i class="bi bi-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+                                                <i class="bi bi-chevron-double-right"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Quick Actions -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-modern">
+                    <div class="card-header bg-white border-0 py-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4 class="card-title mb-0 fw-bold">Aksi Cepat</h4>
+                                <p class="text-muted mb-0 mt-2">Akses cepat ke fitur keuangan utama</p>
+                            </div>
+                            <div class="icon-bg bg-warning bg-opacity-10 text-warning">
+                                <i class="bi bi-lightning"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row">
+                            <div class="col-md-6 col-lg-3 mb-3">
+                                <a href="{% url 'finance:journal_entry_create' %}" class="quick-action d-flex align-items-center text-decoration-none">
+                                    <div class="icon-bg bg-primary bg-opacity-10 text-primary me-3">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </div>
+                                    <span class="fw-medium text-dark">Jurnal Umum Baru</span>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-3 mb-3">
+                                <a href="{% url 'finance:account_create' %}" class="quick-action d-flex align-items-center text-decoration-none">
+                                    <div class="icon-bg bg-success bg-opacity-10 text-success me-3">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </div>
+                                    <span class="fw-medium text-dark">Akun Baru</span>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-3 mb-3">
+                                <a href="{% url 'finance:budget_create' %}" class="quick-action d-flex align-items-center text-decoration-none">
+                                    <div class="icon-bg bg-info bg-opacity-10 text-info me-3">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </div>
+                                    <span class="fw-medium text-dark">Anggaran Baru</span>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-3 mb-3">
+                                <a href="{% url 'finance:cash_flow_create' %}" class="quick-action d-flex align-items-center text-decoration-none">
+                                    <div class="icon-bg bg-warning bg-opacity-10 text-warning me-3">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </div>
+                                    <span class="fw-medium text-dark">Arus Kas Baru</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+$(document).ready(function() {
+    // Add any JavaScript functionality here
+});
+</script>
+{% endblock %}

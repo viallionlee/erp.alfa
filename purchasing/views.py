@@ -7,6 +7,7 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.core.paginator import Paginator
 from django.db.models import Q, Sum, Count
+from django.db import models
 from django.template.loader import render_to_string
 from django.conf import settings
 import re
@@ -1741,6 +1742,79 @@ def purchase_edit(request, purchase_id):
 
 
 @login_required
+def purchase_verify_list(request):
+    """Purchase Verify List - List purchases yang sudah received dan perlu di-verify"""
+    from django.core.exceptions import PermissionDenied
+    
+    # Check permission
+    if not request.user.has_perm('purchasing.purchase_finance'):
+        raise PermissionDenied("You don't have permission to view purchase verify list.")
+    
+    # Filter purchases yang statusnya 'received' (perlu di-verify)
+    purchases = Purchase.objects.filter(
+        status='received'
+    ).select_related('supplier', 'po').prefetch_related('items__product').order_by('-tanggal_purchase')
+    
+    # Get summary statistics
+    total_received = purchases.count()
+    total_amount = purchases.aggregate(total=models.Sum('total_amount'))['total'] or 0
+    
+    # Get filter parameters
+    supplier_filter = request.GET.get('supplier', '').strip()
+    date_from = request.GET.get('date_from', '').strip()
+    date_to = request.GET.get('date_to', '').strip()
+    search = request.GET.get('search', '').strip()
+    
+    # Apply filters
+    if supplier_filter:
+        purchases = purchases.filter(supplier__id=supplier_filter)
+    
+    if date_from:
+        try:
+            from datetime import datetime
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d')
+            purchases = purchases.filter(tanggal_purchase__gte=date_from_obj.date())
+        except ValueError:
+            pass
+    
+    if date_to:
+        try:
+            from datetime import datetime
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d')
+            purchases = purchases.filter(tanggal_purchase__lte=date_to_obj.date())
+        except ValueError:
+            pass
+    
+    if search:
+        purchases = purchases.filter(
+            models.Q(nomor_purchase__icontains=search) |
+            models.Q(supplier__nama_supplier__icontains=search) |
+            models.Q(notes__icontains=search)
+        )
+    
+    # Get unique suppliers for filter dropdown
+    from inventory.models import Supplier
+    suppliers = Supplier.objects.filter(
+        id__in=purchases.values_list('supplier_id', flat=True).distinct()
+    ).order_by('nama_supplier')
+    
+    context = {
+        'purchases': purchases,
+        'suppliers': suppliers,
+        'total_received': total_received,
+        'total_amount': total_amount,
+        'filter_data': {
+            'supplier': supplier_filter,
+            'date_from': date_from,
+            'date_to': date_to,
+            'search': search,
+        }
+    }
+    
+    return render(request, 'purchasing/purchase_verify_list.html', context)
+
+
+@login_required
 def purchase_verify(request, purchase_id):
     """Verify Purchase (mark as verified)"""
     from django.core.exceptions import PermissionDenied
@@ -1803,6 +1877,16 @@ def purchase_verify(request, purchase_id):
                 purchase.verified_by = request.user
                 purchase.save()
                 logger.info(f"[VERIFY] Status updated: {old_status} -> {purchase.status}")
+                
+                # Create journal entry for purchase verify
+                try:
+                    from .accounting import create_purchase_verify_journal_entry
+                    journal_entry = create_purchase_verify_journal_entry(purchase, request.user)
+                    logger.info(f"[VERIFY] Journal entry created: {journal_entry.entry_number}")
+                    messages.success(request, f'Purchase berhasil di-verify! Journal entry {journal_entry.entry_number} telah dibuat.')
+                except Exception as e:
+                    logger.error(f"[VERIFY] Error creating journal entry: {str(e)}")
+                    messages.warning(request, f'Purchase berhasil di-verify, tapi ada error saat membuat journal entry: {str(e)}')
                 
                 # Update product harga_beli (last purchase price) and calculate HPP for each item
                 from inventory.models import Stock

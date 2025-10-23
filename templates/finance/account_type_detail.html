@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ account_type.name }} - Account Type Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .detail-header {
+        border-bottom: 2px solid #f8f9fa;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .detail-header h2 {
+        color: #2c3e50;
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #495057;
+        min-width: 150px;
+    }
+    
+    .info-value {
+        color: #6c757d;
+        flex: 1;
+        text-align: right;
+    }
+    
+    .type-badge {
+        display: inline-block;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+    
+    .type-asset { background-color: #e8f5e8; color: #2d5a2d; }
+    .type-liability { background-color: #fff3cd; color: #856404; }
+    .type-equity { background-color: #d1ecf1; color: #0c5460; }
+    .type-revenue { background-color: #d4edda; color: #155724; }
+    .type-expense { background-color: #f8d7da; color: #721c24; }
+    .type-cost-of-sales { background-color: #e2e3e5; color: #383d41; }
+    
+    .accounts-table {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .table-header {
+        background: #f8f9fa;
+        padding: 20px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .table-header h3 {
+        margin: 0;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+    
+    .account-row {
+        padding: 15px 20px;
+        border-bottom: 1px solid #f8f9fa;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .account-row:last-child {
+        border-bottom: none;
+    }
+    
+    .account-row:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .account-info {
+        flex: 1;
+    }
+    
+    .account-code {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 1.1em;
+    }
+    
+    .account-name {
+        color: #6c757d;
+        margin-top: 2px;
+    }
+    
+    .account-balance {
+        text-align: right;
+        font-weight: 600;
+    }
+    
+    .balance-positive {
+        color: #28a745;
+    }
+    
+    .balance-negative {
+        color: #dc3545;
+    }
+    
+    .balance-zero {
+        color: #6c757d;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 3em;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">{{ account_type.name }}</h1>
+            <p class="text-muted">Account Type Details</p>
+        </div>
+        <div>
+            <a href="{% url 'finance:account_type_edit' account_type.id %}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{% url 'finance:account_type_list' %}" class="btn btn-outline-secondary ml-2">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <!-- Account Type Information -->
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h2><i class="fas fa-chart-pie text-primary"></i> Account Type Information</h2>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Code:</span>
+                    <span class="info-value">{{ account_type.code }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Name:</span>
+                    <span class="info-value">{{ account_type.name }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Type:</span>
+                    <span class="info-value">
+                        <span class="type-badge type-{{ account_type.type|lower|cut:'_' }}">
+                            {{ account_type.get_type_display }}
+                        </span>
+                    </span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">
+                        {% if account_type.is_active %}
+                            <span class="badge badge-success">Active</span>
+                        {% else %}
+                            <span class="badge badge-secondary">Inactive</span>
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Total Accounts:</span>
+                    <span class="info-value">{{ account_type.accounts.count }}</span>
+                </div>
+                
+                {% if account_type.description %}
+                <div class="info-row">
+                    <span class="info-label">Description:</span>
+                    <span class="info-value">{{ account_type.description }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <!-- Accounts List -->
+            <div class="accounts-table">
+                <div class="table-header">
+                    <h3><i class="fas fa-list text-primary"></i> Accounts in this Type</h3>
+                </div>
+                
+                {% if account_type.accounts.all %}
+                    {% for account in account_type.accounts.all %}
+                    <div class="account-row">
+                        <div class="account-info">
+                            <div class="account-code">{{ account.code }}</div>
+                            <div class="account-name">{{ account.name }}</div>
+                        </div>
+                        <div class="account-balance">
+                            {% if account.current_balance > 0 %}
+                                <span class="balance-positive">+{{ account.formatted_balance }}</span>
+                            {% elif account.current_balance < 0 %}
+                                <span class="balance-negative">{{ account.formatted_balance }}</span>
+                            {% else %}
+                                <span class="balance-zero">{{ account.formatted_balance }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-chart-bar"></i>
+                        <h4>No Accounts Found</h4>
+                        <p>This account type doesn't have any accounts yet.</p>
+                        <a href="{% url 'finance:account_create' %}?type={{ account_type.id }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Create Account
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+$(document).ready(function() {
+    // Add any JavaScript functionality here
+});
+</script>
+{% endblock %}
+
+
+

@@ -1,0 +1,365 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Buat Akun - Keuangan{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Modern gradient backgrounds */
+    .gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .gradient-success {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .gradient-danger {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+    .gradient-warning {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    }
+    .gradient-info {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    }
+    
+    /* Modern card shadows */
+    .card-modern {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+    
+    .card-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+    
+    /* Modern button styles */
+    .btn-modern {
+        border-radius: 12px;
+        padding: 12px 20px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .btn-modern:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Icon backgrounds */
+    .icon-bg {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+    
+    /* Form styling */
+    .form-control-modern {
+        border: 2px solid #f1f3f4;
+        border-radius: 12px;
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control-modern:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    /* Account preview */
+    .account-preview {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 16px;
+    }
+    
+    .account-preview-label {
+        font-size: 0.9em;
+        color: #6c757d;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+    
+    .account-preview-value {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    /* Balance type info */
+    .balance-type-info {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border: 2px solid #bbdefb;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 16px;
+    }
+    
+    .balance-type-info h6 {
+        color: #1976d2;
+        margin-bottom: 12px;
+        font-weight: 600;
+    }
+    
+    .balance-type-info ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+    
+    .balance-type-info li {
+        margin-bottom: 6px;
+        font-size: 0.9em;
+    }
+    
+    /* Form header */
+    .form-header-modern {
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .form-header-modern h2 {
+        color: #2c3e50;
+        margin: 0;
+        font-weight: 700;
+        font-size: 1.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-vh-100" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+    <div class="container-fluid py-5">
+        <!-- Breadcrumb and Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb bg-transparent p-0 mb-0">
+                        <li class="breadcrumb-item"><a href="{% url 'finance:dashboard' %}" class="text-muted">Dashboard Keuangan</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'finance:chart_of_accounts' %}" class="text-muted">Daftar Akun</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Buat Akun</li>
+                    </ol>
+                </nav>
+                <h1 class="display-5 fw-bold text-dark mb-2">Buat Akun Baru</h1>
+                <p class="text-muted fs-5">Tambahkan akun baru ke chart of accounts</p>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-md-10">
+                <div class="card card-modern p-4">
+                    <div class="form-header-modern">
+                        <i class="bi bi-plus-circle-fill text-primary fs-3"></i>
+                        <h2>Informasi Akun</h2>
+                    </div>
+
+                    <form method="post" id="accountForm">
+                        {% csrf_token %}
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="code" class="form-label fw-medium">Kode Akun <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-modern" id="code" name="code" required
+                                       placeholder="e.g., 1-1000, 2-2000" maxlength="20">
+                                <small class="form-text text-muted">Kode unik untuk akun ini</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="account_type" class="form-label fw-medium">Tipe Akun <span class="text-danger">*</span></label>
+                                <select class="form-control form-control-modern" id="account_type" name="account_type" required>
+                                    <option value="">Pilih Tipe Akun</option>
+                                    {% for type in account_types %}
+                                    <option value="{{ type.id }}" {% if request.GET.type == type.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ type.code }} - {{ type.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="name" class="form-label fw-medium">Nama Akun <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-modern" id="name" name="name" required
+                                   placeholder="e.g., Kas, Piutang Usaha" maxlength="200">
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="parent" class="form-label fw-medium">Akun Induk</label>
+                                <select class="form-control form-control-modern" id="parent" name="parent">
+                                    <option value="">Tidak Ada Induk (Level Atas)</option>
+                                    {% for account in parent_accounts %}
+                                    <option value="{{ account.id }}">{{ account.code }} - {{ account.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">Pilih akun induk untuk hierarki</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="balance_type" class="form-label fw-medium">Tipe Saldo <span class="text-danger">*</span></label>
+                                <select class="form-control form-control-modern" id="balance_type" name="balance_type" required>
+                                    <option value="">Pilih Tipe Saldo</option>
+                                    <option value="DEBIT">Debit</option>
+                                    <option value="CREDIT">Kredit</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="description" class="form-label fw-medium">Deskripsi</label>
+                            <textarea class="form-control form-control-modern" id="description" name="description" rows="3"
+                                      placeholder="Deskripsi detail akun ini..."></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="notes" class="form-label fw-medium">Catatan</label>
+                            <textarea class="form-control form-control-modern" id="notes" name="notes" rows="2"
+                                      placeholder="Catatan tambahan..."></textarea>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                                    <label class="form-check-label fw-medium" for="is_active">
+                                        Aktif
+                                    </label>
+                                    <small class="form-text text-muted">Hanya akun aktif yang dapat digunakan dalam transaksi</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_system" name="is_system">
+                                    <label class="form-check-label fw-medium" for="is_system">
+                                        Akun Sistem
+                                    </label>
+                                    <small class="form-text text-muted">Akun sistem tidak dapat dihapus</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Balance Type Information -->
+                        <div class="balance-type-info" id="balanceTypeInfo" style="display: none;">
+                            <h6><i class="bi bi-info-circle me-2"></i>Informasi Tipe Saldo</h6>
+                            <div id="balanceTypeContent"></div>
+                        </div>
+
+                        <!-- Account Preview -->
+                        <div class="account-preview" id="accountPreview" style="display: none;">
+                            <div class="account-preview-label">Pratinjau:</div>
+                            <div class="account-preview-value" id="previewText"></div>
+                        </div>
+
+                        <div class="form-actions mt-5 d-flex justify-content-end gap-3">
+                            <a href="{% url 'finance:chart_of_accounts' %}" class="btn btn-secondary btn-modern">
+                                <i class="bi bi-x-circle me-2"></i>Batal
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-modern">
+                                <i class="bi bi-save me-2"></i>Buat Akun
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+$(document).ready(function() {
+    const balanceTypeInfo = {
+        'DEBIT': {
+            title: 'Tipe Saldo Debit',
+            description: 'Akun yang biasanya memiliki saldo debit:',
+            examples: [
+                'Aset (Kas, Persediaan, Peralatan)',
+                'Biaya (Sewa, Gaji, Utilitas)',
+                'Harga Pokok Penjualan (HPP)'
+            ]
+        },
+        'CREDIT': {
+            title: 'Tipe Saldo Kredit',
+            description: 'Akun yang biasanya memiliki saldo kredit:',
+            examples: [
+                'Kewajiban (Hutang Usaha, Pinjaman)',
+                'Modal (Modal Saham, Laba Ditahan)',
+                'Pendapatan (Penjualan, Pendapatan Jasa)'
+            ]
+        }
+    };
+    
+    // Update preview when form changes
+    function updatePreview() {
+        const code = $('#code').val();
+        const name = $('#name').val();
+        const type = $('#account_type option:selected').text();
+        const balanceType = $('#balance_type option:selected').text();
+        
+        if (code && name && type && balanceType) {
+            $('#previewText').text(`${code} - ${name} (${type}, ${balanceType})`);
+            $('#accountPreview').show();
+        } else {
+            $('#accountPreview').hide();
+        }
+    }
+    
+    // Update balance type info
+    function updateBalanceTypeInfo() {
+        const balanceType = $('#balance_type').val();
+        const info = balanceTypeInfo[balanceType];
+        
+        if (info) {
+            let content = `<strong>${info.title}</strong><br>${info.description}<br><ul>`;
+            info.examples.forEach(example => {
+                content += `<li>${example}</li>`;
+            });
+            content += '</ul>';
+            $('#balanceTypeContent').html(content);
+            $('#balanceTypeInfo').show();
+        } else {
+            $('#balanceTypeInfo').hide();
+        }
+    }
+    
+    $('#code, #name, #account_type, #balance_type').on('input change', updatePreview);
+    $('#balance_type').on('change', updateBalanceTypeInfo);
+    
+    // Form validation
+    $('#accountForm').on('submit', function(e) {
+        const code = $('#code').val().trim();
+        const name = $('#name').val().trim();
+        const accountType = $('#account_type').val();
+        const balanceType = $('#balance_type').val();
+        
+        if (!code || !name || !accountType || !balanceType) {
+            e.preventDefault();
+            alert('Harap isi semua field yang wajib diisi.');
+            return false;
+        }
+    });
+    
+    // Auto-format code input
+    $('#code').on('input', function() {
+        this.value = this.value.replace(/[^a-zA-Z0-9\-]/g, '');
+    });
+    
+    // Update parent accounts when account type changes
+    $('#account_type').on('change', function() {
+        const selectedType = $(this).val();
+        // In a real application, you would fetch parent accounts via AJAX
+        // For now, we'll just show all available parent accounts
+    });
+});
+</script>
+{% endblock %}

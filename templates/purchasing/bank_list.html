@@ -23,6 +23,7 @@
                         <th>Nama Bank</th>
                         <th>Nomor Rekening</th>
                         <th>Atas Nama</th>
+                        <th>Link Akun</th>
                         <th>Status</th>
                         <th>Notes</th>
                         <th>Created At</th>
@@ -36,6 +37,17 @@
                         <td><strong>{{ bank.nama_bank }}</strong></td>
                         <td>{{ bank.nomor_rekening }}</td>
                         <td>{{ bank.atas_nama|default:"-" }}</td>
+                        <td>
+                            {% if bank.account %}
+                            <span class="badge bg-info">
+                                <i class="bi bi-link-45deg"></i> {{ bank.account.code }} - {{ bank.account.name }}
+                            </span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">
+                                <i class="bi bi-exclamation-triangle"></i> Belum di-link
+                            </span>
+                            {% endif %}
+                        </td>
                         <td>
                             {% if bank.is_active %}
                             <span class="badge bg-success">Active</span>
@@ -61,7 +73,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="8" class="text-center text-muted">No banks found. <a href="{% url 'purchasing:bank_create' %}">Add one now!</a></td>
+                        <td colspan="9" class="text-center text-muted">No banks found. <a href="{% url 'purchasing:bank_create' %}">Add one now!</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -84,6 +96,7 @@
     }
 </style>
 {% endblock %}
+
 
 
 

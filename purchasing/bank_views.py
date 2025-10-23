@@ -17,18 +17,24 @@ def bank_list(request):
 @require_http_methods(["GET", "POST"])
 def bank_create(request):
     """Create new bank"""
+    # Get all active accounts for dropdown
+    from finance.models import Account
+    accounts = Account.objects.filter(is_active=True).order_by('code')
+    
     if request.method == 'POST':
         try:
             nama_bank = request.POST.get('nama_bank', '').strip()
             nomor_rekening = request.POST.get('nomor_rekening', '').strip()
             atas_nama = request.POST.get('atas_nama', '').strip()
             notes = request.POST.get('notes', '').strip()
+            account_id = request.POST.get('account_id', '').strip()
             
             if not nama_bank or not nomor_rekening:
                 messages.error(request, 'Nama Bank dan Nomor Rekening wajib diisi!')
                 return render(request, 'purchasing/bank_form.html', {
                     'form_data': request.POST,
-                    'is_edit': False
+                    'is_edit': False,
+                    'accounts': accounts
                 })
             
             # Check if bank with same account number exists
@@ -36,14 +42,24 @@ def bank_create(request):
                 messages.error(request, f'Nomor rekening {nomor_rekening} sudah terdaftar!')
                 return render(request, 'purchasing/bank_form.html', {
                     'form_data': request.POST,
-                    'is_edit': False
+                    'is_edit': False,
+                    'accounts': accounts
                 })
+            
+            # Get account instance if provided
+            account = None
+            if account_id:
+                try:
+                    account = Account.objects.get(id=account_id)
+                except Account.DoesNotExist:
+                    pass
             
             Bank.objects.create(
                 nama_bank=nama_bank,
                 nomor_rekening=nomor_rekening,
                 atas_nama=atas_nama,
                 notes=notes,
+                account=account,
                 is_active=True
             )
             
@@ -54,11 +70,15 @@ def bank_create(request):
             messages.error(request, f'Error: {str(e)}')
             return render(request, 'purchasing/bank_form.html', {
                 'form_data': request.POST,
-                'is_edit': False
+                'is_edit': False,
+                'accounts': accounts
             })
     
     # GET request
-    return render(request, 'purchasing/bank_form.html', {'is_edit': False})
+    return render(request, 'purchasing/bank_form.html', {
+        'is_edit': False,
+        'accounts': accounts
+    })
 
 
 @login_required
@@ -67,6 +87,10 @@ def bank_edit(request, bank_id):
     """Edit bank"""
     bank = get_object_or_404(Bank, id=bank_id)
     
+    # Get all active accounts for dropdown
+    from finance.models import Account
+    accounts = Account.objects.filter(is_active=True).order_by('code')
+    
     if request.method == 'POST':
         try:
             nama_bank = request.POST.get('nama_bank', '').strip()
@@ -74,13 +98,15 @@ def bank_edit(request, bank_id):
             atas_nama = request.POST.get('atas_nama', '').strip()
             notes = request.POST.get('notes', '').strip()
             is_active = request.POST.get('is_active') == 'on'
+            account_id = request.POST.get('account_id', '').strip()
             
             if not nama_bank or not nomor_rekening:
                 messages.error(request, 'Nama Bank dan Nomor Rekening wajib diisi!')
                 return render(request, 'purchasing/bank_form.html', {
                     'bank': bank,
                     'form_data': request.POST,
-                    'is_edit': True
+                    'is_edit': True,
+                    'accounts': accounts
                 })
             
             # Check if bank with same account number exists (excluding current bank)
@@ -89,14 +115,24 @@ def bank_edit(request, bank_id):
                 return render(request, 'purchasing/bank_form.html', {
                     'bank': bank,
                     'form_data': request.POST,
-                    'is_edit': True
+                    'is_edit': True,
+                    'accounts': accounts
                 })
+            
+            # Get account instance if provided
+            account = None
+            if account_id:
+                try:
+                    account = Account.objects.get(id=account_id)
+                except Account.DoesNotExist:
+                    pass
             
             bank.nama_bank = nama_bank
             bank.nomor_rekening = nomor_rekening
             bank.atas_nama = atas_nama
             bank.notes = notes
             bank.is_active = is_active
+            bank.account = account
             bank.save()
             
             messages.success(request, f'Bank {nama_bank} berhasil diupdate!')
@@ -107,11 +143,16 @@ def bank_edit(request, bank_id):
             return render(request, 'purchasing/bank_form.html', {
                 'bank': bank,
                 'form_data': request.POST,
-                'is_edit': True
+                'is_edit': True,
+                'accounts': accounts
             })
     
     # GET request
-    return render(request, 'purchasing/bank_form.html', {'bank': bank, 'is_edit': True})
+    return render(request, 'purchasing/bank_form.html', {
+        'bank': bank,
+        'is_edit': True,
+        'accounts': accounts
+    })
 
 
 @login_required
@@ -148,6 +189,7 @@ def bank_api(request):
         })
     
     return JsonResponse({'data': data})
+
 
 
 

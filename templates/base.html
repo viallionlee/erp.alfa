@@ -75,6 +75,17 @@
         .dropdown-item:hover .badge {
             opacity: 0.8;
         }
+        
+        /* Icon tile default */
+        .icon-bg{
+            width:60px;height:60px;border-radius:16px;
+            display:flex;align-items:center;justify-content:center;font-size:24px;
+            line-height:1;
+        }
+        /* Jika tile putih, pakai ikon gelap agar kontras */
+        .icon-bg.bg-white i{ color: rgba(33,37,41,.92) !important; }
+        /* Jika tile bukan putih (mis. bg-*), pakai ikon putih */
+        .icon-bg:not(.bg-white) i{ color:#fff !important; }
     </style>
 </head>
 <body>
@@ -179,11 +190,6 @@
                             {% if perms.purchasing.purchase_warehouse %}
                             <li><a class="dropdown-item {% if '/purchaseorder/purchase/create/' in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_create' %}">Buat Purchase Baru</a></li>
                             {% endif %}
-                            {% if perms.purchasing.purchase_finance %}
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item {% if '/purchaseorder/purchase-payment/' in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_payment_list' %}">Purchase Payment</a></li>
-                            <li><a class="dropdown-item {% if '/purchaseorder/purchase-taxinvoice/' in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_taxinvoice_list' %}">Tax Invoice</a></li>
-                            {% endif %}
                             <li><a class="dropdown-item {% if '/purchaseorder/purchase-report/' in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_report' %}">Report</a></li>
                             {% endif %}
                         </ul>
@@ -261,6 +267,33 @@
                                 {% endif %}
                             </a></li>
                             {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
+                    
+                    {% if perms.finance.view_account or user.is_superuser %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if '/finance/' in request.path %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Finance
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item {% if '/finance/' in request.path and '/finance/account-types/' not in request.path and '/finance/accounts/' not in request.path and '/finance/journal-entries/' not in request.path and '/finance/cash-flow/' not in request.path and '/finance/budget/' not in request.path and '/finance/reports/' not in request.path %}active{% endif %}" href="{% url 'finance:dashboard' %}">Dashboard</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if '/finance/account-types/' in request.path %}active{% endif %}" href="{% url 'finance:account_type_list' %}">Account Types</a></li>
+                            <li><a class="dropdown-item {% if '/finance/coa/' in request.path %}active{% endif %}" href="{% url 'finance:chart_of_accounts' %}">Chart of Accounts</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if '/finance/journal-entries/' in request.path %}active{% endif %}" href="{% url 'finance:journal_entry_list' %}">Journal Entries</a></li>
+                            <li><a class="dropdown-item {% if '/finance/cash-flow/' in request.path %}active{% endif %}" href="{% url 'finance:cash_flow_list' %}">Cash Flow</a></li>
+                            <li><a class="dropdown-item {% if '/finance/budget/' in request.path %}active{% endif %}" href="{% url 'finance:budget_list' %}">Budget</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if '/purchasing/purchase-verify/' in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_verify_list' %}">Purchase Verify</a></li>
+                            <li><a class="dropdown-item {% if '/purchasing/purchase-payment/' in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_payment_list' %}">Purchase Payment</a></li>
+                            <li><a class="dropdown-item {% if '/purchasing/purchase-taxinvoice/' in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_taxinvoice_list' %}">Purchase Tax Invoice</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if '/finance/reports/' in request.path %}active{% endif %}" href="{% url 'finance:financial_reports' %}">Financial Reports</a></li>
+                            <li><a class="dropdown-item {% if '/finance/reports/trial-balance/' in request.path %}active{% endif %}" href="{% url 'finance:trial_balance' %}">Trial Balance</a></li>
+                            <li><a class="dropdown-item {% if '/finance/reports/profit-loss/' in request.path %}active{% endif %}" href="{% url 'finance:profit_loss_statement' %}">Profit & Loss</a></li>
+                            <li><a class="dropdown-item {% if '/finance/reports/balance-sheet/' in request.path %}active{% endif %}" href="{% url 'finance:balance_sheet' %}">Balance Sheet</a></li>
                         </ul>
                     </li>
                     {% endif %}

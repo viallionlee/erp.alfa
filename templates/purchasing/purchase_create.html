@@ -202,7 +202,7 @@
                 <div class="modern-form-row">
                     <div class="form-group">
                         <label class="modern-form-label" for="tanggal_purchase">Tanggal Purchase <span style="color:red">*</span></label>
-                        <input type="datetime-local" name="tanggal_purchase" id="tanggal_purchase" class="form-control" required>
+                        <input type="date" name="tanggal_purchase" id="tanggal_purchase" class="form-control" required>
                     </div>
                     <div class="form-group">
                         <label class="modern-form-label" for="nama_supplier">Supplier <span style="color:red">*</span></label>
@@ -418,7 +418,7 @@ $(document).ready(function() {
     // Set default tanggal purchase
     let now = new Date();
     let pad = n => n < 10 ? '0' + n : n;
-    let tglStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    let tglStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
     $('#tanggal_purchase').val(tglStr);
     
     // Pre-fill data from PO if exists
@@ -517,9 +517,9 @@ $(document).ready(function() {
 
         // Ambil data PO (JSON)
         $.getJSON('/purchasing/' + poId + '/json/', function(poData) {
-            // 1) Set tanggal purchase = tanggal PO (format input datetime-local: YYYY-MM-DDTHH:MM)
+            // 1) Set tanggal purchase = tanggal PO (format input date: YYYY-MM-DD)
             if (poData.tanggal_po) {
-                const dt = poData.tanggal_po.slice(0,16); // aman & cepat
+                const dt = poData.tanggal_po.slice(0,10); // aman & cepat
                 $('#tanggal_purchase').val(dt);
             }
 

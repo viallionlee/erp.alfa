@@ -52,11 +52,43 @@ def purchase_payment_api(request):
         date_from = request.GET.get('date_from', '').strip()
         date_to = request.GET.get('date_to', '').strip()
         
+        # Get sort parameters
+        sort_field = request.GET.get('sort_field', 'purchase__id')
+        sort_direction = request.GET.get('sort_direction', 'desc')
+        
         # Build query
         queryset = PurchasePayment.objects.select_related(
             'purchase', 
             'supplier'
-        ).prefetch_related('allocations__transfer_from').order_by('-due_date')
+        ).prefetch_related('allocations__transfer_from')
+        
+        # Apply sorting
+        sort_prefix = '-' if sort_direction == 'desc' else ''
+        
+        # Direct field mapping (jika sudah dalam format database)
+        # Atau gunakan mapping untuk backward compatibility
+        if sort_field.startswith('purchase__') or sort_field.startswith('supplier__'):
+            # Field sudah dalam format database, langsung pakai
+            actual_sort_field = sort_field
+        else:
+            # Legacy mapping untuk backward compatibility
+            sort_field_mapping = {
+                'purchase_number': 'purchase__nomor_purchase',
+                'supplier': 'supplier__nama_supplier',
+                'total_amount': 'total_amount',
+                'discount': 'discount',
+                'paid_amount': 'paid_amount',
+                'remaining_amount': 'remaining_amount',
+                'due_date': 'due_date',
+                'transaction_type': 'transaction_type',
+                'payment_date': 'allocations__allocation_date',
+                'status': 'status',
+                'payment_method': 'allocations__payment_method',
+                'transfer_from': 'allocations__transfer_from__nama_bank',
+            }
+            actual_sort_field = sort_field_mapping.get(sort_field, 'purchase__id')
+        
+        queryset = queryset.order_by(sort_prefix + actual_sort_field)
         
         # Apply filters
         if status_filter:
@@ -75,7 +107,7 @@ def purchase_payment_api(request):
             try:
                 from datetime import datetime
                 date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
-                queryset = queryset.filter(due_date__gte=date_from_obj)
+                queryset = queryset.filter(purchase__tanggal_purchase__gte=date_from_obj)
             except:
                 pass
         
@@ -84,7 +116,7 @@ def purchase_payment_api(request):
                 from datetime import datetime
                 date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
                 end_of_day = date_to_obj + timedelta(days=1)
-                queryset = queryset.filter(due_date__lt=end_of_day)
+                queryset = queryset.filter(purchase__tanggal_purchase__lt=end_of_day)
             except:
                 pass
         
@@ -133,6 +165,7 @@ def purchase_payment_api(request):
                         'id': payment.id,
                         'allocation_id': allocation.id,
                         'purchase_number': payment.purchase.nomor_purchase,
+                        'purchase_date': payment.purchase.tanggal_purchase.strftime('%d %b %Y') if payment.purchase.tanggal_purchase else '-',
                         'supplier': payment.supplier.nama_supplier,
                         'total_amount': float(payment.total_amount),
                         'total_amount_formatted': f"{payment.total_amount:,.0f}".replace(',', '.'),
@@ -154,6 +187,7 @@ def purchase_payment_api(request):
                         'payment_method': payment_method_display,
                         'transfer_from': transfer_from_display,
                         'notes': allocation.notes or '-',
+                        'is_overdue': days_until_due < 0,
                     })
             else:
                 # No allocations yet - show payment record
@@ -177,6 +211,7 @@ def purchase_payment_api(request):
                     'id': payment.id,
                     'allocation_id': None,
                     'purchase_number': payment.purchase.nomor_purchase,
+                    'purchase_date': payment.purchase.tanggal_purchase.strftime('%d %b %Y') if payment.purchase.tanggal_purchase else '-',
                     'supplier': payment.supplier.nama_supplier,
                     'total_amount': float(payment.total_amount),
                     'total_amount_formatted': f"{payment.total_amount:,.0f}".replace(',', '.'),
@@ -198,6 +233,7 @@ def purchase_payment_api(request):
                     'payment_method': '-',
                     'transfer_from': '-',
                     'notes': payment.notes or '-',
+                    'is_overdue': days_until_due < 0,
                 })
         
         # Calculate statistics
@@ -206,6 +242,8 @@ def purchase_payment_api(request):
             'total_unpaid_amount': float(queryset.filter(status__in=['unpaid', 'partial', 'overdue']).aggregate(total=Sum('remaining_amount'))['total'] or 0),
             'total_overdue': queryset.filter(status='overdue').count(),
             'total_overdue_amount': float(queryset.filter(status='overdue').aggregate(total=Sum('remaining_amount'))['total'] or 0),
+            'total_paid': queryset.filter(status='paid').count(),
+            'total_paid_amount': float(queryset.filter(status='paid').aggregate(total=Sum('paid_amount'))['total'] or 0),
         }
         
         return JsonResponse({
@@ -291,7 +329,20 @@ def purchase_payment_update(request, payment_id):
         # Update payment (auto-calculate from allocations)
         payment.save()
         
-        messages.success(request, f'Payment allocation untuk {payment.purchase.nomor_purchase} berhasil dibuat!')
+        # Create journal entry for purchase payment
+        try:
+            from purchasing.accounting import create_purchase_payment_journal_entry
+            journal_entry = create_purchase_payment_journal_entry(
+                purchase=payment.purchase,
+                payment_amount=paid_amount,
+                bank_account=transfer_from,
+                user=request.user,
+                discount_amount=payment.discount
+            )
+            messages.success(request, f'Payment allocation untuk {payment.purchase.nomor_purchase} berhasil dibuat! Journal entry {journal_entry.entry_number} telah dibuat.')
+        except Exception as e:
+            messages.warning(request, f'Payment allocation berhasil dibuat, tapi ada error saat membuat journal entry: {str(e)}')
+        
         return redirect('purchasing:purchase_payment_list')
     
     except Exception as e:
@@ -636,6 +687,7 @@ def purchase_taxinvoice_api(request):
     # Get filter parameters
     status_filter = request.GET.get('status', '').strip()
     supplier_filter = request.GET.get('supplier', '').strip()
+    purchase_filter = request.GET.get('purchase', '').strip()
     date_from = request.GET.get('date_from', '').strip()
     date_to = request.GET.get('date_to', '').strip()
     
@@ -651,6 +703,9 @@ def purchase_taxinvoice_api(request):
     
     if supplier_filter:
         queryset = queryset.filter(supplier__nama_supplier__icontains=supplier_filter)
+    
+    if purchase_filter:
+        queryset = queryset.filter(purchase__nomor_purchase__icontains=purchase_filter)
     
     if date_from:
         try:
@@ -780,7 +835,18 @@ def purchase_taxinvoice_update(request, invoice_id):
             invoice.notes = notes
         invoice.save()
         
-        messages.success(request, f'Tax invoice untuk {invoice.purchase.nomor_purchase} berhasil diupdate!')
+        # Create journal entry for purchase tax invoice
+        try:
+            from purchasing.accounting import create_purchase_taxinvoice_journal_entry
+            journal_entry = create_purchase_taxinvoice_journal_entry(
+                purchase=invoice.purchase,
+                tax_amount=total_amount_int,
+                user=request.user
+            )
+            messages.success(request, f'Tax invoice untuk {invoice.purchase.nomor_purchase} berhasil diupdate! Journal entry {journal_entry.entry_number} telah dibuat.')
+        except Exception as e:
+            messages.warning(request, f'Tax invoice berhasil diupdate, tapi ada error saat membuat journal entry: {str(e)}')
+        
         return redirect('purchasing:purchase_taxinvoice_list')
     
     except Exception as e:

@@ -1,86 +1,509 @@
 {% extends 'base.html' %}
 {% load humanize %}
 
-{% block title %}Chart of Accounts{% endblock %}
+{% block title %}Chart of Accounts - Keuangan{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Modern gradient backgrounds */
+    .gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .gradient-success {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .gradient-danger {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+    .gradient-warning {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    }
+    .gradient-info {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    }
+    
+    /* Modern card shadows */
+    .card-modern {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+    
+    .card-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+    
+    /* Modern button styles */
+    .btn-modern {
+        border-radius: 12px;
+        padding: 12px 20px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .btn-modern:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Icon backgrounds */
+    .icon-bg {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+    
+    /* Form styling */
+    .form-control-modern {
+        border: 2px solid #f1f3f4;
+        border-radius: 12px;
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control-modern:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    /* Table modern */
+    .table-modern {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .table-modern thead th {
+        border: none;
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #6c757d;
+        padding: 16px;
+    }
+    
+    .table-modern tbody tr {
+        border: none;
+        transition: all 0.2s ease;
+    }
+    
+    .table-modern tbody tr:hover {
+        background: #f8f9ff;
+    }
+    
+    .table-modern tbody td {
+        border: none;
+        padding: 16px;
+        vertical-align: middle;
+    }
+    
+    /* Badge modern */
+    .badge-modern {
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-weight: 500;
+        font-size: 0.75rem;
+    }
+    
+    /* Account type badges */
+    .badge-asset {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .badge-liability {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+    
+    .badge-equity {
+        background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+        color: #0c5460;
+        border: 1px solid #abdde5;
+    }
+    
+    .badge-revenue {
+        background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+        color: #2d5a2d;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .badge-expense {
+        background: linear-gradient(135deg, #f8d7da 0%, #f1b0b7 100%);
+        color: #721c24;
+        border: 1px solid #f1b0b7;
+    }
+    
+    .badge-cost-of-sales {
+        background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%);
+        color: #383d41;
+        border: 1px solid #d6d8db;
+    }
+    
+    /* Balance type badges */
+    .badge-debit {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .badge-credit {
+        background: linear-gradient(135deg, #f8d7da 0%, #f1b0b7 100%);
+        color: #721c24;
+        border: 1px solid #f1b0b7;
+    }
+    
+    /* Status badges */
+    .badge-active {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .badge-inactive {
+        background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%);
+        color: #383d41;
+        border: 1px solid #d6d8db;
+    }
+    
+    /* Section headers */
+    .section-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 16px 16px 0 0;
+        margin-bottom: 0;
+    }
+    
+    .section-header h3 {
+        margin: 0;
+        font-weight: 700;
+        font-size: 1.25rem;
+    }
+    
+    /* Balance sheet sections */
+    .balance-section {
+        border: 2px solid #e9ecef;
+        border-radius: 0 0 16px 16px;
+        border-top: none;
+    }
+    
+    .balance-section.assets {
+        border-left-color: #28a745;
+        border-right-color: #28a745;
+        border-bottom-color: #28a745;
+    }
+    
+    .balance-section.liabilities {
+        border-left-color: #dc3545;
+        border-right-color: #dc3545;
+        border-bottom-color: #dc3545;
+    }
+    
+    .balance-section.equity {
+        border-left-color: #17a2b8;
+        border-right-color: #17a2b8;
+        border-bottom-color: #17a2b8;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <h1 class="mb-4">Chart of Accounts</h1>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-12">
-            {% for acc_type, accounts in accounts_by_type.items %}
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">{{ acc_type.code }} - {{ acc_type.name }} ({{ acc_type.get_type_display }})</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Code</th>
-                                    <th>Account Name</th>
-                                    <th>Balance Type</th>
-                                    <th class="text-right">Current Balance</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for account in accounts %}
-                                <tr>
-                                    <td><strong>{{ account.code }}</strong></td>
-                                    <td>{{ account.name }}</td>
-                                    <td>
-                                        <span class="badge {% if account.balance_type == 'DEBIT' %}badge-success{% else %}badge-danger{% endif %}">
-                                            {{ account.balance_type }}
-                                        </span>
-                                    </td>
-                                    <td class="text-right">
-                                        {% if account.current_balance >= 0 %}
-                                        <span class="text-success font-weight-bold">
-                                            Rp {{ account.current_balance|floatformat:0|intcomma }}
-                                        </span>
-                                        {% else %}
-                                        <span class="text-danger font-weight-bold">
-                                            Rp {{ account.current_balance|floatformat:0|intcomma }}
-                                        </span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <a href="{% url 'finance:account_detail' account.id %}" class="btn btn-sm btn-info">
-                                            <i class="fas fa-eye"></i> View
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted">No accounts found</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+<div class="min-vh-100" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+    <div class="container-fluid py-5">
+        <!-- Header Section -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="display-6 fw-bold text-dark mb-2">Chart of Accounts</h1>
+                        <p class="text-muted fs-5 mb-0">Klasifikasi akun keuangan perusahaan dengan fitur lengkap</p>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <a href="{% url 'finance:account_create' %}" class="btn btn-primary btn-modern">
+                            <i class="bi bi-plus-circle me-2"></i>Akun Baru
+                        </a>
+                        <a href="{% url 'finance:account_type_create' %}" class="btn btn-outline-primary btn-modern">
+                            <i class="bi bi-plus-circle me-2"></i>Tipe Akun Baru
+                        </a>
+                        <a href="{% url 'finance:dashboard' %}" class="btn btn-outline-secondary btn-modern">
+                            <i class="bi bi-house me-2"></i>Dashboard
+                        </a>
                     </div>
                 </div>
             </div>
-            {% empty %}
-            <div class="alert alert-info">
-                <h4>No Account Types Found</h4>
-                <p>Please create account types first in the admin panel.</p>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card card-modern">
+                    <div class="card-body gradient-primary text-white p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-1 fw-medium small">Total Akun</h6>
+                                <h4 class="fw-bold mb-0">{{ total_accounts }}</h4>
+                            </div>
+                            <div class="icon-bg bg-primary bg-opacity-10 text-primary" style="width: 45px; height: 45px; font-size: 18px;">
+                                <i class="bi bi-grid-3x3"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card card-modern">
+                    <div class="card-body gradient-success text-white p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-1 fw-medium small">Akun Aktif</h6>
+                                <h4 class="fw-bold mb-0">{{ active_accounts }}</h4>
+                            </div>
+                            <div class="icon-bg bg-success bg-opacity-10 text-success" style="width: 45px; height: 45px; font-size: 18px;">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card card-modern">
+                    <div class="card-body gradient-warning text-white p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-1 fw-medium small">Tipe Akun</h6>
+                                <h4 class="fw-bold mb-0">{{ account_types.count }}</h4>
+                            </div>
+                            <div class="icon-bg bg-warning bg-opacity-10 text-warning" style="width: 45px; height: 45px; font-size: 18px;">
+                                <i class="bi bi-layers"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card card-modern">
+                    <div class="card-body gradient-info text-white p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-1 fw-medium small">Total Saldo</h6>
+                                <h4 class="fw-bold mb-0">Rp {{ total_balance|floatformat:0|intcomma }}</h4>
+                            </div>
+                            <div class="icon-bg bg-info bg-opacity-10 text-info" style="width: 45px; height: 45px; font-size: 18px;">
+                                <i class="bi bi-wallet"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter -->
+        <form method="get" class="row g-2 mb-3">
+            <div class="col-md-3">
+                <select class="form-select form-select-sm" id="type_filter" name="type">
+                    <option value="">Semua Tipe</option>
+                    {% for type in account_types %}
+                    <option value="{{ type.id }}" {% if request.GET.type == type.id|stringformat:"s" %}selected{% endif %}>
+                        {{ type.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select form-select-sm" id="status_filter" name="status">
+                    <option value="">Semua Status</option>
+                    <option value="active" {% if request.GET.status == "active" %}selected{% endif %}>Aktif</option>
+                    <option value="inactive" {% if request.GET.status == "inactive" %}selected{% endif %}>Tidak Aktif</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <input type="text" id="search" name="search" 
+                       placeholder="Kode atau nama..." value="{{ request.GET.search }}"
+                       class="form-control form-control-sm">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-search"></i> Terapkan
+                </button>
+                <a href="{% url 'finance:chart_of_accounts' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-x-circle"></i> Reset
+                </a>
+            </div>
+        </form>
+
+        <!-- Content Section -->
+        {% if accounts_by_type %}
+        <div class="row">
+            {% for acc_type, accounts in accounts_by_type.items %}
+            <div class="col-12 mb-4">
+                <div class="card card-modern">
+                    <!-- Account Type Header -->
+                    <div class="section-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="mb-1">
+                                    {{ acc_type.code }} - {{ acc_type.name }}
+                                </h3>
+                                <p class="text-white-50 mb-0">
+                                    {% if acc_type.type == 'ASSET' %}
+                                        Aset
+                                    {% elif acc_type.type == 'LIABILITY' %}
+                                        Kewajiban
+                                    {% elif acc_type.type == 'EQUITY' %}
+                                        Modal
+                                    {% elif acc_type.type == 'REVENUE' %}
+                                        Pendapatan
+                                    {% elif acc_type.type == 'EXPENSE' %}
+                                        Biaya
+                                    {% elif acc_type.type == 'COST_OF_SALES' %}
+                                        Harga Pokok Penjualan
+                                    {% else %}
+                                        {{ acc_type.get_type_display }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div>
+                                <span class="badge badge-modern bg-white bg-opacity-20 text-white">{{ accounts.count }} Akun</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Accounts Table -->
+                    <div class="card-body p-0">
+                        {% if accounts %}
+                        <div class="table-responsive">
+                            <table class="table table-modern mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="fw-semibold">Kode Akun</th>
+                                        <th class="fw-semibold">Nama Akun</th>
+                                        <th class="fw-semibold">Tipe Saldo</th>
+                                        <th class="fw-semibold">Induk</th>
+                                        <th class="fw-semibold text-end">Saldo Saat Ini</th>
+                                        <th class="fw-semibold text-center">Status</th>
+                                        <th class="fw-semibold text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for account in accounts %}
+                                    <tr>
+                                        <td>
+                                            <span class="fw-semibold text-dark font-monospace">{{ account.code }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="fw-medium text-dark">{{ account.name }}</div>
+                                            {% if account.description %}
+                                            <div class="text-muted small">{{ account.description|truncatechars:50 }}</div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-modern {% if account.balance_type == 'DEBIT' %}badge-debit{% else %}badge-credit{% endif %}">
+                                                {% if account.balance_type == 'DEBIT' %}Debit{% else %}Kredit{% endif %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if account.parent %}
+                                                <a href="{% url 'finance:account_detail' account.parent.id %}" class="text-decoration-none text-muted">
+                                                    {{ account.parent.code }} - {{ account.parent.name }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="fw-semibold {% if account.current_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                                Rp {{ account.current_balance|floatformat:0|intcomma }}
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge badge-modern {% if account.is_active %}badge-active{% else %}badge-inactive{% endif %}">
+                                                {% if account.is_active %}Aktif{% else %}Tidak Aktif{% endif %}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'finance:account_detail' account.id %}" class="btn btn-outline-primary btn-sm">
+                                                    <i class="bi bi-eye me-1"></i>Lihat
+                                                </a>
+                                                <a href="{% url 'finance:account_edit' account.id %}" class="btn btn-outline-secondary btn-sm">
+                                                    <i class="bi bi-pencil me-1"></i>Edit
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <div class="icon-bg bg-light text-muted mx-auto mb-3">
+                                <i class="bi bi-folder-open"></i>
+                            </div>
+                            <h4 class="text-muted">Tidak ada akun ditemukan</h4>
+                            <p class="text-muted">Tambahkan akun untuk tipe ini.</p>
+                            <a href="{% url 'finance:account_create' %}" class="btn btn-primary btn-modern mt-3">
+                                <i class="bi bi-plus-circle me-2"></i>Tambah Akun
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
             {% endfor %}
         </div>
-    </div>
-
-    <div class="row mt-4">
-        <div class="col-12">
-            <a href="{% url 'finance:dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+        {% else %}
+        <!-- Empty State -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-modern">
+                    <div class="card-body text-center py-5">
+                        <div class="icon-bg bg-light text-muted mx-auto mb-4">
+                            <i class="bi bi-folder-plus"></i>
+                        </div>
+                        <h3 class="fw-bold text-dark mb-3">Belum Ada Jenis Akun</h3>
+                        <p class="text-muted mb-4">Silakan buat jenis akun terlebih dahulu untuk mengorganisir akun keuangan.</p>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="{% url 'finance:account_type_create' %}" class="btn btn-primary btn-modern">
+                                <i class="bi bi-plus-circle me-2"></i>Buat Jenis Akun
+                            </a>
+                            <a href="{% url 'finance:dashboard' %}" class="btn btn-outline-secondary btn-modern">
+                                <i class="bi bi-house me-2"></i>Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
 
+{% block extra_script %}
+<script>
+$(document).ready(function() {
+    // Auto-submit form on filter change
+    $('#type_filter, #status_filter').on('change', function() {
+        $(this).closest('form').submit();
+    });
+    
+    // Search with delay
+    let searchTimeout;
+    $('#search').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            $(this).closest('form').submit();
+        }, 500);
+    });
+});
+</script>
+{% endblock %}

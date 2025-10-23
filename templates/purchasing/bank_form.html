@@ -43,6 +43,28 @@
                         <small class="text-muted">Nama pemilik rekening</small>
                     </div>
                     
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-journal-text"></i> Link ke Akun (Chart of Accounts)
+                        </label>
+                        <select class="form-control" name="account_id" id="account_id">
+                            <option value="">-- Pilih Akun (Opsional) --</option>
+                            {% for account in accounts %}
+                            <option value="{{ account.id }}" 
+                                    {% if form_data.account_id == account.id|stringformat:"s" %}selected
+                                    {% elif bank and bank.account_id == account.id %}selected{% endif %}>
+                                {{ account.code }} - {{ account.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">
+                            Link bank ini ke akun di Chart of Accounts untuk pencatatan akuntansi otomatis. 
+                            <a href="{% url 'finance:account_create' %}" target="_blank" class="text-primary">
+                                <i class="bi bi-plus-circle"></i> Buat Akun Baru
+                            </a>
+                        </small>
+                    </div>
+                    
                     {% if is_edit %}
                     <div class="mb-3">
                         <div class="form-check">
@@ -99,6 +121,7 @@
     }
 </style>
 {% endblock %}
+
 
 
 

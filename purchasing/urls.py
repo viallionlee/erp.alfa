@@ -36,6 +36,7 @@ urlpatterns = [
     path('purchase/<int:purchase_id>/auto-save/', views.purchase_auto_save, name='purchase_auto_save'),
     path('purchase/<int:purchase_id>/receive/', views.purchase_receive, name='purchase_receive'),
     path('purchase/<int:purchase_id>/verify/', views.purchase_verify, name='purchase_verify'),
+    path('purchase-verify/', views.purchase_verify_list, name='purchase_verify_list'),
     path('purchase/<int:purchase_id>/delete/', views.purchase_delete, name='purchase_delete'),
     path('purchase/<int:purchase_id>/cancel/', views.purchase_cancel, name='purchase_cancel'),
     

@@ -1,0 +1,408 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ budget.name }} - Budget Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .detail-header {
+        border-bottom: 2px solid #f8f9fa;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .detail-header h2 {
+        color: #2c3e50;
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #495057;
+        min-width: 150px;
+    }
+    
+    .info-value {
+        color: #6c757d;
+        flex: 1;
+        text-align: right;
+    }
+    
+    .status-badge {
+        font-size: 0.9em;
+        padding: 6px 12px;
+    }
+    
+    .progress-container {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+    
+    .progress {
+        height: 20px;
+        border-radius: 10px;
+        background-color: #e9ecef;
+        margin-bottom: 10px;
+    }
+    
+    .progress-bar {
+        border-radius: 10px;
+        transition: width 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 0.9em;
+    }
+    
+    .progress-success {
+        background-color: #28a745;
+    }
+    
+    .progress-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    
+    .progress-danger {
+        background-color: #dc3545;
+    }
+    
+    .amount-display {
+        font-size: 1.5em;
+        font-weight: bold;
+        text-align: center;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 10px 0;
+    }
+    
+    .amount-budget {
+        background: #e3f2fd;
+        color: #1976d2;
+        border: 1px solid #bbdefb;
+    }
+    
+    .amount-actual {
+        background: #f3e5f5;
+        color: #7b1fa2;
+        border: 1px solid #e1bee7;
+    }
+    
+    .amount-variance {
+        background: #e8f5e8;
+        color: #2e7d32;
+        border: 1px solid #c8e6c9;
+    }
+    
+    .amount-variance.negative {
+        background: #ffebee;
+        color: #c62828;
+        border: 1px solid #ffcdd2;
+    }
+    
+    .action-buttons {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .action-buttons h5 {
+        color: #495057;
+        margin-bottom: 15px;
+    }
+    
+    .btn-action {
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .period-info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .period-info h6 {
+        color: #1976d2;
+        margin-bottom: 10px;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 3em;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">{{ budget.name }}</h1>
+            <p class="text-muted">Budget Details & Performance</p>
+        </div>
+        <div>
+            <a href="{% url 'finance:budget_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <!-- Budget Information -->
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h2><i class="fas fa-chart-pie text-primary"></i> Budget Information</h2>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Name:</span>
+                    <span class="info-value">{{ budget.name }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">
+                        {% if budget.status == 'draft' %}
+                            <span class="badge badge-secondary status-badge">Draft</span>
+                        {% elif budget.status == 'approved' %}
+                            <span class="badge badge-info status-badge">Approved</span>
+                        {% elif budget.status == 'active' %}
+                            <span class="badge badge-success status-badge">Active</span>
+                        {% elif budget.status == 'closed' %}
+                            <span class="badge badge-dark status-badge">Closed</span>
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Account:</span>
+                    <span class="info-value">
+                        <a href="{% url 'finance:account_detail' budget.account.id %}">
+                            {{ budget.account.code }} - {{ budget.account.name }}
+                        </a>
+                    </span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Period Type:</span>
+                    <span class="info-value">{{ budget.get_period_type_display }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Created:</span>
+                    <span class="info-value">{{ budget.created_at|date:"d M Y, H:i" }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Created By:</span>
+                    <span class="info-value">{{ budget.created_by.get_full_name|default:budget.created_by.username }}</span>
+                </div>
+                
+                {% if budget.approved_by %}
+                <div class="info-row">
+                    <span class="info-label">Approved By:</span>
+                    <span class="info-value">{{ budget.approved_by.get_full_name|default:budget.approved_by.username }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Approved At:</span>
+                    <span class="info-value">{{ budget.approved_at|date:"d M Y, H:i" }}</span>
+                </div>
+                {% endif %}
+                
+                {% if budget.notes %}
+                <div class="info-row">
+                    <span class="info-label">Notes:</span>
+                    <span class="info-value">{{ budget.notes }}</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Period Information -->
+            <div class="period-info">
+                <h6><i class="fas fa-calendar"></i> Budget Period</h6>
+                <p><strong>Start:</strong> {{ budget.period_start|date:"d M Y" }}</p>
+                <p><strong>End:</strong> {{ budget.period_end|date:"d M Y" }}</p>
+                <p><strong>Duration:</strong> {{ budget.period_start|timesince:budget.period_end }}</p>
+            </div>
+            
+            <!-- Description -->
+            {% if budget.description %}
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h2><i class="fas fa-align-left text-info"></i> Description</h2>
+                </div>
+                <p>{{ budget.description }}</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-8">
+            <!-- Budget Performance -->
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h2><i class="fas fa-chart-bar text-success"></i> Budget Performance</h2>
+                </div>
+                
+                <!-- Amount Display -->
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="amount-display amount-budget">
+                            <div>Budget</div>
+                            <div>Rp {{ budget.budget_amount|floatformat:0 }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="amount-display amount-actual">
+                            <div>Actual</div>
+                            <div>Rp {{ budget.actual_amount|floatformat:0 }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="amount-display amount-variance {% if budget.variance < 0 %}negative{% endif %}">
+                            <div>Variance</div>
+                            <div>Rp {{ budget.variance|floatformat:0 }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="progress-container">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span><strong>Budget Utilization</strong></span>
+                        <span><strong>{{ budget.utilization_percentage|floatformat:1 }}%</strong></span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar {% if budget.utilization_percentage <= 80 %}progress-success{% elif budget.utilization_percentage <= 100 %}progress-warning{% else %}progress-danger{% endif %}" 
+                             role="progressbar" 
+                             style="width: {{ budget.utilization_percentage }}%">
+                            {{ budget.utilization_percentage|floatformat:1 }}%
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2">
+                        <small class="text-muted">0%</small>
+                        <small class="text-muted">100%</small>
+                        <small class="text-muted">200%</small>
+                    </div>
+                </div>
+                
+                <!-- Performance Summary -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Remaining Budget</h5>
+                                <h3 class="{% if budget.variance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    Rp {{ budget.variance|floatformat:0 }}
+                                </h3>
+                                <p class="card-text">
+                                    {% if budget.variance >= 0 %}
+                                        <span class="text-success">Under budget</span>
+                                    {% else %}
+                                        <span class="text-danger">Over budget</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Utilization Rate</h5>
+                                <h3 class="{% if budget.utilization_percentage <= 80 %}text-success{% elif budget.utilization_percentage <= 100 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ budget.utilization_percentage|floatformat:1 }}%
+                                </h3>
+                                <p class="card-text">
+                                    {% if budget.utilization_percentage <= 80 %}
+                                        <span class="text-success">Good</span>
+                                    {% elif budget.utilization_percentage <= 100 %}
+                                        <span class="text-warning">Caution</span>
+                                    {% else %}
+                                        <span class="text-danger">Over budget</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <h5><i class="fas fa-cogs"></i> Actions</h5>
+                
+                {% if budget.status == 'draft' %}
+                <form method="post" action="{% url 'finance:budget_approve' budget.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success btn-action" 
+                            onclick="return confirm('Are you sure you want to approve this budget?')">
+                        <i class="fas fa-check"></i> Approve Budget
+                    </button>
+                </form>
+                {% endif %}
+                
+                <a href="{% url 'finance:budget_list' %}" class="btn btn-secondary btn-action">
+                    <i class="fas fa-list"></i> All Budgets
+                </a>
+                
+                <button type="button" class="btn btn-info btn-action" onclick="window.print()">
+                    <i class="fas fa-print"></i> Print
+                </button>
+                
+                <a href="{% url 'finance:account_detail' budget.account.id %}" class="btn btn-primary btn-action">
+                    <i class="fas fa-chart-bar"></i> View Account
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+$(document).ready(function() {
+    // Add any JavaScript functionality here
+});
+</script>
+{% endblock %}
+
+
+

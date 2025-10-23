@@ -78,43 +78,39 @@
     </div>
 </div>
 
-<!-- Filter Box -->
-<div class="card shadow-sm mb-3 border-0">
-    <div class="card-body">
-        <div class="row g-2">
-            <div class="col-md-2">
-                <input type="text" id="filter-purchase-number" class="form-control form-control-sm" placeholder="Cari Nomor Purchase">
-            </div>
-            <div class="col-md-2">
-                <input type="date" id="filter-date-from" class="form-control form-control-sm" placeholder="Dari Tanggal">
-            </div>
-            <div class="col-md-2">
-                <input type="date" id="filter-date-to" class="form-control form-control-sm" placeholder="Sampai Tanggal">
-            </div>
-            <div class="col-md-2">
-                <select id="filter-status" class="form-select form-select-sm">
-                    <option value="">Semua Status</option>
-                    <option value="draft">Draft</option>
-                    <option value="pending">Pending</option>
-                    <option value="received">Received</option>
-                    <option value="verified">Verified</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <select id="filter-supplier" class="form-select form-select-sm">
-                    <option value="">Semua Supplier</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button class="btn btn-sm btn-primary w-100" id="btn-filter">
-                    <i class="bi bi-search"></i> Filter
-                </button>
-                <button class="btn btn-sm btn-secondary w-100" id="btn-reset">
-                    <i class="bi bi-x-circle"></i> Reset
-                </button>
-            </div>
-        </div>
+<!-- Filter -->
+<div class="row g-2 mb-3">
+    <div class="col-md-2">
+        <input type="text" id="filter-purchase-number" class="form-control form-control-sm" placeholder="Cari Nomor Purchase">
+    </div>
+    <div class="col-md-2">
+        <input type="date" id="filter-date-from" class="form-control form-control-sm" placeholder="Dari Tanggal">
+    </div>
+    <div class="col-md-2">
+        <input type="date" id="filter-date-to" class="form-control form-control-sm" placeholder="Sampai Tanggal">
+    </div>
+    <div class="col-md-2">
+        <select id="filter-status" class="form-select form-select-sm">
+            <option value="">Semua Status</option>
+            <option value="draft">Draft</option>
+            <option value="pending">Pending</option>
+            <option value="received">Received</option>
+            <option value="verified">Verified</option>
+            <option value="cancelled">Cancelled</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select id="filter-supplier" class="form-select form-select-sm">
+            <option value="">Semua Supplier</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-sm btn-primary" id="btn-filter">
+            <i class="bi bi-search"></i> Filter
+        </button>
+        <button class="btn btn-sm btn-secondary" id="btn-reset">
+            <i class="bi bi-x-circle"></i> Reset
+        </button>
     </div>
 </div>
 

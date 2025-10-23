@@ -140,7 +140,7 @@ $(document).ready(function() {
             {
                 id: {{ purchase.id }},
                 nomor_purchase: "{{ purchase.nomor_purchase }}",
-                tanggal_purchase: "{{ purchase.tanggal_purchase|date:'d-m-Y H:i' }}",
+                tanggal_purchase: "{{ purchase.tanggal_purchase|date:'d-m-Y' }}",
                 supplier: "{{ purchase.supplier.nama_supplier }}",
                 po_reference: "{{ purchase.po.nomor_po|default:'-' }}",
                 status: "{{ purchase.get_status_display }}",

@@ -218,9 +218,9 @@
                     <div class="form-group">
                         <label class="modern-form-label" for="tanggal_purchase">Tanggal Purchase <span style="color:red">*</span></label>
                         {% if is_verification_mode %}
-                        <input type="datetime-local" name="tanggal_purchase" id="tanggal_purchase" class="form-control" required readonly>
+                        <input type="date" name="tanggal_purchase" id="tanggal_purchase" class="form-control" required readonly>
                         {% else %}
-                        <input type="datetime-local" name="tanggal_purchase" id="tanggal_purchase" class="form-control" required>
+                        <input type="date" name="tanggal_purchase" id="tanggal_purchase" class="form-control" required>
                         {% endif %}
                     </div>
                     <div class="form-group">
@@ -641,7 +641,7 @@
             
             // Tanggal purchase - Leave blank for new purchases, only fill if editing existing
             {% if purchase.tanggal_purchase %}
-            let tglStr = '{{ purchase.tanggal_purchase|date:"Y-m-d\TH:i" }}';
+            let tglStr = '{{ purchase.tanggal_purchase|date:"Y-m-d" }}';
             $('#tanggal_purchase').val(tglStr);
             {% else %}
             // Leave blank - user must fill manually

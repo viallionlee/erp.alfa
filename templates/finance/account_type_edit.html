@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Account Type - Finance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .form-header {
+        border-bottom: 2px solid #f8f9fa;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .form-header h2 {
+        color: #2c3e50;
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .form-group label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .type-preview {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+    }
+    
+    .type-preview-label {
+        font-size: 0.9em;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+    
+    .type-preview-value {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .btn-cancel {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-cancel:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+        color: white;
+    }
+    
+    .account-info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .account-info h5 {
+        color: #1976d2;
+        margin-bottom: 10px;
+    }
+    
+    .account-count {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #1976d2;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Edit Account Type</h1>
+            <p class="text-muted">Modify account type information</p>
+        </div>
+        <div>
+            <a href="{% url 'finance:account_type_detail' account_type.id %}" class="btn btn-secondary">
+                <i class="fas fa-eye"></i> View Details
+            </a>
+            <a href="{% url 'finance:account_type_list' %}" class="btn btn-outline-secondary ml-2">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Account Information -->
+            <div class="account-info">
+                <h5><i class="fas fa-info-circle"></i> Account Type Information</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Code:</strong> {{ account_type.code }}<br>
+                        <strong>Name:</strong> {{ account_type.name }}<br>
+                        <strong>Type:</strong> {{ account_type.get_type_display }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Status:</strong> 
+                        {% if account_type.is_active %}
+                            <span class="badge badge-success">Active</span>
+                        {% else %}
+                            <span class="badge badge-secondary">Inactive</span>
+                        {% endif %}<br>
+                        <strong>Accounts:</strong> 
+                        <span class="account-count">{{ account_type.accounts.count }}</span> accounts
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <div class="form-header">
+                    <h2><i class="fas fa-edit text-primary"></i> Edit Account Type</h2>
+                </div>
+
+                <form method="post" id="accountTypeForm">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="code">Code <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="code" name="code" required
+                                       value="{{ account_type.code }}" maxlength="20">
+                                <small class="form-text text-muted">Unique code for this account type</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="type">Type <span class="text-danger">*</span></label>
+                                <select class="form-control" id="type" name="type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="ASSET" {% if account_type.type == 'ASSET' %}selected{% endif %}>Asset</option>
+                                    <option value="LIABILITY" {% if account_type.type == 'LIABILITY' %}selected{% endif %}>Liability</option>
+                                    <option value="EQUITY" {% if account_type.type == 'EQUITY' %}selected{% endif %}>Equity</option>
+                                    <option value="REVENUE" {% if account_type.type == 'REVENUE' %}selected{% endif %}>Revenue</option>
+                                    <option value="EXPENSE" {% if account_type.type == 'EXPENSE' %}selected{% endif %}>Expense</option>
+                                    <option value="COST_OF_SALES" {% if account_type.type == 'COST_OF_SALES' %}selected{% endif %}>Cost of Sales</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="name">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" required
+                               value="{{ account_type.name }}" maxlength="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="4"
+                                  placeholder="Detailed description of this account type...">{{ account_type.description|default:"" }}</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                   {% if account_type.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">
+                                Active
+                            </label>
+                            <small class="form-text text-muted">Only active account types can be used for new accounts</small>
+                        </div>
+                    </div>
+
+                    <!-- Type Preview -->
+                    <div class="type-preview" id="typePreview">
+                        <div class="type-preview-label">Preview:</div>
+                        <div class="type-preview-value" id="previewText">{{ account_type.code }} - {{ account_type.name }} ({{ account_type.get_type_display }})</div>
+                    </div>
+
+                    <div class="form-actions mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Account Type
+                        </button>
+                        <a href="{% url 'finance:account_type_detail' account_type.id %}" class="btn btn-cancel ml-2">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+$(document).ready(function() {
+    // Update preview when form changes
+    function updatePreview() {
+        const code = $('#code').val();
+        const name = $('#name').val();
+        const type = $('#type option:selected').text();
+        
+        if (code && name && type) {
+            $('#previewText').text(`${code} - ${name} (${type})`);
+            $('#typePreview').show();
+        } else {
+            $('#typePreview').hide();
+        }
+    }
+    
+    $('#code, #name, #type').on('input change', updatePreview);
+    
+    // Form validation
+    $('#accountTypeForm').on('submit', function(e) {
+        const code = $('#code').val().trim();
+        const name = $('#name').val().trim();
+        const type = $('#type').val();
+        
+        if (!code || !name || !type) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+            return false;
+        }
+    });
+    
+    // Auto-format code input
+    $('#code').on('input', function() {
+        this.value = this.value.replace(/[^a-zA-Z0-9]/g, '');
+    });
+    
+    // Warning if deactivating with existing accounts
+    $('#is_active').on('change', function() {
+        if (!this.checked && {{ account_type.accounts.count }} > 0) {
+            if (!confirm('This account type has {{ account_type.accounts.count }} accounts. Deactivating it may affect existing accounts. Are you sure?')) {
+                this.checked = true;
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
+
+
+

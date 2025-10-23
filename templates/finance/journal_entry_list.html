@@ -1,148 +1,340 @@
 {% extends 'base.html' %}
 {% load humanize %}
 
-{% block title %}Journal Entries{% endblock %}
+{% block title %}Jurnal Umum - Keuangan{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Modern gradient backgrounds */
+    .gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .gradient-success {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .gradient-danger {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+    .gradient-warning {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    }
+    .gradient-info {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    }
+    
+    /* Modern card shadows */
+    .card-modern {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+    
+    .card-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+    
+    /* Modern button styles */
+    .btn-modern {
+        border-radius: 12px;
+        padding: 12px 20px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .btn-modern:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Icon backgrounds */
+    .icon-bg {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+    
+    /* Form styling */
+    .form-control-modern {
+        border: 2px solid #f1f3f4;
+        border-radius: 12px;
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control-modern:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    /* Table modern */
+    .table-modern {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .table-modern thead th {
+        border: none;
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #6c757d;
+        padding: 16px;
+    }
+    
+    .table-modern tbody tr {
+        border: none;
+        transition: all 0.2s ease;
+    }
+    
+    .table-modern tbody tr:hover {
+        background: #f8f9ff;
+    }
+    
+    .table-modern tbody td {
+        border: none;
+        padding: 16px;
+        vertical-align: middle;
+    }
+    
+    /* Badge modern */
+    .badge-modern {
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-weight: 500;
+        font-size: 0.75rem;
+    }
+    
+    /* Status badges */
+    .badge-draft {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+    
+    .badge-posted {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .badge-reversed {
+        background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%);
+        color: #383d41;
+        border: 1px solid #d6d8db;
+    }
+    
+    .badge-cancelled {
+        background: linear-gradient(135deg, #f8d7da 0%, #f1b0b7 100%);
+        color: #721c24;
+        border: 1px solid #f1b0b7;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <h1 class="mb-4">Journal Entries</h1>
-        </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <form method="get" class="row">
-                        <div class="col-md-2">
-                            <label>Status</label>
-                            <select name="status" class="form-control">
-                                <option value="">All</option>
-                                <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
-                                <option value="posted" {% if status_filter == 'posted' %}selected{% endif %}>Posted</option>
-                                <option value="reversed" {% if status_filter == 'reversed' %}selected{% endif %}>Reversed</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label>Date From</label>
-                            <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
-                        </div>
-                        <div class="col-md-2">
-                            <label>Date To</label>
-                            <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
-                        </div>
-                        <div class="col-md-3">
-                            <label>Search</label>
-                            <input type="text" name="search" class="form-control" placeholder="Entry number, description..." value="{{ search }}">
-                        </div>
-                        <div class="col-md-3">
-                            <label>&nbsp;</label><br>
-                            <button type="submit" class="btn btn-primary">Filter</button>
-                            <a href="{% url 'finance:journal_entry_list' %}" class="btn btn-secondary">Clear</a>
-                        </div>
-                    </form>
+<div class="min-vh-100" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+    <div class="container-fluid py-5">
+        <!-- Header Section -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="display-6 fw-bold text-dark mb-2">Jurnal Umum</h1>
+                        <p class="text-muted fs-5 mb-0">Kelola jurnal umum dan transaksi akuntansi</p>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <a href="{% url 'finance:journal_entry_create' %}" class="btn btn-primary btn-modern">
+                            <i class="bi bi-plus-circle me-2"></i>Jurnal Umum Baru
+                        </a>
+                        <a href="{% url 'finance:dashboard' %}" class="btn btn-outline-primary btn-modern">
+                            <i class="bi bi-house me-2"></i>Dashboard
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Journal Entries Table -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Journal Entries List</h5>
-                    <a href="{% url 'finance:journal_entry_create' %}" class="btn btn-success">
-                        <i class="fas fa-plus"></i> New Journal Entry
-                    </a>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Entry Number</th>
-                                    <th>Date</th>
-                                    <th>Description</th>
-                                    <th>Reference</th>
-                                    <th>Status</th>
-                                    <th class="text-right">Total Debit</th>
-                                    <th class="text-right">Total Credit</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for entry in page_obj %}
-                                <tr>
-                                    <td><strong>{{ entry.entry_number }}</strong></td>
-                                    <td>{{ entry.entry_date }}</td>
-                                    <td>{{ entry.description|truncatewords:10 }}</td>
-                                    <td>{{ entry.reference|default:"-" }}</td>
-                                    <td>
-                                        {% if entry.status == 'draft' %}
-                                        <span class="badge badge-warning">Draft</span>
-                                        {% elif entry.status == 'posted' %}
-                                        <span class="badge badge-success">Posted</span>
-                                        {% elif entry.status == 'reversed' %}
-                                        <span class="badge badge-secondary">Reversed</span>
-                                        {% else %}
-                                        <span class="badge badge-danger">Cancelled</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-right text-success">Rp {{ entry.total_debit|floatformat:0|intcomma }}</td>
-                                    <td class="text-right text-danger">Rp {{ entry.total_credit|floatformat:0|intcomma }}</td>
-                                    <td>
-                                        <a href="{% url 'finance:journal_entry_detail' entry.id %}" class="btn btn-sm btn-info">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="8" class="text-center text-muted">No journal entries found</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+        <!-- Filters Section -->
+        <div class="card card-modern mb-4">
+            <div class="card-header bg-white border-0 py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-0 fw-bold">Filter & Pencarian</h6>
+                        <small class="text-muted">Saring data jurnal umum berdasarkan kriteria</small>
                     </div>
+                    <div class="icon-bg bg-primary bg-opacity-10 text-primary" style="width: 40px; height: 40px; font-size: 16px;">
+                        <i class="bi bi-funnel"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                <form method="get" class="row g-2">
+                    <div class="col-md-2">
+                        <label class="form-label small fw-medium">Status</label>
+                        <select name="status" class="form-control form-control-modern" style="padding: 8px 12px;">
+                            <option value="">Semua</option>
+                            <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
+                            <option value="posted" {% if status_filter == 'posted' %}selected{% endif %}>Diposting</option>
+                            <option value="reversed" {% if status_filter == 'reversed' %}selected{% endif %}>Dibalik</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-medium">Tanggal Dari</label>
+                        <input type="date" name="date_from" class="form-control form-control-modern" value="{{ date_from }}" style="padding: 8px 12px;">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-medium">Tanggal Sampai</label>
+                        <input type="date" name="date_to" class="form-control form-control-modern" value="{{ date_to }}" style="padding: 8px 12px;">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-medium">Cari</label>
+                        <input type="text" name="search" class="form-control form-control-modern" placeholder="No. jurnal, deskripsi..." value="{{ search }}" style="padding: 8px 12px;">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid gap-1">
+                            <button type="submit" class="btn btn-primary btn-modern" style="padding: 8px 12px; font-size: 0.875rem;">
+                                <i class="bi bi-search me-1"></i>Filter
+                            </button>
+                            <a href="{% url 'finance:journal_entry_list' %}" class="btn btn-outline-secondary btn-modern" style="padding: 8px 12px; font-size: 0.875rem;">
+                                <i class="bi bi-x-circle me-1"></i>Reset
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-                    <!-- Pagination -->
-                    {% if page_obj.has_other_pages %}
+        <!-- Journal Entries Table -->
+        <div class="card card-modern">
+            <div class="card-header bg-white border-0 py-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title mb-0 fw-bold">Daftar Jurnal Umum</h5>
+                        <p class="text-muted mb-0 mt-2">Semua jurnal umum dalam sistem keuangan</p>
+                    </div>
+                    <div class="icon-bg bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-list-ul"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-modern mb-0">
+                        <thead>
+                            <tr>
+                                <th class="fw-semibold">No. Jurnal</th>
+                                <th class="fw-semibold">Tanggal</th>
+                                <th class="fw-semibold">Deskripsi</th>
+                                <th class="fw-semibold">Referensi</th>
+                                <th class="fw-semibold text-center">Status</th>
+                                <th class="fw-semibold text-end">Total Debit</th>
+                                <th class="fw-semibold text-end">Total Kredit</th>
+                                <th class="fw-semibold text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in page_obj %}
+                            <tr>
+                                <td>
+                                    <span class="fw-semibold text-dark font-monospace">{{ entry.entry_number }}</span>
+                                </td>
+                                <td class="text-muted">{{ entry.entry_date|date:"d M Y" }}</td>
+                                <td>
+                                    <div class="fw-medium text-dark">{{ entry.description|truncatewords:10 }}</div>
+                                </td>
+                                <td class="text-muted">{{ entry.reference|default:"-" }}</td>
+                                <td class="text-center">
+                                    <span class="badge badge-modern
+                                        {% if entry.status == 'draft' %}badge-draft
+                                        {% elif entry.status == 'posted' %}badge-posted
+                                        {% elif entry.status == 'reversed' %}badge-reversed
+                                        {% else %}badge-cancelled{% endif %}">
+                                        {% if entry.status == 'draft' %}Draft
+                                        {% elif entry.status == 'posted' %}Diposting
+                                        {% elif entry.status == 'reversed' %}Dibalik
+                                        {% else %}Dibatalkan{% endif %}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <span class="fw-semibold text-success">Rp {{ entry.total_debit|floatformat:0|intcomma }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <span class="fw-semibold text-danger">Rp {{ entry.total_credit|floatformat:0|intcomma }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <a href="{% url 'finance:journal_entry_detail' entry.id %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye me-1"></i>Lihat
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <div class="p-3 border-top">
                     <nav aria-label="Page navigation">
-                        <ul class="pagination justify-content-center">
+                        <ul class="pagination justify-content-center mb-0">
                             {% if page_obj.has_previous %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
                             </li>
                             {% endif %}
                             
-                            {% for num in page_obj.paginator.page_range %}
-                            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    Halaman {{ page_obj.number }} dari {{ page_obj.paginator.num_pages }}
+                                </span>
                             </li>
-                            {% endfor %}
                             
                             {% if page_obj.has_next %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if search %}&search={{ search }}{% endif %}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
                             </li>
                             {% endif %}
                         </ul>
                     </nav>
-                    {% endif %}
                 </div>
+                {% endif %}
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="icon-bg bg-light text-muted mx-auto mb-3">
+                        <i class="bi bi-file-x"></i>
+                    </div>
+                    <h4 class="text-muted">Tidak ada jurnal umum ditemukan</h4>
+                    <p class="text-muted">Mulai dengan membuat jurnal umum pertama Anda.</p>
+                    <a href="{% url 'finance:journal_entry_create' %}" class="btn btn-primary btn-modern mt-3">
+                        <i class="bi bi-plus-circle me-2"></i>Jurnal Umum Baru
+                    </a>
+                </div>
+                {% endif %}
             </div>
-        </div>
-    </div>
-
-    <div class="row mt-4">
-        <div class="col-12">
-            <a href="{% url 'finance:dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
         </div>
     </div>
 </div>
 {% endblock %}
 
+{% block extra_script %}
+<script>
+$(document).ready(function() {
+    // Auto-submit form on filter change
+    $('select[name="status"]').on('change', function() {
+        $(this).closest('form').submit();
+    });
+});
+</script>
+{% endblock %}

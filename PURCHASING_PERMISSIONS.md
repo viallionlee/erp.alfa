@@ -453,3 +453,6 @@ user.has_perm('purchasing.purchase_finance')  # True/False
 **Documentation Created:** 2025-01-20
 **Last Updated:** 2025-01-20
 
+
+
+

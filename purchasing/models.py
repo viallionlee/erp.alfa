@@ -138,7 +138,7 @@ class Purchase(models.Model):
     nomor_purchase = models.CharField(max_length=100, unique=True, null=True, blank=True)
     supplier = models.ForeignKey('inventory.Supplier', on_delete=models.PROTECT, null=True, blank=True)
     po = models.ForeignKey(PurchaseOrder, on_delete=models.SET_NULL, null=True, blank=True, related_name='purchases')
-    tanggal_purchase = models.DateTimeField(null=True, blank=True, help_text="Tanggal invoice dari supplier (user harus isi manual)")
+    tanggal_purchase = models.DateField(null=True, blank=True, help_text="Tanggal invoice dari supplier (user harus isi manual)")
     tanggal_received = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     total_amount = models.IntegerField(default=0)  # Changed to IntegerField for easier formatting
@@ -245,7 +245,7 @@ class PriceHistory(models.Model):
     subtotal = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     supplier = models.ForeignKey('inventory.Supplier', on_delete=models.SET_NULL, null=True)
     
-    purchase_date = models.DateTimeField()
+    purchase_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -411,6 +411,17 @@ class Bank(models.Model):
     nama_bank = models.CharField(max_length=100)
     nomor_rekening = models.CharField(max_length=50)
     atas_nama = models.CharField(max_length=200, blank=True, null=True)
+    
+    # Link to Chart of Accounts
+    account = models.ForeignKey(
+        'finance.Account',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='banks',
+        help_text="Link ke akun di Chart of Accounts untuk pencatatan akuntansi"
+    )
+    
     is_active = models.BooleanField(default=True)
     notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -423,6 +434,16 @@ class Bank(models.Model):
     
     def __str__(self):
         return f"{self.nama_bank} - {self.nomor_rekening}"
+    
+    @property
+    def account_name(self):
+        """Get account name if linked"""
+        return f"{self.account.code} - {self.account.name}" if self.account else "Belum di-link"
+    
+    @property
+    def current_balance(self):
+        """Get current balance from linked account"""
+        return self.account.current_balance if self.account else 0
 
 
 class PurchasePaymentAllocation(models.Model):
