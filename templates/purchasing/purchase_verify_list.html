@@ -154,8 +154,8 @@
             <div class="col-6 col-md-3 col-lg">
                 <div class="card text-white bg-warning h-100">
                     <div class="card-body p-2">
-                        <h6 class="card-title mb-1" style="font-size: 0.75rem;">Total Received</h6>
-                        <h4 class="mb-0" style="font-size: 1.5rem;">{{ total_received }}</h4>
+                        <h6 class="card-title mb-1" style="font-size: 0.75rem;">{{ stats_title_1 }}</h6>
+                        <h4 class="mb-0" style="font-size: 1.5rem;">{{ total_count }}</h4>
                     </div>
                 </div>
             </div>
@@ -178,7 +178,7 @@
             <div class="col-6 col-md-3 col-lg">
                 <div class="card text-white bg-primary h-100">
                     <div class="card-body p-2">
-                        <h6 class="card-title mb-1" style="font-size: 0.75rem;">Pending Verify</h6>
+                        <h6 class="card-title mb-1" style="font-size: 0.75rem;">{{ stats_title_4 }}</h6>
                         <h4 class="mb-0" style="font-size: 1.5rem;">{{ purchases.count }}</h4>
                     </div>
                 </div>
@@ -187,6 +187,16 @@
 
         <!-- Filter -->
         <form method="get" class="row g-2 mb-3">
+            <div class="col-md-3 d-flex align-items-center gap-2">
+                <div class="btn-group" role="group" aria-label="Filter status">
+                    <a href="?tab=pending" class="btn btn-sm {% if filter_data.tab != 'verified' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        Belum Verified
+                    </a>
+                    <a href="?tab=verified" class="btn btn-sm {% if filter_data.tab == 'verified' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        Verified
+                    </a>
+                </div>
+            </div>
             <div class="col-md-2">
                 <input type="text" id="search" name="search" 
                        placeholder="Cari Nomor Purchase" value="{{ filter_data.search }}"
@@ -212,14 +222,8 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary btn-sm">
-                    <i class="bi bi-search"></i> Filter
-                </button>
-                <a href="{% url 'purchasing:purchase_verify_list' %}" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-x-circle"></i> Reset
-                </a>
-            </div>
+            <input type="hidden" name="tab" value="{{ filter_data.tab|default:'pending' }}">
+            <!-- Buttons removed as requested -->
         </form>
 
         <!-- Purchase List -->

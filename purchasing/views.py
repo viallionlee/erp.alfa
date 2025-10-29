@@ -1750,13 +1750,19 @@ def purchase_verify_list(request):
     if not request.user.has_perm('purchasing.purchase_finance'):
         raise PermissionDenied("You don't have permission to view purchase verify list.")
     
-    # Filter purchases yang statusnya 'received' (perlu di-verify)
-    purchases = Purchase.objects.filter(
-        status='received'
-    ).select_related('supplier', 'po').prefetch_related('items__product').order_by('-tanggal_purchase')
+    # Base queryset
+    base_qs = Purchase.objects.select_related('supplier', 'po').prefetch_related('items__product').order_by('-tanggal_purchase')
+
+    # Tab filter: default 'pending' shows received (not yet verified); 'verified' shows verified
+    tab = request.GET.get('tab', 'pending').strip().lower()
+    if tab == 'verified':
+        purchases = base_qs.filter(status='verified')
+    else:
+        # default
+        purchases = base_qs.filter(status='received')
     
     # Get summary statistics
-    total_received = purchases.count()
+    total_count = purchases.count()
     total_amount = purchases.aggregate(total=models.Sum('total_amount'))['total'] or 0
     
     # Get filter parameters
@@ -1801,13 +1807,16 @@ def purchase_verify_list(request):
     context = {
         'purchases': purchases,
         'suppliers': suppliers,
-        'total_received': total_received,
+        'total_count': total_count,
         'total_amount': total_amount,
+        'stats_title_1': 'Total Verified' if tab == 'verified' else 'Total Received',
+        'stats_title_4': 'Verified' if tab == 'verified' else 'Pending Verify',
         'filter_data': {
             'supplier': supplier_filter,
             'date_from': date_from,
             'date_to': date_to,
             'search': search,
+            'tab': tab,
         }
     }
     
@@ -1849,6 +1858,8 @@ def purchase_verify(request, purchase_id):
             # Get form data
             due_date_str = request.POST.get('due_date', '').strip()
             transaction_type = request.POST.get('transaction_type', '').strip()
+            has_fp_value = request.POST.get('has_fp', 'Y').strip().upper()
+            has_fp = (has_fp_value == 'Y')
             
             # Validate due_date
             if not due_date_str:
@@ -1875,6 +1886,7 @@ def purchase_verify(request, purchase_id):
                 purchase.status = 'verified'
                 purchase.verified_at = timezone.now()
                 purchase.verified_by = request.user
+                purchase.has_tax_invoice = has_fp
                 purchase.save()
                 logger.info(f"[VERIFY] Status updated: {old_status} -> {purchase.status}")
                 
@@ -1965,29 +1977,33 @@ def purchase_verify(request, purchase_id):
             )
             logger.info(f"[VERIFY] PurchasePayment created: ID={payment.id}, amount={payment.total_amount}, due_date={due_date}, transaction_type={transaction_type}")
             
-            # Create PurchaseTaxInvoice (default pending)
-            # Calculate tax: invoice_amount = subtotal + tax
-            # invoice_amount = subtotal * (1 + tax_rate/100)
-            # subtotal = invoice_amount / (1 + tax_rate/100)
-            tax_rate = 11  # 11% PPN
-            subtotal = int(purchase.total_amount / (1 + tax_rate / 100))
-            tax_amount = purchase.total_amount - subtotal
-            
-            tax_invoice = PurchaseTaxInvoice.objects.create(
-                purchase=purchase,
-                supplier=purchase.supplier,
-                invoice_number=None,
-                invoice_amount=purchase.total_amount,
-                discount=0,  # Default no discount
-                tax_rate=tax_rate,
-                subtotal=subtotal,
-                tax_amount=tax_amount,
-                status='pending',
-            )
-            logger.info(f"[VERIFY] PurchaseTaxInvoice created: ID={tax_invoice.id}, amount={tax_invoice.invoice_amount}")
+            # Create PurchaseTaxInvoice only if has_fp is True
+            if has_fp:
+                # Calculate tax: invoice_amount = subtotal + tax
+                tax_rate = 11  # 11% PPN
+                subtotal = int(purchase.total_amount / (1 + tax_rate / 100))
+                tax_amount = purchase.total_amount - subtotal
+                
+                tax_invoice, _created = PurchaseTaxInvoice.objects.get_or_create(
+                    purchase=purchase,
+                    supplier=purchase.supplier,
+                    defaults={
+                        'invoice_number': None,
+                        'invoice_amount': purchase.total_amount,
+                        'discount': 0,
+                        'tax_rate': tax_rate,
+                        'subtotal': subtotal,
+                        'tax_amount': tax_amount,
+                        'status': 'pending',
+                    }
+                )
+                logger.info(f"[VERIFY] PurchaseTaxInvoice ensured: ID={tax_invoice.id}, amount={tax_invoice.invoice_amount}")
             
             logger.info(f"[VERIFY] Verification completed successfully for {purchase.nomor_purchase}")
-            messages.success(request, f'Purchase {purchase.nomor_purchase} berhasil di-verify! Purchase Payment (Due: {due_date.strftime("%d %b %Y")}, Type: {transaction_type}) dan Tax Invoice telah dibuat.')
+            if has_fp:
+                messages.success(request, f'Purchase {purchase.nomor_purchase} berhasil di-verify! Payment dibuat (Due: {due_date.strftime("%d %b %Y")}, Type: {transaction_type}) dan Tax Invoice disiapkan.')
+            else:
+                messages.success(request, f'Purchase {purchase.nomor_purchase} berhasil di-verify! Payment dibuat (Due: {due_date.strftime("%d %b %Y")}, Type: {transaction_type}). Tidak ada Tax Invoice (FP = Tidak).')
             return redirect('purchasing:purchase_list')
         
         except Exception as e:
@@ -2006,6 +2022,7 @@ def purchase_verify(request, purchase_id):
         'purchase': purchase,
         'items': items,
         'suppliers': suppliers,
+        'has_tax_invoice': purchase.has_tax_invoice if hasattr(purchase, 'has_tax_invoice') else True,
     }
     
     return render(request, 'purchasing/purchase_verify.html', context)

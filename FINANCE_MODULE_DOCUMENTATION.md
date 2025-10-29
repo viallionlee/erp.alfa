@@ -279,6 +279,20 @@ CashFlow.objects.create(
 )
 ```
 
+### Purchasing Journal Flow (Accurate style)
+
+| Step | Scenario | Debit | Credit | Notes |
+|---|---|---|---|---|
+| Receive | Goods received (no vendor invoice yet) | Inventory (1303001) | GRNI – Goods Received Not Invoiced (2103xxx) | Stock increases; AP not booked |
+| Verify | Got Tax Invoice | GRNI (2103xxx) = DPP; Deferred Input VAT (1206002) = VAT | Accounts Payable (2103001) = DPP + VAT | AP booked; VAT parked |
+| Verify | No Tax Invoice | GRNI (2103xxx) | Accounts Payable (2103001) | AP booked without VAT |
+| Tax Invoice Received | Reclass VAT | Input VAT (1206001) | Deferred Input VAT (1206002) | Move VAT from deferred to claimable |
+| Payment | Pay supplier | Accounts Payable (2103001) | Cash/Bank (1110001) + Purchase Discount (5103001) if any | Split discount if applicable |
+
+Catatan:
+- GRNI selalu menutup nilai DPP saat Verify.
+- Reklas VAT hanya berlaku jika saat Verify menggunakan Deferred Input VAT.
+
 ## Permissions
 
 Finance module menggunakan Django's built-in permission system. Tambahkan permissions di admin:

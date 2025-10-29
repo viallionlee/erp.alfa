@@ -207,26 +207,62 @@
                 <input type="hidden" name="supplier_id" id="supplier_id">
                 <input type="hidden" name="po_id" id="po_id" value="{% if purchase.po %}{{ purchase.po.id }}{% endif %}">
                 
-                <!-- Row 1: Tanggal, Supplier -->
-                <div class="modern-form-row">
-                    <div class="form-group">
-                        <label class="modern-form-label" for="tanggal_purchase">Tanggal Purchase <span style="color:red">*</span></label>
-                        <input type="date" name="tanggal_purchase" id="tanggal_purchase" class="form-control" required readonly>
+                <!-- Panel: Informasi Tagihan & Pajak (collapsible, compact) -->
+                <div class="card border-primary mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center"
+                         data-bs-toggle="collapse" data-bs-target="#panel-info-billing" aria-expanded="true" style="cursor:pointer;">
+                        <div class="fw-bold"><i class="bi bi-receipt"></i> Informasi Tagihan & Pajak</div>
+                        <i class="bi bi-chevron-down"></i>
                     </div>
-                    <div class="form-group">
-                        <label class="modern-form-label" for="nama_supplier">Supplier <span style="color:red">*</span></label>
-                        <div class="input-group">
-                            <input type="text" id="nama_supplier" class="form-control" required readonly aria-label="Nama Supplier" value="{{ purchase.supplier.nama_supplier|default:'' }}">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Row 2: Nomor PO (Optional) -->
-                <div class="modern-form-row">
-                    <div class="form-group">
-                        <label class="modern-form-label" for="nomor_po">Nomor PO (Opsional)</label>
-                        <div class="input-group">
-                            <input type="text" id="nomor_po" class="form-control" placeholder="Kosongkan jika tidak ada PO" value="{{ purchase.po.nomor_po|default:'' }}" readonly>
+                    <div id="panel-info-billing" class="collapse">
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <!-- Row 1: Tanggal Purchase - Supplier - Nomor PO -->
+                                <div class="col-md-4">
+                                    <label class="modern-form-label">Tanggal Purchase</label>
+                                    <input type="date" name="tanggal_purchase" id="tanggal_purchase" class="form-control" required readonly>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="modern-form-label">Supplier</label>
+                                    <input type="text" id="nama_supplier" class="form-control" required readonly value="{{ purchase.supplier.nama_supplier|default:'' }}">
+                                </div>
+                                <div class="col-md-4" id="po_wrapper" {% if not purchase.po %}style="display:none;"{% endif %}>
+                                    <label class="modern-form-label" id="po_label">Nomor PO</label>
+                                    <input type="text" id="nomor_po" class="form-control" value="{{ purchase.po.nomor_po|default:'' }}" readonly>
+                                </div>
+                                <!-- Row 2: Catatan -->
+                                <div class="col-12">
+                                    <label class="modern-form-label" for="notes">Catatan</label>
+                                    <textarea name="notes" id="notes" class="form-control" rows="1" placeholder="Catatan tambahan (opsional)">{{ notes }}</textarea>
+                                </div>
+                                <!-- Row 3: Tanggal Jatuh Tempo - Tipe Transaksi - Dapat Faktur Pajak -->
+                                <div class="col-md-4">
+                                    <label class="modern-form-label" for="due_date">Tanggal Jatuh Tempo <span style="color:red">*</span></label>
+                                    <input type="date" id="due_date" name="due_date" class="form-control" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="modern-form-label" for="transaction_type">Tipe Transaksi <span style="color:red">*</span></label>
+                                    <select id="transaction_type" name="transaction_type" class="form-select" required>
+                                        <option value="">-- Pilih Tipe --</option>
+                                        <option value="COD">COD (Cash on Delivery)</option>
+                                        <option value="CREDIT">Credit</option>
+                                        <option value="PREPAID">Prepaid</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="modern-form-label">Dapat Faktur Pajak? <span style="color:red">*</span></label>
+                                    <div class="d-flex align-items-center" style="gap:18px;">
+                                        <div class="form-check mb-0">
+                                            <input class="form-check-input" type="checkbox" id="has_fp_yes" name="has_fp" value="Y">
+                                            <label class="form-check-label" for="has_fp_yes">YA</label>
+                                        </div>
+                                        <div class="form-check mb-0">
+                                            <input class="form-check-input" type="checkbox" id="has_fp_no" value="N">
+                                            <label class="form-check-label" for="has_fp_no">TIDAK</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -314,10 +350,10 @@
                         <div class="card border-primary">
                             <div class="card-body">
                                 <!-- Row 1: Total Invoice di Kertas -->
-                                <div class="row align-items-center mb-3">
+                <div class="row align-items-center mb-3">
                                     <div class="col-md-3">
                                         <label class="form-label fw-bold mb-0" for="total_invoice_kertas">
-                                            TOTAL Invoice di Kertas:
+                                            TOTAL Invoice di Kertas <span style="color:red">*</span>:
                                         </label>
                                     </div>
                                     <div class="col-md-9">
@@ -347,39 +383,7 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Row 2: Due Date & Transaction Type -->
-                                <div class="row align-items-center">
-                                    <div class="col-md-3">
-                                        <label class="form-label fw-bold mb-0" for="due_date">
-                                            <i class="bi bi-calendar-check"></i> Tanggal Jatuh Tempo:
-                                        </label>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <input type="date" 
-                                               id="due_date" 
-                                               name="due_date"
-                                               class="form-control form-control-lg" 
-                                               required>
-                                        <small class="text-muted">Kapan tanggal jatuh tempo pembayaran</small>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label fw-bold mb-0" for="transaction_type">
-                                            Tipe Transaksi:
-                                        </label>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <select id="transaction_type" 
-                                                name="transaction_type"
-                                                class="form-select form-select-lg" 
-                                                required>
-                                            <option value="">-- Pilih Tipe --</option>
-                                            <option value="COD">COD (Cash on Delivery)</option>
-                                            <option value="CREDIT">Credit</option>
-                                            <option value="PREPAID">Prepaid</option>
-                                        </select>
-                                        <small class="text-muted">Tipe pembayaran</small>
-                                    </div>
-                                </div>
+                                <!-- Row 2 removed: Due Date & Transaction Type now moved to top panel -->
                             </div>
                         </div>
                     </div>
@@ -399,9 +403,15 @@
                     (<span id="invoice-success-value">0</span>). Silakan klik tombol "VERIFIED" untuk melanjutkan.
                 </div>
                 
-                <div class="mt-3 text-center">
-                    <button type="button" class="btn btn-primary px-4" id="btn-verify-purchase" disabled><i class="bi bi-check2-circle"></i> VERIFIED</button>
-                    <a href="{% url 'purchasing:purchase_list' %}" class="btn btn-secondary ms-2">Batal</a>
+                <div class="mt-3 d-flex justify-content-between align-items-center">
+                    <div class="small text-muted"><span style="color:red">*</span> wajib diisi</div>
+                    <div class="text-center">
+                        <button type="button" class="btn btn-primary px-4" id="btn-verify-purchase" disabled><i class="bi bi-check2-circle"></i> VERIFIED</button>
+                        <span id="verify-progress" class="ms-2 text-success" style="font-weight:600;">(0/4)</span>
+                    </div>
+                    <div>
+                        <a href="{% url 'purchasing:purchase_list' %}" class="btn btn-secondary ms-2">Batal</a>
+                    </div>
                 </div>
             </form>
         </div>
@@ -647,6 +657,16 @@
             const isConfirmed = $('#total_invoice_kertas').prop('readonly');
             const dueDate = $('#due_date').val();
             const transactionType = $('#transaction_type').val();
+            let fpYes = $('#has_fp_yes').is(':checked');
+            let fpNo = $('#has_fp_no').is(':checked');
+
+            // Progress counter (0/4) — update FIRST so it reflects partial progress
+            let done = 0;
+            if (isConfirmed && totalSistem > 0 && totalKertas > 0 && totalSistem === totalKertas) done++;
+            if (dueDate) done++;
+            if (transactionType) done++;
+            if (fpYes || fpNo) done++;
+            $('#verify-progress').text(`(${done}/4)`);
             
             console.log('[PurchaseVerify] validateTotal:', {
                 totalSistem: totalSistem,
@@ -682,6 +702,18 @@
                 $('#total-success-message').addClass('d-none');
                 return;
             }
+
+            // Check if tax invoice decision selected
+            fpYes = $('#has_fp_yes').is(':checked');
+            fpNo = $('#has_fp_no').is(':checked');
+            if (!fpYes && !fpNo) {
+                console.log('[PurchaseVerify] Tax invoice decision not selected, disabling button');
+                $('#btn-verify-purchase').prop('disabled', true);
+                $('#btn-verify-purchase').removeClass('btn-success').addClass('btn-primary');
+                $('#total-validation-message').addClass('d-none');
+                $('#total-success-message').addClass('d-none');
+                return;
+            }
             
             // Only validate if invoice is confirmed
             if (!isConfirmed) {
@@ -707,6 +739,8 @@
                 $('#total-validation-message').removeClass('d-none');
                 $('#total-success-message').addClass('d-none');
             }
+
+            // Progress already updated above
         },
         
         // Prefill purchase data
@@ -729,6 +763,8 @@
             {% if purchase.po %}
             $('#po_id').val('{{ purchase.po.id }}');
             $('#nomor_po').val('{{ purchase.po.nomor_po }}');
+            $('#po_wrapper').show();
+            $('#po_label').text('Nomor PO');
             {% endif %}
         },
         
@@ -759,7 +795,7 @@
         setupEvents: function() {
             const self = this;
             
-            // Harga input change
+        // Harga input change
             $(document).off('input' + EVENT_NS, '.harga-input');
             $(document).on('input' + EVENT_NS, '.harga-input', function() {
                 let value = $(this).val();
@@ -770,6 +806,11 @@
                 self.updateSubtotal($(this).closest('tr'));
                 autoSave(); // Trigger autosave
             });
+
+        // Real-time listeners to refresh progress
+        $('#total_invoice_kertas').on('input change', () => window.App.PurchaseEdit.validateTotal());
+        $('#due_date, #transaction_type').on('change', () => window.App.PurchaseEdit.validateTotal());
+        $('#has_fp_yes, #has_fp_no').on('change', () => window.App.PurchaseEdit.validateTotal());
         }
     };
     
@@ -825,10 +866,18 @@
             // Get values from form (validation already done in validateTotal)
             const dueDate = $('#due_date').val();
             const transactionType = $('#transaction_type').val();
+            const hasFp = $('#has_fp_yes').is(':checked') ? 'Y' : ($('#has_fp_no').is(':checked') ? 'N' : '');
             
             // Double check validation (should not happen if button is enabled)
             if (!dueDate || !transactionType) {
                 alert('Data pembayaran belum lengkap!');
+                $('#verificationModal').modal('hide');
+                return;
+            }
+
+            // Require tax invoice decision before verifying
+            if (!hasFp) {
+                alert('Pilih "Dapat Faktur Pajak?" (YA/TIDAK) terlebih dahulu.');
                 $('#verificationModal').modal('hide');
                 return;
             }
@@ -858,7 +907,8 @@
                             data: {
                                 csrfmiddlewaretoken: '{{ csrf_token }}',
                                 due_date: dueDate,
-                                transaction_type: transactionType
+                                transaction_type: transactionType,
+                                has_fp: hasFp
                             },
                             success: function(response) {
                                 console.log('[PurchaseVerify] ✅ Verification successful!');
@@ -892,6 +942,33 @@
         $('#due_date, #transaction_type').on('change', function() {
             console.log('[PurchaseVerify] Due date or transaction type changed');
             window.App.PurchaseEdit.validateTotal();
+        });
+
+        // Mutually exclusive checkboxes for "Dapat Faktur Pajak?"
+        $(document).on('change', '#has_fp_yes', function() {
+            if ($(this).is(':checked')) {
+                $('#has_fp_no').prop('checked', false);
+            } else {
+                // Ensure at least one selected: default to YES
+                $('#has_fp_yes').prop('checked', true);
+            }
+            if (window.App && window.App.PurchaseEdit && typeof window.App.PurchaseEdit.validateTotal === 'function') {
+                window.App.PurchaseEdit.validateTotal();
+            }
+        });
+        $(document).on('change', '#has_fp_no', function() {
+            if ($(this).is(':checked')) {
+                $('#has_fp_yes').prop('checked', false);
+                // Create a hidden input "has_fp" with value N so backend receives it
+                $('input[name="has_fp"][type="hidden"]').remove();
+                $('<input>').attr({type:'hidden', name:'has_fp', value:'N'}).appendTo('#add-purchase-form');
+            } else {
+                $('#has_fp_yes').prop('checked', true);
+                $('input[name="has_fp"][type="hidden"]').remove();
+            }
+            if (window.App && window.App.PurchaseEdit && typeof window.App.PurchaseEdit.validateTotal === 'function') {
+                window.App.PurchaseEdit.validateTotal();
+            }
         });
     });
     

@@ -166,6 +166,7 @@ class Purchase(models.Model):
         related_name='purchases_verified'
     )
     verified_at = models.DateTimeField(null=True, blank=True)
+    has_tax_invoice = models.BooleanField(default=False, help_text="Dapat Faktur Pajak? (pilih saat verifikasi)")
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
