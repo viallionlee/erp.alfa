@@ -175,8 +175,9 @@ def orders_table_data(request):
 
     data = []
     for order in qs:
-        # Ambil nama_produk, variant_produk, brand dari Product berdasarkan SKU
+        # Ambil nama_produk, variant_produk, brand, photo dari Product berdasarkan SKU
         product_obj = None
+        photo_url = None
         if hasattr(order, 'sku') and order.sku:
             product_obj = Product.objects.filter(sku__iexact=order.sku).first()
         if product_obj:
@@ -184,6 +185,8 @@ def orders_table_data(request):
             variant_produk = getattr(product_obj, 'variant_produk', '')
             brand = getattr(product_obj, 'brand', '')
             product_id = product_obj.id
+            if product_obj.photo:
+                photo_url = product_obj.photo.url
         else:
             nama_produk = ''
             variant_produk = ''
@@ -216,6 +219,8 @@ def orders_table_data(request):
             order.status_order,       # 22
             order.status_cancel,      # 23
             order.status_retur,       # 24
+            order.status_bundle or '', # 25
+            photo_url,                # 26 (Photo URL)
         ])
 
     return JsonResponse({

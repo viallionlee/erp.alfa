@@ -1,6 +1,7 @@
 from django.db.models import Count, Sum, Q
 from inventory.models import Stock, OpnameQueue, RakTransferSession
 from fullfilment.models import BatchList, ReturnSession, ReturnItem, ReadyToPrint
+from purchasing.models import Purchase, PurchasePayment, PurchaseTaxInvoice
 
 
 def purchasing_permissions(request):
@@ -83,6 +84,29 @@ def notification_counts(request):
         ).count()
         context['ready_to_print_not_handed_over'] = ready_to_print_not_handed_over
         
+        # Purchase Verify badges
+        # Jumlah purchase yang sudah received tapi belum di-verify
+        purchase_verify_pending_count = Purchase.objects.filter(status='received').count()
+        context['purchase_verify_pending_count'] = purchase_verify_pending_count
+        
+        # Purchase Tax Invoice badges
+        # Jumlah purchase yang sudah verified tapi has_tax_invoice=True dan belum ada tax invoice (pending)
+        # Count purchases that need tax invoice but don't have one yet
+        purchase_taxinvoice_pending_count = Purchase.objects.filter(
+            status='verified',
+            has_tax_invoice=True
+        ).exclude(
+            tax_invoice__status__in=['received', 'verified']
+        ).count()
+        context['purchase_taxinvoice_pending_count'] = purchase_taxinvoice_pending_count
+        
+        # Purchase Payment badges
+        # Jumlah payment yang belum lunas (unpaid, partial, overdue)
+        purchase_payment_unpaid_count = PurchasePayment.objects.filter(
+            status__in=['unpaid', 'partial', 'overdue']
+        ).count()
+        context['purchase_payment_unpaid_count'] = purchase_payment_unpaid_count
+        
     except Exception as e:
         # Jika ada error, set default values
         context['putaway_count'] = 0
@@ -94,5 +118,8 @@ def notification_counts(request):
         context['return_session_open_count'] = 0
         context['return_sku_pending_putaway'] = 0
         context['ready_to_print_not_handed_over'] = 0
+        context['purchase_verify_pending_count'] = 0
+        context['purchase_taxinvoice_pending_count'] = 0
+        context['purchase_payment_unpaid_count'] = 0
     
     return context

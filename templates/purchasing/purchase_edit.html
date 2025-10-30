@@ -944,17 +944,35 @@
     });
     
     function loadPOList(keyword, searchType = 'supplier') {
+        const supplierId = $('#supplier_id').val();
+        
         $.getJSON('/purchaseorder/data/', {
             search: keyword,
-            search_type: searchType
+            search_type: searchType,
+            supplier_id: supplierId,  // Filter by selected supplier
+            length: 100  // Get more results
         }, function(response) {
             let html = '';
+            let filteredData = [];
+            
+            // Filter only draft and pending PO (same as mobile)
             if (response.data && response.data.length > 0) {
-                response.data.forEach(function(po) {
+                filteredData = response.data.filter(function(po) {
+                    const status = po.status ? po.status.toLowerCase() : '';
+                    return status === 'draft' || status === 'pending';
+                });
+            }
+            
+            console.log('[Desktop Purchase Edit] Total PO:', response.data ? response.data.length : 0);
+            console.log('[Desktop Purchase Edit] Filtered PO (draft/pending):', filteredData.length);
+            
+            if (filteredData.length > 0) {
+                filteredData.forEach(function(po) {
                     let statusBadge = '';
-                    if (po.status === 'Draft') statusBadge = '<span class="badge bg-warning">Draft</span>';
-                    else if (po.status === 'Received') statusBadge = '<span class="badge bg-success">Received</span>';
-                    else if (po.status === 'Cancelled') statusBadge = '<span class="badge bg-danger">Cancelled</span>';
+                    const status = po.status ? po.status.toLowerCase() : '';
+                    
+                    if (status === 'draft') statusBadge = '<span class="badge bg-warning">Draft</span>';
+                    else if (status === 'pending') statusBadge = '<span class="badge bg-info">Pending</span>';
                     
                     html += `
                         <tr>
@@ -972,7 +990,7 @@
         `;
                 });
             } else {
-                html = '<tr><td colspan="6" class="text-center text-muted">Tidak ada data ditemukan</td></tr>';
+                html = '<tr><td colspan="6" class="text-center text-muted">Tidak ada PO (Draft/Pending) ditemukan</td></tr>';
             }
             $('#po_list_tbody').html(html);
         }).fail(function() {

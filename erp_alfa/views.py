@@ -116,6 +116,26 @@ def api_notification_counts(request):
             handed_over_at__isnull=True
         ).count()
         
+        # Purchase Verify badges
+        # Jumlah purchase yang sudah received tapi belum di-verify
+        from purchasing.models import Purchase, PurchasePayment, PurchaseTaxInvoice
+        purchase_verify_pending_count = Purchase.objects.filter(status='received').count()
+        
+        # Purchase Tax Invoice badges
+        # Jumlah purchase yang sudah verified tapi has_tax_invoice=True dan belum ada tax invoice
+        purchase_taxinvoice_pending_count = Purchase.objects.filter(
+            status='verified',
+            has_tax_invoice=True
+        ).exclude(
+            tax_invoice__status__in=['received', 'verified']
+        ).count()
+        
+        # Purchase Payment badges
+        # Jumlah payment yang belum lunas (unpaid, partial, overdue)
+        purchase_payment_unpaid_count = PurchasePayment.objects.filter(
+            status__in=['unpaid', 'partial', 'overdue']
+        ).count()
+        
         response_data = {
             'success': True,
             'putaway_count': total_putaway_count,  # Total dari regular + transfer
@@ -127,6 +147,9 @@ def api_notification_counts(request):
             'return_session_open_count': return_session_open_count,
             'return_sku_pending_putaway': return_sku_pending_putaway,
             'ready_to_print_not_handed_over': ready_to_print_not_handed_over,
+            'purchase_verify_pending_count': purchase_verify_pending_count,
+            'purchase_taxinvoice_pending_count': purchase_taxinvoice_pending_count,
+            'purchase_payment_unpaid_count': purchase_payment_unpaid_count,
             'cached': False,
             'response_time': round((time.time() - start_time) * 1000, 2)  # ms
         }
@@ -149,6 +172,9 @@ def api_notification_counts(request):
             'return_session_open_count': 0,
             'return_sku_pending_putaway': 0,
             'ready_to_print_not_handed_over': 0,
+            'purchase_verify_pending_count': 0,
+            'purchase_taxinvoice_pending_count': 0,
+            'purchase_payment_unpaid_count': 0,
             'cached': False,
             'response_time': round((time.time() - start_time) * 1000, 2)  # ms
         }

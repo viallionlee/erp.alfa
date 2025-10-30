@@ -1122,7 +1122,7 @@ def purchase_list_api(request):
         date_to = request.GET.get('date_to', '').strip()
         
         # Build query
-        queryset = Purchase.objects.select_related('supplier', 'po', 'created_by', 'received_by', 'verified_by').order_by('-id')
+        queryset = Purchase.objects.select_related('supplier', 'po', 'created_by', 'received_by', 'verified_by').prefetch_related('items').order_by('-id')
         
         # Apply filters
         if purchase_number_filter:
@@ -1153,6 +1153,11 @@ def purchase_list_api(request):
         # Serialize data
         data = []
         for purchase in page_obj:
+            # Calculate total items and total quantity
+            items = purchase.items.all()
+            total_items = items.count()  # Jumlah produk berbeda
+            total_qty = sum(item.quantity for item in items)  # Total quantity semua produk
+            
             data.append({
                 'id': purchase.id,
                 'nomor_purchase': purchase.nomor_purchase,
@@ -1163,6 +1168,8 @@ def purchase_list_api(request):
                 'status_value': purchase.status,
                 'total_amount': purchase.total_amount,
                 'total_amount_formatted': f'{purchase.total_amount:,}',
+                'total_items': total_items,
+                'total_qty': total_qty,
                 'created_by': purchase.created_by.username if purchase.created_by else '-',
                 'created_at': purchase.created_at.strftime('%Y-%m-%d %H:%M') if purchase.created_at else '',
                 'verified_by': purchase.verified_by.username if purchase.verified_by else None,
@@ -1625,6 +1632,11 @@ def purchase_edit(request, purchase_id):
         id=purchase_id
     )
     
+    # Check if purchase is already verified (cannot edit verified purchases)
+    if purchase.status == 'verified':
+        messages.error(request, "Purchase yang sudah verified tidak dapat di-edit lagi. Silakan hubungi Finance untuk perubahan.")
+        return redirect('purchasing:purchase_detail', purchase_id=purchase.id)
+    
     # Check if this is verification mode
     is_verification_mode = request.GET.get('mode') == 'verification'
     
@@ -1761,10 +1773,6 @@ def purchase_verify_list(request):
         # default
         purchases = base_qs.filter(status='received')
     
-    # Get summary statistics
-    total_count = purchases.count()
-    total_amount = purchases.aggregate(total=models.Sum('total_amount'))['total'] or 0
-    
     # Get filter parameters
     supplier_filter = request.GET.get('supplier', '').strip()
     date_from = request.GET.get('date_from', '').strip()
@@ -1798,10 +1806,20 @@ def purchase_verify_list(request):
             models.Q(notes__icontains=search)
         )
     
-    # Get unique suppliers for filter dropdown
+    # Get summary statistics AFTER all filters are applied
+    total_count = purchases.count()
+    total_amount = purchases.aggregate(total=models.Sum('total_amount'))['total'] or 0
+    total_received = total_count  # For calculating average
+    
+    # Get unique suppliers for filter dropdown (from base queryset, not filtered)
     from inventory.models import Supplier
+    if tab == 'verified':
+        supplier_base_qs = base_qs.filter(status='verified')
+    else:
+        supplier_base_qs = base_qs.filter(status='received')
+    
     suppliers = Supplier.objects.filter(
-        id__in=purchases.values_list('supplier_id', flat=True).distinct()
+        id__in=supplier_base_qs.values_list('supplier_id', flat=True).distinct()
     ).order_by('nama_supplier')
     
     context = {
@@ -1809,6 +1827,7 @@ def purchase_verify_list(request):
         'suppliers': suppliers,
         'total_count': total_count,
         'total_amount': total_amount,
+        'total_received': total_received,
         'stats_title_1': 'Total Verified' if tab == 'verified' else 'Total Received',
         'stats_title_4': 'Verified' if tab == 'verified' else 'Pending Verify',
         'filter_data': {

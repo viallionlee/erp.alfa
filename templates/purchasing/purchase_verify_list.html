@@ -186,15 +186,15 @@
         </div>
 
         <!-- Filter -->
-        <form method="get" class="row g-2 mb-3">
+        <form method="get" id="filterForm" class="row g-2 mb-3">
             <div class="col-md-3 d-flex align-items-center gap-2">
                 <div class="btn-group" role="group" aria-label="Filter status">
-                    <a href="?tab=pending" class="btn btn-sm {% if filter_data.tab != 'verified' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    <button type="button" onclick="switchTab('pending')" class="btn btn-sm {% if filter_data.tab != 'verified' %}btn-primary{% else %}btn-outline-primary{% endif %}">
                         Belum Verified
-                    </a>
-                    <a href="?tab=verified" class="btn btn-sm {% if filter_data.tab == 'verified' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    </button>
+                    <button type="button" onclick="switchTab('verified')" class="btn btn-sm {% if filter_data.tab == 'verified' %}btn-primary{% else %}btn-outline-primary{% endif %}">
                         Verified
-                    </a>
+                    </button>
                 </div>
             </div>
             <div class="col-md-2">
@@ -313,6 +313,14 @@
 
 {% block extra_script %}
 <script>
+// Function to switch tabs while preserving other filters
+function switchTab(tabValue) {
+    const form = document.getElementById('filterForm');
+    const tabInput = document.querySelector('input[name="tab"]');
+    tabInput.value = tabValue;
+    form.submit();
+}
+
 $(document).ready(function() {
     // Auto-submit form on filter change
     $('#supplier_filter').on('change', function() {

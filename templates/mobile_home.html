@@ -191,6 +191,19 @@
             </div>
         </div>
         {% endif %}
+        
+        {% if perms.purchasing.purchase_view or perms.purchasing.purchase_warehouse %}
+        <div class="col-6">
+            <div class="modern-card h-100" style="cursor:pointer;" onclick="window.location.href='{% url 'purchasing:purchase_list' %}'">
+                <div class="card-body text-center p-3">
+                    <div class="icon-circle icon-purchasing mb-3">
+                        <i class="bi bi-cart-check"></i>
+                    </div>
+                    <h6 class="card-title fw-bold">Purchase List</h6>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
     {% endif %}
     
@@ -350,6 +363,8 @@ body {
 .icon-putaway { background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); color: #4f46e5; }
 .icon-opname { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: #059669; }
 .icon-inventory { background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%); color: #7c3aed; }
+.icon-purchasing { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #d97706; }
+.icon-verify { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); color: #059669; }
 
 .card-title {
     font-weight: 700;

@@ -686,7 +686,7 @@ document.addEventListener('DOMContentLoaded', function() {
           render: function(data, type, row) {
             if (data) {
               const harga = parseFloat(data).toLocaleString('id-ID');
-              const historyUrl = `/purchasing/price-history/?sku=${row.sku}`;
+              const historyUrl = `/purchaseorder/price-history/?sku=${row.sku}`;
               return `
                 <div class="d-flex align-items-center gap-2">
                   <span class="fw-bold text-success">Rp ${harga}</span>

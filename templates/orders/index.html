@@ -140,20 +140,26 @@
                                 <!-- 3. sku/nama produk/variant produk/brand/product id -->
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        {% if row.26 %}
-                                            <a href="{{ row.26 }}" class="clickable-photo">
-                                                {% if row.26 %}
-                                                    <img src="{{ row.26 }}" alt="Product photo" class="me-3" style="width: 120px; height: 120px; object-fit: cover; border-radius: 4px; cursor: pointer;">
-                                                {% else %}
-                                                    <img src="/static/path/to/placeholder.png" alt="No image" width="50">
-                                                {% endif %}
-                                            </a>
-                                        {% endif %}
-                                        <div>
+                                        <div class="product-photo-wrapper me-3" style="width:120px; height:120px; flex-shrink:0;">
+                                            {% if row.26 %}
+                                                <div class="photo-container" data-photo-url="{{ row.26 }}" style="width:100%; height:100%; position:relative; background:#f8f9fa; border-radius:4px; overflow:hidden;">
+                                                    <div class="photo-loader" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);">
+                                                        <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                                                            <span class="visually-hidden">Loading...</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <div class="d-flex align-items-center justify-content-center" style="width:100%; height:100%; background:#f8f9fa; border-radius:4px; border:2px dashed #dee2e6;">
+                                                    <i class="bi bi-image text-muted" style="font-size:2rem; opacity:0.3;"></i>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-grow-1">
                                             <strong>{{ row.7 }}</strong>
                                             <div class="d-block text-muted">var : <strong>{{ row.8 }}</strong></div>
                                             <div><code>SKU: {{ row.6 }}</code></div>
-                                            <small class="text-muted">Brand: {{ row.9 }} | ID: {{ row.10 }}</small>
+                                            <small class="text-muted">Brand: {{ row.9 }}</small>
                                         </div>
                                     </div>
                                 </td>
@@ -259,47 +265,170 @@
 <script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
 <script>
 $(document).ready(function() {
-    // Inisialisasi DataTables
+    // ========================================
+    // 1. INISIALISASI DATATABLE
+    // ========================================
     $('#ordersTable').DataTable({
-        pageLength: 100,
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '/orders/data/',
+            type: 'GET',
+            error: function(xhr, error, thrown) {
+                console.error('DataTables AJAX error:', error, thrown);
+            }
+        },
+        pageLength: 25,
+        lengthMenu: [[25, 50, 100, 250], [25, 50, 100, 250]],
         order: [[0, 'desc']],
         searching: true,
         info: true,
-        lengthChange: false,
-        paging: false
-        // Tidak perlu columnDefs atau autoWidth lagi karena struktur HTML sudah diubah
+        lengthChange: true,
+        paging: true,
+        columns: [
+            { data: 0 }, // Tanggal Pembuatan
+            { data: 1 }, // Status
+            { data: 2 }, // Jenis Pesanan
+            { data: 3 }, // Channel
+            { data: 4 }, // Nama Toko
+            { data: 5 }, // ID Pesanan
+            { data: 6 }, // SKU
+            { data: 7 }, // Nama Produk
+            { data: 8 }, // Variant
+            { data: 9 }, // Brand
+            { data: 10 }, // Product ID (hidden)
+            { data: 11 }, // Jumlah
+            { data: 12 }, // Harga Promosi
+            { data: 13 }, // Catatan Pembeli
+            { data: 14 }, // Kurir
+            { data: 15 }, // AWB
+            { data: 16 }, // Metode Pengiriman
+            { data: 17 }, // Kirim Sebelum
+            { data: 18 }, // Order Type
+            { data: 19 }, // Nama Batch
+            { data: 20 }, // Jumlah Ambil
+            { data: 21 }, // Status Ambil
+            { data: 22 }, // Status Order
+            { data: 23 }, // Status Cancel
+            { data: 24 }, // Status Retur
+            { data: 25 }, // Status Bundle
+            { data: 26 }  // Photo URL
+        ],
+        columnDefs: [
+            {
+                // Photo column - lazy load
+                targets: 26,
+                render: function(data, type, row) {
+                    if (data) {
+                        return '<div class="photo-container" data-photo-url="' + data + '" style="width:60px; height:60px; display:flex; align-items:center; justify-content:center; background:#f8f9fa;">' +
+                               '<div class="spinner-border spinner-border-sm text-secondary" role="status"></div>' +
+                               '</div>';
+                    } else {
+                        return '<div style="width:60px; height:60px; display:flex; align-items:center; justify-content:center; border:2px dashed #dee2e6;">' +
+                               '<i class="bi bi-image text-muted" style="font-size:1.5rem; opacity:0.3;"></i>' +
+                               '</div>';
+                    }
+                }
+            }
+        ],
+        language: {
+            processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
+            lengthMenu: 'Tampilkan _MENU_ per halaman',
+            info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ order',
+            infoEmpty: 'Tidak ada data',
+            infoFiltered: '(difilter dari _MAX_ total order)',
+            paginate: {
+                first: 'Pertama',
+                last: 'Terakhir',
+                next: 'Berikutnya',
+                previous: 'Sebelumnya'
+            }
+        },
+        drawCallback: function() {
+            // Load photos after each draw (pagination, filter, etc)
+            loadProductPhotos();
+        }
     });
 
-    // Menampilkan foto di modal saat diklik
-    $('#ordersTable').on('click', '.clickable-photo', function(e) {
-        e.preventDefault(); // Mencegah link membuka tab baru
+    // ========================================
+    // 2. LOAD PRODUCT PHOTOS (LAZY LOAD)
+    // ========================================
+    function loadProductPhotos() {
+        $('.photo-container[data-photo-url]').each(function() {
+            const $container = $(this);
+            const photoUrl = $container.data('photo-url');
+            
+            // Skip jika sudah di-load atau URL kosong
+            if (!photoUrl || $container.hasClass('photo-loaded')) {
+                return;
+            }
+            
+            // Mark sebagai loading
+            $container.addClass('photo-loading');
+            
+            // Test image in memory dulu (NO DOM manipulation)
+            const testImg = new Image();
+            
+            testImg.onload = function() {
+                // SUCCESS: Image exists
+                $container.removeClass('photo-loading').addClass('photo-loaded');
+                $container.empty().html(
+                    '<a href="' + photoUrl + '" class="clickable-photo d-block w-100 h-100">' +
+                        '<img src="' + photoUrl + '" alt="Product" style="width:100%; height:100%; object-fit:cover; cursor:pointer;">' +
+                    '</a>'
+                );
+            };
+            
+            testImg.onerror = function() {
+                // ERROR: Image not found (404)
+                $container.removeClass('photo-loading').addClass('photo-loaded photo-error');
+                $container.empty().html(
+                    '<div class="d-flex align-items-center justify-content-center w-100 h-100" style="border:2px dashed #dee2e6;">' +
+                        '<i class="bi bi-image text-muted" style="font-size:2rem; opacity:0.3;"></i>' +
+                    '</div>'
+                );
+            };
+            
+            // Mulai test load
+            testImg.src = photoUrl;
+        });
+    }
 
-        const imageUrl = $(this).attr('href'); // Ambil URL dari link
-        $('#modalImage').attr('src', imageUrl); // Set URL ke gambar di dalam modal
-
+    // ========================================
+    // 3. PHOTO MODAL (CLICK TO ENLARGE)
+    // ========================================
+    $(document).on('click', '.clickable-photo', function(e) {
+        e.preventDefault();
+        const imgUrl = $(this).attr('href');
+        $('#modalImage').attr('src', imgUrl);
         const photoModal = new bootstrap.Modal(document.getElementById('photoModal'));
-        photoModal.show(); // Tampilkan modal
+        photoModal.show();
     });
 
-    // Notifikasi setelah extract-bundling
+    // ========================================
+    // 4. EXTRACT BUNDLING
+    // ========================================
     const bundlingForm = $('form[action="/orders/extract-bundling/"]');
     bundlingForm.on('submit', function(e) {
         e.preventDefault();
         const btn = bundlingForm.find('button[type="submit"]');
-        const txt = btn.html();
+        const originalText = btn.html();
+        
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Memproses...');
+        
         fetch('/orders/extract-bundling/', {
             method: 'POST',
             headers: { 'X-CSRFToken': bundlingForm.find('[name=csrfmiddlewaretoken]').val() }
         })
         .then(async res => {
-            btn.prop('disabled', false).html(txt);
+            btn.prop('disabled', false).html(originalText);
             let data = {};
             try { data = await res.json(); } catch {}
+            
             if (res.ok && data.success) {
-                let html = `<b>${data.extracted_count}</b> SKU yang berhasil diextract!`;
+                let html = '<b>' + data.extracted_count + '</b> SKU yang berhasil diextract!';
                 if (data.failed && data.failed.length > 0) {
-                    html += `<br><br><b>SKU Not Found:</b><br><code style='word-break:break-all;'>${data.failed.join(', ')}</code>`;
+                    html += '<br><br><b>SKU Not Found:</b><br><code style="word-break:break-all;">' + data.failed.join(', ') + '</code>';
                 }
                 Swal.fire({
                     icon: 'success',
@@ -317,22 +446,30 @@ $(document).ready(function() {
             }
         })
         .catch(() => {
-            btn.prop('disabled', false).html(txt);
-            Swal.fire({ icon: 'error', title: 'Extract Bundling gagal', confirmButtonText: 'OK' });
+            btn.prop('disabled', false).html(originalText);
+            Swal.fire({ 
+                icon: 'error', 
+                title: 'Extract Bundling gagal', 
+                confirmButtonText: 'OK' 
+            });
         });
     });
 
-    // Modal detail SKU Not Found
+    // ========================================
+    // 5. MODAL SKU NOT FOUND
+    // ========================================
     $('#showSkuNotFound').on('click', function(e) {
         e.preventDefault();
-        var modal = new bootstrap.Modal(document.getElementById('skuNotFoundModal'));
+        const modal = new bootstrap.Modal(document.getElementById('skuNotFoundModal'));
         modal.show();
     });
 
-    // BARU: Modal detail SKU No Product
+    // ========================================
+    // 6. MODAL SKU NO PRODUCT
+    // ========================================
     $('#showSkuNoProduct').on('click', function(e) {
         e.preventDefault();
-        var modal = new bootstrap.Modal(document.getElementById('skuNoProductModal'));
+        const modal = new bootstrap.Modal(document.getElementById('skuNoProductModal'));
         modal.show();
     });
 });

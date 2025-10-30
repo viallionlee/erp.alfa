@@ -325,11 +325,9 @@ function renderTable(data) {
         if (purchase.status_value === 'verified') badgeClass = 'info';
         if (purchase.status_value === 'cancelled') badgeClass = 'danger';
         
-        // Update button - Combined Verify and Receive
+        // Update button - Receive only (Verify moved to Purchase Verify List)
         let updateBtn = '<span class="text-muted">-</span>';
-        if (purchase.status_value === 'received' && window.PERMISSIONS.finance) {
-            updateBtn = '<a href="/purchaseorder/purchase/' + purchase.id + '/verify/" class="btn btn-sm btn-info">Verify</a>';
-        } else if (purchase.status_value === 'pending' && window.PERMISSIONS.warehouse) {
+        if (purchase.status_value === 'pending' && window.PERMISSIONS.warehouse) {
             updateBtn = '<a href="/purchaseorder/purchase/' + purchase.id + '/" class="btn btn-sm btn-success">Receive</a>';
         }
         
@@ -344,13 +342,13 @@ function renderTable(data) {
         dropdownItems += '<li><a class="dropdown-item" href="/purchaseorder/purchase/' + purchase.id + '/"><i class="bi bi-eye"></i> Detail</a></li>';
         hasActions = true;
         
-        // Edit button (warehouse permission)
-        if ((purchase.status_value === 'draft' || purchase.status_value === 'pending') && window.PERMISSIONS.warehouse) {
+        // Edit button (warehouse permission) - Can edit draft, pending, and received (not verified)
+        if ((purchase.status_value === 'draft' || purchase.status_value === 'pending' || purchase.status_value === 'received') && window.PERMISSIONS.warehouse) {
             dropdownItems += '<li><a class="dropdown-item" href="/purchaseorder/purchase/' + purchase.id + '/edit/"><i class="bi bi-pencil"></i> Edit</a></li>';
             hasActions = true;
         }
         
-        // Hapus button (warehouse permission)
+        // Hapus button (warehouse permission) - Can delete draft and pending only
         if ((purchase.status_value === 'draft' || purchase.status_value === 'pending') && window.PERMISSIONS.warehouse) {
             dropdownItems += '<li><hr class="dropdown-divider"></li>';
             dropdownItems += '<li><button class="dropdown-item text-danger btn-delete-purchase" data-purchase-id="' + purchase.id + '" data-purchase-nomor="' + purchase.nomor_purchase + '" data-purchase-supplier="' + purchase.supplier + '" data-purchase-total="' + purchase.total_amount_formatted + '"><i class="bi bi-trash"></i> Hapus</button></li>';

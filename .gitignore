@@ -14,10 +14,13 @@ ENV/
 *.log
 db.sqlite3
 db.sqlite3-journal
-/media/
+# /media/  ← UNIGNORE untuk backup foto produk di git
 /staticfiles/
 /static/admin/
 /static/rest_framework/
+
+# Media - Ignore semua kecuali product_photos (untuk development)
+# Untuk production, sebaiknya gunakan cloud storage (S3, GCS, dll)
 
 # IDE
 .vscode/

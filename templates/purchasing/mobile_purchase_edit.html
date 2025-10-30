@@ -642,7 +642,7 @@
                 <div class="compact-input-group">
                     <div class="form-group">
                         <label>Tanggal Purchase</label>
-                        <input type="datetime-local" name="tanggal_purchase" value="{{ purchase.tanggal_purchase|date:'Y-m-d\TH:i' }}" class="compact-input" required>
+                        <input type="date" name="tanggal_purchase" value="{{ purchase.tanggal_purchase|date:'Y-m-d' }}" class="compact-input" required>
                     </div>
                     <div class="form-group">
                         <label>Supplier</label>
@@ -655,6 +655,17 @@
                             {% endfor %}
                         </select>
                     </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Nomor PO (Opsional)</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="nomor_po" class="compact-input" placeholder="Kosongkan jika tidak ada PO" value="{{ purchase.po.nomor_po|default:'' }}" readonly style="flex: 1;">
+                        <button type="button" class="btn btn-sm btn-primary" id="cari_po_btn">
+                            <i class="bi bi-search"></i> Cari PO
+                        </button>
+                    </div>
+                    <input type="hidden" name="po_id" id="po_id" value="{% if purchase.po %}{{ purchase.po.id }}{% endif %}">
                 </div>
                 
                 <div class="form-group">
@@ -918,6 +929,7 @@ $(document).ready(function() {
     // Fungsi untuk mengecek daftar produk
     function checkProductList() {
         const count = $('#products-list .compact-added-product').length;
+        console.log('[checkProductList] Updating count:', count);
         $('#product-count').text(count);
         if (count > 0) {
             $('#no-product-msg').hide();
@@ -1133,6 +1145,220 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Cari PO functionality
+$('#cari_po_btn').on('click', function() {
+    const supplierId = $('select[name="supplier_id"]').val();
+    if (!supplierId) {
+        alert('Pilih supplier terlebih dahulu');
+        return;
+    }
+    $('#cariPoModal').modal('show');
+    loadPOList(supplierId);
+});
+
+function loadPOList(supplierId) {
+    $('#po_list_tbody').html('<tr><td colspan="4" class="text-center"><i class="bi bi-hourglass-split"></i> Loading...</td></tr>');
+    
+    // Only allow draft and pending status for tarik PO
+    const allowedStatuses = ['draft', 'pending'];
+    
+    $.getJSON('/purchaseorder/data/', {
+        supplier_id: supplierId,
+        search_type: 'supplier',
+        length: 100  // Get more results
+    }, function(response) {
+        let html = '';
+        let filteredData = [];
+        
+        // Filter only draft and pending PO
+        if (response.data && response.data.length > 0) {
+            filteredData = response.data.filter(function(po) {
+                // Check status from response (case insensitive)
+                const status = po.status ? po.status.toLowerCase() : '';
+                return status === 'draft' || status === 'pending';
+            });
+        }
+        
+        console.log('[Mobile Purchase Edit] Total PO:', response.data ? response.data.length : 0);
+        console.log('[Mobile Purchase Edit] Filtered PO (draft/pending):', filteredData.length);
+        
+        if (filteredData.length > 0) {
+            filteredData.forEach(function(po) {
+                let statusBadge = '';
+                const status = po.status ? po.status.toLowerCase() : '';
+                
+                if (status === 'draft') {
+                    statusBadge = '<span class="badge bg-warning">Draft</span>';
+                } else if (status === 'pending') {
+                    statusBadge = '<span class="badge bg-info">Pending</span>';
+                }
+                
+                html += `
+                    <tr>
+                        <td style="font-size: 0.85rem;">${po.nomor_po || '-'}</td>
+                        <td style="font-size: 0.85rem;">${po.tanggal_po || '-'}</td>
+                        <td style="font-size: 0.85rem;">${statusBadge}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary pilih-po-btn" data-po-id="${po.id}" data-po-nomor="${po.nomor_po}">
+                                <i class="bi bi-check-circle"></i> Pilih
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        } else {
+            html = '<tr><td colspan="4" class="text-center text-muted">Tidak ada PO (Draft/Pending) untuk supplier ini</td></tr>';
+        }
+        $('#po_list_tbody').html(html);
+    }).fail(function() {
+        $('#po_list_tbody').html('<tr><td colspan="4" class="text-center text-danger">Error loading PO data</td></tr>');
+    });
+}
+
+$(document).on('click', '.pilih-po-btn', function() {
+    const poId = $(this).data('po-id');
+    const poNomor = $(this).data('po-nomor');
+
+    $('#nomor_po').val(poNomor);
+    $('#po_id').val(poId);
+    $('#cariPoModal').modal('hide');
+
+    $.getJSON('/purchaseorder/' + poId + '/json/', function(poData) {
+        console.log('[Mobile Purchase Edit] PO Data loaded:', poData);
+        console.log('[Mobile Purchase Edit] Items count:', poData.items ? poData.items.length : 0);
+        
+        // Auto-fill supplier jika belum ada
+        if (poData.supplier && !$('select[name="supplier_id"]').val()) {
+            $('select[name="supplier_id"]').val(poData.supplier.id);
+        }
+        
+        // Clear existing products
+        console.log('[Mobile Purchase Edit] Clearing products list...');
+        $('#products-list').empty();
+        
+        // Add products from PO
+        if (poData.items && poData.items.length) {
+            console.log('[Mobile Purchase Edit] Adding', poData.items.length, 'products from PO...');
+            
+            poData.items.forEach(function(item, index) {
+                console.log('[Mobile Purchase Edit] Processing item', index + 1, ':', item.product.sku);
+                
+                const produk = {
+                    id: item.product.id,
+                    sku: item.product.sku,
+                    barcode: item.product.barcode,
+                    nama_produk: item.product.nama_produk,
+                    variant_produk: item.product.variant_produk,
+                    brand: item.product.brand,
+                    harga_beli: item.harga_beli || 0,
+                    photo_url: item.product.photo_url || ''
+                };
+                
+                console.log('[Mobile Purchase Edit] Product data:', produk);
+                console.log('[Mobile Purchase Edit] Quantity:', item.quantity, 'Harga Beli:', item.harga_beli);
+                
+                // Create product HTML with correct quantity and harga_beli from PO
+                const photoUrl = produk.photo_url ? produk.photo_url : null;
+                
+                let itemHtml = `
+                    <div class="compact-added-product" data-sku="${produk.sku}" data-product-id="${produk.id}">
+                        <div class="compact-added-top">
+                            ${photoUrl ? 
+                                `<div class="compact-added-photo">
+                                    <img src="${photoUrl}" alt="${produk.sku}"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                         loading="lazy">
+                                    <div class="compact-added-photo-placeholder" style="display: none;">
+                                        <i class="bi bi-box"></i>
+                                    </div>
+                                </div>` :
+                                `<div class="compact-added-photo-placeholder"><i class="bi bi-box"></i></div>`
+                            }
+                            <div class="compact-added-content">
+                                <div class="compact-added-row">
+                                    <span class="compact-added-sku-barcode">${produk.sku}</span>
+                                    <span class="compact-added-sku-barcode">${produk.barcode || ''}</span>
+                                </div>
+                                <div class="compact-added-name">${produk.nama_produk || ''}</div>
+                                <div class="compact-added-brand-variant">
+                                    ${produk.brand ? `<span class="compact-added-brand">${produk.brand}</span>` : ''}
+                                    ${produk.variant_produk ? `<span class="compact-added-variant">${produk.variant_produk}</span>` : ''}
+                                </div>
+                            </div>
+
+                            <div class="compact-qty-controls">
+                                <button type="button" class="compact-qty-btn btn-minus">-</button>
+                                <input type="number" name="produk_qty[]" class="compact-qty-input" value="${item.quantity || 1}" min="1">
+                                <button type="button" class="compact-qty-btn btn-plus">+</button>
+                            </div>
+                        </div>
+
+                        <button type="button" class="compact-remove-btn btn-remove">
+                            <i class="bi bi-x"></i>
+                        </button>
+
+                        <input type="hidden" name="produk_id[]" value="${produk.id}">
+                        <input type="hidden" name="produk_sku[]" value="${produk.sku}">
+                        <input type="hidden" name="produk_harga_beli[]" value="${item.harga_beli || 0}">
+                    </div>
+                `;
+                
+                $('#products-list').append(itemHtml);
+                console.log('[Mobile Purchase Edit] Product added to list');
+            });
+            
+            // Update product count
+            const finalCount = $('#products-list .compact-added-product').length;
+            $('#product-count').text(finalCount);
+            console.log('[Mobile Purchase Edit] Final product count:', finalCount);
+            
+            // Hide empty message if products added
+            if (finalCount > 0) {
+                $('#no-product-msg').hide();
+            }
+            
+            alert('PO berhasil dimuat! ' + poData.items.length + ' produk ditambahkan.');
+        } else {
+            console.log('[Mobile Purchase Edit] No items in PO');
+            alert('PO tidak memiliki produk.');
+        }
+    }).fail(function(xhr, status, error) {
+        console.error('[Mobile Purchase Edit] Error loading PO:', error);
+        console.error('[Mobile Purchase Edit] XHR:', xhr);
+        alert('Error loading PO data: ' + error);
+    });
+});
 </script>
+
+<!-- Modal Cari PO -->
+<div class="modal fade" id="cariPoModal" tabindex="-1" aria-labelledby="cariPoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title" id="cariPoModalLabel">Cari Purchase Order</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th style="font-size: 0.85rem;">Nomor PO</th>
+                                <th style="font-size: 0.85rem;">Tanggal</th>
+                                <th style="font-size: 0.85rem;">Status</th>
+                                <th style="font-size: 0.85rem; width: 100px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="po_list_tbody">
+                            <tr><td colspan="4" class="text-center">Pilih supplier terlebih dahulu</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 

@@ -58,6 +58,29 @@
         margin-bottom: 5px;
     }
     
+    .purchase-card-badges {
+        display: flex;
+        gap: 5px;
+        margin-top: 5px;
+        flex-wrap: wrap;
+    }
+    
+    .info-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 2px 6px;
+        border-radius: 8px;
+        font-size: 0.65rem;
+        font-weight: 500;
+        background: #e7f1ff;
+        color: #0d6efd;
+    }
+    
+    .info-badge i {
+        font-size: 0.7rem;
+    }
+    
     .status-badge {
         padding: 3px 8px;
         border-radius: 10px;
@@ -271,27 +294,31 @@ function renderList(data) {
         html += '</div>';
         
         html += '<div class="purchase-card-meta">';
-        html += '<div>Tanggal: ' + purchase.tanggal_purchase + ' | Supplier: ' + purchase.supplier + '</div>';
+        // Format date without time (already in Y-m-d from API)
+        let tanggalFormatted = purchase.tanggal_purchase || '-';
+        html += '<div>Tanggal: ' + tanggalFormatted + ' | Supplier: ' + purchase.supplier + '</div>';
+        
+        // Add badges for total items and total qty
+        html += '<div class="purchase-card-badges">';
+        html += '<span class="info-badge"><i class="bi bi-box-seam"></i> ' + (purchase.total_items || 0) + ' Item</span>';
+        html += '<span class="info-badge"><i class="bi bi-123"></i> ' + (purchase.total_qty || 0) + ' Qty</span>';
+        html += '</div>';
+        
         html += '</div>';
         
         html += '<div class="purchase-card-footer">';
         html += '<div class="purchase-total">Rp ' + purchase.total_amount_formatted + '</div>';
         html += '<div class="purchase-actions">';
         
-        // Receive button (Warehouse) - only for verified status
-        if (purchase.status_value === 'verified' && window.PERMISSIONS.warehouse) {
-            html += '<a href="/purchaseorder/purchase/' + purchase.id + '/receive/" class="btn-success" title="Receive"><i class="bi bi-box-arrow-in-down"></i></a>';
-        }
-        
         // Detail button - always show
         html += '<a href="/purchaseorder/purchase/' + purchase.id + '/" class="btn-info" title="Detail"><i class="bi bi-eye"></i></a>';
         
-        // Edit button (Warehouse)
-        if ((purchase.status_value === 'draft' || purchase.status_value === 'pending') && window.PERMISSIONS.warehouse) {
+        // Edit button (Warehouse) - Can edit draft, pending, and received (not verified)
+        if ((purchase.status_value === 'draft' || purchase.status_value === 'pending' || purchase.status_value === 'received') && window.PERMISSIONS.warehouse) {
             html += '<a href="/purchaseorder/purchase/' + purchase.id + '/edit/" class="btn-primary" title="Edit"><i class="bi bi-pencil"></i></a>';
         }
         
-        // Delete button (Warehouse)
+        // Delete button (Warehouse) - Can delete draft and pending only
         if ((purchase.status_value === 'draft' || purchase.status_value === 'pending') && window.PERMISSIONS.warehouse) {
             html += '<button class="btn-danger btn-delete-purchase" data-id="' + purchase.id + '" title="Hapus"><i class="bi bi-trash"></i></button>';
         }

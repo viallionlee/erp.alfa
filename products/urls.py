@@ -35,6 +35,10 @@ urlpatterns = [
     path('api/extra-barcodes/<int:product_id>/', views.get_product_extra_barcodes, name='api_get_extra_barcodes'),
     path('api/add-extra-barcode/', views.add_extra_barcode, name='api_add_extra_barcode'),
     path('api/delete-extra-barcode/<int:barcode_id>/', views.api_delete_extra_barcode, name='api_delete_extra_barcode'),
+    
+    # URL API untuk Photo Upload
+    path('api/upload-photo/<int:product_id>/', views.upload_product_photo, name='api_upload_product_photo'),
+    
     path('add_history/', views.add_history_view, name='add_history'),
 
     # Dashboard Stok Produk per Rak

@@ -1158,49 +1158,119 @@ def get_product_extra_barcodes(request, product_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
-@require_POST
 @login_required
 @permission_required('products.add_product', raise_exception=True)
 def add_extra_barcode(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
     try:
-        data = json.loads(request.body)
-        product_id = data.get('product_id')
-        barcode_value = data.get('barcode_value')
+        # Support both JSON and Form POST
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            product_id = data.get('product_id')
+            barcode_value = data.get('barcode_value')
+        else:
+            # Form POST - get product_id from query string (safe from formatting issues)
+            product_id = request.GET.get('product_id') or request.POST.get('product_id')
+            barcode_value = request.POST.get('barcode_value')
+        
+        # Clean product_id (remove any dots, commas, or non-digit characters)
+        if product_id:
+            product_id = str(product_id).replace('.', '').replace(',', '').strip()
+            # Convert to int to validate it's a number
+            try:
+                product_id = int(product_id)
+            except (ValueError, TypeError):
+                error_msg = f'Product ID tidak valid: {product_id}'
+                if request.content_type == 'application/json':
+                    return JsonResponse({'success': False, 'error': error_msg}, status=400)
+                else:
+                    messages.error(request, error_msg)
+                    return redirect('products:index')
         
         if barcode_value:
             barcode_value = barcode_value.strip()
 
         if not product_id or not barcode_value:
-            return JsonResponse({'success': False, 'error': 'Product ID dan Barcode diperlukan.'}, status=400)
+            if request.content_type == 'application/json':
+                return JsonResponse({'success': False, 'error': 'Product ID dan Barcode diperlukan.'}, status=400)
+            else:
+                messages.error(request, 'Product ID dan Barcode diperlukan.')
+                return redirect('products:edit_product', pk=product_id) if product_id else redirect('products:index')
 
         product = Product.objects.get(id=product_id)
 
         if Product.objects.filter(barcode=barcode_value).exists():
-            return JsonResponse({'success': False, 'error': 'Barcode ini sudah menjadi barcode utama produk lain atau produk ini.'}, status=400)
+            error_msg = 'Barcode ini sudah menjadi barcode utama produk lain.'
+            if request.content_type == 'application/json':
+                return JsonResponse({'success': False, 'error': error_msg}, status=400)
+            else:
+                messages.error(request, error_msg)
+                return redirect('products:edit_product', pk=product_id)
 
         if ProductExtraBarcode.objects.filter(barcode=barcode_value).exists(): 
-            return JsonResponse({'success': False, 'error': 'Barcode ini sudah terdaftar sebagai extra barcode.'}, status=400)
+            error_msg = 'Barcode ini sudah terdaftar sebagai extra barcode.'
+            if request.content_type == 'application/json':
+                return JsonResponse({'success': False, 'error': error_msg}, status=400)
+            else:
+                messages.error(request, error_msg)
+                return redirect('products:edit_product', pk=product_id)
 
         ProductExtraBarcode.objects.create(product=product, barcode=barcode_value) 
         
-        return JsonResponse({'success': True, 'message': 'Extra barcode berhasil ditambahkan.'})
-    except Product.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Produk tidak ditemukan.'}, status=404)
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        if request.content_type == 'application/json':
+            return JsonResponse({'success': True, 'message': 'Extra barcode berhasil ditambahkan.'})
+        else:
+            messages.success(request, f'Extra barcode "{barcode_value}" berhasil ditambahkan!')
+            return redirect('products:edit_product', pk=product_id)
 
-@require_POST
+    except Product.DoesNotExist:
+        error_msg = 'Produk tidak ditemukan.'
+        if request.content_type == 'application/json':
+            return JsonResponse({'success': False, 'error': error_msg}, status=404)
+        else:
+            messages.error(request, error_msg)
+            return redirect('products:index')
+    except Exception as e:
+        error_msg = str(e)
+        if request.content_type == 'application/json':
+            return JsonResponse({'success': False, 'error': error_msg}, status=500)
+        else:
+            messages.error(request, error_msg)
+            return redirect('products:edit_product', pk=product_id) if product_id else redirect('products:index')
+
 @login_required
 @permission_required('products.delete_product', raise_exception=True)
 def api_delete_extra_barcode(request, barcode_id):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    
     try:
         extra_barcode = ProductExtraBarcode.objects.get(id=barcode_id)
+        product_id = extra_barcode.product.id
+        barcode_value = extra_barcode.barcode
         extra_barcode.delete()
-        return JsonResponse({'success': True, 'message': 'Extra barcode berhasil dihapus.'})
+        
+        if request.content_type == 'application/json':
+            return JsonResponse({'success': True, 'message': 'Extra barcode berhasil dihapus.'})
+        else:
+            messages.success(request, f'Extra barcode "{barcode_value}" berhasil dihapus!')
+            return redirect('products:edit_product', pk=product_id)
     except ProductExtraBarcode.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Extra barcode tidak ditemukan.'}, status=404)
+        error_msg = 'Extra barcode tidak ditemukan.'
+        if request.content_type == 'application/json':
+            return JsonResponse({'success': False, 'error': error_msg}, status=404)
+        else:
+            messages.error(request, error_msg)
+            return redirect('products:index')
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        error_msg = str(e)
+        if request.content_type == 'application/json':
+            return JsonResponse({'success': False, 'error': error_msg}, status=500)
+        else:
+            messages.error(request, error_msg)
+            return redirect('products:index')
 
 def add_history_view(request):
     add_history = ProductAddHistory.objects.select_related('product', 'added_by').all().order_by('-added_at')
@@ -2112,6 +2182,72 @@ def product_dimension_data(request):
             'error': str(e)
         }, status=500)
 
+
+@require_POST
+@login_required
+@permission_required('products.change_product', raise_exception=True)
+def upload_product_photo(request, product_id):
+    """
+    AJAX endpoint untuk upload foto produk secara otomatis
+    """
+    try:
+        product = get_object_or_404(Product, id=product_id)
+        
+        if 'photo' not in request.FILES:
+            return JsonResponse({
+                'success': False,
+                'error': 'Tidak ada file yang diupload'
+            }, status=400)
+        
+        photo_file = request.FILES['photo']
+        
+        # Validate file type
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+        if photo_file.content_type not in allowed_types:
+            return JsonResponse({
+                'success': False,
+                'error': 'Format file tidak didukung. Gunakan JPG, PNG, GIF, atau WEBP'
+            }, status=400)
+        
+        # Validate file size (5MB)
+        if photo_file.size > 5 * 1024 * 1024:
+            return JsonResponse({
+                'success': False,
+                'error': 'Ukuran file maksimal 5MB'
+            }, status=400)
+        
+        # Save old photo URL for logging
+        old_photo_url = product.photo.url if product.photo else None
+        
+        # Update product photo
+        product.photo = photo_file
+        product.save()
+        
+        # Log the change
+        EditProductLog.objects.create(
+            product=product,
+            edited_by=request.user,
+            field_name='photo',
+            old_value=old_photo_url or 'No photo',
+            new_value=product.photo.url,
+            change_type='UPDATE',
+            notes=f'Foto produk diupload via AJAX. File: {photo_file.name}',
+            product_sku=product.sku,
+            product_name=product.nama_produk,
+            product_barcode=product.barcode
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Foto produk berhasil diupload',
+            'photo_url': product.photo.url
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Terjadi kesalahan: {str(e)}'
+        }, status=500)
 
 @require_POST
 @csrf_exempt

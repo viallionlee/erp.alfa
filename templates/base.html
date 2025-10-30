@@ -286,9 +286,30 @@
                             <li><a class="dropdown-item {% if '/finance/cash-flow/' in request.path %}active{% endif %}" href="{% url 'finance:cash_flow_list' %}">Cash Flow</a></li>
                             <li><a class="dropdown-item {% if '/finance/budget/' in request.path %}active{% endif %}" href="{% url 'finance:budget_list' %}">Budget</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item {% if '/purchasing/purchase-verify/' in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_verify_list' %}">Purchase Verify</a></li>
-                            <li><a class="dropdown-item {% if '/purchasing/purchase-payment/' in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_payment_list' %}">Purchase Payment</a></li>
-                            <li><a class="dropdown-item {% if '/purchasing/purchase-taxinvoice/' in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_taxinvoice_list' %}">Purchase Tax Invoice</a></li>
+                            <li><a class="dropdown-item {% if '/purchasing/purchase-verify/' in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_verify_list' %}">
+                                Purchase Verify
+                                {% if purchase_verify_pending_count > 0 %}
+                                    <span class="badge bg-warning ms-2" title="Belum Verified: {{ purchase_verify_pending_count }}">
+                                        {{ purchase_verify_pending_count }}
+                                    </span>
+                                {% endif %}
+                            </a></li>
+                            <li><a class="dropdown-item {% if '/purchasing/purchase-payment/' in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_payment_list' %}">
+                                Purchase Payment
+                                {% if purchase_payment_unpaid_count > 0 %}
+                                    <span class="badge bg-danger ms-2" title="Unpaid/Partial: {{ purchase_payment_unpaid_count }}">
+                                        {{ purchase_payment_unpaid_count }}
+                                    </span>
+                                {% endif %}
+                            </a></li>
+                            <li><a class="dropdown-item {% if '/purchasing/purchase-taxinvoice/' in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_taxinvoice_list' %}">
+                                Purchase Tax Invoice
+                                {% if purchase_taxinvoice_pending_count > 0 %}
+                                    <span class="badge bg-info ms-2" title="Pending Tax Invoice: {{ purchase_taxinvoice_pending_count }}">
+                                        {{ purchase_taxinvoice_pending_count }}
+                                    </span>
+                                {% endif %}
+                            </a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item {% if '/finance/reports/' in request.path %}active{% endif %}" href="{% url 'finance:financial_reports' %}">Financial Reports</a></li>
                             <li><a class="dropdown-item {% if '/finance/reports/trial-balance/' in request.path %}active{% endif %}" href="{% url 'finance:trial_balance' %}">Trial Balance</a></li>
@@ -401,6 +422,39 @@
                         batchBadge.style.display = 'inline';
                     } else {
                         batchBadge.style.display = 'none';
+                    }
+                }
+                
+                // Update purchase verify count
+                const purchaseVerifyBadge = document.querySelector('a[href*="/purchasing/purchase-verify/"] .badge');
+                if (purchaseVerifyBadge) {
+                    if (data.purchase_verify_pending_count > 0) {
+                        purchaseVerifyBadge.textContent = data.purchase_verify_pending_count;
+                        purchaseVerifyBadge.style.display = 'inline';
+                    } else {
+                        purchaseVerifyBadge.style.display = 'none';
+                    }
+                }
+                
+                // Update purchase payment count
+                const purchasePaymentBadge = document.querySelector('a[href*="/purchasing/purchase-payment/"] .badge');
+                if (purchasePaymentBadge) {
+                    if (data.purchase_payment_unpaid_count > 0) {
+                        purchasePaymentBadge.textContent = data.purchase_payment_unpaid_count;
+                        purchasePaymentBadge.style.display = 'inline';
+                    } else {
+                        purchasePaymentBadge.style.display = 'none';
+                    }
+                }
+                
+                // Update purchase tax invoice count
+                const purchaseTaxInvoiceBadge = document.querySelector('a[href*="/purchasing/purchase-taxinvoice/"] .badge');
+                if (purchaseTaxInvoiceBadge) {
+                    if (data.purchase_taxinvoice_pending_count > 0) {
+                        purchaseTaxInvoiceBadge.textContent = data.purchase_taxinvoice_pending_count;
+                        purchaseTaxInvoiceBadge.style.display = 'inline';
+                    } else {
+                        purchaseTaxInvoiceBadge.style.display = 'none';
                     }
                 }
                 

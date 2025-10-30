@@ -33,6 +33,7 @@ urlpatterns = [
     path('api/delete-order-item/', delete_order_item, name='delete_order_item'),
 
     # Endpoint API & Data
+    path('data/', views.orders_table_data, name='orders_table_data'),  # For main orders list page
     path('datatable/', views.orders_datatable, name='orders_datatable'),
     path('download-orders/', views.download_orders, name='download_orders'),
     path('unique-filters/', unique_order_filters, name='orders_unique_filters'),
