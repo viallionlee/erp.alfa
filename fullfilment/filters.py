@@ -1,15 +1,34 @@
 import django_filters
 from orders.models import Order
 from django.db.models import Q
+from django import forms
 
 def filtered_order_queryset():
     return Order.objects.filter(status__iexact='Lunas').filter(Q(nama_batch__isnull=True) | Q(nama_batch=''))
+
+# --- FUNGSI BARU UNTUK SORTING KURIR PRIORITAS ---
+def sort_courier_priority(courier_tuple):
+    """
+    Mengurutkan kurir dengan prioritas: Instant/Gojek/Grab/Same Day di atas, sisanya di bawah.
+    """
+    courier_name = (courier_tuple[0] or '').lower()
+    
+    # Kata kunci prioritas (case insensitive)
+    priority_keywords = ['instant', 'gojek', 'grab', 'same day', 'sameday']
+    
+    # Cek apakah kurir mengandung kata kunci prioritas
+    for keyword in priority_keywords:
+        if keyword in courier_name:
+            return (0, courier_name)  # Prioritas tinggi (0 = paling atas)
+    
+    return (1, courier_name)  # Prioritas rendah (1 = di bawah)
 
 class GenerateBatchOrderFilter(django_filters.FilterSet):
     nama_toko = django_filters.MultipleChoiceFilter(
         choices=lambda: sorted(filtered_order_queryset().values_list('nama_toko', 'nama_toko').distinct(), key=lambda x: (x[0] or '').lower()),
         label='Nama Toko',
-        conjoined=False
+        conjoined=False,
+        widget=forms.SelectMultiple(attrs={'size': '8'})
     )
     brand = django_filters.MultipleChoiceFilter(
         field_name='product__brand',
@@ -21,28 +40,34 @@ class GenerateBatchOrderFilter(django_filters.FilterSet):
             key=lambda x: (x[0] or '').lower()
         ),
         label='Brand',
-        conjoined=False
+        conjoined=False,
+        widget=forms.SelectMultiple(attrs={'size': '8'})
     )
     order_type = django_filters.MultipleChoiceFilter(
         choices=lambda: sorted(filtered_order_queryset().values_list('order_type', 'order_type').distinct(), key=lambda x: (x[0] or '')),
         label='Order Type',
-        conjoined=False
+        conjoined=False,
+        widget=forms.SelectMultiple(attrs={'size': '8'})
     )
     tanggal_pembuatan = django_filters.DateFilter(field_name='tanggal_pembuatan', lookup_expr='exact', label='Tanggal Pembuatan (YYYY-MM-DD)')
     kurir = django_filters.MultipleChoiceFilter(
-        choices=lambda: sorted(filtered_order_queryset().exclude(kurir__isnull=True).exclude(kurir='').values_list('kurir', 'kurir').distinct(), key=lambda x: (x[0] or '').lower()),
+        # PERBAIKAN DI BAGIAN CHOICES
+        choices=lambda: sorted(filtered_order_queryset().values_list('kurir', 'kurir').distinct(), key=sort_courier_priority),  # 3. Gunakan fungsi sorting kustom
         label='Kurir',
-        conjoined=False
+        conjoined=False,
+        widget=forms.SelectMultiple(attrs={'size': '8'})
     )
     kirim_sebelum = django_filters.MultipleChoiceFilter(
         choices=lambda: sorted(filtered_order_queryset().exclude(kirim_sebelum__isnull=True).exclude(kirim_sebelum='').values_list('kirim_sebelum', 'kirim_sebelum').distinct(), key=lambda x: (x[0] or '')),
         label='Kirim Sebelum',
-        conjoined=False
+        conjoined=False,
+        widget=forms.SelectMultiple(attrs={'size': '8'})
     )
     id_pesanan = django_filters.MultipleChoiceFilter(
-        choices=lambda: sorted(filtered_order_queryset().exclude(id_pesanan__isnull=True).exclude(id_pesanan='').values_list('id_pesanan', 'id_pesanan').distinct(), key=lambda x: (x[0] or '')),
+        choices=lambda: sorted(filtered_order_queryset().order_by('-id').values_list('id_pesanan', 'id_pesanan').distinct(), key=lambda x: (x[0] or '').lower()),
         label='ID Pesanan',
-        conjoined=False
+        conjoined=False,
+        widget=forms.SelectMultiple(attrs={'size': '8'})
     )
 
     def filter_queryset(self, queryset):

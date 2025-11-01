@@ -15,6 +15,8 @@ import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+print(f"DEBUG: BASE_DIR is {BASE_DIR}")
+print(f"DEBUG: STATICFILES_DIRS[0] is {os.path.join(BASE_DIR, 'static')}")
 
 
 # Quick-start development settings - unsuitable for production
@@ -24,13 +26,26 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-s&efx(f9_)70+@7^ev459#$ahvs6%*b&r8#1%0!+g#c!)wsaow'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = [
     'localhost',
-    '127.0.0.1',
-    '192.168.68.127',  # local IP for mobile access
+    '127.0.0.1', 
+    '192.168.68.112',
+    '192.168.68.*',
+    'erp.local',
+    'alfa.erp',
+    'testserver',
+    'eewvqzetol.a.pinggy.link',
 ]
+
+# Trust Pinggy tunnel origins for CSRF
+CSRF_TRUSTED_ORIGINS = [
+    'https://eewvqzetol.a.pinggy.link',
+]
+
+# If behind a reverse proxy/tunnel that forwards proto
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Application definition
@@ -42,14 +57,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'products',
     'orders',
     'inventory',
     'fullfilment',
+    'purchasing',
+    'accounts.apps.AccountsConfig',
+    'finance.apps.FinanceConfig',
     'django_tables2',
     'django_filters',
     'django_extensions',
-    'demo.apps.DemoConfig',
+    # 'channels',
 ]
 
 MIDDLEWARE = [
@@ -60,6 +79,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'erp_alfa.middleware.SessionExpiryMessageMiddleware',
 ]
 
 ROOT_URLCONF = 'erp_alfa.urls'
@@ -74,12 +94,16 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'erp_alfa.context_processors.notification_counts',
+                'erp_alfa.context_processors.purchasing_permissions',
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = 'erp_alfa.wsgi.application'
+
+ASGI_APPLICATION = 'erp_alfa.asgi.application'
 
 
 # Database
@@ -127,18 +151,27 @@ USE_I18N = True
 
 USE_TZ = True
 
+# Number formatting
+USE_THOUSAND_SEPARATOR = True
+NUMBER_GROUPING = 3
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = '/static/'  # Tambahkan forward slash
+
+# Direktori tempat Django akan mencari file statis tambahan
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',
+    os.path.join(BASE_DIR, 'static'),
 ]
+
+# Direktori tempat file statis dikumpulkan saat deploy (python manage.py collectstatic)
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Media files (Product Images, etc)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Gunakan os.path.join untuk konsistensi
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -171,3 +204,56 @@ LOGGING = {
         },
     },
 }
+
+# Konfigurasi Channel Layers
+# Contoh menggunakan in-memory channel layer (untuk development/testing sederhana)
+# Untuk produksi, sebaiknya pakai Redis
+if DEBUG:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer"
+        }
+    }
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [("127.0.0.1", 6379)],
+            },
+        },
+    }
+
+# Jika kamu ingin pakai Redis (direkomendasikan untuk produksi):
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "channels_redis.core.RedisChannelLayer",
+#         "CONFIG": {
+#             "hosts": [("127.0.0.1", 6379)], # Sesuaikan dengan host dan port Redis kamu
+#         },
+#     },
+# }
+
+# Ubah nilai ini untuk menaikkan batas ukuran upload file
+# Defaultnya 2.5 MB (2621440 bytes)
+# Contoh: Untuk 10 MB
+# DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760 # 10 MB
+# FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760 # 10 MB
+
+# Untuk 100 MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600 # 100 MB (100 * 1024 * 1024)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600 # 100 MB (100 * 1024 * 1024)
+
+# Session settings - 1 hari (24 jam)
+SESSION_COOKIE_AGE = 86400  # 24 jam = 24*60*60 detik
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Session tidak hilang saat browser ditutup
+SESSION_SAVE_EVERY_REQUEST = True  # Update session setiap request untuk tracking activity
+
+# Idle timeout settings (1 jam = 3600 detik)
+IDLE_TIMEOUT = 3600  # 1 jam dalam detik
+
+LOGIN_URL = '/login/' # Sesuaikan dengan URL login Anda
+LOGIN_REDIRECT_URL = '/'  # Setelah login, redirect ke halaman utama
+LOGOUT_REDIRECT_URL = '/login/'  # Setelah logout, redirect ke login
+
+HANDLER403 = 'erp_alfa.views.custom_permission_denied_view'

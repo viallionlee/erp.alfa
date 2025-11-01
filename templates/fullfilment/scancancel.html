@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="container mt-4">
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="me-3 mb-0">Order Cancellation</h4>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Scan Order ID / AWB</h5>
+            <a href="{% url 'order_cancel_log_view' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-clock-history me-1"></i> View Log
+            </a>
+        </div>
+        <div class="card-body">
+            <form id="orderIdForm" method="GET" action="" class="mb-3">
+                <label for="orderIdInput" class="form-label">Scan Order ID / AWB:</label>
+                <div class="input-group">
+                    <input type="text" id="orderIdInput" name="order_id" class="form-control" placeholder="Scan atau ketik Order ID / AWB..." value="{{ order_id|default:'' }}" autofocus>
+                    <button class="btn btn-primary" type="submit" id="searchOrderIdBtn">Cari</button>
+                    {% if order_id %}
+                    <a href="{% url 'scancancel_index' %}" class="btn btn-outline-secondary">Clear</a>
+                    {% endif %}
+                </div>
+            </form>
+
+            {% if error %}
+                <div class="alert alert-danger">{{ error }}</div>
+            {% endif %}
+
+            <div id="orderStatusDisplay" class="mt-3">
+                {% if order_id_found %}
+                    <div class="alert alert-info">
+                        <strong>Order ID: {{ order_id }}</strong><br>
+                        Status Retur: <strong><span id="currentStatusRetur">{% if status_retur %}{{ status_retur }}{% else %}Tidak Tercatat{% endif %}</span></strong>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if order_id_found %}
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <h5 class="card-title mb-3">Scan Barcode Produk (Fungsi Khusus Pembatalan)</h5>
+            <form id="barcodeForm" class="mb-3" autocomplete="off">
+                <label for="productBarcodeInput" class="form-label fw-bold">Scan Barcode Produk</label>
+                <input type="text" id="productBarcodeInput" class="form-control" placeholder="Scan barcode produk untuk tindakan pembatalan..." autofocus autocomplete="off">
+                <div id="barcodeFeedback" class="mt-2"></div>
+            </form>
+            <div id="barcodeError" class="alert alert-danger mt-2 d-none"></div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    window.ORDER_ID = "{{ order_id|escapejs }}";
+    window.CSRF_TOKEN = "{{ csrf_token }}";
+
+    function playSound(type) {
+        if (type === 'success') {
+            new Audio('/static/sounds/ding.mp3').play();
+        } else if (type === 'error' || type === 'fail') {
+            new Audio('/static/sounds/wrong_barcode.mp3').play();
+        }
+    }
+
+    function showFeedback(message, type) {
+        const feedback = document.getElementById('barcodeFeedback'); // Reusing barcodeFeedback for general messages
+        if (!feedback) return;
+        feedback.innerHTML = message;
+        feedback.className = type === 'success' ? 'alert alert-success' : 'alert alert-danger';
+        feedback.style.display = 'block';
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const orderIdInput = document.getElementById('orderIdInput');
+        const orderIdForm = document.getElementById('orderIdForm');
+        const productBarcodeInput = document.getElementById('productBarcodeInput');
+        const barcodeForm = document.getElementById('barcodeForm');
+        const currentStatusReturEl = document.getElementById('currentStatusRetur'); 
+
+        // Handle Order ID form submission
+        if (orderIdForm && orderIdInput) {
+            orderIdForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const orderId = orderIdInput.value.trim();
+                if (orderId) {
+                    window.location.href = `/fullfilment/scancancel/${encodeURIComponent(orderId)}/`;
+                }
+            });
+        }
+
+        // Handle Product Barcode scan submission (placeholder)
+        if (barcodeForm && productBarcodeInput && window.ORDER_ID) {
+            barcodeForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const barcode = productBarcodeInput.value.trim();
+                if (!barcode) {
+                    showFeedback('Masukkan barcode produk.', 'error');
+                    playSound('error');
+                    return;
+                }
+
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Fungsi Barcode Produk',
+                    text: `Barcode produk "${barcode}" dipindai untuk Order ID "${window.ORDER_ID}". Fungsi ini belum diimplementasikan.`,
+                    confirmButtonText: 'OK'
+                });
+                productBarcodeInput.value = ''; // Clear input after scan
+                setTimeout(() => productBarcodeInput.focus(), 100);
+            });
+        }
+
+        // Auto-focus on the correct input field
+        setTimeout(() => {
+            if (window.ORDER_ID && productBarcodeInput) {
+                productBarcodeInput.focus();
+            } else if (orderIdInput) {
+                orderIdInput.focus();
+            }
+        }, 100);
+
+        // Logic for automatically updating order status to 'Y' if it's 'N' in OrderCancelLog
+        if (window.ORDER_ID && currentStatusReturEl) {
+            const currentStatus = currentStatusReturEl.textContent.trim();
+
+            if (currentStatus === 'N') {
+                // Langsung panggil API untuk mengubah status menjadi 'Y'
+                fetch(`/fullfilment/scancancel/${window.ORDER_ID}/update-status-retur/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': window.CSRF_TOKEN,
+                    },
+                    body: JSON.stringify({ 'status_retur': 'Y' }) 
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        currentStatusReturEl.textContent = 'Y';
+                        Swal.fire(
+                            'Berhasil!',
+                            'Status retur Order ID telah diperbarui menjadi Y.',
+                            'success'
+                        );
+                        playSound('success');
+                    } else {
+                        // Tampilkan pesan error dari backend
+                        Swal.fire(
+                            'Gagal!',
+                            data.error || 'Gagal memperbarui status retur.',
+                            'error'
+                        );
+                        playSound('error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire(
+                        'Error!',
+                        'Terjadi kesalahan saat menghubungi server.',
+                        'error'
+                    );
+                    playSound('error');
+                });
+            } else if (currentStatus === 'Y') {
+                Swal.fire(
+                    'Informasi',
+                    'Order Id ini sudah pernah di retur',
+                    'info'
+                );
+                playSound('error'); 
+            } else if (currentStatus === 'NOT_IN_CANCEL_LOG' || currentStatus === 'Tidak Tercatat') { // Catch new status and default "Tidak Tercatat"
+                Swal.fire(
+                    'Perhatian',
+                    'Cek kembali order ini, karena order ini bukan order yang di batalkan atau cancel',
+                    'warning'
+                );
+                playSound('error');
+            } else {
+                 // Fallback for any other unexpected status
+                 Swal.fire(
+                    'Perhatian',
+                    `Status order tidak dikenal: "${currentStatus}". Mohon cek kembali.`,
+                    'warning'
+                );
+                playSound('error');
+            }
+        }
+    });
+</script>
+{% endblock %} 

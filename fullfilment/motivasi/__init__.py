@@ -1,0 +1,1 @@
+# File ini sengaja dikosongkan agar folder 'motivasi' dapat di-import. 

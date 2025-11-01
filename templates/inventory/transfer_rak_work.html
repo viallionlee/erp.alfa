@@ -1,0 +1,790 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Transfer Rak - {{ session.session_code }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Minimalis Table Styling */
+    .table {
+        font-size: 0.9rem;
+    }
+    
+    .table thead th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 8px 4px;
+        vertical-align: middle;
+        text-align: center;
+    }
+    
+    .table tbody td {
+        padding: 8px 4px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    /* Compact form controls */
+    .form-control-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        border-radius: 0.2rem;
+    }
+    
+    /* Small buttons */
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        border-radius: 0.2rem;
+    }
+    
+    /* Badge styling */
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.25em 0.5em;
+    }
+    
+    /* Text sizing for compact display */
+    .small {
+        font-size: 0.8rem;
+        line-height: 1.2;
+    }
+    
+    /* Column width constraints */
+    .table th[style*="width: 50px"],
+    .table td[style*="width: 50px"] {
+        width: 50px !important;
+        max-width: 50px !important;
+        min-width: 50px !important;
+        text-align: center;
+    }
+    
+    /* Photo column styling */
+    .table th[style*="width: 60px"],
+    .table td[style*="width: 60px"] {
+        width: 60px !important;
+        max-width: 60px !important;
+        min-width: 60px !important;
+        text-align: center;
+        vertical-align: middle;
+    }
+    
+    /* Product photo styling */
+    .img-thumbnail {
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    /* Inline editing styling */
+    .qty-transfer-input {
+        border: 1px solid #ffc107;
+        background-color: #fff3cd;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    .qty-transfer-input:focus {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+        background-color: #fff;
+    }
+    
+    .qty-transfer-input:hover {
+        background-color: #fff;
+        border-color: #ffca2c;
+    }
+    
+    /* Compact card styling */
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .card-header {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .table {
+            font-size: 0.8rem;
+        }
+        
+        .table thead th,
+        .table tbody td {
+            padding: 4px 2px;
+        }
+        
+        .small {
+            font-size: 0.75rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-1">
+                <i class="bi bi-arrow-left-right text-primary"></i>
+                Transfer Rak: {{ session.session_code }}
+            </h4>
+            <p class="text-muted mb-0">
+                Transfer dari {{ session.rak_asal.kode_rak }} ke {{ session.rak_tujuan.kode_rak }}
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'inventory:transfer_rak_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Kembali ke Daftar
+            </a>
+            <button type="button" class="btn btn-success" onclick="finishTransfer()">
+                <i class="bi bi-check-circle"></i> Selesai Transfer
+            </button>
+        </div>
+    </div>
+
+    <!-- Scan Barcode Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-upc-scan"></i> Scan Barcode untuk Menambah Item
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-end">
+                        <div class="col-md-4">
+                            <label for="barcodeInput" class="form-label">
+                                <strong>Scan Barcode / SKU:</strong>
+                            </label>
+                            <input type="text" id="barcodeInput" class="form-control" 
+                                   placeholder="Scan barcode atau ketik SKU..." 
+                                   autocomplete="off">
+                            <div class="form-text">
+                                Scan barcode produk atau ketik SKU untuk menambah ke daftar transfer
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="scanQtyInput" class="form-label">
+                                <strong>Quantity:</strong>
+                            </label>
+                            <input type="number" id="scanQtyInput" class="form-control" 
+                                   value="1" min="1" placeholder="Qty">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" id="scanAddBtn" class="btn btn-primary w-100" onclick="scanAddItem()">
+                                <i class="bi bi-plus-circle"></i> Tambah Item
+                            </button>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" id="clearScanBtn" class="btn btn-outline-secondary w-100" onclick="clearScanInput()">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                    <div id="scanResult" class="mt-3" style="display: none;">
+                        <!-- Hasil scan akan ditampilkan di sini -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Info -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Informasi Sesi
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Kode Sesi:</strong><br>
+                            {{ session.session_code }}
+                        </div>
+                        <div class="col-6">
+                            <strong>Status:</strong><br>
+                            <span class="badge bg-warning">{{ session.get_status_display }}</span>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Rak Asal:</strong><br>
+                            {{ session.rak_asal.kode_rak }} - {{ session.rak_asal.nama_rak }}
+                        </div>
+                        <div class="col-6">
+                            <strong>Rak Tujuan:</strong><br>
+                            {{ session.rak_tujuan.kode_rak }} - {{ session.rak_tujuan.nama_rak }}
+                        </div>
+                    </div>
+                    {% if session.catatan %}
+                    <hr>
+                    <div>
+                        <strong>Catatan:</strong><br>
+                        {{ session.catatan }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-bar-chart"></i> Statistik Transfer
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h4 id="totalItems">0</h4>
+                            <small class="text-muted">Total Items</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 id="totalQty">0</h4>
+                            <small class="text-muted">Total Quantity</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 id="progressPercent">0%</h4>
+                            <small class="text-muted">Progress</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <!-- Source Stock Table (Rak Asal) -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-box-seam"></i> Stok Rak Asal ({{ session.rak_asal.kode_rak }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="sourceStockTable" class="table table-striped table-hover" style="width:100%">
+                                                         <thead>
+                                 <tr>
+                                     <th style="width: 60px;">Foto</th>
+                                     <th style="width: 35%;">Kode</th>
+                                     <th style="width: 30%;">Nama Produk</th>
+                                     <th style="width: 50px;">Qty Asal</th>
+                                     <th style="width: 50px;">Aksi</th>
+                                 </tr>
+                             </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <!-- Transfer Items Table -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-ul"></i> Daftar Item Dipilih
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="transferItemsTable" class="table table-striped table-hover" style="width:100%">
+                                                         <thead>
+                                 <tr>
+                                     <th style="width: 60px;">Foto</th>
+                                     <th style="width: 35%;">Kode</th>
+                                     <th style="width: 30%;">Nama Produk</th>
+                                     <th style="width: 50px;">Stok Asal</th>
+                                     <th style="width: 50px;">Qty Transfer</th>
+                                     <th style="width: 50px;">Stok Setelah</th>
+                                     <th style="width: 50px;">Aksi</th>
+                                 </tr>
+                             </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script type="text/javascript" src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script type="text/javascript" src=""></script>
+
+<script>
+    let transferItemsTable;
+    let sourceStockTable;
+
+    $(document).ready(function() {
+        initializeSourceStockTable();
+        initializeItemsTable();
+        loadStatistics();
+        
+        // Setup barcode input handling
+        setupBarcodeInput();
+        
+        // Setup inline editing for qty transfer
+        setupQtyTransferEditing();
+    });
+
+    function initializeSourceStockTable() {
+        sourceStockTable = $('#sourceStockTable').DataTable({
+            "processing": true,
+            "serverSide": true,
+            "ajax": {
+                "url": "{% url 'inventory:transfer_rak_source_stock' session.id %}",
+                "type": "GET"
+            },
+            "columns": [
+                { 
+                    "data": null,
+                    "orderable": false,
+                    "render": function(data, type, row) {
+                        if (type === 'display') {
+                            if (row.photo_url) {
+                                return '<img src="' + row.photo_url + '" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;" alt="Product Photo">';
+                            } else {
+                                return '<i class="bi bi-box" style="font-size: 2rem; color: #6c757d; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;"></i>';
+                            }
+                        }
+                        return '';
+                    }
+                },
+                { 
+                    "data": null,
+                    "render": function(data, type, row) {
+                        if (type === 'display') {
+                            return '<div class="small">' +
+                                   '<div><strong>SKU:</strong> ' + (row.sku || '-') + '</div>' +
+                                   '<div><strong>Barcode:</strong> ' + (row.barcode || '-') + '</div>' +
+                                   '<div><strong>Brand:</strong> ' + (row.brand || '-') + '</div>' +
+                                   '</div>';
+                        }
+                        return row.sku || '';
+                    }
+                },
+                { 
+                    "data": null,
+                    "render": function(data, type, row) {
+                        if (type === 'display') {
+                            return '<div class="small">' +
+                                   '<div><strong>' + (row.product_name || '-') + '</strong></div>' +
+                                   '<div class="text-muted">' + (row.variant_produk || '-') + '</div>' +
+                                   '</div>';
+                        }
+                        return row.product_name || '';
+                    }
+                },
+                { 
+                    "data": "qty_asal",
+                    "render": function(data, type, row) {
+                        if (type === 'display') {
+                            return '<span class="badge bg-info">' + data + '</span>';
+                        }
+                        return data;
+                    }
+                },
+                { 
+                    "data": null,
+                    "orderable": false,
+                    "render": function(data, type, row) {
+                        if (type === 'display') {
+                            return '<button class="btn btn-sm btn-primary" onclick="addItem('+ row.product_id +')" title="Tambah"><i class="bi bi-plus"></i></button>';
+                        }
+                        return '';
+                    }
+                }
+            ],
+            "pageLength": 10
+        });
+    }
+
+    function initializeItemsTable() {
+        transferItemsTable = $('#transferItemsTable').DataTable({
+            "processing": true,
+            "serverSide": true,
+            "ajax": {
+                "url": "{% url 'inventory:transfer_rak_items_data' session.id %}",
+                "type": "GET"
+            },
+            "columns": [
+                { 
+                    "data": null,
+                    "orderable": false,
+                    "render": function(data, type, row) {
+                        if (type === 'display') {
+                            if (row.photo_url) {
+                                return '<img src="' + row.photo_url + '" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;" alt="Product Photo">';
+                            } else {
+                                return '<i class="bi bi-box" style="font-size: 2rem; color: #6c757d; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;"></i>';
+                            }
+                        }
+                        return '';
+                    }
+                },
+                { 
+                    "data": null,
+                    "render": function(data, type, row) {
+                        if (type === 'display') {
+                            return '<div class="small">' +
+                                   '<div><strong>SKU:</strong> ' + (row.sku || '-') + '</div>' +
+                                   '<div><strong>Barcode:</strong> ' + (row.barcode || '-') + '</div>' +
+                                   '<div><strong>Brand:</strong> ' + (row.brand || '-') + '</div>' +
+                                   '</div>';
+                        }
+                        return row.sku || '';
+                    }
+                },
+                { 
+                    "data": null,
+                    "render": function(data, type, row) {
+                        if (type === 'display') {
+                            return '<div class="small">' +
+                                   '<div><strong>' + (row.product_name || '-') + '</strong></div>' +
+                                   '<div class="text-muted">' + (row.variant_produk || '-') + '</div>' +
+                                   '</div>';
+                        }
+                        return row.product_name || '';
+                    }
+                },
+                { 
+                    "data": "stok_asal",
+                    "render": function(data, type, row) {
+                        if (type === 'display') {
+                            return '<span class="badge bg-info">' + data + '</span>';
+                        }
+                        return data;
+                    }
+                },
+                { 
+                    "data": "qty_transfer",
+                    "render": function(data, type, row) {
+                        if (type === 'display') {
+                            return '<input type="number" min="1" value="' + data + '" class="form-control form-control-sm qty-transfer-input" data-item-id="' + row.id + '" data-current-qty="' + data + '" style="width: 50px; text-align: center;">';
+                        }
+                        return data;
+                    }
+                },
+                { 
+                    "data": "stok_setelah",
+                    "render": function(data, type, row) {
+                        if (type === 'display') {
+                            return '<span class="badge bg-secondary">' + data + '</span>';
+                        }
+                        return data;
+                    }
+                },
+                { 
+                    "data": null,
+                    "render": function(data, type, row) {
+                        if (type === 'display') {
+                            return '<button class="btn btn-sm btn-danger" onclick="deleteItem(' + row.id + ')" title="Hapus">' +
+                                   '<i class="bi bi-trash"></i></button>';
+                        }
+                        return '';
+                    }
+                }
+            ],
+            "language": {
+                "lengthMenu": "Tampilkan _MENU_ entri",
+                "zeroRecords": "Tidak ada data yang ditemukan",
+                "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ entri",
+                "search": "Cari:",
+                "paginate": {
+                    "first": "Pertama",
+                    "last": "Terakhir",
+                    "next": "Selanjutnya",
+                    "previous": "Sebelumnya"
+                },
+                "processing": "Memproses..."
+            },
+            "order": [[0, "asc"]],
+            "pageLength": 25
+        });
+    }
+
+    function loadStatistics() {
+        $.ajax({
+            url: "{% url 'inventory:transfer_rak_statistics' session.id %}",
+            method: 'GET',
+            success: function(data) {
+                $('#totalItems').text(data.total_items || 0);
+                $('#totalQty').text(data.total_qty || 0);
+                $('#progressPercent').text(data.progress_percent || '0%');
+            },
+            error: function() {
+                console.log('Gagal memuat statistik');
+            }
+        });
+    }
+
+    // Barcode scanning functions
+    function setupBarcodeInput() {
+        $('#barcodeInput').on('keypress', function(e) {
+            if (e.which === 13) { // Enter key
+                e.preventDefault();
+                scanAddItem();
+            }
+        });
+        
+        // Focus on barcode input when page loads
+        $('#barcodeInput').focus();
+    }
+
+    function scanAddItem() {
+        var barcode = $('#barcodeInput').val().trim();
+        var qty = parseInt($('#scanQtyInput').val()) || 1;
+        
+        if (!barcode) {
+            showScanResult('error', 'Barcode/SKU tidak boleh kosong');
+            return;
+        }
+        
+        if (qty <= 0) {
+            showScanResult('error', 'Quantity harus lebih dari 0');
+            return;
+        }
+        
+        // Disable button during processing
+        $('#scanAddBtn').prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Processing...');
+        
+        // Cari produk berdasarkan barcode/SKU
+        $.ajax({
+            url: "{% url 'inventory:transfer_rak_scan_product' session.id %}",
+            method: 'POST',
+            data: {
+                barcode: barcode,
+                qty: qty,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    showScanResult('success', 'Item berhasil ditambahkan: ' + response.product_name);
+                    // Clear input and reload tables
+                    clearScanInput();
+                    transferItemsTable.ajax.reload(null, false);
+                    sourceStockTable.ajax.reload(null, false);
+                    loadStatistics();
+                } else {
+                    showScanResult('error', response.message || 'Gagal menambahkan item');
+                }
+            },
+            error: function() {
+                showScanResult('error', 'Terjadi kesalahan saat memproses barcode');
+            },
+            complete: function() {
+                // Re-enable button
+                $('#scanAddBtn').prop('disabled', false).html('<i class="bi bi-plus-circle"></i> Tambah Item');
+            }
+        });
+    }
+
+    function showScanResult(type, message) {
+        var alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        var icon = type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle';
+        
+        $('#scanResult').html(`
+            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                <i class="bi ${icon} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `).show();
+        
+        // Auto hide after 3 seconds for success messages
+        if (type === 'success') {
+            setTimeout(function() {
+                $('#scanResult').fadeOut();
+            }, 3000);
+        }
+    }
+
+    function clearScanInput() {
+        $('#barcodeInput').val('').focus();
+        $('#scanQtyInput').val('1');
+        $('#scanResult').hide();
+    }
+
+    function finishTransfer() {
+        if (confirm('Apakah Anda yakin ingin menyelesaikan transfer ini? Tindakan ini tidak dapat dibatalkan.')) {
+            $.ajax({
+                url: "{% url 'inventory:transfer_rak_finish' session.id %}",
+                method: 'POST',
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Transfer berhasil diselesaikan!');
+                        window.location.href = "{% url 'inventory:transfer_rak_list' %}";
+                    } else {
+                        alert('Gagal: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Terjadi kesalahan saat menyelesaikan transfer');
+                }
+            });
+        }
+    }
+
+    function getQtyForProduct(productId) {
+        // Since we removed the qty input from source stock table, default to 1
+        return 1;
+    }
+
+    function addItem(productId) {
+        var qty = getQtyForProduct(productId);
+        $.ajax({
+            url: "{% url 'inventory:transfer_rak_add_item' session.id %}",
+            method: 'POST',
+            data: {
+                product_id: productId,
+                qty: qty,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(resp) {
+                if (resp.success) {
+                    transferItemsTable.ajax.reload(null, false);
+                    sourceStockTable.ajax.reload(null, false);
+                    loadStatistics();
+                } else {
+                    alert(resp.message || 'Gagal menambah item');
+                }
+            },
+            error: function() {
+                alert('Terjadi kesalahan saat menambah item');
+            }
+        });
+    }
+
+    function setupQtyTransferEditing() {
+        // Handle qty transfer input changes using event delegation
+        $(document).on('change', '.qty-transfer-input', function() {
+            var input = $(this);
+            var itemId = input.data('item-id');
+            var newQty = parseInt(input.val()) || 0;
+            var currentQty = parseInt(input.data('current-qty')) || 0;
+            
+            if (newQty <= 0) {
+                alert('Qty harus lebih dari 0');
+                input.val(currentQty); // Reset to original value
+                return;
+            }
+            
+            // Update the data attribute to reflect the new value
+            input.data('current-qty', newQty);
+            
+            // Send update request
+            $.ajax({
+                url: '/inventory/transfer-rak/item/' + itemId + '/update/',
+                method: 'POST',
+                data: {
+                    qty: newQty,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function(resp) {
+                    if (resp.success) {
+                        // Update the input value to show the confirmed value
+                        input.val(newQty);
+                        // Reload tables to update related data
+                        transferItemsTable.ajax.reload(null, false);
+                        sourceStockTable.ajax.reload(null, false);
+                        loadStatistics();
+                    } else {
+                        alert(resp.message || 'Gagal update item');
+                        input.val(currentQty); // Reset to original value on error
+                    }
+                },
+                error: function() {
+                    alert('Terjadi kesalahan saat update item');
+                    input.val(currentQty); // Reset to original value on error
+                }
+            });
+        });
+        
+        // Handle Enter key press to trigger change event
+        $(document).on('keypress', '.qty-transfer-input', function(e) {
+            if (e.which === 13) { // Enter key
+                e.preventDefault();
+                $(this).trigger('change');
+            }
+        });
+    }
+
+    function editItem(itemId, currentQty) {
+        // This function is now deprecated since we have inline editing
+        // But keeping it for backward compatibility
+        var qty = prompt('Masukkan qty transfer baru:', currentQty);
+        if (qty === null) return; // dibatalkan
+        qty = parseInt(qty || '0', 10);
+        if (!qty || qty <= 0) { alert('Qty harus > 0'); return; }
+
+        $.ajax({
+            url: '/inventory/transfer-rak/item/' + itemId + '/update/',
+            method: 'POST',
+            data: {
+                qty: qty,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(resp) {
+                if (resp.success) {
+                    transferItemsTable.ajax.reload(null, false);
+                    sourceStockTable.ajax.reload(null, false);
+                    loadStatistics();
+                } else {
+                    alert(resp.message || 'Gagal update item');
+                }
+            },
+            error: function() {
+                alert('Terjadi kesalahan saat update item');
+            }
+        });
+    }
+
+    function deleteItem(itemId) {
+        if (confirm('Apakah Anda yakin ingin menghapus item ini?')) {
+            $.ajax({
+                url: '/inventory/transfer-rak/item/' + itemId + '/delete/',
+                method: 'POST',
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        transferItemsTable.ajax.reload();
+                        loadStatistics();
+                    } else {
+                        alert('Gagal: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Terjadi kesalahan saat menghapus item');
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

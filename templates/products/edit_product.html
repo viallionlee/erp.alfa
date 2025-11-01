@@ -1,8 +1,28 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block content %}
-<div class="container py-4" style="max-width:480px;">
-    <h4 class="mb-3">Edit Produk</h4>
-    <form method="post" enctype="multipart/form-data">
+<div class="container-fluid py-4" style="max-width: 1400px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4><i class="bi bi-pencil-square"></i> Edit Produk</h4>
+        <div>
+            <a href="{% url 'purchasing:price_history' %}?sku={{ product.sku }}" class="btn btn-outline-success btn-sm me-2">
+                <i class="bi bi-graph-up me-1"></i> History Harga
+            </a>
+            <a href="{% url 'products:product_edit_logs_detail' product.id %}" class="btn btn-outline-info btn-sm">
+                <i class="bi bi-clock-history me-1"></i> Log Perubahan
+            </a>
+        </div>
+    </div>
+    
+    <div class="row g-3">
+        <!-- LEFT PANEL: Edit Product Form -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3"><i class="bi bi-box-seam"></i> Informasi Produk</h5>
+                    
+    <form method="post" enctype="multipart/form-data" id="product-edit-form">
         {% csrf_token %}
         <div class="mb-2">
             <label class="form-label">SKU</label>
@@ -24,20 +44,315 @@
             <label class="form-label">Brand</label>
             <input type="text" name="brand" class="form-control" value="{{ product.brand }}">
         </div>
-        <div class="mb-2">
-            <label class="form-label">Rak</label>
-            <input type="text" name="rak" class="form-control" value="{{ product.rak }}">
-        </div>
-        <div class="mb-2">
-            <label class="form-label">Photo Produk</label><br>
-            {% if product.photo %}
-                <img src="{{ product.photo.url }}" alt="Photo" style="max-width:80px; max-height:80px; object-fit:contain; border-radius:6px; margin-bottom:8px;">
-                <br>
-            {% endif %}
-            <input type="file" name="photo" class="form-control" accept="image/*">
-        </div>
-        <button type="submit" class="btn btn-primary">Simpan</button>
-        <a href="{% url 'products:index' %}" class="btn btn-secondary">Batal</a>
+        
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save"></i> Simpan
+        </button>
+        <a href="{% url 'products:index' %}" class="btn btn-secondary">
+            <i class="bi bi-x-circle"></i> Batal
+        </a>
     </form>
-</div>
+                </div>
+            </div>
+            
+            <!-- Dimensi Produk -->
+            <div class="card shadow-sm mt-3">
+                <div class="card-body">
+                    <h5 class="card-title mb-3"><i class="bi bi-rulers"></i> Dimensi & Berat Produk</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Panjang (cm)</label>
+                            <input type="text" name="panjang" form="product-edit-form" class="form-control dimension-input" value="{{ product.panjang|default:'' }}" placeholder="0">
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Lebar (cm)</label>
+                            <input type="text" name="lebar" form="product-edit-form" class="form-control dimension-input" value="{{ product.lebar|default:'' }}" placeholder="0">
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Tinggi (cm)</label>
+                            <input type="text" name="tinggi" form="product-edit-form" class="form-control dimension-input" value="{{ product.tinggi|default:'' }}" placeholder="0">
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label">Berat (gram)</label>
+                            <input type="text" name="berat" form="product-edit-form" class="form-control dimension-input" value="{{ product.berat|default:'' }}" placeholder="0">
+                        </div>
+                    </div>
+                    
+                    <hr class="my-3">
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="posisi_tidur" form="product-edit-form" id="posisi_tidur" 
+                               value="1" {% if product.posisi_tidur %}checked{% endif %}>
+                        <label class="form-check-label" for="posisi_tidur">
+                            <i class="bi bi-box-seam"></i> <strong>Boleh Posisi Tidur</strong>
+                        </label>
+                        <small class="form-text text-muted d-block mt-1">
+                            Centang jika produk dapat diposisikan tidur untuk optimasi ruang rak
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- RIGHT PANEL: Photo & Extra Barcode -->
+        <div class="col-lg-5">
+            <!-- Photo Produk -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h5 class="card-title mb-3"><i class="bi bi-image"></i> Photo Produk</h5>
+                    
+                    {% if product.photo %}
+                    <div class="text-center mb-3">
+                        <img src="{{ product.photo.url }}" alt="{{ product.nama_produk }}" 
+                             style="width: auto; height: auto; min-width: 150px; min-height: 150px; max-width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px; border: 2px solid #e9ecef;">
+                    </div>
+                    {% else %}
+                    <div class="text-center mb-3 p-4" style="background: #f8f9fa; border-radius: 8px; border: 2px dashed #dee2e6;">
+                        <i class="bi bi-image" style="font-size: 3rem; opacity: 0.3;"></i>
+                        <p class="text-muted mb-0 mt-2">Belum ada foto</p>
+                    </div>
+                    {% endif %}
+                    
+                    <label class="form-label fw-bold">Upload/Ganti Photo</label>
+                    <input type="file" name="photo" form="product-edit-form" class="form-control" accept="image/*">
+                    <small class="text-muted">Format: JPG, PNG. Max 5MB</small>
+                </div>
+            </div>
+            
+            <!-- Extra Barcode -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3"><i class="bi bi-upc-scan"></i> Extra Barcode</h5>
+                    
+                    <!-- Tambah Barcode Baru -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tambah Barcode Baru</label>
+                        <div class="input-group">
+                            <input type="text" id="barcode_input" class="form-control" placeholder="Masukkan barcode tambahan">
+                            <button class="btn btn-success" type="button" onclick="addExtraBarcodeSimple()">
+                                <i class="bi bi-plus-circle"></i> Tambah
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Daftar Extra Barcode -->
+                    <div>
+                        <label class="form-label fw-bold mb-2">Daftar Extra Barcode</label>
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th>Barcode</th>
+                                        <th width="80">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if product.extra_barcodes.all %}
+                                        {% for eb in product.extra_barcodes.all %}
+                                        <tr>
+                                            <td><strong>{{ eb.barcode }}</strong></td>
+                                            <td>
+                                                <button class="btn btn-danger btn-sm" onclick="deleteExtraBarcodeSimple({{ eb.id }}, '{{ eb.barcode }}')">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="2" class="text-center text-muted py-4">
+                                                <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.3;"></i><br>
+                                                <small>Belum ada extra barcode</small>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> <!-- end row -->
+</div> <!-- end container-fluid -->
+{% endblock %}
+
+{% block extra_script %}
+<!-- Load edit_product.js for photo upload and extra barcode -->
+<script src="{% static 'js/edit_product.js' %}"></script>
+
+<script>
+// Extra Barcode dengan Toast Notification - SIMPLE VERSION
+const PRODUCT_ID = {{ product.id }};
+
+function showToast(message, type = 'success') {
+    // Gunakan SweetAlert2 untuk toast (sudah ada di base.html)
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+    });
+    
+    Toast.fire({
+        icon: type,
+        title: message
+    });
+}
+
+function addExtraBarcodeSimple() {
+    const input = document.getElementById('barcode_input');
+    const barcode = input.value.trim();
+    
+    if (!barcode) {
+        showToast('Barcode tidak boleh kosong!', 'warning');
+        return;
+    }
+    
+    fetch('/products/api/add-extra-barcode/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            product_id: PRODUCT_ID,
+            barcode_value: barcode
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Extra barcode berhasil ditambahkan!', 'success');
+            input.value = '';
+            // Reload page to show new barcode
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Gagal menambahkan barcode', 'error');
+        }
+    })
+    .catch(error => {
+        showToast('Error: ' + error.message, 'error');
+    });
+}
+
+function deleteExtraBarcodeSimple(id, barcode) {
+    Swal.fire({
+        title: 'Hapus barcode?',
+        text: 'Barcode "' + barcode + '" akan dihapus',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, hapus!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('/products/api/delete-extra-barcode/' + id + '/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                console.log('[Delete] Response status:', response.status);
+                console.log('[Delete] Content-Type:', response.headers.get('Content-Type'));
+                
+                // Check if response is JSON
+                const contentType = response.headers.get('Content-Type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    // If not JSON (redirect/html), treat as success
+                    console.log('[Delete] Non-JSON response, treating as success');
+                    return { success: true };
+                }
+            })
+            .then(data => {
+                console.log('[Delete] Data:', data);
+                if (data.success) {
+                    showToast('Extra barcode berhasil dihapus!', 'success');
+                    // Reload page to update list
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(data.error || 'Gagal menghapus barcode', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('[Delete] Error:', error);
+                // Jika error parsing tapi delete berhasil, tetap reload
+                showToast('Barcode dihapus, page akan di-refresh...', 'info');
+                setTimeout(() => location.reload(), 1000);
+            });
+        }
+    });
+}
+</script>
+
+<script>
+$(document).ready(function() {
+    // Handle dimension input formatting
+    $('input[name="panjang_cm"], input[name="lebar_cm"], input[name="tinggi_cm"], input[name="berat_gram"]').each(function() {
+        var input = $(this);
+        var value = input.val();
+        
+        console.log('Processing input:', input.attr('name'), 'Value:', value);
+        
+        // Only clear if value is actually None, empty, or invalid
+        if (value === 'None' || value === '' || value === null) {
+            input.val('');
+            console.log('Cleared invalid value for:', input.attr('name'));
+        } else {
+            // Keep all valid values as they are
+            console.log('Keeping valid value for:', input.attr('name'), ':', value);
+        }
+    });
+    
+    // Add input validation for numeric fields
+    $('input[name="panjang_cm"], input[name="lebar_cm"], input[name="tinggi_cm"], input[name="berat_gram"]').on('input', function() {
+        var input = $(this);
+        var value = input.val();
+        
+        // Allow only numbers, decimal points, and commas
+        var cleanValue = value.replace(/[^0-9.,]/g, '');
+        
+        // Convert comma to dot for consistency
+        cleanValue = cleanValue.replace(',', '.');
+        
+        // Ensure only one decimal point
+        var parts = cleanValue.split('.');
+        if (parts.length > 2) {
+            cleanValue = parts[0] + '.' + parts.slice(1).join('');
+        }
+        
+        if (cleanValue !== value) {
+            input.val(cleanValue);
+        }
+    });
+    
+    // Handle form submission to ensure proper number format
+    $('form').on('submit', function() {
+        $('input[name="panjang_cm"], input[name="lebar_cm"], input[name="tinggi_cm"], input[name="berat_gram"]').each(function() {
+            var input = $(this);
+            var value = input.val();
+            
+            if (value && value !== '') {
+                // Convert comma to dot
+                var cleanValue = value.replace(',', '.');
+                var numValue = parseFloat(cleanValue);
+                if (!isNaN(numValue)) {
+                    input.val(numValue);
+                } else {
+                    input.val('');
+                }
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

@@ -1,24 +1,34 @@
 {% extends 'base.html' %}
-{% block title %}Detail Order {{ id_pesanan }}{% endblock %}
+{% block title %}Detail Order {{ order.id_pesanan }}{% endblock %}
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4 text-center">Detail Order <span class="text-primary">{{ id_pesanan }}</span></h2>
-    <div class="mb-3">
+    <h2 class="mb-4 text-center">Detail Order <span class="text-primary">{{ order.id_pesanan }}</span></h2>
+    <div class="mb-3 d-flex gap-2">
         <a href="{% url 'orders_list' %}" class="btn btn-secondary">Kembali ke Daftar Order</a>
+        {% if not nama_batch %}
+        <a href="{% url 'orders_listedit' id_pesanan=order.id_pesanan|urlencode %}" class="btn btn-primary">Edit Order</a>
+        {% endif %}
     </div>
+
+    {% if nama_batch %}
+    <div class="alert alert-warning" role="alert">
+      <strong>Informasi:</strong> Pesanan ini sudah masuk ke dalam batch <strong>'{{ nama_batch }}'</strong> dan tidak dapat diedit lagi.
+    </div>
+    {% endif %}
+    
     <form autocomplete="off" class="needs-validation" novalidate>
         <div class="row g-2 align-items-center mb-2">
             <div class="col-md-3">
                 <label class="form-label mb-1">ID Pesanan</label>
-                <input type="text" class="form-control" value="{{ id_pesanan }}" readonly>
+                <input type="text" class="form-control" value="{{ order.id_pesanan }}" readonly>
             </div>
             <div class="col-md-3">
                 <label class="form-label mb-1">Tanggal</label>
-                <input type="text" class="form-control" value="{{ tanggal_pembuatan|date:'d-m-Y H:i' }}" readonly>
+                <input type="text" class="form-control" value="{{ order.tanggal_pembuatan|date:'d-m-Y H:i' }}" readonly>
             </div>
             <div class="col-md-3">
                 <label class="form-label mb-1">Customer</label>
-                <input type="text" class="form-control" value="{{ nama_customer }}" readonly>
+                <input type="text" class="form-control" value="{{ order.customer.nama_customer }}" readonly>
             </div>
             <div class="col-md-3">
                 <label class="form-label mb-1">Total Item</label>
@@ -28,7 +38,7 @@
         <div class="row mb-2">
             <div class="col-md-12">
                 <label class="form-label mb-1">Keterangan</label>
-                <textarea class="form-control" rows="2" readonly>{{ keterangan|default:'-' }}</textarea>
+                <textarea class="form-control" rows="2" readonly>{{ order.keterangan|default:'-' }}</textarea>
             </div>
         </div>
         <div class="row mb-2">

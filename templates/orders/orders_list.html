@@ -1,19 +1,22 @@
 {% extends 'base.html' %}
 {% block title %}Daftar Order{% endblock %}
 {% block content %}
-<div class="container mt-4">
-    <h2 class="mb-4 text-center">Daftar Order</h2>
-    <div class="mb-3 d-flex justify-content-between align-items-center">
-        <a href="{% url 'orders_add' %}" class="btn btn-primary">Add Order</a>
-        <div class="dropdown">
-            <button class="btn btn-success dropdown-toggle" type="button" id="downloadDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                Download Orders
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="downloadDropdown">
-                <li><a class="dropdown-item" href="/orders/download-orders/?limit=1000">Download 1000 Terbaru</a></li>
-                <li><a class="dropdown-item" href="/orders/download-orders/?limit=5000">Download 5000 Terbaru</a></li>
-                <li><a class="dropdown-item" href="/orders/download-orders/?limit=10000">Download 10000 Terbaru</a></li>
-            </ul>
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Daftar Order</h2>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{% url 'add_order' %}" class="btn btn-primary">Add Order</a>
+            <button id="importBtn" class="btn btn-secondary">Import</button>
+            <a href="{% url 'orderimport_history' %}" class="btn btn-info">History</a>
+            <div class="dropdown">
+                <button class="btn btn-success dropdown-toggle" type="button" id="downloadDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    Download Orders
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="downloadDropdown">
+                    <li><a class="dropdown-item" href="/orders/download-orders/?limit=1000">Download 1000 Terbaru</a></li>
+                    <li><a class="dropdown-item" href="/orders/download-orders/">Download Semua</a></li>
+                </ul>
+            </div>
         </div>
     </div>
     <div class="table-responsive">
@@ -25,7 +28,7 @@
                     <th>Customer</th>
                     <th>Keterangan</th>
                     <th>Total Item</th>
-                    <th>Aksi</th>
+                    <th class="text-end">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -36,9 +39,12 @@
                     <td>{{ order.nama_customer }}</td>
                     <td>{{ order.keterangan|default:'-' }}</td>
                     <td><span class="badge bg-info">{{ order.total_item }} item</span></td>
-                    <td>
+                    <td class="text-end">
                         <a href="{% url 'orders_listdetail' id_pesanan=order.id_pesanan|urlencode %}" class="btn btn-sm btn-info">Detail</a>
-                        <a href="{% url 'orders_listedit' id_pesanan=order.id_pesanan|urlencode %}" class="btn btn-sm btn-warning">Edit</a>
+                        <form action="{% url 'orders_delete' pk=order.pk %}" method="post" class="d-inline" onsubmit="return confirmDelete(this);">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
                     </td>
                 </tr>
                 {% empty %}
@@ -48,4 +54,114 @@
         </table>
     </div>
 </div>
+
+<!-- Import Modal -->
+<div id="importModal" class="modal fade" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="importForm" enctype="multipart/form-data" method="post">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="importModalLabel">Import Orders</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="import_file">Pilih File Excel</label>
+            <input type="file" name="file" id="import_file" class="form-control" required>
+          </div>
+          <div id="importLoading" class="d-none">
+            <div class="progress">
+              <div id="importProgressBar" class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary">Upload</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+$(document).ready(function() {
+    const importModal = new bootstrap.Modal(document.getElementById('importModal'));
+    $('#importBtn').on('click', function() {
+        importModal.show();
+    });
+
+    $('#importForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const loadingDiv = $('#importLoading');
+        const progressBar = $('#importProgressBar');
+
+        loadingDiv.removeClass('d-none');
+        progressBar.css('width', '0%').text('0%');
+
+        $.ajax({
+            url: '/orders/import/',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            xhr: function() {
+                const xhr = new window.XMLHttpRequest();
+                xhr.upload.addEventListener('progress', function(evt) {
+                    if (evt.lengthComputable) {
+                        const percentComplete = Math.round((evt.loaded / evt.total) * 100);
+                        progressBar.css('width', percentComplete + '%').text(percentComplete + '%');
+                    }
+                }, false);
+                return xhr;
+            },
+            success: function(response) {
+                importModal.hide();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Import Berhasil',
+                    text: `Berhasil mengimpor ${response.created} order. Diperbarui: ${response.updated}. Dilewati: ${response.skipped}.`,
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                const errorMsg = xhr.responseJSON ? xhr.responseJSON.error : 'Terjadi kesalahan saat mengupload file.';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Import Gagal',
+                    text: errorMsg
+                });
+            },
+            complete: function() {
+                loadingDiv.addClass('d-none');
+            }
+        });
+    });
+});
+
+function confirmDelete(form) {
+    event.preventDefault(); // Mencegah form submit langsung
+    Swal.fire({
+        title: 'Anda yakin?',
+        text: "Order ini akan dihapus secara permanen!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, hapus!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            form.submit(); // Lanjutkan submit form jika dikonfirmasi
+        }
+    });
+    return false; // Selalu return false untuk mengontrol submit manual
+}
+</script>
 {% endblock %}

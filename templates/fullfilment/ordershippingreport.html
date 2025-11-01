@@ -1,0 +1,508 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    :root {
+        --primary-color: #667eea;
+        --secondary-color: #764ba2;
+        --success-color: #10b981;
+        --info-color: #3b82f6;
+        --warning-color: #f59e0b;
+        --danger-color: #ef4444;
+        --light-bg: #f8fafc;
+        --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --card-shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        padding: 1rem 0;
+        margin-bottom: 1rem;
+        border-radius: 6px;
+        box-shadow: var(--card-shadow);
+    }
+
+    .page-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .page-subtitle {
+        font-size: 0.8rem;
+        opacity: 0.9;
+        margin-top: 0.2rem;
+    }
+
+    .stats-summary {
+        background: white;
+        border-radius: 6px;
+        padding: 0.75rem;
+        box-shadow: var(--card-shadow);
+        margin-bottom: 1rem;
+    }
+
+    .stats-summary .stat-item {
+        text-align: center;
+    }
+
+    .stats-summary .stat-value {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 0.2rem;
+    }
+
+    .stats-summary .stat-label {
+        font-size: 0.7rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.2px;
+    }
+
+    .filter-section {
+        background: white;
+        border-radius: 6px;
+        padding: 0.75rem;
+        box-shadow: var(--card-shadow);
+        margin-bottom: 1rem;
+    }
+
+    .filter-section .form-label {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.2rem;
+        font-size: 0.8rem;
+    }
+
+    .filter-section .form-control {
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+    }
+
+    .filter-section .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+    }
+
+    .filter-section .btn {
+        padding: 0.4rem 1rem;
+        border-radius: 4px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        font-size: 0.8rem;
+    }
+
+    .filter-section .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        border: none;
+    }
+
+    .filter-section .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .filter-section .btn-group .btn {
+        padding: 0.4rem 0.8rem;
+        border-radius: 4px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        font-size: 0.8rem;
+    }
+    
+    .filter-section .btn-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border: none;
+    }
+    
+    .filter-section .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border: none;
+    }
+    
+    .filter-section .btn-success:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .filter-section .btn-danger:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+    
+    .filter-section .btn-info {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        border: none;
+    }
+    
+    .filter-section .btn-info:hover {
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+    }
+    
+
+    .courier-card {
+        background: white;
+        border-radius: 6px;
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        box-shadow: var(--card-shadow);
+        transition: all 0.3s ease;
+        border-left: 2px solid var(--primary-color);
+    }
+
+    .courier-card:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--card-shadow-hover);
+    }
+
+    .courier-card .courier-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .courier-card .courier-name {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .courier-card .courier-name i {
+        color: var(--primary-color);
+        font-size: 1rem;
+    }
+
+    .courier-card .courier-count {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 15px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        min-width: 50px;
+        text-align: center;
+    }
+
+
+    .courier-card .toggle-btn {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        border: none;
+        padding: 0.3rem 0.6rem;
+        border-radius: 4px;
+        font-weight: 500;
+        color: #475569;
+        transition: all 0.3s ease;
+        margin-top: 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .courier-card .btn-group .btn {
+        padding: 0.3rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+    }
+    
+    .courier-card .btn-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border: none;
+    }
+    
+    .courier-card .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border: none;
+    }
+    
+    .courier-card .btn-success:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        transform: translateY(-1px);
+    }
+    
+    .courier-card .btn-danger:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        transform: translateY(-1px);
+    }
+    
+    .courier-card .btn-info {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        border: none;
+    }
+    
+    .courier-card .btn-info:hover {
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+    }
+
+    .courier-card .toggle-btn:hover {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+
+    .order-table {
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .order-table thead {
+        background: #f8fafc;
+    }
+
+    .order-table th {
+        padding: 0.4rem;
+        font-weight: 600;
+        color: #475569;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.2px;
+    }
+
+    .order-table td {
+        padding: 0.4rem;
+        border-bottom: 1px solid #f1f5f9;
+        color: #1e293b;
+        font-size: 0.8rem;
+    }
+
+    .order-table tr:hover {
+        background: #f8fafc;
+    }
+
+    .badge-user {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 0.15rem 0.4rem;
+        border-radius: 8px;
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 1.5rem 0.75rem;
+        background: white;
+        border-radius: 6px;
+        box-shadow: var(--card-shadow);
+    }
+
+    .empty-state i {
+        font-size: 2rem;
+        color: #cbd5e1;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state h3 {
+        color: #64748b;
+        font-size: 1rem;
+        margin-bottom: 0.2rem;
+    }
+
+    .empty-state p {
+        color: #94a3b8;
+        font-size: 0.8rem;
+    }
+
+    @media (max-width: 768px) {
+        .page-title {
+            font-size: 1.1rem;
+        }
+
+        .courier-card .courier-name {
+            font-size: 0.9rem;
+        }
+
+        .courier-card .courier-count {
+            font-size: 0.9rem;
+            padding: 0.3rem 0.6rem;
+            min-width: 45px;
+        }
+
+        .order-table {
+            font-size: 0.75rem;
+        }
+
+        .order-table th,
+        .order-table td {
+            padding: 0.3rem;
+        }
+    }
+</style>
+
+<div class="container-fluid px-4">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h1 class="page-title">
+                <i class="bi bi-truck me-1"></i>Laporan Shipping per Kurir
+            </h1>
+            <p class="page-subtitle">Monitoring pengiriman order berdasarkan kurir ekspedisi</p>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <form method="get" action="{% url 'order_shipping_report' %}" class="row align-items-end g-3">
+            <div class="col-md-6">
+                <label for="dateFilter" class="form-label">
+                    <i class="bi bi-calendar-event me-1" style="font-size: 0.8rem;"></i>Pilih Tanggal
+                </label>
+                <input type="date" 
+                       id="dateFilter" 
+                       name="date" 
+                       class="form-control" 
+                       value="{{ selected_date_str }}"
+                       max="{{ today|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search me-1" style="font-size: 0.8rem;"></i>Filter Data
+                </button>
+            </div>
+            <div class="col-md-3">
+                <div class="btn-group w-100" role="group">
+                    <a href="{% url 'order_shipping_report_download_excel' %}?date={{ selected_date_str }}" 
+                       class="btn btn-success btn-sm">
+                        <i class="bi bi-file-excel me-1" style="font-size: 0.8rem;"></i>Excel
+                    </a>
+                    <a href="{% url 'order_shipping_report_download_pdf' %}?date={{ selected_date_str }}" 
+                       class="btn btn-danger btn-sm">
+                        <i class="bi bi-file-pdf me-1" style="font-size: 0.8rem;"></i>PDF
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="stats-summary">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <div class="stat-value">{{ total_shipped }}</div>
+                    <div class="stat-label">Total Dikirim</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <div class="stat-value">{{ courier_stats|length }}</div>
+                    <div class="stat-label">Jumlah Kurir</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <div class="stat-value">{{ selected_date|date:"d M Y" }}</div>
+                    <div class="stat-label">Tanggal Dipilih</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Courier Cards -->
+    {% if courier_stats %}
+        <div class="row">
+            {% for courier in courier_stats %}
+            <div class="col-md-6 col-lg-4">
+                <div class="courier-card" id="courier-{{ forloop.counter }}">
+                    <div class="courier-header">
+                        <div class="courier-name">
+                            <i class="bi bi-box-seam"></i>
+                            {{ courier.name }}
+                        </div>
+                        <div class="courier-count">
+                            {{ courier.count }}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'order_shipping_detail' %}?courier={{ courier.name|urlencode }}&date={{ selected_date_str }}" 
+                           class="toggle-btn flex-grow-1 text-decoration-none">
+                            <i class="bi bi-list-ul me-1" style="font-size: 0.8rem;"></i>
+                            Lihat Detail ({{ courier.count }} order)
+                        </a>
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'order_shipping_report_download_excel' %}?date={{ selected_date_str }}&courier={{ courier.name|urlencode }}" 
+                               class="btn btn-success btn-sm" title="Download Excel">
+                                <i class="bi bi-file-excel" style="font-size: 0.8rem;"></i>
+                            </a>
+                            <a href="{% url 'order_shipping_report_download_pdf' %}?date={{ selected_date_str }}&courier={{ courier.name|urlencode }}" 
+                               class="btn btn-danger btn-sm" title="Download PDF">
+                                <i class="bi bi-file-pdf" style="font-size: 0.8rem;"></i>
+                            </a>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <h3>Tidak Ada Data</h3>
+            <p>Belum ada order yang dikirim pada tanggal {{ selected_date|date:"d M Y" }}</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+
+// Auto-select today's date if no date is selected
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('dateFilter');
+    if (!dateInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+    }
+    
+    // Update download links when date changes
+    function updateDownloadLinks() {
+        const selectedDate = dateInput.value;
+        const excelLinks = document.querySelectorAll('a[href*="download-excel"]');
+        const pdfLinks = document.querySelectorAll('a[href*="download-pdf"]');
+        
+        excelLinks.forEach(link => {
+            const url = new URL(link.href);
+            url.searchParams.set('date', selectedDate);
+            link.href = url.toString();
+        });
+        
+        pdfLinks.forEach(link => {
+            const url = new URL(link.href);
+            url.searchParams.set('date', selectedDate);
+            link.href = url.toString();
+        });
+    }
+    
+    // Update links on date change
+    dateInput.addEventListener('change', updateDownloadLinks);
+    
+    // Initial update
+    updateDownloadLinks();
+});
+
+
+</script>
+
+
+{% endblock %}
+

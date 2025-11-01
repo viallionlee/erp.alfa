@@ -1,0 +1,2785 @@
+{% extends 'base_mobile.html' %}
+{% load static %}
+
+{% block title %}Scan Putaway - Mobile{% endblock %}
+
+{% block extra_head %}
+<!-- Preload critical resources to reduce flickering -->
+<link rel="preload" href="{% static 'sounds/ding.mp3' %}" as="audio">
+<link rel="preload" href="{% static 'sounds/errorsound.mp3' %}" as="audio">
+<link rel="preload" href="{% static 'sounds/completedsound.mp3' %}" as="audio">
+
+<style>
+    .content-wrapper {
+        padding-bottom: 80px; /* Space for sticky bar */
+    }
+    
+    .scan-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem;
+        border-radius: 8px;
+        margin-bottom: 0.25rem;
+        text-align: center;
+    }
+    
+    .scan-header h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+    
+    .scan-header p {
+        margin: 0.1rem 0 0 0;
+        opacity: 0.9;
+        font-size: 0.7rem;
+    }
+    
+    .step-card {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+        border-left: 4px solid;
+    }
+    
+    .step-card.step-1 {
+        border-left-color: #0d6efd;
+    }
+    
+    .step-card.step-2 {
+        border-left-color: #198754;
+    }
+    
+    .step-card.step-3 {
+        border-left-color: #fd7e14;
+    }
+    
+    .step-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+    
+    .step-number {
+        background: #0d6efd;
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        margin-right: 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .step-2 .step-number {
+        background: #198754;
+    }
+    
+    .step-3 .step-number {
+        background: #fd7e14;
+    }
+    
+    .scan-input {
+        width: 100%;
+        padding: 0.5rem;
+        border: 2px solid #e9ecef;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+        background: #f8f9fa;
+    }
+    
+    .scan-input:focus {
+        border-color: #0d6efd;
+        outline: none;
+        background: white;
+    }
+    
+    .scan-btn {
+        width: 100%;
+        padding: 0.5rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: white;
+        transition: all 0.2s;
+    }
+    
+    .scan-btn:active {
+        transform: scale(0.98);
+    }
+    
+    .btn-primary-scan {
+        background: #0d6efd;
+    }
+    
+    .btn-success-scan {
+        background: #198754;
+    }
+    
+    .btn-warning-scan {
+        background: #fd7e14;
+    }
+    
+    .rak-info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .rak-info h6 {
+        margin: 0 0 0.25rem 0;
+        color: #1976d2;
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+    
+    .rak-info p {
+        margin: 0 0 0.1rem 0;
+        font-size: 0.75rem;
+        color: #424242;
+    }
+    
+    .product-info {
+        background: #e8f5e8;
+        border: 1px solid #c8e6c9;
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .product-info h6 {
+        margin: 0 0 0.25rem 0;
+        color: #2e7d32;
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+    
+    .product-info p {
+        margin: 0 0 0.1rem 0;
+        font-size: 0.75rem;
+        color: #424242;
+    }
+    
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .qty-btn {
+        width: 40px;
+        height: 40px;
+        border: 2px solid #e9ecef;
+        background: white;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    
+    .qty-btn:active {
+        transform: scale(0.95);
+    }
+    
+    .qty-input {
+        width: 60px;
+        height: 40px;
+        border: 2px solid #e9ecef;
+        border-radius: 6px;
+        text-align: center;
+        font-size: 1rem;
+        font-weight: 700;
+        background: #f8f9fa;
+    }
+    
+    .qty-input:focus {
+        border-color: #0d6efd;
+        outline: none;
+        background: white;
+    }
+    
+    .max-btn {
+        padding: 0.5rem 0.75rem;
+        border: 2px solid #6c757d;
+        background: white;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        color: #6c757d;
+        transition: all 0.2s;
+    }
+    
+    .max-btn:active {
+        transform: scale(0.95);
+    }
+    
+    .cart-item {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .cart-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.25rem;
+    }
+    
+    .cart-sku {
+        font-weight: 700;
+        color: #0d6efd;
+        font-size: 0.85rem;
+    }
+    
+    .cart-qty {
+        background: #198754;
+        color: white;
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 0.75rem;
+    }
+    
+    .cart-name {
+        font-size: 0.8rem;
+        color: #212529;
+        font-weight: 600;
+        line-height: 1.3;
+        margin-bottom: 0.5rem;
+        word-break: break-word;
+    }
+    
+    .cart-brand {
+        font-size: 0.75rem;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .cart-brand i {
+        font-size: 0.7rem;
+    }
+    
+    .cart-item {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .cart-item-left {
+        flex-shrink: 0;
+    }
+    
+    .cart-product-photo {
+        width: 80px;
+        height: 100px;
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        overflow: hidden;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .cart-product-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .cart-product-photo .no-photo {
+        color: #6c757d;
+        font-size: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .cart-item-right {
+        flex: 1;
+        min-width: 0;
+        position: relative;
+    }
+    
+    .cart-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.5rem;
+    }
+    
+    .cart-identifiers {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .cart-sku {
+        font-weight: 700;
+        color: #0d6efd;
+        font-size: 0.85rem;
+        margin-bottom: 0.15rem;
+    }
+    
+    .cart-barcode {
+        font-size: 0.75rem;
+        color: #6c757d;
+        font-family: monospace;
+    }
+    
+    .cart-qty {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 0.2rem 0.5rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        position: absolute;
+        top: 0;
+        right: 0;
+    }
+    
+    .cart-variant-brand {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .cart-variant {
+        font-size: 0.7rem;
+        color: #6c757d;
+        font-style: italic;
+        background: #f8f9fa;
+        padding: 0.1rem 0.3rem;
+        border-radius: 4px;
+        display: inline-block;
+        width: fit-content;
+    }
+    
+    .cart-brand {
+        font-size: 0.75rem;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .cart-brand i {
+        font-size: 0.7rem;
+    }
+    
+    .edit-trigger-btn {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 28px;
+        height: 28px;
+        border: none;
+        border-radius: 50%;
+        background: #6c757d;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        z-index: 10;
+    }
+    
+    .edit-trigger-btn:hover {
+        background: #5a6268;
+        transform: scale(1.1);
+    }
+    
+    .edit-trigger-btn:active {
+        transform: scale(0.95);
+    }
+    
+    .edit-actions-popup {
+        position: absolute;
+        bottom: 0.5rem;
+        right: 2.5rem;
+        display: flex;
+        gap: 0.3rem;
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 20px;
+        padding: 0.2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 20;
+        animation: slideInRight 0.2s ease-out;
+    }
+    
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    .edit-qty-btn, .remove-item-btn {
+        width: 24px;
+        height: 24px;
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .edit-qty-btn {
+        background: #0d6efd;
+        color: white;
+    }
+    
+    .edit-qty-btn:hover {
+        background: #0b5ed7;
+        transform: scale(1.1);
+    }
+    
+    .remove-item-btn {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .remove-item-btn:hover {
+        background: #c82333;
+        transform: scale(1.1);
+    }
+    
+    .edit-qty-btn:active, .remove-item-btn:active {
+        transform: scale(0.95);
+    }
+    
+    .save-btn {
+        width: 100%;
+        padding: 0.75rem;
+        background: #198754;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+        transition: all 0.2s;
+    }
+    
+    .save-btn:active {
+        transform: scale(0.98);
+    }
+    
+    .save-btn:disabled {
+        background: #6c757d;
+        opacity: 0.6;
+    }
+    
+    .status-message {
+        padding: 0.5rem;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    
+    .status-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .status-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .status-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+    
+    .hidden {
+        display: none !important;
+    }
+    
+    /* Sticky Action Bar */
+    .sticky-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #e9ecef;
+        padding: 0.5rem;
+        z-index: 100;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+    }
+    
+         .rak-info-sticky {
+         background: #e3f2fd;
+         border: 1px solid #bbdefb;
+         border-radius: 6px;
+         padding: 0.5rem;
+         margin-bottom: 0.5rem;
+         font-size: 0.75rem;
+         color: #1976d2;
+         font-weight: 600;
+         text-align: center;
+         cursor: pointer;
+         transition: background 0.2s;
+     }
+     
+     .rak-info-sticky:hover {
+         background: #bbdefb;
+     }
+     
+     .cart-info-sticky {
+         background: #e8f5e8;
+         border: 1px solid #c8e6c9;
+         border-radius: 6px;
+         padding: 0.5rem;
+         margin-bottom: 0.5rem;
+         font-size: 0.75rem;
+         color: #2e7d32;
+         font-weight: 600;
+         text-align: center;
+         cursor: pointer;
+         transition: background 0.2s;
+     }
+     
+     .cart-info-sticky:hover {
+         background: #c8e6c9;
+     }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .action-btn {
+        flex: 1;
+        padding: 0.5rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: white;
+        transition: all 0.2s;
+    }
+    
+        .btn-back {
+        background: #6c757d;
+    }
+    
+    .btn-list {
+        background: #fd7e14;
+    }
+    
+    .btn-next {
+        background: #0d6efd;
+    }
+    
+        .btn-save {
+        background: #198754;
+    }
+     
+     /* Modal Styles */
+     .modal-overlay {
+         position: fixed;
+         top: 0;
+         left: 0;
+         right: 0;
+         bottom: 0;
+         background: rgba(0, 0, 0, 0.5);
+         z-index: 1000;
+         display: none;
+         align-items: center;
+         justify-content: center;
+         padding: 1rem;
+     }
+     
+     .modal-content {
+         background: white;
+         border-radius: 12px;
+         max-width: 90%;
+         max-height: 80%;
+         overflow-y: auto;
+         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+         animation: modalSlideIn 0.3s ease-out;
+     }
+     
+     @keyframes modalSlideIn {
+         from {
+             opacity: 0;
+             transform: translateY(-20px) scale(0.95);
+         }
+         to {
+             opacity: 1;
+             transform: translateY(0) scale(1);
+         }
+     }
+     
+     .modal-header {
+         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+         color: white;
+         padding: 1rem;
+         border-radius: 12px 12px 0 0;
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+     }
+     
+     .modal-title {
+         font-weight: 700;
+         font-size: 1rem;
+         margin: 0;
+     }
+     
+     .modal-close {
+         background: none;
+         border: none;
+         color: white;
+         font-size: 1.5rem;
+         cursor: pointer;
+         padding: 0;
+         width: 30px;
+         height: 30px;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         border-radius: 50%;
+         transition: background 0.2s;
+     }
+     
+     .modal-close:hover {
+         background: rgba(255, 255, 255, 0.2);
+     }
+     
+     .modal-body {
+         padding: 1rem;
+     }
+     
+         .modal-item {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        max-height: 100px;
+        overflow: hidden;
+    }
+     
+         .modal-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.25rem;
+    }
+     
+         .modal-item-sku {
+        font-weight: 700;
+        color: #0d6efd;
+        font-size: 0.75rem;
+    }
+    
+    .modal-item-barcode {
+        font-weight: 400;
+        color: #6c757d;
+        font-size: 0.65rem;
+        margin-left: 0.5rem;
+    }
+     
+     .modal-item-qty {
+         background: #198754;
+         color: white;
+         padding: 0.25rem 0.5rem;
+         border-radius: 6px;
+         font-weight: 700;
+         font-size: 0.8rem;
+     }
+     
+         .modal-item-name {
+        font-size: 0.75rem;
+        color: #495057;
+        margin-bottom: 0.15rem;
+        line-height: 1.2;
+    }
+     
+         .modal-item-putaway {
+        font-size: 0.65rem;
+        color: #6c757d;
+        font-style: italic;
+        margin-bottom: 0.1rem;
+    }
+    
+    .modal-item-brand-variant {
+        font-size: 0.7rem;
+        color: #6c757d;
+        margin-bottom: 0.1rem;
+    }
+    
+    .modal-item-actions {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+    }
+    
+    .modal-item-actions .btn {
+        font-size: 0.7rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+    }
+    
+     
+     .modal-summary {
+         background: #e3f2fd;
+         border: 1px solid #bbdefb;
+         border-radius: 8px;
+         padding: 0.75rem;
+         margin-top: 1rem;
+         text-align: center;
+     }
+     
+     .modal-summary-title {
+         font-weight: 700;
+         color: #1976d2;
+         font-size: 0.9rem;
+         margin-bottom: 0.5rem;
+     }
+     
+     .modal-summary-stats {
+         display: flex;
+         justify-content: space-around;
+         font-size: 0.8rem;
+     }
+     
+     .modal-summary-stat {
+         text-align: center;
+     }
+     
+     .modal-summary-value {
+         font-weight: 700;
+         color: #1976d2;
+         font-size: 1.1rem;
+     }
+     
+         .modal-summary-label {
+        color: #6c757d;
+        font-size: 0.7rem;
+    }
+    
+    .modal-section {
+        margin-top: 1rem;
+        border-top: 1px solid #e9ecef;
+        padding-top: 1rem;
+    }
+    
+    .modal-section-title {
+        font-weight: 700;
+        color: #495057;
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .loading-item {
+        text-align: center;
+        padding: 1rem;
+        color: #6c757d;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .empty-items {
+        text-align: center;
+        padding: 1rem;
+        color: #6c757d;
+        font-size: 0.8rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .empty-items i {
+        font-size: 2rem;
+        opacity: 0.5;
+    }
+    
+    .error-items {
+        text-align: center;
+        padding: 1rem;
+        color: #dc3545;
+        font-size: 0.8rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .error-items i {
+        font-size: 2rem;
+        opacity: 0.7;
+    }
+    
+    .rak-items-scroll {
+        max-height: 300px;
+        overflow-y: auto;
+        padding-right: 0.5rem;
+    }
+    
+    .modal-item-content {
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-start;
+        margin-top: 0.25rem;
+    }
+    
+    .modal-item-photo {
+        flex-shrink: 0;
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #e9ecef;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .modal-item-photo:hover {
+        transform: scale(1.05);
+    }
+    
+    .modal-item-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 6px;
+    }
+    
+    .modal-item-photo .no-photo {
+        color: #6c757d;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal-item-details {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    /* Photo Modal */
+    .photo-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 2000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+    
+    .photo-modal-content {
+        background: white;
+        border-radius: 12px;
+        max-width: 90%;
+        max-height: 90%;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        animation: modalSlideIn 0.3s ease-out;
+    }
+    
+    .photo-modal-header {
+        background: #6f42c1;
+        color: white;
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .photo-modal-title {
+        font-weight: 600;
+        font-size: 1rem;
+    }
+    
+    .photo-modal-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background 0.2s;
+    }
+    
+    .photo-modal-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .photo-modal-body {
+        padding: 1rem;
+        text-align: center;
+    }
+    
+    .photo-modal-image {
+        max-width: 100%;
+        max-height: 400px;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Product Card Redesign - Proper Layout */
+.product-card-glassmorphism {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+    margin: 1rem auto;
+    max-width: 400px;
+    padding: 1rem;
+    display: flex; /* This is the key for the two-column layout */
+    gap: 1rem;
+    align-items: flex-start; /* Align columns to the top */
+    transition: all 0.3s ease;
+    opacity: 1;
+    transform: translateY(0);
+    animation: fadeInUp 0.4s ease-out;
+}
+
+/* Loading animation for smooth transitions */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading state styling */
+.product-card-glassmorphism.loading {
+    opacity: 0.7;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.7;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+.product-card-glassmorphism:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
+.product-photo-section {
+    flex-shrink: 0; /* Prevents the photo from shrinking */
+}
+
+.photo-container {
+    width: 150px;
+    height: 150px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+}
+
+.photo-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.product-info-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* This makes the info column take up the remaining space */
+    min-width: 0; /* Crucial for preventing text overflow issues */
+    justify-content: space-between; /* Distributes space */
+    align-self: stretch; /* Make it as tall as the photo column */
+}
+
+.product-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1.3;
+    margin-bottom: 0.35rem;
+    white-space: normal; /* Allow text to wrap */
+    word-break: break-word; /* Break long words if necessary */
+}
+
+.product-subtitle {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+
+.variant-tag, .brand-tag {
+    background-color: #e9ecef;
+    color: #495057;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: auto; /* Push the grid to the bottom of the wrapper */
+}
+
+.info-item {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 3.1px;
+    text-align: center;
+    border: 1px solid #e9ecef;
+}
+
+.info-label {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    margin-bottom: 0.15rem;
+    display: block;
+}
+
+.info-value {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1.2;
+}
+
+.sku-value { color: #0d6efd; }
+.barcode-value { color: #dc3545; }
+.qty-value { color: #198754; }
+.rak-value { color: #fd7e14; }
+
+/* Responsive adjustments */
+@media (max-width: 420px) {
+    .product-card-glassmorphism {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .product-info-wrapper {
+        align-self: auto; /* Reset stretch alignment */
+        width: 100%;
+    }
+
+    .product-main-info {
+        align-items: center;
+    }
+    
+    .product-subtitle {
+        justify-content: center;
+    }
+}
+
+/* Cleanup old/conflicting styles */
+.product-card-glassmorphism::before, 
+.photo-overlay, 
+.card-header, 
+.card-body {
+    display: none !important;
+}
+
+.dominant-rak-tujuan {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 1rem;
+    margin: 1rem auto;
+    max-width: 400px;
+    width: 100%;
+    height: 50px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.dominant-rak-tujuan:hover {
+    transform: scale(1.02);
+}
+
+.rak-tujuan-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    opacity: 0.8;
+    margin-bottom: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+    .rak-tujuan-kode {
+        font-size: 1.2rem;
+        font-weight: 700;
+        line-height: 1;
+        text-shadow: none;
+    }
+
+    /* Edit Quantity Modal Styles */
+    .edit-quantity-form {
+        padding: 1rem 0;
+    }
+    
+    .product-info-edit {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .product-sku-edit {
+        font-weight: 700;
+        color: #0d6efd;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .product-name-edit {
+        font-size: 0.8rem;
+        color: #495057;
+        line-height: 1.3;
+    }
+    
+    .quantity-edit-controls {
+        margin-bottom: 1.5rem;
+    }
+    
+    .quantity-label {
+        display: block;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .quantity-input-group {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .quantity-input-group .qty-btn {
+        width: 50px;
+        height: 50px;
+        border: 2px solid #e9ecef;
+        background: white;
+        border-radius: 8px;
+        font-size: 1.2rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    
+    .quantity-input-group .qty-btn:active {
+        transform: scale(0.95);
+    }
+    
+    .quantity-input-group .qty-input {
+        width: 80px;
+        height: 50px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 1.1rem;
+        font-weight: 700;
+        background: #f8f9fa;
+    }
+    
+    .quantity-input-group .qty-input:focus {
+        border-color: #0d6efd;
+        outline: none;
+        background: white;
+    }
+    
+    .max-quantity-info {
+        text-align: center;
+        font-size: 0.8rem;
+        color: #6c757d;
+        font-weight: 600;
+    }
+    
+    .edit-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+    
+    .edit-actions .btn {
+        flex: 1;
+        padding: 0.75rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+    
+    .edit-actions .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .edit-actions .btn-primary {
+        background: #0d6efd;
+        color: white;
+    }
+    
+    .edit-actions .btn:active {
+        transform: scale(0.98);
+    }
+    
+    .select-product-form {
+        padding: 1rem;
+    }
+    
+    .product-info-select {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .product-sku-select {
+        font-weight: 600;
+        color: #007bff;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .product-name-select {
+        font-size: 0.8rem;
+        color: #495057;
+        line-height: 1.3;
+    }
+    
+    .quantity-select-controls {
+        margin-bottom: 1rem;
+    }
+    
+    .select-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .select-actions .btn {
+        flex: 1;
+        padding: 0.75rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+    
+    .select-actions .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .select-actions .btn-primary {
+        background: #0d6efd;
+        color: white;
+    }
+    
+    .select-actions .btn:active {
+        transform: scale(0.98);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="content-wrapper">
+        <!-- Header -->
+        <div class="scan-header">
+            <h4><i class="bi bi-box-arrow-up"></i> Scan Putaway</h4>
+            <p>Scan rak dan produk untuk proses putaway</p>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="status-messages"></div>
+
+        <!-- Product Card Horizontal Glassmorphism (shown when SKU is provided) -->
+        <div id="product-card-glassmorphism" class="product-card-glassmorphism hidden">
+            <!-- Column 1: Photo -->
+            <div class="product-photo-section">
+                <div class="photo-container">
+                    <img id="selected-product-photo-img" src="" alt="Foto Produk" style="display: none;" />
+                    <i class="bi bi-box" id="selected-product-photo-icon" style="font-size: 3rem; color: #adb5bd;"></i>
+                </div>
+            </div>
+
+            <!-- Column 2: All Info -->
+            <div class="product-info-wrapper">
+                <div class="product-main-info">
+                    <div class="product-title" id="selected-product-name">-</div>
+                    <div class="product-subtitle">
+                        <span class="variant-tag" id="selected-product-variant">-</span>
+                        <span class="brand-tag" id="selected-product-brand">-</span>
+                    </div>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">SKU</div>
+                        <div class="info-value sku-value" id="selected-product-sku">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Barcode</div>
+                        <div class="info-value barcode-value" id="selected-product-barcode">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Qty Putaway</div>
+                        <div class="info-value qty-value" id="selected-product-qty">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Suggested Rak</div>
+                        <div class="info-value rak-value" id="selected-product-suggested-rak">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dominant Rak Tujuan (shown when SKU is provided) -->
+        <div id="dominant-rak-tujuan" class="dominant-rak-tujuan hidden">
+            <div class="rak-tujuan-label">Rak Tujuan:</div>
+            <div class="rak-tujuan-kode" id="dominant-rak-kode">-</div>
+        </div>
+
+        <!-- Step 1: Scan Rak -->
+        <div class="step-card step-1" id="step-1">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <div>Scan Rak</div>
+            </div>
+            
+            <input type="text" id="kode-rak-input" class="scan-input" 
+                   placeholder="Scan barcode rak atau ketik kode rak..." autofocus>
+            
+            <button class="scan-btn btn-primary-scan" onclick="scanRak()">
+                <i class="bi bi-search"></i> Cari Rak
+            </button>
+            
+            <div id="rak-result"></div>
+        </div>
+
+        <!-- Step 2: Scan Produk -->
+        <div class="step-card step-2" id="step-2">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <div>Scan Barcode Produk</div>
+            </div>
+            
+            <input type="text" id="barcode-input" class="scan-input" 
+                   placeholder="Scan barcode produk...">
+            
+            <button class="scan-btn btn-success-scan" onclick="scanProduct()">
+                <i class="bi bi-search"></i> Cari Produk
+            </button>
+            
+            <div id="product-scan-detail" class="hidden">
+                <div class="quantity-controls">
+                    <button class="qty-btn" id="decrease-qty-btn">
+                        <i class="bi bi-dash-lg"></i>
+                    </button>
+                    <input type="number" id="scanned-quantity-input" class="qty-input" 
+                           value="1" min="1" inputmode="numeric">
+                    <button class="qty-btn" id="increase-qty-btn">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                    <button class="max-btn" id="max-qty-btn">MAX</button>
+                </div>
+                
+                <button class="scan-btn btn-success-scan" onclick="addProductToCart()">
+                    <i class="bi bi-plus-circle"></i> Tambahkan ke Daftar
+                </button>
+            </div>
+            
+            <div id="product-result"></div>
+        </div>
+
+        <!-- Step 3: Daftar Putaway -->
+        <div class="step-card step-3" id="step-3">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <div>Daftar Produk untuk Putaway</div>
+            </div>
+            
+            <div id="putaway-cart-body">
+                <!-- Items will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sticky Action Bar -->
+<div class="sticky-action-bar">
+    <div id="rak-info-sticky" class="rak-info-sticky" style="display: none;" onclick="showRakModal()">
+        <!-- Rak info will be displayed here -->
+    </div>
+    <div id="cart-info-sticky" class="cart-info-sticky" style="display: none;" onclick="showCartModal()">
+        <!-- Cart info will be displayed here -->
+    </div>
+    <div class="action-buttons">
+        <button class="action-btn btn-back" onclick="goBack()" id="back-btn">
+            <i class="bi bi-arrow-left"></i> Kembali
+        </button>
+        <button class="action-btn btn-list" onclick="showPutawayListModal()" id="list-btn">
+            <i class="bi bi-list-ul"></i> Daftar
+        </button>
+        <button class="action-btn btn-save" onclick="savePutaway()" id="save-putaway-btn" disabled>
+            <i class="bi bi-check-circle"></i> Simpan
+        </button>
+    </div>
+</div>
+
+<!-- Modal for Rak Info -->
+<div id="rak-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="bi bi-box"></i> Informasi Rak</h3>
+            <button class="modal-close" onclick="closeModal('rak-modal')">&times;</button>
+        </div>
+        <div class="modal-body" id="rak-modal-body">
+            <!-- Rak details will be displayed here -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Cart Info -->
+<div id="cart-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="bi bi-cart-check"></i> Daftar Putaway</h3>
+            <button class="modal-close" onclick="closeModal('cart-modal')">&times;</button>
+        </div>
+        <div class="modal-body" id="cart-modal-body">
+            <!-- Cart items will be displayed here -->
+        </div>
+    </div>
+</div>
+
+<!-- Photo Modal -->
+<div id="photo-modal" class="photo-modal-overlay">
+    <div class="photo-modal-content">
+        <div class="photo-modal-header">
+            <div class="photo-modal-title" id="photo-modal-title">Foto Produk</div>
+            <button class="photo-modal-close" onclick="closePhotoModal()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="photo-modal-body">
+            <img id="photo-modal-image" class="photo-modal-image" src="" alt="Foto Produk">
+        </div>
+    </div>
+</div>
+
+<!-- Putaway List Modal -->
+<div id="putaway-list-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="bi bi-list-ul"></i> Daftar Item Putaway</h3>
+            <button class="modal-close" onclick="closeModal('putaway-list-modal')">&times;</button>
+        </div>
+        <div class="modal-body" id="putaway-list-modal-body">
+            <!-- Putaway list will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Edit Quantity Modal -->
+<div id="edit-quantity-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="bi bi-pencil"></i> Edit Jumlah</h3>
+            <button class="modal-close" onclick="closeModal('edit-quantity-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="edit-quantity-form">
+                <div class="product-info-edit">
+                    <div class="product-sku-edit" id="edit-product-sku">-</div>
+                    <div class="product-name-edit" id="edit-product-name">-</div>
+                </div>
+                
+                <div class="quantity-edit-controls">
+                    <label for="edit-quantity-input" class="quantity-label">Jumlah:</label>
+                    <div class="quantity-input-group">
+                        <button class="qty-btn" id="edit-decrease-btn">
+                            <i class="bi bi-dash-lg"></i>
+                        </button>
+                        <input type="number" id="edit-quantity-input" class="qty-input" 
+                               value="1" min="1" inputmode="numeric">
+                        <button class="qty-btn" id="edit-increase-btn">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    </div>
+                    <div class="max-quantity-info">
+                        Maksimal: <span id="edit-max-quantity">1</span> pcs
+                    </div>
+                </div>
+                
+                <div class="edit-actions">
+                    <button class="btn btn-secondary" onclick="closeModal('edit-quantity-modal')">
+                        Batal
+                    </button>
+                    <button class="btn btn-primary" id="save-edit-btn">
+                        Simpan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Select Product Quantity Modal -->
+<div id="select-product-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="bi bi-plus-circle"></i> Pilih Jumlah</h3>
+            <button class="modal-close" onclick="closeModal('select-product-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="select-product-form">
+                <div class="product-info-select">
+                    <div class="product-sku-select" id="select-product-sku">-</div>
+                    <div class="product-name-select" id="select-product-name">-</div>
+                </div>
+                
+                <div class="quantity-select-controls">
+                    <label for="select-quantity-input" class="quantity-label">Jumlah:</label>
+                    <div class="quantity-input-group">
+                        <button class="qty-btn" id="select-decrease-btn">
+                            <i class="bi bi-dash-lg"></i>
+                        </button>
+                        <input type="number" id="select-quantity-input" class="qty-input" 
+                               value="1" min="1" inputmode="numeric">
+                        <button class="qty-btn" id="select-increase-btn">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    </div>
+                    <div class="max-quantity-info">
+                        Maksimal: <span id="select-max-quantity">1</span> pcs
+                    </div>
+                </div>
+                
+                <div class="select-actions">
+                    <button class="btn btn-secondary" onclick="closeModal('select-product-modal')">
+                        Batal
+                    </button>
+                    <button class="btn btn-primary" id="add-selected-product-btn">
+                        <i class="bi bi-plus-circle"></i> Tambahkan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Audio Elements for Feedback Sounds -->
+<audio id="dingSound" src="{% static 'sounds/ding.mp3' %}" preload="auto"></audio>
+<audio id="errorSound" src="{% static 'sounds/errorsound.mp3' %}" preload="auto"></audio>
+<audio id="completedSound" src="{% static 'sounds/completedsound.mp3' %}" preload="auto"></audio>
+
+<script>
+let currentRak = null;
+let scannedProduct = null;
+let putawayCart = [];
+let currentStep = 1;
+let selectedProductData = null; // Store selected product data from URL
+
+// Cache DOM elements for performance
+let quantityInput, decreaseQtyBtn, increaseQtyBtn, maxQtyBtn;
+let editQuantityInput, editDecreaseBtn, editIncreaseBtn, saveEditBtn;
+let editingCartIndex = -1;
+let activePopupIndex = -1;
+let selectedProductFromList = null; // Store selected product data from list
+
+// CSRF Token
+const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+// Initialize page when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Cache elements
+    quantityInput = document.getElementById('scanned-quantity-input');
+    decreaseQtyBtn = document.getElementById('decrease-qty-btn');
+    increaseQtyBtn = document.getElementById('increase-qty-btn');
+    maxQtyBtn = document.getElementById('max-qty-btn');
+    
+    // Cache edit modal elements
+    editQuantityInput = document.getElementById('edit-quantity-input');
+    editDecreaseBtn = document.getElementById('edit-decrease-btn');
+    editIncreaseBtn = document.getElementById('edit-increase-btn');
+    saveEditBtn = document.getElementById('save-edit-btn');
+
+    // Add event listeners
+    decreaseQtyBtn.addEventListener('click', decreaseScannedQuantity);
+    increaseQtyBtn.addEventListener('click', increaseScannedQuantity);
+    maxQtyBtn.addEventListener('click', setMaxScannedQuantity);
+    
+    // Add edit modal event listeners
+    editDecreaseBtn.addEventListener('click', decreaseEditQuantity);
+    editIncreaseBtn.addEventListener('click', increaseEditQuantity);
+    saveEditBtn.addEventListener('click', saveEditQuantity);
+    
+    // Add input validation
+    quantityInput.addEventListener('input', handleQuantityInput);
+    editQuantityInput.addEventListener('input', handleEditQuantityInput);
+    
+    // Add event listeners for select product modal
+    document.getElementById('select-decrease-btn').addEventListener('click', decreaseSelectQuantity);
+    document.getElementById('select-increase-btn').addEventListener('click', increaseSelectQuantity);
+    document.getElementById('add-selected-product-btn').addEventListener('click', addSelectedProductToCart);
+    document.getElementById('select-quantity-input').addEventListener('input', handleSelectQuantityInput);
+
+    // Use requestIdleCallback if available, otherwise use setTimeout
+    if (window.requestIdleCallback) {
+        requestIdleCallback(initializePage);
+    } else {
+        setTimeout(initializePage, 0);
+    }
+});
+
+// Function to initialize page and load product data if SKU is provided
+function initializePage() {
+    // Hide step 2 and 3 initially
+    document.getElementById('step-2').classList.add('hidden');
+    document.getElementById('step-3').classList.add('hidden');
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const sku = urlParams.get('sku');
+    
+    if (sku) {
+        // Show loading state immediately to prevent flickering
+        showProductCardLoading();
+        // Load product data based on SKU
+        loadProductData(sku);
+    }
+}
+
+// Function to show loading state for product card
+function showProductCardLoading() {
+    const productCard = document.getElementById('product-card-glassmorphism');
+    if (productCard) {
+        productCard.classList.remove('hidden');
+        productCard.classList.add('loading');
+        
+        // Show loading state
+        document.getElementById('selected-product-name').textContent = 'Memuat data produk...';
+        document.getElementById('selected-product-sku').textContent = '-';
+        document.getElementById('selected-product-barcode').textContent = '-';
+        document.getElementById('selected-product-qty').textContent = '-';
+        document.getElementById('selected-product-suggested-rak').textContent = '-';
+        document.getElementById('selected-product-variant').textContent = '-';
+        document.getElementById('selected-product-brand').textContent = '-';
+        
+        // Show loading icon
+        const photoImg = document.getElementById('selected-product-photo-img');
+        const photoIcon = document.getElementById('selected-product-photo-icon');
+        photoImg.style.display = 'none';
+        photoIcon.style.display = 'block';
+        photoIcon.className = 'bi bi-hourglass-split';
+        photoIcon.style.color = '#6c757d';
+        
+        // Hide dominant rak card during loading
+        const dominantRakCard = document.getElementById('dominant-rak-tujuan');
+        if (dominantRakCard) {
+            dominantRakCard.classList.add('hidden');
+        }
+    }
+}
+
+// Function to load product data from SKU
+function loadProductData(sku) {
+    fetch(`/inventory/putaway/get-product-data/?sku=${encodeURIComponent(sku)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                selectedProductData = data.product;
+                displayProductInfo(data.product);
+                showProductCard();
+            } else {
+                hideProductCard();
+                showStatus(`Produk dengan SKU ${sku} tidak ditemukan`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading product data:', error);
+            hideProductCard();
+            showStatus('Gagal memuat data produk', 'error');
+        });
+}
+
+// Function to display product information in the new card
+function displayProductInfo(product) {
+    const productCard = document.getElementById('product-card-glassmorphism');
+    if (productCard) {
+        // Remove loading class
+        productCard.classList.remove('loading');
+    }
+    
+    // Update photo
+    const photoImg = document.getElementById('selected-product-photo-img');
+    const photoIcon = document.getElementById('selected-product-photo-icon');
+    
+    if (product.photo) {
+        photoImg.src = product.photo;
+        photoImg.style.display = 'block';
+        photoIcon.style.display = 'none';
+    } else {
+        photoImg.style.display = 'none';
+        photoIcon.style.display = 'block';
+        photoIcon.className = 'bi bi-box';
+        photoIcon.style.color = '#adb5bd';
+    }
+    
+    // Update badges with full text for larger card
+    document.getElementById('selected-product-sku').textContent = product.sku || '-';
+    document.getElementById('selected-product-barcode').textContent = product.barcode || '-';
+    document.getElementById('selected-product-qty').textContent = `${product.quantity_putaway || 0} pcs`;
+    document.getElementById('selected-product-suggested-rak').textContent = product.suggested_rak || '-';
+    
+    // Update name and meta with full text
+    document.getElementById('selected-product-name').textContent = product.nama_produk || '-';
+    document.getElementById('selected-product-variant').textContent = product.variant_produk || '-';
+    document.getElementById('selected-product-brand').textContent = product.brand || '-';
+
+    // Update dominant rak tujuan card
+    const dominantRakCard = document.getElementById('dominant-rak-tujuan');
+    const dominantRakKode = document.getElementById('dominant-rak-kode');
+    if (product.suggested_rak) {
+        dominantRakKode.textContent = product.suggested_rak;
+        dominantRakCard.classList.remove('hidden');
+    } else {
+        dominantRakCard.classList.add('hidden');
+    }
+}
+
+// Function to show product card
+function showProductCard() {
+    const productCard = document.getElementById('product-card-glassmorphism');
+    if (productCard) {
+        productCard.classList.remove('hidden');
+    }
+}
+
+// Function to hide product card
+function hideProductCard() {
+    const productCard = document.getElementById('product-card-glassmorphism');
+    if (productCard) {
+        productCard.classList.add('hidden');
+    }
+    // Also hide the dominant rak card
+    const dominantRakCard = document.getElementById('dominant-rak-tujuan');
+    if (dominantRakCard) {
+        dominantRakCard.classList.add('hidden');
+    }
+}
+
+function showStatus(message, type = 'info') {
+    const statusDiv = document.getElementById('status-messages');
+    statusDiv.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+    
+    setTimeout(() => {
+        statusDiv.innerHTML = '';
+    }, 3000);
+}
+
+function playSound(soundId) {
+    const audio = document.getElementById(soundId);
+    if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(e => console.log('Audio play failed:', e));
+    }
+}
+
+function goBack() {
+    if (currentStep > 1) {
+        currentStep--;
+        
+        // Don't use showStep() as it might hide card 2 and 3
+        // Instead, manually show step 1 and keep card 2 and 3 visible
+        if (currentStep === 1) {
+            document.getElementById('step-1').classList.remove('hidden');
+            // Keep card 2 and 3 visible (they should never be hidden after rak scan)
+            document.getElementById('step-2').classList.remove('hidden');
+            document.getElementById('step-3').classList.remove('hidden');
+            
+            // Hide rak info sticky if going back to step 1
+            const stickyInfo = document.getElementById('rak-info-sticky');
+            stickyInfo.style.display = 'none';
+            
+            // Hide cart info sticky as well
+            const cartInfoSticky = document.getElementById('cart-info-sticky');
+            cartInfoSticky.style.display = 'none';
+        }
+    } else {
+        window.location.href = '/inventory/putaway/';
+    }
+}
+
+function showStep(step) {
+    // Hide all step cards except step 2 and 3 (they should always be visible after rak scan)
+    document.querySelectorAll('.step-card').forEach(card => {
+        if (card.id !== 'step-2' && card.id !== 'step-3') {
+            card.classList.add('hidden');
+        }
+    });
+    
+    // Show current step (but don't hide step 2 and 3 if they're already visible)
+    if (step !== 2 && step !== 3) {
+        document.getElementById(`step-${step}`).classList.remove('hidden');
+    }
+    
+    // Update back button
+    const backBtn = document.getElementById('back-btn');
+    if (step === 1) {
+        backBtn.innerHTML = '<i class="bi bi-arrow-left"></i> Kembali';
+    } else {
+        backBtn.innerHTML = '<i class="bi bi-arrow-left"></i> Sebelumnya';
+    }
+    
+    currentStep = step;
+}
+
+function scanRak() {
+    const inputValue = document.getElementById('kode-rak-input').value.trim();
+    if (!inputValue) {
+        showStatus('Masukkan kode rak atau scan barcode rak terlebih dahulu', 'error');
+        return;
+    }
+
+    // Determine if input is barcode or kode_rak based on length/pattern
+    let isBarcode = false;
+    if (inputValue.length > 10 || /^[0-9]{8,}$/.test(inputValue)) {
+        // Likely a barcode if longer than 10 chars or all digits 8+
+        isBarcode = true;
+    }
+
+    const url = isBarcode 
+        ? `/inventory/putaway/scan-rak/?barcode_rak=${encodeURIComponent(inputValue)}`
+        : `/inventory/putaway/scan-rak/?kode_rak=${encodeURIComponent(inputValue)}`;
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentRak = data.rak;
+                document.getElementById('rak-result').innerHTML = `
+                    <div class="rak-info">
+                        <h6><i class="bi bi-check-circle"></i> Rak Ditemukan</h6>
+                        <p><strong>Kode Rak:</strong> ${data.rak.kode_rak}</p>
+                        <p><strong>Nama Rak:</strong> ${data.rak.nama_rak || '-'}</p>
+                        <p><strong>Lokasi:</strong> ${data.rak.lokasi || '-'}</p>
+                        ${data.rak.barcode_rak ? `<p><strong>Barcode:</strong> ${data.rak.barcode_rak}</p>` : ''}
+                    </div>
+                `;
+                
+                                 // Show rak info in sticky bar
+                 const stickyInfo = document.getElementById('rak-info-sticky');
+                 stickyInfo.innerHTML = `<i class="bi bi-box"></i> ${data.rak.kode_rak} - ${data.rak.nama_rak || 'N/A'}`;
+                 stickyInfo.style.display = 'block';
+                 
+                 // Update cart info sticky if items exist
+                 updateCartInfoSticky();
+                
+                currentStep = 2;
+                // Hide card 1 and show card 2 & 3 after successful rak scan
+                document.getElementById('step-1').classList.add('hidden');
+                document.getElementById('step-2').classList.remove('hidden');
+                document.getElementById('step-3').classList.remove('hidden');
+                document.getElementById('barcode-input').focus();
+                playSound('dingSound');
+                showStatus('Rak berhasil ditemukan! Silakan scan produk', 'success');
+            } else {
+                document.getElementById('rak-result').innerHTML = `
+                    <div class="status-message status-error">
+                        <i class="bi bi-exclamation-triangle"></i> ${data.error}
+                    </div>
+                `;
+                playSound('errorSound');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showStatus('Terjadi kesalahan saat mencari rak', 'error');
+            playSound('errorSound');
+        });
+}
+
+function scanProduct() {
+    const barcode = document.getElementById('barcode-input').value.trim();
+    if (!barcode) {
+        showStatus('Masukkan barcode produk terlebih dahulu', 'error');
+        return;
+    }
+
+    if (!currentRak) {
+        showStatus('Scan rak terlebih dahulu', 'error');
+        return;
+    }
+
+    fetch(`/inventory/putaway/scan-product/?barcode=${encodeURIComponent(barcode)}&rak_id=${currentRak.id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                scannedProduct = data.product;
+                document.getElementById('product-scan-detail').classList.remove('hidden');
+                
+                // Reset quantity to 1
+                quantityInput.value = 1;
+                
+                playSound('dingSound');
+                showStatus('Produk berhasil ditemukan!', 'success');
+            } else {
+                document.getElementById('product-result').innerHTML = `
+                    <div class="status-message status-error">
+                        <i class="bi bi-exclamation-triangle"></i> ${data.error}
+                    </div>
+                `;
+                playSound('errorSound');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showStatus('Terjadi kesalahan saat mencari produk', 'error');
+            playSound('errorSound');
+        });
+}
+
+function handleQuantityInput() {
+    let value = parseInt(quantityInput.value.replace(/[^0-9]/g, ''));
+    if (isNaN(value) || value < 1) {
+        value = 1;
+    }
+
+    const maxQty = scannedProduct ? scannedProduct.quantity_putaway : 1;
+    if (value > maxQty) {
+        value = maxQty;
+    }
+    quantityInput.value = value;
+}
+
+function decreaseScannedQuantity() {
+    const currentValue = parseInt(quantityInput.value);
+    if (currentValue > 1) {
+        quantityInput.value = currentValue - 1;
+    }
+}
+
+function increaseScannedQuantity() {
+    const currentValue = parseInt(quantityInput.value);
+    const maxQty = scannedProduct ? scannedProduct.quantity_putaway : 1;
+    if (currentValue < maxQty) {
+        quantityInput.value = currentValue + 1;
+    }
+}
+
+function setMaxScannedQuantity() {
+    if (scannedProduct) {
+        quantityInput.value = scannedProduct.quantity_putaway;
+    }
+}
+
+function addProductToCart() {
+    if (!scannedProduct) {
+        showStatus('Scan produk terlebih dahulu', 'error');
+        return;
+    }
+
+    const quantity = parseInt(quantityInput.value);
+    
+    // Check if product already in cart
+    const existingIndex = putawayCart.findIndex(item => item.sku === scannedProduct.sku);
+    
+    if (existingIndex >= 0) {
+        putawayCart[existingIndex].quantity += quantity;
+    } else {
+        putawayCart.push({
+            product_id: scannedProduct.id,
+            sku: scannedProduct.sku,
+            barcode: scannedProduct.barcode || '',
+            nama_produk: scannedProduct.nama_produk,
+            brand: scannedProduct.brand || '',
+            variant_produk: scannedProduct.variant_produk || '',
+            quantity: quantity,
+            quantity_putaway: scannedProduct.quantity_putaway,
+            photo: scannedProduct.photo || ''
+        });
+    }
+    
+    updateCartDisplay();
+    clearProductScan();
+    
+    // Show step 3
+    currentStep = 3;
+    showStep(3);
+    
+    playSound('dingSound');
+    showStatus('Produk berhasil ditambahkan ke daftar', 'success');
+}
+
+function updateCartDisplay() {
+    const cartBody = document.getElementById('putaway-cart-body');
+    const saveBtn = document.getElementById('save-putaway-btn');
+    
+    if (putawayCart.length === 0) {
+        cartBody.innerHTML = '<p class="text-muted text-center" style="font-size: 0.8rem;">Belum ada produk di daftar</p>';
+        saveBtn.disabled = true;
+        updateCartInfoSticky();
+        return;
+    }
+    
+    cartBody.innerHTML = putawayCart.map((item, index) => `
+        <div class="cart-item" id="cart-item-${index}">
+            <div class="cart-item-left">
+                <div class="cart-product-photo">
+                    <img src="${item.photo || ''}" alt="${item.nama_produk}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="no-photo" style="display: none;">
+                        <i class="bi bi-box"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="cart-item-right">
+                <div class="cart-item-header">
+                    <div class="cart-identifiers">
+                        <div class="cart-sku">SKU : ${item.sku}</div>
+                        <div class="cart-barcode">Barcode : ${item.barcode}</div>
+                    </div>
+                    <div class="cart-qty">${item.quantity} Qty</div>
+                </div>
+                <div class="cart-name">${item.nama_produk}</div>
+                <div class="cart-variant-brand">
+                    ${item.variant_produk ? `<span class="cart-variant">${item.variant_produk}</span>` : ''}
+                    <div class="cart-brand">
+                        <i class="bi bi-tag"></i> ${item.brand}
+                    </div>
+                </div>
+                <button class="edit-trigger-btn" onclick="showEditActions(${index})" title="Edit">
+                    <i class="bi bi-three-dots-vertical"></i>
+                </button>
+            </div>
+            <div class="edit-actions-popup" id="edit-popup-${index}" style="display: none;">
+                <button class="edit-qty-btn" onclick="editCartItem(${index})" title="Edit Qty">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="remove-item-btn" onclick="removeFromCart(${index})" title="Hapus">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+    
+    saveBtn.disabled = false;
+    updateCartInfoSticky();
+}
+
+function updateCartInfoSticky() {
+    const cartInfoSticky = document.getElementById('cart-info-sticky');
+    
+    if (putawayCart.length === 0) {
+        cartInfoSticky.style.display = 'none';
+        return;
+    }
+    
+    const totalItems = putawayCart.length;
+    const totalQuantity = putawayCart.reduce((sum, item) => sum + item.quantity, 0);
+    
+    cartInfoSticky.innerHTML = `<i class="bi bi-cart-check"></i> ${totalItems} item (${totalQuantity} pcs)`;
+    cartInfoSticky.style.display = 'block';
+}
+
+function removeFromCart(index) {
+    if (index < 0 || index >= putawayCart.length) {
+        showStatus('Item tidak ditemukan', 'error');
+        return;
+    }
+    
+    const item = putawayCart[index];
+    
+    // Show confirmation dialog
+    if (confirm(`Apakah Anda yakin ingin menghapus produk "${item.nama_produk}" dari daftar putaway?`)) {
+        putawayCart.splice(index, 1);
+        updateCartDisplay();
+        
+        if (putawayCart.length === 0) {
+            currentStep = 2;
+            // Keep step 2 and 3 visible even when cart is empty (they should never be hidden after rak scan)
+            document.getElementById('step-2').classList.remove('hidden');
+            document.getElementById('step-3').classList.remove('hidden');
+        }
+        
+        playSound('dingSound');
+        showStatus('Produk berhasil dihapus dari daftar', 'success');
+    }
+}
+
+function showEditActions(index) {
+    // Hide any active popup first
+    hideAllPopups();
+    
+    // Show the clicked popup
+    const popup = document.getElementById(`edit-popup-${index}`);
+    if (popup) {
+        popup.style.display = 'flex';
+        activePopupIndex = index;
+    }
+}
+
+function hideAllPopups() {
+    // Hide all popups
+    document.querySelectorAll('.edit-actions-popup').forEach(popup => {
+        popup.style.display = 'none';
+    });
+    activePopupIndex = -1;
+}
+
+function hidePopup(index) {
+    const popup = document.getElementById(`edit-popup-${index}`);
+    if (popup) {
+        popup.style.display = 'none';
+        if (activePopupIndex === index) {
+            activePopupIndex = -1;
+        }
+    }
+}
+
+function editCartItem(index) {
+    if (index < 0 || index >= putawayCart.length) {
+        showStatus('Item tidak ditemukan', 'error');
+        return;
+    }
+    
+    // Hide popup first
+    hidePopup(index);
+    
+    const item = putawayCart[index];
+    editingCartIndex = index;
+    
+    // Populate edit modal
+    document.getElementById('edit-product-sku').textContent = item.sku;
+    document.getElementById('edit-product-name').textContent = item.nama_produk;
+    document.getElementById('edit-max-quantity').textContent = item.quantity_putaway;
+    
+    // Set current quantity
+    editQuantityInput.value = item.quantity;
+    
+    // Show modal
+    document.getElementById('edit-quantity-modal').style.display = 'flex';
+}
+
+function handleEditQuantityInput() {
+    let value = parseInt(editQuantityInput.value.replace(/[^0-9]/g, ''));
+    if (isNaN(value) || value < 1) {
+        value = 1;
+    }
+
+    const maxQty = putawayCart[editingCartIndex] ? putawayCart[editingCartIndex].quantity_putaway : 1;
+    if (value > maxQty) {
+        value = maxQty;
+    }
+    editQuantityInput.value = value;
+}
+
+function decreaseEditQuantity() {
+    const currentValue = parseInt(editQuantityInput.value);
+    if (currentValue > 1) {
+        editQuantityInput.value = currentValue - 1;
+    }
+}
+
+function increaseEditQuantity() {
+    const currentValue = parseInt(editQuantityInput.value);
+    const maxQty = putawayCart[editingCartIndex] ? putawayCart[editingCartIndex].quantity_putaway : 1;
+    if (currentValue < maxQty) {
+        editQuantityInput.value = currentValue + 1;
+    }
+}
+
+function saveEditQuantity() {
+    if (editingCartIndex < 0 || editingCartIndex >= putawayCart.length) {
+        showStatus('Item tidak ditemukan', 'error');
+        return;
+    }
+    
+    const newQuantity = parseInt(editQuantityInput.value);
+    const item = putawayCart[editingCartIndex];
+    
+    if (newQuantity < 1 || newQuantity > item.quantity_putaway) {
+        showStatus('Jumlah tidak valid', 'error');
+        return;
+    }
+    
+    // Update quantity
+    putawayCart[editingCartIndex].quantity = newQuantity;
+    
+    // Update display
+    updateCartDisplay();
+    
+    // Close modal
+    closeModal('edit-quantity-modal');
+    
+    // Reset editing index
+    editingCartIndex = -1;
+    
+    playSound('dingSound');
+    showStatus('Jumlah berhasil diubah', 'success');
+}
+
+function clearProductScan() {
+    document.getElementById('barcode-input').value = '';
+    document.getElementById('product-scan-detail').classList.add('hidden');
+    document.getElementById('product-result').innerHTML = '';
+    scannedProduct = null;
+    document.getElementById('barcode-input').focus();
+}
+
+function savePutaway() {
+    if (putawayCart.length === 0) {
+        showStatus('Tidak ada produk untuk disimpan', 'error');
+        return;
+    }
+
+    const saveBtn = document.getElementById('save-putaway-btn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Menyimpan...';
+
+    // Get product IDs from SKUs
+    const skuToProductIdPromises = putawayCart.map(item => 
+        fetch(`/inventory/putaway/get-product-id/?sku=${encodeURIComponent(item.sku)}`)
+            .then(response => response.json())
+            .then(data => ({
+                product_id: data.product_id,
+                quantity: item.quantity
+            }))
+    );
+    
+    Promise.all(skuToProductIdPromises)
+        .then(items => {
+            const putawayData = {
+                rak_id: currentRak.id,
+                items: items
+            };
+            
+            return fetch('/inventory/putaway/save/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(putawayData)
+            });
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                playSound('completedSound');
+                showStatus('Putaway berhasil disimpan!', 'success');
+                
+                // Redirect back to putaway mobile
+                setTimeout(() => {
+                    window.location.href = '/inventory/putaway/';
+                }, 2000);
+            } else {
+                showStatus(data.error || 'Gagal menyimpan putaway', 'error');
+                playSound('errorSound');
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> Simpan';
+            }
+        })
+        .catch(error => {
+            console.error('Error saving putaway:', error);
+            showStatus('Terjadi kesalahan saat menyimpan putaway', 'error');
+            playSound('errorSound');
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> Simpan';
+        });
+
+}
+
+// Modal functions
+function showRakModal() {
+    if (!currentRak) return;
+    
+    const modalBody = document.getElementById('rak-modal-body');
+    modalBody.innerHTML = `
+        <div class="modal-item" style="max-height: 80px; padding: 0.4rem;">
+            <div class="modal-item-header">
+                <div class="modal-item-sku">${currentRak.kode_rak}</div>
+            </div>
+            <div class="modal-item-name"><strong>Nama:</strong> ${currentRak.nama_rak || 'N/A'}</div>
+            <div class="modal-item-putaway"><strong>Lokasi:</strong> ${currentRak.lokasi || 'N/A'}</div>
+        </div>
+        
+        <div class="modal-section">
+            <div class="modal-section-title">
+                <i class="bi bi-box-seam"></i> Item di Rak Ini
+            </div>
+            <div id="rak-items-list" class="rak-items-scroll">
+                <div class="loading-item">
+                    <i class="bi bi-hourglass-split"></i> Memuat data item...
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('rak-modal').style.display = 'flex';
+    
+    // Load rak items
+    loadRakItems();
+}
+
+function loadRakItems() {
+    if (!currentRak) return;
+    
+    fetch(`/inventory/rak/${currentRak.id}/items/`)
+        .then(response => response.json())
+        .then(data => {
+            const itemsList = document.getElementById('rak-items-list');
+            
+            if (data.success && data.items && data.items.length > 0) {
+                                 itemsList.innerHTML = data.items.map(item => `
+                     <div class="modal-item">
+                         <div class="modal-item-header">
+                             <div class="modal-item-sku">${item.sku} <span class="modal-item-barcode">${item.barcode || ''}</span></div>
+                             <div class="modal-item-qty">${item.quantity}</div>
+                         </div>
+                         <div class="modal-item-content">
+                             <div class="modal-item-photo" onclick="${item.photo ? `showPhotoModal('${item.photo}', '${item.nama_produk}')` : ''}">
+                                 ${item.photo ? `<img src="${item.photo}" alt="${item.nama_produk}">` : '<i class="bi bi-box"></i>'}
+                             </div>
+                             <div class="modal-item-details">
+                                 <div class="modal-item-name">${item.nama_produk}</div>
+                                 <div class="modal-item-brand-variant">
+                                     ${item.brand || ''} ${item.variant_produk ? `• ${item.variant_produk}` : ''}
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+                 `).join('');
+            } else {
+                itemsList.innerHTML = `
+                    <div class="empty-items">
+                        <i class="bi bi-box"></i>
+                        <div>Tidak ada item di rak ini</div>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading rak items:', error);
+            const itemsList = document.getElementById('rak-items-list');
+            itemsList.innerHTML = `
+                <div class="error-items">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <div>Gagal memuat data item</div>
+                </div>
+            `;
+        });
+}
+
+function showCartModal() {
+    if (putawayCart.length === 0) return;
+    
+    const modalBody = document.getElementById('cart-modal-body');
+    const totalItems = putawayCart.length;
+    const totalQuantity = putawayCart.reduce((sum, item) => sum + item.quantity, 0);
+    
+    modalBody.innerHTML = `
+        ${putawayCart.map((item, index) => `
+            <div class="modal-item">
+                <div class="modal-item-header">
+                    <div class="modal-item-sku">${item.sku} <span class="modal-item-barcode">${item.barcode || ''}</span></div>
+                    <div class="modal-item-qty">${item.quantity}</div>
+                </div>
+                <div class="modal-item-name">${item.nama_produk}</div>
+                <div class="modal-item-brand-variant">
+                    ${item.brand || ''} ${item.variant_produk ? `• ${item.variant_produk}` : ''}
+                </div>
+            </div>
+        `).join('')}
+        
+        <div class="modal-summary">
+            <div class="modal-summary-title">Ringkasan Putaway</div>
+            <div class="modal-summary-stats">
+                <div class="modal-summary-stat">
+                    <div class="modal-summary-value">${totalItems}</div>
+                    <div class="modal-summary-label">Item</div>
+                </div>
+                <div class="modal-summary-stat">
+                    <div class="modal-summary-value">${totalQuantity}</div>
+                    <div class="modal-summary-label">Pcs</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('cart-modal').style.display = 'flex';
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+function showPhotoModal(photoUrl, productName) {
+    if (!photoUrl) {
+        alert('Tidak ada foto produk');
+        return;
+    }
+    
+    document.getElementById('photo-modal-image').src = photoUrl;
+    document.getElementById('photo-modal-title').textContent = productName;
+    document.getElementById('photo-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // Prevent scrolling
+}
+
+function closePhotoModal() {
+    document.getElementById('photo-modal').style.display = 'none';
+    document.body.style.overflow = 'auto'; // Restore scrolling
+}
+
+function showPutawayListModal() {
+    const modalBody = document.getElementById('putaway-list-modal-body');
+    
+    // Show loading
+    modalBody.innerHTML = `
+        <div class="loading-item">
+            <i class="bi bi-hourglass-split"></i> Memuat daftar putaway...
+        </div>
+    `;
+    
+    document.getElementById('putaway-list-modal').style.display = 'flex';
+    
+    // Load putaway list data
+    loadPutawayListData();
+}
+
+function loadPutawayListData() {
+    fetch('/inventory/putaway/list-data/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data) {
+                renderPutawayList(data.data);
+            } else {
+                throw new Error(data.error || 'Gagal memuat data');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading putaway list:', error);
+            const modalBody = document.getElementById('putaway-list-modal-body');
+            modalBody.innerHTML = `
+                <div class="error-items">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <div>Gagal memuat daftar putaway</div>
+                    <div style="font-size: 0.7rem; margin-top: 0.5rem;">
+                        Silakan coba lagi
+                    </div>
+                </div>
+            `;
+        });
+}
+
+function renderPutawayList(items) {
+    const modalBody = document.getElementById('putaway-list-modal-body');
+    
+    if (items.length === 0) {
+        modalBody.innerHTML = `
+            <div class="empty-items">
+                <i class="bi bi-inbox"></i>
+                <div>Tidak ada item putaway</div>
+                <div style="font-size: 0.7rem; margin-top: 0.5rem;">
+                    Semua item sudah diproses
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    // Calculate summary
+    const totalItems = items.length;
+    const totalQuantity = items.reduce((sum, item) => sum + item.quantity_putaway, 0);
+    
+    const summaryHtml = `
+        <div class="modal-summary">
+            <div class="modal-summary-title">Ringkasan Putaway</div>
+            <div class="modal-summary-stats">
+                <div class="modal-summary-stat">
+                    <div class="modal-summary-value">${totalItems}</div>
+                    <div class="modal-summary-label">Item</div>
+                </div>
+                <div class="modal-summary-stat">
+                    <div class="modal-summary-value">${totalQuantity}</div>
+                    <div class="modal-summary-label">Pcs</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const itemsHtml = items.map(item => `
+        <div class="modal-item">
+            <div class="modal-item-header">
+                <div class="modal-item-sku">${item.sku} <span class="modal-item-barcode">${item.barcode || ''}</span></div>
+                <div class="modal-item-qty">${item.quantity_putaway} pcs</div>
+            </div>
+            <div class="modal-item-content">
+                <div class="modal-item-photo" onclick="${item.photo ? `showPhotoModal('${item.photo}', '${item.nama_produk}')` : ''}">
+                    ${item.photo ? 
+                        `<img src="${item.photo}" alt="${item.nama_produk}" loading="lazy">` : 
+                        `<div class="no-photo"><i class="bi bi-box"></i></div>`
+                    }
+                </div>
+                <div class="modal-item-details">
+                    <div class="modal-item-name">${item.nama_produk}</div>
+                    <div class="modal-item-brand-variant">
+                        ${item.brand || ''} ${item.variant_produk ? `• ${item.variant_produk}` : ''}
+                    </div>
+                </div>
+                <div class="modal-item-actions">
+                    <button class="btn btn-sm btn-primary" onclick="selectProductFromList('${item.sku}', '${item.sku}', '${item.nama_produk}', '${item.brand || ''}', '${item.variant_produk || ''}', '${item.photo || ''}', ${item.quantity_putaway})">
+                        <i class="bi bi-plus-circle"></i> Pilih
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    modalBody.innerHTML = summaryHtml + itemsHtml;
+}
+
+// Function to select product from putaway list
+function selectProductFromList(sku, barcode, namaProduk, brand, variant, photo, maxQuantity) {
+    selectedProductFromList = {
+        sku: sku,
+        barcode: barcode,
+        nama_produk: namaProduk,
+        brand: brand,
+        variant_produk: variant,
+        photo: photo,
+        quantity_putaway: maxQuantity
+    };
+    
+    // Populate modal
+    document.getElementById('select-product-sku').textContent = sku;
+    document.getElementById('select-product-name').textContent = namaProduk;
+    document.getElementById('select-quantity-input').value = 1;
+    document.getElementById('select-quantity-input').max = maxQuantity;
+    document.getElementById('select-max-quantity').textContent = maxQuantity;
+    
+    // Close putaway list modal and open select quantity modal
+    closeModal('putaway-list-modal');
+    document.getElementById('select-product-modal').style.display = 'flex';
+}
+
+// Function to decrease select quantity
+function decreaseSelectQuantity() {
+    const input = document.getElementById('select-quantity-input');
+    let current = parseInt(input.value);
+    if (current > 1) {
+        input.value = current - 1;
+    }
+}
+
+// Function to increase select quantity
+function increaseSelectQuantity() {
+    const input = document.getElementById('select-quantity-input');
+    let current = parseInt(input.value);
+    const max = parseInt(input.max);
+    if (current < max) {
+        input.value = current + 1;
+    }
+}
+
+// Function to handle select quantity input
+function handleSelectQuantityInput() {
+    const input = document.getElementById('select-quantity-input');
+    let value = parseInt(input.value);
+    const max = parseInt(input.max);
+    
+    if (isNaN(value) || value < 1) {
+        input.value = 1;
+    } else if (value > max) {
+        input.value = max;
+    }
+}
+
+// Function to add selected product to cart
+function addSelectedProductToCart() {
+    if (!selectedProductFromList) {
+        showStatus('Tidak ada produk yang dipilih', 'error');
+        return;
+    }
+    
+    const quantity = parseInt(document.getElementById('select-quantity-input').value);
+    const maxQuantity = selectedProductFromList.quantity_putaway;
+    
+    if (quantity <= 0 || quantity > maxQuantity) {
+        showStatus('Kuantitas tidak valid', 'error');
+        return;
+    }
+    
+    // Check if product already exists in cart
+    const existingIndex = putawayCart.findIndex(item => item.sku === selectedProductFromList.sku);
+    
+    if (existingIndex >= 0) {
+        const newQty = putawayCart[existingIndex].quantity + quantity;
+        if (newQty > maxQuantity) {
+            showStatus(`Total kuantitas untuk ${selectedProductFromList.sku} melebihi stok yang tersedia (${maxQuantity})`, 'error');
+            return;
+        }
+        putawayCart[existingIndex].quantity = newQty;
+        showStatus(`Kuantitas untuk ${selectedProductFromList.sku} diperbarui menjadi ${newQty}`, 'success');
+    } else {
+        putawayCart.push({
+            sku: selectedProductFromList.sku,
+            barcode: selectedProductFromList.barcode,
+            nama_produk: selectedProductFromList.nama_produk,
+            brand: selectedProductFromList.brand,
+            variant_produk: selectedProductFromList.variant_produk,
+            quantity: quantity,
+            quantity_putaway: selectedProductFromList.quantity_putaway,
+            photo: selectedProductFromList.photo
+        });
+        showStatus(`${quantity} unit ${selectedProductFromList.sku} ditambahkan ke daftar putaway`, 'success');
+    }
+    
+    updateCartDisplay();
+    closeModal('select-product-modal');
+    selectedProductFromList = null;
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('modal-overlay')) {
+        e.target.style.display = 'none';
+    }
+    if (e.target.classList.contains('photo-modal-overlay')) {
+        e.target.style.display = 'none';
+    }
+    
+    // Close popup when clicking outside
+    if (!e.target.closest('.edit-actions-popup') && !e.target.closest('.edit-trigger-btn')) {
+        hideAllPopups();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.style.display = 'none';
+        });
+        document.getElementById('photo-modal').style.display = 'none';
+        document.getElementById('putaway-list-modal').style.display = 'none';
+        document.getElementById('edit-quantity-modal').style.display = 'none';
+        document.getElementById('select-product-modal').style.display = 'none';
+        
+        // Close popup
+        hideAllPopups();
+    }
+});
+
+// Keyboard shortcuts
+document.getElementById('kode-rak-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        scanRak();
+    }
+});
+
+document.getElementById('barcode-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        scanProduct();
+    }
+});
+</script>
+{% endblock %}

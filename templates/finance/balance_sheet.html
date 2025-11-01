@@ -1,0 +1,419 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Neraca - Keuangan{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Modern gradient backgrounds */
+    .gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .gradient-success {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .gradient-danger {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+    .gradient-warning {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    }
+    .gradient-info {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    }
+    
+    /* Modern card shadows */
+    .card-modern {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+    
+    .card-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+    
+    /* Modern button styles */
+    .btn-modern {
+        border-radius: 12px;
+        padding: 12px 20px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .btn-modern:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Icon backgrounds */
+    .icon-bg {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+    
+    /* Form styling */
+    .form-control-modern {
+        border: 2px solid #f1f3f4;
+        border-radius: 12px;
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control-modern:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    /* Table modern */
+    .table-modern {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .table-modern thead th {
+        border: none;
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #6c757d;
+        padding: 16px;
+    }
+    
+    .table-modern tbody tr {
+        border: none;
+        transition: all 0.2s ease;
+    }
+    
+    .table-modern tbody tr:hover {
+        background: #f8f9ff;
+    }
+    
+    .table-modern tbody td {
+        border: none;
+        padding: 16px;
+        vertical-align: middle;
+    }
+    
+    /* Badge modern */
+    .badge-modern {
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-weight: 500;
+        font-size: 0.75rem;
+    }
+    
+    /* Section headers */
+    .section-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 16px 16px 0 0;
+        margin-bottom: 0;
+    }
+    
+    .section-header h3 {
+        margin: 0;
+        font-weight: 700;
+        font-size: 1.25rem;
+    }
+    
+    /* Balance sheet sections */
+    .balance-section {
+        border: 2px solid #e9ecef;
+        border-radius: 0 0 16px 16px;
+        border-top: none;
+    }
+    
+    .balance-section.assets {
+        border-left-color: #28a745;
+        border-right-color: #28a745;
+        border-bottom-color: #28a745;
+    }
+    
+    .balance-section.liabilities {
+        border-left-color: #dc3545;
+        border-right-color: #dc3545;
+        border-bottom-color: #dc3545;
+    }
+    
+    .balance-section.equity {
+        border-left-color: #17a2b8;
+        border-right-color: #17a2b8;
+        border-bottom-color: #17a2b8;
+    }
+    
+    /* Total rows */
+    .total-row {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        font-weight: 700;
+        border-top: 2px solid #dee2e6;
+    }
+    
+    /* Balance check alerts */
+    .alert-modern {
+        border: none;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+    
+    .alert-success-modern {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        border-left: 4px solid #28a745;
+    }
+    
+    .alert-danger-modern {
+        background: linear-gradient(135deg, #f8d7da 0%, #f1b0b7 100%);
+        color: #721c24;
+        border-left: 4px solid #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-vh-100" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+    <div class="container-fluid py-5">
+        <!-- Header Section -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="display-6 fw-bold text-dark mb-2">Neraca</h1>
+                        <p class="text-muted fs-5 mb-0">Laporan posisi keuangan perusahaan</p>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <a href="{% url 'finance:profit_loss_statement' %}" class="btn btn-outline-primary btn-modern">
+                            <i class="bi bi-graph-up me-2"></i>Laba Rugi
+                        </a>
+                        <a href="{% url 'finance:dashboard' %}" class="btn btn-outline-secondary btn-modern">
+                            <i class="bi bi-house me-2"></i>Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="card card-modern mb-4">
+            <div class="card-header bg-white border-0 py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-0 fw-bold">Filter Laporan</h6>
+                        <small class="text-muted">Pilih tanggal untuk laporan neraca</small>
+                    </div>
+                    <div class="icon-bg bg-primary bg-opacity-10 text-primary" style="width: 40px; height: 40px; font-size: 16px;">
+                        <i class="bi bi-calendar"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                <form method="get" class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-medium">Tanggal</label>
+                        <input type="date" name="date" class="form-control form-control-modern" value="{{ date }}" style="padding: 8px 12px;">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-modern" style="padding: 8px 12px; font-size: 0.875rem;">
+                                <i class="bi bi-file-earmark-text me-1"></i>Generate Laporan
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Balance Sheet Report -->
+        <div class="card card-modern">
+            <div class="section-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3><i class="bi bi-file-earmark-text me-2"></i>Neraca per {{ date }}</h3>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-light btn-sm" onclick="window.print()">
+                            <i class="bi bi-printer me-1"></i>Print
+                        </button>
+                        <button class="btn btn-light btn-sm" onclick="exportToPDF()">
+                            <i class="bi bi-file-pdf me-1"></i>PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body p-0">
+                <div class="row g-0">
+                    <!-- Assets Column -->
+                    <div class="col-md-6">
+                        <div class="balance-section assets p-4">
+                            <h5 class="text-success mb-3 fw-bold">
+                                <i class="bi bi-wallet2 me-2"></i>ASET
+                            </h5>
+                            <div class="table-responsive">
+                                <table class="table table-modern mb-0">
+                                    <tbody>
+                                        {% for item in assets_details %}
+                                        <tr>
+                                            <td class="ps-3">
+                                                <div class="fw-medium">{{ item.account.code }} - {{ item.account.name }}</div>
+                                            </td>
+                                            <td class="text-end text-success fw-semibold">
+                                                Rp {{ item.balance|floatformat:0|intcomma }}
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td class="ps-3 text-muted">Tidak ada aset tercatat</td>
+                                            <td class="text-end">-</td>
+                                        </tr>
+                                        {% endfor %}
+                                        <tr class="total-row">
+                                            <td class="ps-3 fw-bold">TOTAL ASET</td>
+                                            <td class="text-end text-success fw-bold fs-5">
+                                                Rp {{ assets_total|floatformat:0|intcomma }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Liabilities & Equity Column -->
+                    <div class="col-md-6">
+                        <!-- Liabilities -->
+                        <div class="balance-section liabilities p-4">
+                            <h5 class="text-danger mb-3 fw-bold">
+                                <i class="bi bi-credit-card me-2"></i>KEWAJIBAN
+                            </h5>
+                            <div class="table-responsive">
+                                <table class="table table-modern mb-0">
+                                    <tbody>
+                                        {% for item in liabilities_details %}
+                                        <tr>
+                                            <td class="ps-3">
+                                                <div class="fw-medium">{{ item.account.code }} - {{ item.account.name }}</div>
+                                            </td>
+                                            <td class="text-end text-danger fw-semibold">
+                                                Rp {{ item.balance|floatformat:0|intcomma }}
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td class="ps-3 text-muted">Tidak ada kewajiban tercatat</td>
+                                            <td class="text-end">-</td>
+                                        </tr>
+                                        {% endfor %}
+                                        <tr class="total-row">
+                                            <td class="ps-3 fw-bold">TOTAL KEWAJIBAN</td>
+                                            <td class="text-end text-danger fw-bold fs-5">
+                                                Rp {{ liabilities_total|floatformat:0|intcomma }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Equity -->
+                        <div class="balance-section equity p-4">
+                            <h5 class="text-info mb-3 fw-bold">
+                                <i class="bi bi-shield-check me-2"></i>MODAL
+                            </h5>
+                            <div class="table-responsive">
+                                <table class="table table-modern mb-0">
+                                    <tbody>
+                                        {% for item in equity_details %}
+                                        <tr>
+                                            <td class="ps-3">
+                                                <div class="fw-medium">{{ item.account.code }} - {{ item.account.name }}</div>
+                                            </td>
+                                            <td class="text-end text-info fw-semibold">
+                                                Rp {{ item.balance|floatformat:0|intcomma }}
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td class="ps-3 text-muted">Tidak ada modal tercatat</td>
+                                            <td class="text-end">-</td>
+                                        </tr>
+                                        {% endfor %}
+                                        <tr class="total-row">
+                                            <td class="ps-3 fw-bold">TOTAL MODAL</td>
+                                            <td class="text-end text-info fw-bold fs-5">
+                                                Rp {{ equity_total|floatformat:0|intcomma }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Total Liabilities & Equity -->
+                        <div class="balance-section p-4" style="border-left-color: #6c757d; border-right-color: #6c757d; border-bottom-color: #6c757d;">
+                            <div class="table-responsive">
+                                <table class="table table-modern mb-0">
+                                    <tbody>
+                                        <tr class="total-row">
+                                            <td class="ps-3 fw-bold fs-5">TOTAL KEWAJIBAN & MODAL</td>
+                                            <td class="text-end fw-bold fs-5">
+                                                Rp {{ total_liabilities_equity|floatformat:0|intcomma }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Balance Check -->
+                <div class="p-4">
+                    {% if assets_total == total_liabilities_equity %}
+                    <div class="alert-modern alert-success-modern">
+                        <h5 class="fw-bold mb-2">
+                            <i class="bi bi-check-circle me-2"></i>Neraca Seimbang!
+                        </h5>
+                        <p class="mb-0">
+                            Total Aset = Total Kewajiban & Modal = Rp {{ assets_total|floatformat:0|intcomma }}
+                        </p>
+                    </div>
+                    {% else %}
+                    <div class="alert-modern alert-danger-modern">
+                        <h5 class="fw-bold mb-2">
+                            <i class="bi bi-exclamation-triangle me-2"></i>Neraca Tidak Seimbang!
+                        </h5>
+                        <p class="mb-0">
+                            Total Aset: Rp {{ assets_total|floatformat:0|intcomma }}<br>
+                            Total Kewajiban & Modal: Rp {{ total_liabilities_equity|floatformat:0|intcomma }}<br>
+                            Selisih: Rp {{ assets_total|add:total_liabilities_equity|floatformat:0|intcomma }}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+function exportToPDF() {
+    // Simple print functionality for now
+    window.print();
+}
+
+$(document).ready(function() {
+    // Add any JavaScript functionality here
+});
+</script>
+{% endblock %}

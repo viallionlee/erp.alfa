@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detail Opname Rak - {{ session.session_code }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .selisih-positive {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    .selisih-negative {
+        color: #fd7e14;
+        font-weight: bold;
+    }
+    .selisih-zero {
+        color: #28a745;
+        font-weight: bold;
+    }
+    .log-item {
+        border-left: 3px solid #007bff;
+        padding-left: 15px;
+        margin-bottom: 10px;
+    }
+    .log-item.create { border-left-color: #28a745; }
+    .log-item.update_item { border-left-color: #ffc107; }
+    .log-item.delete_item { border-left-color: #dc3545; }
+    .log-item.selesai { border-left-color: #17a2b8; }
+    .log-item.batal { border-left-color: #6c757d; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-1">
+                <i class="bi bi-clipboard-check text-primary"></i>
+                Detail Opname Rak
+            </h4>
+            <p class="text-muted mb-0">
+                Sesi: <strong>{{ session.session_code }}</strong> | 
+                Rak: <strong>{{ session.rak.lokasi }} ({{ session.rak.kode_rak }})</strong>
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'inventory:opname_rak_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Kembali
+            </a>
+            <button type="button" class="btn btn-success" onclick="exportToExcel()">
+                <i class="bi bi-file-earmark-excel"></i> Export Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- Session Info -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Total Items</h6>
+                    <h3>{{ session.total_items }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Total Selisih</h6>
+                    <h3>{{ session.total_selisih }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Status</h6>
+                    <h3>{{ session.get_status_display }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Dibuat Oleh</h6>
+                    <h3>{{ session.created_by.username|default:"-" }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Details -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Informasi Sesi
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td width="150"><strong>Kode Sesi:</strong></td>
+                            <td>{{ session.session_code }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rak:</strong></td>
+                            <td>{{ session.rak.lokasi }} ({{ session.rak.kode_rak }})</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tanggal Mulai:</strong></td>
+                            <td>{{ session.tanggal_mulai|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tanggal Selesai:</strong></td>
+                            <td>{{ session.tanggal_selesai|date:"d/m/Y H:i"|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dibuat Oleh:</strong></td>
+                            <td>{{ session.created_by.username|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Selesai Oleh:</strong></td>
+                            <td>{{ session.completed_by.username|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Catatan:</strong></td>
+                            <td>{{ session.catatan|default:"-" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up"></i> Ringkasan
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary">{{ session.total_items }}</h4>
+                            <small class="text-muted">Total Items</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-warning">{{ session.total_selisih }}</h4>
+                            <small class="text-muted">Total Selisih</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h5 class="text-success">{{ items_with_positive_selisih|default:0 }}</h5>
+                            <small class="text-muted">Positif</small>
+                        </div>
+                        <div class="col-4">
+                            <h5 class="text-danger">{{ items_with_negative_selisih|default:0 }}</h5>
+                            <small class="text-muted">Negatif</small>
+                        </div>
+                        <div class="col-4">
+                            <h5 class="text-info">{{ items_with_zero_selisih|default:0 }}</h5>
+                            <small class="text-muted">Sesuai</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Items Table -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-list-ul"></i> Daftar Item Opname
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover" id="itemsTable">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>SKU</th>
+                            <th>Nama Produk</th>
+                            <th>Qty Sistem</th>
+                            <th>Qty Fisik</th>
+                            <th>Selisih</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ item.product.sku }}</td>
+                            <td>{{ item.product.nama_produk }}</td>
+                            <td class="text-center">{{ item.qty_sistem }}</td>
+                            <td class="text-center">{{ item.qty_fisik }}</td>
+                            <td class="text-center">
+                                <span class="{% if item.qty_selisih > 0 %}selisih-positive{% elif item.qty_selisih < 0 %}selisih-negative{% else %}selisih-zero{% endif %}">
+                                    {{ item.qty_selisih }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                {% if item.qty_selisih > 0 %}
+                                    <span class="badge bg-danger">Lebih</span>
+                                {% elif item.qty_selisih < 0 %}
+                                    <span class="badge bg-warning">Kurang</span>
+                                {% else %}
+                                    <span class="badge bg-success">Sesuai</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Log -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-clock-history"></i> Log Aktivitas
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if logs %}
+                <div class="timeline">
+                    {% for log in logs %}
+                    <div class="log-item {{ log.action }}">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>{{ log.get_action_display }}</strong>
+                                {% if log.user %}
+                                    oleh <strong>{{ log.user.username }}</strong>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">{{ log.timestamp|date:"d/m/Y H:i" }}</small>
+                        </div>
+                        {% if log.details %}
+                            <p class="mb-0 text-muted">{{ log.details }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted text-center">Tidak ada log aktivitas</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+    function exportToExcel() {
+        // Get table data
+        const table = document.getElementById('itemsTable');
+        const rows = Array.from(table.querySelectorAll('tbody tr'));
+        
+        const data = [
+            ['No', 'SKU', 'Nama Produk', 'Qty Sistem', 'Qty Fisik', 'Selisih', 'Status']
+        ];
+        
+        rows.forEach(row => {
+            const cells = Array.from(row.querySelectorAll('td'));
+            const rowData = cells.map(cell => cell.textContent.trim());
+            data.push(rowData);
+        });
+        
+        // Create workbook and worksheet
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        
+        // Set column widths
+        ws['!cols'] = [
+            { width: 5 },   // No
+            { width: 15 },  // SKU
+            { width: 40 },  // Nama Produk
+            { width: 12 },  // Qty Sistem
+            { width: 12 },  // Qty Fisik
+            { width: 12 },  // Selisih
+            { width: 10 }   // Status
+        ];
+        
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, ws, 'Opname Rak');
+        
+        // Generate filename
+        const filename = `Opname_${session.session_code}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        
+        // Save file
+        XLSX.writeFile(wb, filename);
+    }
+</script>
+{% endblock %}

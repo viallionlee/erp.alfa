@@ -1,0 +1,1090 @@
+{% extends 'base_mobile.html' %}
+{% load static %}
+
+{% block title %}Return List - Mobile{% endblock %}
+
+{% block extra_head %}
+<style>
+    .content-wrapper {
+        padding-bottom: 80px; /* Space for sticky bar */
+    }
+    
+    .header-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem;
+        border-radius: 8px;
+        margin-bottom: 0.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .header-content h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .header-content p {
+        margin: 0.1rem 0 0 0;
+        opacity: 0.9;
+        font-size: 0.7rem;
+    }
+    
+    .header-action {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .header-btn {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        border-radius: 6px;
+        padding: 0.4rem 0.6rem;
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background 0.2s;
+    }
+    
+    .header-btn:hover {
+        background: rgba(255,255,255,0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stat-card:active {
+        transform: translateY(0);
+    }
+    
+    .stat-value {
+        font-weight: 700;
+        font-size: 0.9rem;
+        line-height: 1;
+        margin-bottom: 0.1rem;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.55rem;
+        line-height: 1;
+        font-weight: 600;
+    }
+    
+    .stat-session .stat-value {
+        color: #ffc107;
+    }
+    
+    .stat-overstock .stat-value {
+        color: #17a2b8;
+    }
+    
+    .stat-cancel-system .stat-value {
+        color: #dc3545;
+    }
+    
+    .stat-cancel-user .stat-value {
+        color: #6f42c1;
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: #495057;
+    }
+    
+    .section-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin: 0;
+        color: #495057;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    
+    .section-count {
+        background: #0d6efd;
+        color: white;
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.6rem;
+        font-weight: 600;
+    }
+    
+    .section-body {
+        padding: 0;
+    }
+    
+    .mobile-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    
+    .mobile-list-item {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-bottom: 0.25rem;
+        border-left: 4px solid #0d6efd;
+        position: relative;
+    }
+    
+    .mobile-list-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .mobile-list-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.3rem;
+    }
+    
+    .item-title {
+        font-weight: 700;
+        color: #0d6efd;
+        font-size: 0.8rem;
+    }
+    
+    .item-status {
+        background: #28a745;
+        color: white;
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    
+    .item-status.warning {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .item-status.danger {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .item-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        font-size: 0.65rem;
+        color: #6c757d;
+        line-height: 1.2;
+        margin-bottom: 0.3rem;
+    }
+    
+    .item-meta div {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    
+    .item-actions {
+        display: flex;
+        gap: 0.25rem;
+        margin-top: 0.3rem;
+    }
+    
+    .action-btn {
+        padding: 0.2rem 0.4rem;
+        border: none;
+        border-radius: 4px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        transition: all 0.2s;
+        flex: 1;
+    }
+    
+    .action-btn:active {
+        transform: scale(0.98);
+    }
+    
+    .btn-primary {
+        background: #0d6efd;
+        color: white;
+    }
+    
+    .btn-info {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    .btn-warning {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .empty-state h5 {
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+    }
+    
+    .empty-state p {
+        margin: 0;
+        font-size: 0.8rem;
+    }
+    
+    /* Sticky Action Bar */
+    .sticky-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #dee2e6;
+        padding: 0.5rem;
+        z-index: 1000;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .action-buttons {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+    }
+    
+    .action-btn-main {
+        flex: 1;
+        padding: 0.5rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.7rem;
+        color: white;
+        text-align: center;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        transition: all 0.2s;
+        margin: 0 0.25rem;
+    }
+    
+    .action-btn-main:active {
+        transform: scale(0.98);
+    }
+    
+    .action-icon-btn {
+        background: none;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 8px;
+        color: #6c757d;
+        font-size: 1.2rem;
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    
+    .btn-back {
+        color: #6c757d;
+    }
+    
+    .btn-filter {
+        color: #6c757d;
+    }
+    
+    .btn-add {
+        color: #28a745;
+    }
+    
+    .btn-refresh {
+        color: #17a2b8;
+    }
+    
+    .btn-start-return {
+        background: #0d6efd;
+    }
+    
+    .btn-refresh {
+        background: #6c757d;
+        flex: 0 0 auto;
+        width: 60px;
+    }
+    
+    /* Loading States */
+    .loading-skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: 4px;
+        height: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    @keyframes loading {
+        0% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
+    }
+    
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 30px;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 420px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        animation: modalSlideIn 0.3s ease-out;
+    }
+    
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem 1.5rem;
+        border-radius: 20px 20px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .modal-title {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background 0.2s;
+    }
+    
+    .modal-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .modal-body {
+        padding: 1.5rem;
+        max-height: calc(80vh - 120px);
+        overflow-y: auto;
+    }
+    
+    .modal-body .mobile-list {
+        margin: 0;
+        padding: 0;
+    }
+    
+    .modal-body .mobile-list-item {
+        border-bottom: 1px solid #e9ecef;
+        padding: 1rem;
+        margin: 0;
+    }
+    
+    .modal-body .mobile-list-item:last-child {
+        border-bottom: none;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 375px) {
+        .modal-overlay {
+            padding: 20px;
+        }
+        
+        .modal-content {
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        .modal-header {
+            padding: 1.25rem 1rem;
+        }
+        
+        .modal-title {
+            font-size: 1rem;
+        }
+        
+        #source-modal .modal-body {
+            padding: 1.25rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            gap: 0.5rem;
+        }
+        
+        .action-btn-main {
+            font-size: 0.8rem;
+            padding: 0.6rem;
+        }
+    }
+    
+    /* Source Modal Specific Styles */
+    #source-modal .modal-content {
+        max-width: 400px;
+    }
+    
+    #source-modal .modal-body p {
+        margin-bottom: 1.5rem;
+        font-size: 1rem;
+        color: #6c757d;
+    }
+    
+    #source-modal .modal-body strong {
+        color: #495057;
+        font-weight: 600;
+    }
+    
+    #source-modal .btn {
+        font-weight: 600;
+        font-size: 1rem;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    #source-modal .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="content-wrapper">
+        <!-- Header -->
+        <div class="header-section">
+            <div class="header-content">
+                <h4><i class="bi bi-arrow-return-left"></i> Return List</h4>
+                <p>Kelola proses return dan order yang dibatalkan</p>
+            </div>
+            <div class="header-action">
+                <a href="{% url 'mobile_home' %}" class="header-btn">
+                    <i class="bi bi-arrow-left"></i> Home
+                </a>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-card">
+            <div class="stats-grid">
+                <div class="stat-card stat-session" onclick="showReturnSessions()">
+                    <div class="stat-value">{{ return_sessions_count|default:0 }}</div>
+                    <div class="stat-label">Session Aktif</div>
+                </div>
+                <div class="stat-card stat-overstock" onclick="showOverstockBatchModal()">
+                    <div class="stat-value">{{ overstock_batch_belum_return_count|default:0 }}</div>
+                    <div class="stat-label">Overstock Batch</div>
+                </div>
+                <div class="stat-card stat-cancel-system" onclick="showCancelBySystemModal()">
+                    <div class="stat-value">{{ order_cancel_by_system_count|default:0 }}</div>
+                    <div class="stat-label">Cancel by System</div>
+                </div>
+                <div class="stat-card stat-cancel-user" onclick="showCancelByUserModal()">
+                    <div class="stat-value">{{ order_cancel_by_user_count|default:0 }}</div>
+                    <div class="stat-label">Cancel by User</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Return Sessions -->
+        <div class="section-card">
+            <div class="section-header">
+                <h3 class="section-title">
+                    <i class="bi bi-list-ul"></i> Daftar Return List
+                </h3>
+                <span class="section-count">{{ return_sessions_count|default:0 }}</span>
+            </div>
+            <div class="section-body">
+                {% if return_sessions %}
+                    <ul class="mobile-list">
+                        {% for session in return_sessions %}
+                        <li class="mobile-list-item">
+                            <div class="item-header">
+                                <div class="item-title">{{ session.kode }}</div>
+                                <span class="item-status {% if session.status == 'open' %}warning{% else %}success{% endif %}">
+                                    {{ session.status|title }}
+                                </span>
+                            </div>
+                            <div class="item-meta">
+                                <div><i class="bi bi-person"></i> {{ session.created_by.username|default:"N/A" }}</div>
+                                <div><i class="bi bi-calendar"></i> {{ session.created_at|date:"d M Y, H:i" }}</div>
+                                <div><i class="bi bi-box"></i> {{ session.jumlah_item }} item{% if session.completed_putaway_count > 0 %} ({{ session.completed_putaway_count }} completed){% endif %}</div>
+                            </div>
+                            <div class="item-actions">
+                                <button class="action-btn btn-info" onclick="showSessionDetail({{ session.id }}, '{{ session.kode }}')">
+                                    <i class="bi bi-eye"></i> Detail
+                                </button>
+                                {% if session.status == 'open' %}
+                                <button class="action-btn btn-primary" onclick="updateSession({{ session.id }}, '{{ session.kode }}')">
+                                    <i class="bi bi-pencil"></i> Update
+                                </button>
+                                {% if not session.all_items_putaway_completed %}
+                                <a href="{% url 'putaway_return_session' session.id %}" class="action-btn btn-warning">
+                                    <i class="bi bi-box-arrow-up"></i> Putaway
+                                </a>
+                                {% else %}
+                                <button class="action-btn btn-success" onclick="closeSession({{ session.id }}, '{{ session.kode }}')">
+                                    <i class="bi bi-check-circle"></i> Close
+                                </button>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <h5>Tidak ada Session Retur</h5>
+                        <p>Mulai proses retur untuk melihat data di sini</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Sticky Action Bar -->
+<div class="sticky-action-bar">
+    <div class="action-buttons">
+        <a href="{% url 'mobile_home' %}" class="action-icon-btn btn-back">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <button class="action-icon-btn btn-filter" onclick="showFilterModal()">
+            <i class="bi bi-funnel"></i>
+        </button>
+        <button class="action-icon-btn btn-add" onclick="startNewReturn()">
+            <i class="bi bi-plus-circle"></i>
+        </button>
+        <button class="action-icon-btn btn-refresh" onclick="refreshData()">
+            <i class="bi bi-arrow-clockwise"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Modal for Details -->
+<div id="detail-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modal-title">Detail</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modal-body">
+            <!-- Content will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Overstock Batch -->
+<div id="overstock-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="bi bi-box-seam"></i> Overstock Batch ({{ overstock_batch_belum_return_count|default:0 }})
+            </h3>
+            <button class="modal-close" onclick="closeOverstockModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            {% if overstock_batch_belum_return %}
+                <ul class="mobile-list">
+                    {% for batch in overstock_batch_belum_return %}
+                    <li class="mobile-list-item">
+                        <div class="item-header">
+                            <div class="item-title">{{ batch.nama_batch }}</div>
+                            <span class="item-status warning">Overstock</span>
+                        </div>
+                        <div class="item-meta">
+                            <div><i class="bi bi-box"></i> {{ batch.total_sku }} SKU</div>
+                            <div><i class="bi bi-arrow-up-circle"></i> {{ batch.total_qty }} qty overstock</div>
+                            <div><i class="bi bi-calendar"></i> {{ batch.tanggal_batch|date:"d M Y, H:i" }}</div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="action-btn btn-info" onclick="showBatchDetail({{ batch.id }}, '{{ batch.nama_batch }}')">
+                                <i class="bi bi-eye"></i> Detail
+                            </button>
+                            <button class="action-btn btn-primary" onclick="processBatch({{ batch.id }}, '{{ batch.nama_batch }}')">
+                                <i class="bi bi-play-circle"></i> Proses
+                            </button>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-check-circle"></i>
+                    <h5>Tidak ada Overstock Batch</h5>
+                    <p>Semua batch sudah diproses</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Cancel by System -->
+<div id="cancel-system-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="bi bi-x-circle"></i> Cancel by System ({{ order_cancel_by_system_count|default:0 }})
+            </h3>
+            <button class="modal-close" onclick="closeCancelSystemModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            {% if order_cancel_by_system_belum_return %}
+                <ul class="mobile-list">
+                    {% for order in order_cancel_by_system_belum_return %}
+                    <li class="mobile-list-item">
+                        <div class="item-header">
+                            <div class="item-title">{{ order.id_pesanan }}</div>
+                            <span class="item-status danger">Cancel</span>
+                        </div>
+                        <div class="item-meta">
+                            <div><i class="bi bi-box"></i> {{ order.jumlah_item }} item</div>
+                            <div><i class="bi bi-calendar"></i> {{ order.created_at|date:"d M Y, H:i" }}</div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="action-btn btn-info" onclick="showOrderDetail('{{ order.id_pesanan }}')">
+                                <i class="bi bi-eye"></i> Detail
+                            </button>
+                            <button class="action-btn btn-warning" onclick="processOrderReturn('{{ order.id_pesanan }}')">
+                                <i class="bi bi-arrow-return-left"></i> Return
+                            </button>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-check-circle"></i>
+                    <h5>Tidak ada Order Cancel</h5>
+                    <p>Semua order sudah diproses</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Cancel by User -->
+<div id="cancel-user-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="bi bi-person-x"></i> Cancel by User ({{ order_cancel_by_user_count|default:0 }})
+            </h3>
+            <button class="modal-close" onclick="closeCancelUserModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            {% if order_cancel_by_user_belum_return %}
+                <ul class="mobile-list">
+                    {% for log in order_cancel_by_user_belum_return %}
+                    <li class="mobile-list-item">
+                        <div class="item-header">
+                            <div class="item-title">{{ log.order_id_scanned }}</div>
+                            <span class="item-status danger">Cancel</span>
+                        </div>
+                        <div class="item-meta">
+                            <div><i class="bi bi-person"></i> {{ log.user.username }}</div>
+                            <div><i class="bi bi-calendar"></i> {{ log.scan_time|date:"d M Y, H:i" }}</div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="action-btn btn-info" onclick="showUserCancelDetail('{{ log.order_id_scanned }}')">
+                                <i class="bi bi-eye"></i> Detail
+                            </button>
+                            <button class="action-btn btn-warning" onclick="processUserCancelReturn('{{ log.order_id_scanned }}')">
+                                <i class="bi bi-arrow-return-left"></i> Return
+                            </button>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-check-circle"></i>
+                    <h5>Tidak ada Cancel by User</h5>
+                    <p>Semua order sudah diproses</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Pilih Sumber Update Return -->
+<div id="source-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Pilih Sumber Update Return</h3>
+            <button class="modal-close" onclick="closeSourceModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="current-session-id">
+            <p>Sesi Return: <strong id="current-session-kode"></strong></p>
+            <div class="d-grid gap-3">
+                <button class="btn btn-info btn-lg py-3" id="order-cancel-source-btn">
+                    <i class="bi bi-x-circle me-2"></i> Order Cancel
+                </button>
+                <button class="btn btn-success btn-lg py-3" id="batch-overstock-source-btn">
+                    <i class="bi bi-box-seam me-2"></i> Batch Overstock
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mobile-specific JavaScript functions
+function showReturnSessions() {
+    // Scroll to Return Sessions section
+    document.querySelector('.section-card').scrollIntoView({ behavior: 'smooth' });
+}
+
+function showOverstockBatchModal() {
+    document.getElementById('overstock-modal').style.display = 'flex';
+}
+
+function closeOverstockModal() {
+    document.getElementById('overstock-modal').style.display = 'none';
+}
+
+function showCancelBySystemModal() {
+    document.getElementById('cancel-system-modal').style.display = 'flex';
+}
+
+function closeCancelSystemModal() {
+    document.getElementById('cancel-system-modal').style.display = 'none';
+}
+
+function showCancelByUserModal() {
+    document.getElementById('cancel-user-modal').style.display = 'flex';
+}
+
+function closeCancelUserModal() {
+    document.getElementById('cancel-user-modal').style.display = 'none';
+}
+
+function showFilterModal() {
+    // TODO: Implement filter modal
+    alert('Filter functionality coming soon!');
+}
+
+function showSessionDetail(sessionId, sessionCode) {
+    // Implement session detail modal
+    document.getElementById('modal-title').textContent = `Detail Session ${sessionCode}`;
+    document.getElementById('modal-body').innerHTML = `
+        <div class="text-center">
+            <i class="bi bi-hourglass-split"></i>
+            <p>Memuat detail session...</p>
+        </div>
+    `;
+    document.getElementById('detail-modal').style.display = 'flex';
+    
+    // TODO: Load actual session details via AJAX
+}
+
+function updateSession(sessionId, sessionCode) {
+    // Store current session info for source modal
+    document.getElementById('current-session-id').value = sessionId;
+    document.getElementById('current-session-kode').textContent = sessionCode;
+    
+    // Show source selection modal
+    document.getElementById('source-modal').style.display = 'flex';
+}
+
+
+function closeSession(sessionId, sessionCode) {
+    if (confirm(`Apakah Anda yakin ingin menutup session ${sessionCode}?`)) {
+        // Implement close session functionality
+        showToast('Session berhasil ditutup', 'success');
+    }
+}
+
+function showBatchDetail(batchId, batchCode) {
+    document.getElementById('modal-title').textContent = `Detail Batch ${batchCode}`;
+    document.getElementById('modal-body').innerHTML = `
+        <div class="text-center">
+            <i class="bi bi-hourglass-split"></i>
+            <p>Memuat detail batch...</p>
+        </div>
+    `;
+    document.getElementById('detail-modal').style.display = 'flex';
+}
+
+function processBatch(batchId, batchCode) {
+    if (confirm(`Proses batch ${batchCode}?`)) {
+        // Implement batch processing
+        showToast('Batch sedang diproses...', 'info');
+    }
+}
+
+function showOrderDetail(orderId) {
+    document.getElementById('modal-title').textContent = `Detail Order ${orderId}`;
+    document.getElementById('modal-body').innerHTML = `
+        <div class="text-center">
+            <i class="bi bi-hourglass-split"></i>
+            <p>Memuat detail order...</p>
+        </div>
+    `;
+    document.getElementById('detail-modal').style.display = 'flex';
+}
+
+function processOrderReturn(orderId) {
+    if (confirm(`Proses return untuk order ${orderId}?`)) {
+        // Implement order return processing
+        showToast('Order sedang diproses...', 'info');
+    }
+}
+
+function showUserCancelDetail(orderId) {
+    document.getElementById('modal-title').textContent = `Detail Cancel ${orderId}`;
+    document.getElementById('modal-body').innerHTML = `
+        <div class="text-center">
+            <i class="bi bi-hourglass-split"></i>
+            <p>Memuat detail cancel...</p>
+        </div>
+    `;
+    document.getElementById('detail-modal').style.display = 'flex';
+}
+
+function processUserCancelReturn(orderId) {
+    if (confirm(`Proses return untuk cancel ${orderId}?`)) {
+        // Implement user cancel return processing
+        showToast('Cancel sedang diproses...', 'info');
+    }
+}
+
+function startNewReturn() {
+    // Navigate to create new return session
+    window.location.href = '/fullfilment/returnlist/create/';
+}
+
+function refreshData() {
+    // Refresh the page
+    window.location.reload();
+}
+
+function closeModal() {
+    document.getElementById('detail-modal').style.display = 'none';
+}
+
+function closeSourceModal() {
+    document.getElementById('source-modal').style.display = 'none';
+}
+
+function showToast(message, type = 'info') {
+    // Simple toast notification
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} position-fixed`;
+    toast.style.cssText = `
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 200px;
+    `;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#d4edda' : '#f8d7da'};
+        color: ${type === 'success' ? '#155724' : '#721c24'};
+        border: 1px solid ${type === 'success' ? '#c3e6cb' : '#f5c6cb'};
+        border-radius: 4px;
+        padding: 12px 16px;
+        z-index: 9999;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 3000);
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('modal-overlay')) {
+        if (e.target.id === 'source-modal') {
+            closeSourceModal();
+        } else {
+            closeModal();
+        }
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModal();
+        closeSourceModal();
+    }
+});
+
+// Event handlers for source modal buttons
+document.addEventListener('DOMContentLoaded', function() {
+    // Order Cancel button handler
+    document.getElementById('order-cancel-source-btn').addEventListener('click', function() {
+        const sessionId = document.getElementById('current-session-id').value;
+        if (sessionId) {
+            window.location.href = `/fullfilment/return/session/${sessionId}/ordercancel/`;
+        } else {
+            showNotification('❌ Sesi Retur belum dipilih. Silakan mulai proses retur terlebih dahulu.', 'error');
+        }
+    });
+    
+    // Batch Overstock button handler
+    document.getElementById('batch-overstock-source-btn').addEventListener('click', function() {
+        const sessionId = document.getElementById('current-session-id').value;
+        if (sessionId) {
+            window.location.href = `/fullfilment/scanretur/${sessionId}/`;
+        } else {
+            showNotification('❌ Sesi Retur belum dipilih. Silakan mulai proses retur terlebih dahulu.', 'error');
+        }
+    });
+});
+</script>
+{% endblock %}

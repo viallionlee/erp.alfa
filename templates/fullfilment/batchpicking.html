@@ -1,138 +1,88 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
+
 {% block content %}
+<!-- Banner Notifikasi -->
+<div id="completion-banner" class="alert alert-success fw-bold text-center py-2" style="display: none; position: fixed; top: 0; width: 100%; left: 0; z-index: 2000; border-radius: 0;">
+    <!-- Pesan akan diisi oleh JavaScript -->
+</div>
+
 <div class="container-fluid mt-3 px-1 px-md-3">
-  <div class="row">
-    <!-- KIRI: Tabel Pending & Completed -->
-    <div class="col-lg-8 col-12 mb-3">
-      <div class="mb-2">
-        <div class="fw-bold" style="font-size:1.1rem;">
-          <span class="bg-white px-2 py-1 rounded shadow-sm border" style="position:relative; top:1.2em; left:1em; z-index:2;">
-            Picklist: <b>{{ nama_picklist }}</b>
-          </span>
+  <div class="row mb-3 align-items-center border-bottom pb-3">
+    <!-- Kolom Kiri: Tombol Back -->
+    <div class="col-md-3 d-flex justify-content-start">
+      <a href="{% url 'fullfilment_index' %}" class="btn btn-outline-secondary">
+        &larr; Back to Batchlist
+      </a>
+      <!-- Tombol Panduan Navigasi -->
+      <button type="button" class="btn btn-outline-info ms-2" data-bs-toggle="modal" data-bs-target="#navigationGuideModal">
+        <i class="bi bi-info-circle me-1"></i> Panduan Navigasi
+      </button>
+    </div>
+
+    <!-- Kolom Tengah: Ringkasan Profesional -->
+    <div class="col-md-6">
+      <div class="d-flex justify-content-center align-items-center text-center">
+        <div class="px-3">
+          <span class="d-block text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Batch</span>
+          <strong style="font-size: 1.2rem;">{{ nama_picklist }}</strong>
         </div>
-      </div>
-      <div class="card shadow-sm mb-3 card-pending" style="background: #e3f0ff;">
-        <div class="card-body pb-2 pt-3 px-2">
-          <div class="fw-bold text-white px-3 py-2 mb-0 rounded-top" style="background:#1769aa;">PENDING ITEMS</div>
-          <div class="table-responsive" id="pendingTableWrapper">
-            <table id="pendingTable" class="table table-sm table-bordered align-middle mb-0 table-batch" style="background: #fff;">
-              <thead class="align-middle text-center" style="background:#e3f0ff;">
-                <tr>
-                  <th class="sku-col" onclick="sortTable('pendingTable', 0, true)">SKU</th>
-                  <th class="barcode-col" onclick="sortTable('pendingTable', 1, true)">Barcode</th>
-                  <th class="nama-col" onclick="sortTable('pendingTable', 2, true)">Nama</th>
-                  <th class="variant-col" onclick="sortTable('pendingTable', 3, true)">Variant</th>
-                  <th class="brand-col" onclick="sortTable('pendingTable', 4, true)">Brand</th>
-                  <th class="rak-col" onclick="sortTable('pendingTable', 5, true)">Rak</th>
-                  <th class="jumlah-col" onclick="sortTable('pendingTable', 6, true)">Jumlah</th>
-                  <th class="ambil-col" onclick="sortTable('pendingTable', 7, true)">Ambil</th>
-                  <th class="status-col" onclick="sortTable('pendingTable', 8, true)">Status</th>
-                  <th class="sat-col" onclick="sortTable('pendingTable', 9, true)">SAT</th>
-                  <th class="mix-col" onclick="sortTable('pendingTable', 10, true)">MIX</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for item in details %}
-                {% if item.status_ambil != 'completed' %}
-                <tr data-barcode="{{ item.barcode }}">
-                  <td class="text-center fw-semibold">{{ item.sku }}</td>
-                  <td class="text-center text-primary">{{ item.barcode }}</td>
-                  <td>
-                    <a href="/fullfilment/batchitem/{{ item.id }}/detail/" class="text-decoration-underline text-primary" target="_blank">{{ item.nama_produk }}</a>
-                  </td>
-                  <td class="text-info">{{ item.variant_produk|default_if_none:'' }}</td>
-                  <td class="text-secondary">{{ item.brand|default_if_none:'' }}</td>
-                  <td>{% if item.rak %}<span class="badge bg-light text-dark border">{{ item.rak }}</span>{% else %}-{% endif %}</td>
-                  <td class="jumlah text-end">{{ item.jumlah }}</td>
-                  <td class="jumlah-ambil text-end">{{ item.jumlah_ambil }}</td>
-                  <td class="status-ambil text-center">
-                    {% if item.status_ambil == 'pending' %}
-                      <span class="badge bg-warning text-dark">Pending</span>
-                    {% elif item.status_ambil == 'completed' %}
-                      <span class="badge bg-success">Completed</span>
-                    {% else %}
-                      <span class="badge bg-secondary">{{ item.status_ambil }}</span>
-                    {% endif %}
-                  </td>
-                  <td class="text-center">
-                    {% if item.sat_table_count > 0 %}
-                      <span class="badge bg-primary">{{ item.sat_table_count }}</span>
-                    {% endif %}
-                  </td>
-                  <td class="text-center">
-                    {% if item.mix_table_count > 0 %}
-                      <span class="badge bg-danger">{{ item.mix_table_count }}</span>
-                    {% endif %}
-                  </td>
-                </tr>
-                {% endif %}
-                {% empty %}
-                <tr><td colspan="11" class="text-center text-muted">Tidak ada data.</td></tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
+        <div class="vr mx-2"></div>
+        <div class="px-3">
+          <span class="d-block text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Pending</span>
+          <strong style="font-size: 1.2rem;">{{ total_pending }}</strong>
         </div>
-      </div>
-      <div class="card shadow-sm mb-3 card-completed" style="background: #d4f5dd;">
-        <div class="card-body pb-2 pt-3 px-2">
-          <div class="fw-bold text-white px-3 py-2 mb-0 rounded-top" style="background:#218838;">COMPLETED ITEMS</div>
-          <div class="table-responsive">
-            <table id="completedTable" class="table table-sm table-bordered align-middle mb-0 table-batch" style="background: #f8f9fa;">
-              <thead class="align-middle text-center" style="background:#d4f5dd;">
-                <tr>
-                  <th>SKU</th>
-                  <th>Barcode</th>
-                  <th>Nama</th>
-                  <th>Variant</th>
-                  <th>Brand</th>
-                  <th>Rak</th>
-                  <th>Jumlah</th>
-                  <th>Ambil</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for item in details %}
-                {% if item.status_ambil == 'completed' %}
-                <tr data-barcode="{{ item.barcode }}">
-                  <td class="text-center fw-semibold">{{ item.sku }}</td>
-                  <td class="text-center text-primary">{{ item.barcode }}</td>
-                  <td>
-                    <a href="/fullfilment/batchitem/{{ item.id }}/detail/" class="text-decoration-underline text-primary" target="_blank">{{ item.nama_produk }}</a>
-                  </td>
-                  <td class="text-info">{{ item.variant_produk }}</td>
-                  <td class="text-secondary">{{ item.brand }}</td>
-                  <td>{% if item.rak %}<span class="badge bg-light text-dark border">{{ item.rak }}</span>{% endif %}</td>
-                  <td class="jumlah text-end">{{ item.jumlah }}</td>
-                  <td class="jumlah-ambil text-end">{{ item.jumlah_ambil }}</td>
-                  <td class="status-ambil text-center">
-                    <span class="badge bg-success">Completed</span>
-                  </td>
-                </tr>
-                {% endif %}
-                {% empty %}
-                <tr><td colspan="9" class="text-center text-muted">Tidak ada data.</td></tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
+        <div class="vr mx-2"></div>
+        <div class="px-3">
+          <span class="d-block text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Completed</span>
+          <strong style="font-size: 1.2rem;">{{ total_completed }}</strong>
+        </div>
+        <div class="vr mx-2"></div>
+        <div class="px-3">
+          <span class="d-block text-muted" style="font-size: 0.8rem; text-transform: uppercase;">Not Found</span>
+          <strong style="font-size: 1.2rem;">{{ sku_not_found_count }}</strong>
         </div>
       </div>
     </div>
-    <!-- KANAN: Panel Scan/Search/Summary -->
-    <div class="col-lg-4 col-12 mb-3">
-      <div class="card shadow-sm" id="cardSummaryPanel" style="width: 60%; margin: auto;">
+
+    <!-- Kolom Kanan: Tombol Print -->
+    <div class="col-md-3 d-flex justify-content-end align-items-center">
+      <!-- Tombol Navigasi Baru -->
+      <div class="btn-group me-2" role="group">
+        <a href="{% url 'batchorder_view' nama_batch=nama_batch %}" class="btn btn-primary">
+          Order Detail
+        </a>
+        <a href="{% url 'batchitem_table_view' %}?nama_batch={{ nama_batch }}" class="btn btn-success">
+          Table Item
+        </a>
+      </div>
+      <a href="{% url 'ready_to_print_list' %}?nama_batch={{ nama_batch }}" target="_blank" class="btn btn-warning">
+        Ready to Print
+      </a>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- KOLOM 1: Scan, Manual, History -->
+    <div class="col-md-3 mb-3">
+      <!-- Scan Barcode -->
+      <div class="card mb-3">
         <div class="card-body">
+          <h5 class="card-title">Scan Barcode</h5>
           <div class="mb-3">
-            <label class="form-label fw-bold">Scan Barcode</label>
             <input type="text" id="barcodeInput" class="form-control" placeholder="Scan barcode..." autofocus autocomplete="off">
             <div id="barcodeFeedback" class="mt-2"></div>
             <div id="scanHistory" class="mt-2" style="max-height: 300px; overflow-y: auto; display:none;"></div>
           </div>
+        </div>
+      </div>
+
+      <!-- Manual Search -->
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Manual Search</h5>
           <div class="mb-3">
-            <label class="form-label fw-bold">Manual Search</label>
             <input type="text" id="updateManualInput" class="form-control" placeholder="Cari SKU / Barcode / Nama..." autocomplete="off">
             <div id="updateManualDropdown" class="list-group position-absolute w-100" style="z-index:10; display:none;"></div>
             <div id="updateManualQtyControl" class="d-flex align-items-center mt-2" style="display:none;">
@@ -143,78 +93,181 @@
             </div>
             <div id="updateManualFeedback" class="mt-2"></div>
           </div>
-          <div class="mb-3">
-            <div class="fw-bold mb-1">Summary Order</div>
-            <table class="table table-bordered table-sm mb-2 table-summary-order" style="font-size:0.95em;">
-              <thead class="table-light">
-                <tr>
-                  <th>Order</th>
-                  <th>Pick</th>
-                  <th>SAT</th>
-                  <th>Brand</th>
-                  <th>Mix</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td id="summary-total-order" class="text-center">{{ total_order }}</td>
-                  <td id="summary-ready-to-pick" class="text-center">
-                    <a href="#" id="showReadyToPickModal" style="text-decoration: none; font-weight: bold;">{{ ready_to_pick }}</a>
-                  </td>
-                  <td id="summary-sat-btn" class="text-center">
-                    <button id="satBtn" type="button" style="background: none; border: none; color: #0d6efd; font-weight: bold; font-size: 1.1em; padding: 0; cursor: pointer;">{{sat_count}}</button>
-                  </td>
-                  <td id="summary-brand-btn" class="text-center">
-                    <button id="brandBtn" type="button" style="background: none; border: none; color: #198754; font-weight: bold; font-size: 1.1em; padding: 0; cursor: pointer;">{{brand_count}}</button>
-                  </td>
-                  <td id="summary-mix-btn" class="text-center">
-                    <button id="mixBtn" type="button" style="background: none; border: none; color: #dc3545; font-weight: bold; font-size: 1.2em; padding: 0; cursor: pointer;">
-                      <span id="mixCountBadge">{{ mix_count }}</span>
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="mb-2">
-            <table class="table table-borderless table-sm mb-0" style="font-size:0.97em;">
-                <tbody>
-                    <tr>
-                        <td class="ps-0">SKU Pending</td>
-                        <td class="text-end pe-0"><b>{{ total_pending }}</b></td>
-                    </tr>
-                    <tr>
-                        <td class="ps-0">SKU Completed</td>
-                        <td class="text-end pe-0"><b>{{ total_completed }}</b></td>
-                    </tr>
-                    <tr>
-                        <td class="ps-0">SKU Not Found</td>
-                        <td class="text-end pe-0"><b>{{ sku_not_found_count }}</b></td>
-                    </tr>
-                    <tr>
-                        <td class="ps-0">NAMA BATCH</td>
-                        <td class="text-end pe-0"><b>{{ nama_picklist }}</b></td>
-                    </tr>
-                    <tr>
-                        <td class="ps-0">TOTAL SAT</td>
-                        <td class="text-end pe-0"><b>{{ total_sat_table }}</b></td>
-                    </tr>
-                    <tr>
-                        <td class="ps-0">TOTAL MIX</td>
-                        <td class="text-end pe-0"><b>{{ total_mix_table }}</b></td>
-                    </tr>
+        </div>
+      </div>
+
+      <!-- Scan History -->
+      <div class="card mb-3">
+        <div class="card-body position-relative">
+          <h5 class="card-title d-flex justify-content-between align-items-center">
+            Scan History (10 Terakhir)
+            <button id="showHistoryBtn" class="btn btn-outline-dark btn-sm ms-2" type="button">
+              SHOW HISTORY
+            </button>
+          </h5>
+          <div id="scanHistoryTableWrapper">
+            <div class="table-responsive">
+              <table class="table table-striped table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col" class="ps-3">Waktu</th>
+                    <th scope="col">Tipe</th>
+                    <th scope="col">Barcode</th>
+                    <th scope="col">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="scanHistoryTableBody">
+                  {% for entry in scan_history %}
+                  <tr>
+                    <td>{{ entry.waktu|date:"H:i:s" }}</td>
+                    <td>{{ entry.user }}</td>
+                    <td>{{ entry.product.barcode }}</td>
+                    <td>
+                      {% if entry.status == "completed" %}
+                        <span class="badge bg-success">Completed</span>
+                      {% elif entry.status == "ok" %}
+                        <span class="badge bg-primary">OK</span>
+                      {% else %}
+                        <span class="badge bg-warning text-dark">{{ entry.status }}</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
                 </tbody>
-            </table>
-            </div>
-            <!-- Tombol Download Table Pending -->
-            <div class="mb-2 d-flex align-items-center gap-2">
-              <button id="downloadPendingPDF" class="btn btn-danger btn-sm me-2">Download Pending (PDF)</button>
-              <button id="showScanHistoryBtn" class="btn btn-info btn-sm">Show History</button>
-            </div>
-            <div class="d-flex gap-2">
-              <a href="/fullfilment/" class="btn btn-outline-secondary flex-fill">&larr; Batchlist</a>
-              <a href="/fullfilment/readytoprint/?nama_batch={{ nama_picklist }}" class="btn btn-warning flex-fill">Ready to Print</a>
+              </table>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KOLOM 2: Monitoring Item -->
+    <div class="col-md-4 mb-3">
+      <!-- Kartu Monitoring Item -->
+      <div id="monitoring-card" class="card mb-3 shadow-sm text-center" style="background-color: #e3f2fd;">
+        <div class="d-flex justify-content-center align-items-center p-3">
+          <img id="monitor-photo" src="/static/icons/alfaicon.png" class="img-fluid rounded" style="max-height: 500px; width: auto; border: 1px solid #dee2e6;">
+        </div>
+        <div class="card-body py-3">
+          <h5 id="monitor-nama" class="card-title mb-2" style="font-size: 1.4rem;">---</h5>
+          <p class="card-text text-muted mb-3">
+            <span id="monitor-brand">---</span> - <span id="monitor-variant">---</span>
+          </p>
+          <div class="mb-3">
+            <span class="badge bg-secondary">SKU: <span id="monitor-sku">---</span></span>
+            <br class="mb-1">
+            <span class="badge bg-secondary mt-1">Barcode: <span id="monitor-barcode">---</span></span>
+          </div>
+          <div class="text-center">
+            <p class="text-muted mb-1" style="font-size: 1rem;">Jumlah Ambil</p>
+            <p class="fw-bold text-primary mb-0" style="font-size: 3rem; line-height: 1;" id="monitor-jumlah">- / -</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KOLOM 3: Tabel Pending Items -->
+    <div class="col-md-5 mb-3">
+      <div class="card shadow-sm mb-3 card-pending" style="background: #e3f0ff;">
+        <div class="card-body pb-2 pt-3 px-2">
+          <div class="d-flex justify-content-between align-items-center fw-bold text-white px-3 py-2 mb-0 rounded-top" style="background:#1769aa;">
+            
+            <div class="d-flex align-items-center">
+              <div class="btn-group btn-group-sm me-3" role="group" id="pendingFilterButtons">
+                  <button type="button" class="btn btn-outline-light" data-filter="all">All <span class="badge bg-dark ms-1">{{ details|length }}</span></button>
+                  <button type="button" class="btn btn-light" data-filter="pending">Pending <span class="badge bg-dark ms-1">{{ status_counts.pending|default:0 }}</span></button>
+                  <button type="button" class="btn btn-outline-light" data-filter="partial">Partial <span class="badge bg-dark ms-1">{{ status_counts.partial|default:0 }}</span></button>
+                  <button type="button" class="btn btn-outline-light" data-filter="over_stock">Over Stock <span class="badge bg-dark ms-1">{{ status_counts.over_stock|default:0 }}</span></button>
+                  <button type="button" class="btn btn-outline-light" data-filter="completed">Completed <span class="badge bg-dark ms-1">{{ total_completed }}</span></button>
+              </div>
+            </div>
+          </div>
+          <!-- Search Bar for Pending Items -->
+          <div class="p-3 bg-white border-bottom">
+            <input type="text" id="pendingSearchInput" class="form-control" placeholder="Cari di Pending Items (SKU, Barcode, Nama, Variant, Brand...)">
+          </div>
+          <div id="pendingItemsContainer" class="list-group list-group-flush" style="max-height: 2000px; overflow-y: auto;">
+            {% for item in details %}
+            <div class="list-group-item px-3 py-2 d-flex align-items-center" data-barcode="{{ item.barcode }}" data-status="{{ item.status_ambil }}">
+              <!-- Zona 1: Foto Produk -->
+              <div class="me-3">
+                <img src="{{ item.photo_url|default:'/static/icons/alfaicon.png' }}" class="rounded" style="width: 100px; height: 100px; object-fit: cover; border: 1px solid #dee2e6;">
+              </div>
+        
+              <!-- Wrapper untuk Zona 2, 3, dan 4 -->
+              <div class="flex-grow-1">
+                <!-- Zona 2: Nama Produk -->
+                <div class="mb-1">
+                  <a href="/fullfilment/batchpicking/{{ nama_picklist|urlencode }}/batchitem/{{ item.id }}/detail/" class="product-name-link fw-bold text-dark text-decoration-none" target="_blank">{{ item.nama_produk }}</a>
+                    </div>
+        
+                <!-- Zona 3 (diperbarui): Variant/Brand di kiri, Jumlah di kanan -->
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div>
+                    <small class="text-primary fw-bold variant-produk">{{ item.variant_produk|default_if_none:'' }}</small>
+                    {% if item.brand and item.variant_produk %} - {% endif %}
+                    {% if item.brand %}
+                      <span class="badge bg-light text-success border brand">{{ item.brand }}</span>
+                    {% endif %}
+                  </div>
+                  <div class="me-3" style="min-width: 80px; text-align: center;">
+                    {% if item.status_ambil == 'over_stock' %}
+                      <span class="fw-bold text-danger fs-5 jumlah-ambil">{{ item.jumlah_ambil }}</span> / <span class="text-muted jumlah">{{ item.jumlah }}</span>
+                      {% if item.over_qty_display is not None %}
+                        <small class="d-block text-danger">(lebih {{ item.over_qty_display }})</small>
+                      {% endif %}
+                    {% else %}
+                      <span class="fw-bold fs-5 jumlah-ambil">{{ item.jumlah_ambil }}</span> / <span class="text-muted jumlah">{{ item.jumlah }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+          
+                <!-- Zona 4 (diperbarui): SKU/Barcode di kiri, Status di kanan -->
+                <div class="d-flex justify-content-between align-items-center">
+                  <!-- Kiri: SKU & Barcode -->
+                  <div>
+                    <span class="badge bg-light text-dark border me-2 sku-badge">{{ item.sku }}</span>
+                    <span class="badge bg-light text-dark border barcode-badge"><i class="bi bi-upc me-1"></i>{{ item.barcode }}</span>
+                  </div>
+                  <!-- Kanan: Status -->
+                  <div style="min-width: 100px; text-align: center;">
+                      {% if item.status_ambil == 'pending' %}
+                        <span class="badge bg-light text-dark rounded-pill status-ambil">Pending</span>
+                      {% elif item.status_ambil == 'partial' %}
+                        <span class="badge bg-warning text-dark rounded-pill status-ambil">Partial</span>
+                      {% elif item.status_ambil == 'over_stock' %}
+                        <span class="badge bg-danger rounded-pill status-ambil">Over Stock</span>
+                      {% else %}
+                        <span class="badge bg-secondary rounded-pill status-ambil">Lainnya</span>
+                      {% endif %}
+                  </div>
+                </div>
+              </div>
+          
+            </div>
+            {% empty %}
+              <div class="list-group-item text-center text-muted">Tidak ada data.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Completed Items (kontennya akan dikosongkan karena sudah dipindah) -->
+  <div class="modal fade" id="completedItemsModal" tabindex="-1" aria-labelledby="completedItemsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="completedItemsModalLabel">Completed Items</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Search Bar untuk Completed Items -->
+          <div class="mb-3">
+            <input type="text" id="completedSearchInput" class="form-control" placeholder="Cari di Completed Items (SKU, Barcode, Nama, Variant, Brand...)">
+          </div>
+          <p class="text-center text-muted">Daftar item yang sudah selesai sekarang ditampilkan di daftar utama. Gunakan filter untuk melihatnya.</p>
         </div>
       </div>
     </div>
@@ -229,15 +282,13 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          {% if ready_to_pick_ids %}
-          <ul style="padding-left:18px; font-size:1em;">
-            {% for idp in ready_to_pick_ids %}
-            <li>{{ idp }}</li>
+          <ul id="readyToPickList" class="list-group">
+            {% for order_id in ready_to_pick_ids %}
+            <li class="list-group-item">{{ order_id }}</li>
+            {% empty %}
+            <li class="list-group-item">Tidak ada pesanan yang siap untuk di-pick.</li>
             {% endfor %}
           </ul>
-          {% else %}
-          <div class="text-muted">Belum ada order yang ready.</div>
-          {% endif %}
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
@@ -247,7 +298,8 @@
   </div>
 
   <!-- Modal SKU Not Found -->
-  <div class="modal fade" id="skuNotFoundModal" tabindex="-1" aria-labelledby="skuNotFoundModalLabel" aria-hidden="true">
+  <div class="modal fade" id="skuNotFoundModal" tabindex="-1" aria-labelledby="skuNotFoundModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -265,86 +317,172 @@
   </div>
 </div>
 
-<!-- DataTables CSS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-<!-- jQuery (wajib untuk DataTables) -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<!-- DataTables JS -->
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<!-- Modal Panduan Navigasi -->
+<div class="modal fade" id="navigationGuideModal" tabindex="-1" aria-labelledby="navigationGuideModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="navigationGuideModalLabel">Panduan Navigasi & Shortcut</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <h6>Shortcut Umum:</h6>
+        <ul class="list-group list-group-flush mb-3">
+          <li class="list-group-item"><strong><code>Ctrl + R</code></strong>: Mengembalikan fokus ke kotak SCAN BARCODE (saat tidak ada input lain yang aktif).</li>
+        </ul>
+
+        <h6>Manual Input:</h6>
+        <ul class="list-group list-group-flush mb-3">
+          <li class="list-group-item"><strong>Pilih barang</strong>: Ketik SKU/Barcode/Nama Produk di kolom 'Cari SKU / Barcode / Nama...'.</li>
+          <li class="list-group-item"><strong>Pilih item dari dropdown</strong>:
+            <ul>
+              <li>Gunakan <strong><code>Tombol Panah Bawah</code></strong> untuk navigasi.</li>
+              <li>Gunakan <strong><code>Enter</code></strong> atau <strong><code>Tombol Panah Kanan</code></strong> untuk memilih.</li>
+            </ul>
+          </li>
+          <li class="list-group-item"><strong>Mengatur Jumlah Ambil (setelah item terpilih)</strong>:
+            <ul>
+              <li><strong><code>Tombol Panah Atas</code></strong>: Menambah jumlah.</li>
+              <li><strong><code>Tombol Panah Bawah</code></strong>: Mengurangi jumlah.</li>
+              <li><strong><code>Tombol Panah Kanan</code></strong>: Menyetel ke jumlah maksimal (sesuai 'Jumlah' yang dibutuhkan).</li>
+              <li><strong><code>Tombol Panah Kiri</code></strong>: Menyetel jumlah ke 0 (reset).</li>
+              <li><strong><code>Enter</code></strong>: Melakukan Update (menyimpan perubahan).</li>
+            </ul>
+          </li>
+        </ul>
+
+        <h6>Edit Data di 'Completed Items':</h6>
+        <ul class="list-group list-group-flush mb-3">
+          <li class="list-group-item">Buka modal <strong><code>Lihat Item Selesai</code></strong> (tombol di pojok kanan atas tabel pending).</li>
+          <li class="list-group-item">Klik <strong><code>Nama Produk</code></strong> pada baris item yang ingin diubah.</li>
+          <li class="list-group-item">Input Barcode di <strong><code>Scan Barcode</code></strong> untuk membuka lock.</li>
+          <li class="list-group-item">Edit <strong><code>Jumlah Ambil</code></strong> ,akhiri dengan <strong><code>Tutup Tab</code></strong>.</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Variabel-variabel ini HARUS tetap di sini karena menggunakan Django Template Tags
+  window.NAMA_PICKLIST = "{{ nama_picklist }}";
+  window.CSRF_TOKEN = "{{ csrf_token }}";
+  window.CURRENT_USER = "{{ request.user.username }}";
+</script>
+
+<style>
+  .card-body {
+    width: 100%;
+    height: 100%;
+  }
+
+  .table-batch {
+    width: 100%;
+    margin: auto;
+  }
+
+  .table-summary-order {
+    width: 100% !important;
+    /* diperkecil lagi 20% dari sebelumnya (80% -> 60%) */
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* @media (max-width: 991px) {
+    .table-summary-order {
+      width: 100% !important;
+      margin-left: 0;
+    }
+  } */
+
+  #pendingTableWrapper {
+    max-height: 2000px;
+    /* Atur tinggi area tabel, bisa diubah sesuai kebutuhan */
+    overflow-y: auto;
+    overflow-x: auto;
+    display: block;
+  }
+
+  #pendingTable th,
+  #pendingTable td {
+    font-size: 100%;
+  }
+
+#idcolnama {
+  max-width: 500px !important;
+  width: 500px !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-name-link {
+  font-weight: 500;
+  color: inherit;
+  text-decoration: none;
+}
+.product-name-link:hover {
+  color: var(--bs-primary);
+  text-decoration: underline;
+}
+
+.item-hidden {
+  display: none !important;
+}
+
+/* PERBAIKAN: Memperbesar font untuk SKU, Barcode, dan Status */
+.sku-badge,
+.barcode-badge {
+  font-size: 0.9rem;    /* Ukuran font diperbesar */
+  padding: 0.4em 0.6em; /* Sedikit padding tambahan */
+  vertical-align: middle;
+}
+
+.status-ambil {
+  font-size: 0.9rem;    /* Ukuran font diperbesar */
+  font-weight: 500;     /* Membuat tulisan sedikit lebih tebal */
+  padding: 0.5em 0.8em; /* Padding agar badge lebih besar */
+  min-width: 90px;      /* Lebar minimum agar konsisten */
+}
+
+/* PERBAIKAN: Melebarkan container utama */
+.container-fluid {
+    max-width: none !important; /* Menghapus batasan lebar maksimum */
+    padding-left: 30px !important;  /* Menambah padding kiri */
+    padding-right: 30px !important; /* Menambah padding kanan */
+}
+
+/* PERBAIKAN: Memberi warna pada tombol filter */
+#pendingFilterButtons .btn[data-filter="pending"],
+#pendingFilterButtons .btn[data-filter="partial"],
+#pendingFilterButtons .btn[data-filter="over_stock"],
+#pendingFilterButtons .btn[data-filter="completed"] {
+    color: #fff; /* Teks putih untuk kontras */
+}
+
+#pendingFilterButtons .btn[data-filter="pending"] { background-color: #6c757d; } /* Abu-abu */
+#pendingFilterButtons .btn[data-filter="partial"] { background-color: #ffc107; } /* Kuning */
+#pendingFilterButtons .btn[data-filter="over_stock"] { background-color: #dc3545; } /* Merah */
+#pendingFilterButtons .btn[data-filter="completed"] { background-color: #198754; } /* Hijau */
+
+/* Style untuk tombol yang aktif */
+#pendingFilterButtons .btn.btn-light[data-filter="pending"] { background-color: #5c636a; border-color: #5c636a;}
+#pendingFilterButtons .btn.btn-light[data-filter="partial"] { background-color: #e0a800; border-color: #e0a800;}
+#pendingFilterButtons .btn.btn-light[data-filter="over_stock"] { background-color: #bb2d3b; border-color: #bb2d3b;}
+#pendingFilterButtons .btn.btn-light[data-filter="completed"] { background-color: #157347; border-color: #157347;}
+
+</style>
+
+<!-- Debug info removed to avoid JSON parsing errors -->
+
+{% block extra_script %}
 <!-- jsPDF & autotable untuk download PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-
-<script>
-  window.NAMA_PICKLIST = "{{ nama_picklist }}";
-  window.CSRF_TOKEN = "{{ csrf_token }}";
-</script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="{% static 'datatables/batchpicking.js' %}"></script>
-
-<style>
-.card-body {
-    width: 100%;
-    height: 60%;
-  }
-  .table-batch {
-    width: 150%;
-    margin: auto;
-}
-.table-summary-order {
-  width: 60% !important; /* diperkecil lagi 20% dari sebelumnya (80% -> 60%) */
-  margin-left: auto;
-  margin-right: auto;
-}
-@media (max-width: 991px) {
-  .table-summary-order {
-    width: 100% !important;
-    margin-left: 0;
-  }
-}
-#pendingTableWrapper {
-  max-height: 600px; /* Atur tinggi area tabel, bisa diubah sesuai kebutuhan */
-  overflow-y: auto;
-  overflow-x: auto;
-  display: block;
-}
-#pendingTable th, #pendingTable td {
-  font-size: 80%;
-}
-</style>
-
-<script>
-// Infinite scroll untuk pendingTable
-(function() {
-  const wrapper = document.getElementById('pendingTableWrapper');
-  const table = document.getElementById('pendingTable');
-  if (!wrapper || !table) return;
-  let page = 1;
-  const pageSize = 100;
-  let loading = false;
-  let allLoaded = false;
-  // Sembunyikan semua baris kecuali 100 pertama
-  function showRows() {
-    const rows = table.querySelectorAll('tbody tr');
-    rows.forEach((row, idx) => {
-      row.style.display = (idx < page * pageSize) ? '' : 'none';
-    });
-    if (page * pageSize >= rows.length) allLoaded = true;
-  }
-  showRows();
-  wrapper.addEventListener('scroll', function() {
-    if (loading || allLoaded) return;
-    if (wrapper.scrollTop + wrapper.clientHeight >= wrapper.scrollHeight - 10) {
-      loading = true;
-      setTimeout(() => {
-        page++;
-        showRows();
-        loading = false;
-      }, 200);
-    }
-  });
-})();
-
-</script>
+{% endblock %}
 
 {% endblock %}

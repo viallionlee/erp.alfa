@@ -1,0 +1,341 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Product Dimension - ERP ALFA{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css"/>
+    <style>
+        .dimension-card {
+            border-left: 4px solid #007bff;
+        }
+        .dimension-high {
+            border-left-color: #28a745;
+        }
+        .dimension-medium {
+            border-left-color: #ffc107;
+        }
+        .dimension-low {
+            border-left-color: #dc3545;
+        }
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .table-container {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            padding: 1rem;
+            background-color: #fff;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .dataTables_wrapper .dataTables_filter {
+            text-align: right;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="bi bi-rulers"></i> Product Dimension
+            </h1>
+            <p class="text-muted mb-0">Daftar dimensi produk (Panjang × Lebar × Tinggi)</p>
+        </div>
+        <div>
+            <a href="{% url 'products:index' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Kembali ke Products
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card summary-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-white-50">Total Produk</h6>
+                            <h3 class="mb-0" id="totalProducts">-</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-box text-white-50" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card summary-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-white-50">Dengan Dimensi</h6>
+                            <h3 class="mb-0" id="withDimension">-</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-rulers text-white-50" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card summary-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-white-50">Tanpa Dimensi</h6>
+                            <h3 class="mb-0" id="withoutDimension">-</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-exclamation-triangle text-white-50" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card summary-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title text-white-50">Brands</h6>
+                            <h3 class="mb-0" id="totalBrands">-</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-tags text-white-50" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dimension Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-table"></i> Daftar Dimensi Produk
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-container">
+                <table id="dimensionTable" class="table table-hover" style="width:100%">
+                    <thead class="table-light">
+                        <tr>
+                            <th>SKU</th>
+                            <th>Barcode</th>
+                            <th>Nama Produk</th>
+                            <th>Variant</th>
+                            <th>Brand</th>
+                            <th>Panjang (cm)</th>
+                            <th>Lebar (cm)</th>
+                            <th>Tinggi (cm)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data akan diisi oleh DataTables -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script src=""></script>
+<script>
+$(document).ready(function() {
+    console.log('Product Dimension page loaded');
+    
+    // Check if DataTables is available
+    if (typeof $.fn.DataTable === 'undefined') {
+        console.error('DataTables is not loaded!');
+        alert('Error: DataTables library tidak ter-load. Silakan refresh halaman.');
+        return;
+    }
+    
+    console.log('DataTables is available, initializing...');
+    
+    // Initialize DataTable
+    var table = $('#dimensionTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{% url "products:product_dimension_data" %}',
+            type: 'GET',
+            error: function(xhr, error, thrown) {
+                console.error('DataTables error:', error);
+                console.error('XHR:', xhr);
+                console.error('Thrown:', thrown);
+            }
+        },
+        columns: [
+            {
+                data: 'sku',
+                title: 'SKU',
+                render: function(data, type, row) {
+                    if (type === 'display') {
+                        return `<span class="fw-bold text-primary">${data}</span>`;
+                    }
+                    return data;
+                }
+            },
+            {
+                data: 'barcode',
+                title: 'Barcode',
+                render: function(data, type, row) {
+                    if (type === 'display') {
+                        return `<span class="text-muted">${data}</span>`;
+                    }
+                    return data;
+                }
+            },
+            {
+                data: 'nama_produk',
+                title: 'Nama Produk',
+                render: function(data, type, row) {
+                    if (type === 'display') {
+                        return `<div class="fw-bold">${data}</div>`;
+                    }
+                    return data;
+                }
+            },
+            {
+                data: 'variant_produk',
+                title: 'Variant',
+                render: function(data, type, row) {
+                    if (type === 'display') {
+                        return `<span class="badge bg-secondary">${data}</span>`;
+                    }
+                    return data;
+                }
+            },
+            {
+                data: 'brand',
+                title: 'Brand',
+                render: function(data, type, row) {
+                    if (type === 'display') {
+                        return `<span class="badge bg-info">${data}</span>`;
+                    }
+                    return data;
+                }
+            },
+            {
+                data: 'panjang_cm',
+                title: 'Panjang (cm)',
+                render: function(data, type, row) {
+                    if (type === 'display') {
+                        if (data && data !== '-') {
+                            return `<span class="badge bg-success">${data}</span>`;
+                        } else {
+                            return `<span class="text-muted">-</span>`;
+                        }
+                    }
+                    return data;
+                }
+            },
+            {
+                data: 'lebar_cm',
+                title: 'Lebar (cm)',
+                render: function(data, type, row) {
+                    if (type === 'display') {
+                        if (data && data !== '-') {
+                            return `<span class="badge bg-warning">${data}</span>`;
+                        } else {
+                            return `<span class="text-muted">-</span>`;
+                        }
+                    }
+                    return data;
+                }
+            },
+            {
+                data: 'tinggi_cm',
+                title: 'Tinggi (cm)',
+                render: function(data, type, row) {
+                    if (type === 'display') {
+                        if (data && data !== '-') {
+                            return `<span class="badge bg-danger">${data}</span>`;
+                        } else {
+                            return `<span class="text-muted">-</span>`;
+                        }
+                    }
+                    return data;
+                }
+            }
+        ],
+        order: [[0, 'asc']], // Sort by SKU
+        pageLength: 25,
+        language: {
+            url: '{% static "datatables/Indonesian.json" %}'
+        },
+        drawCallback: function(settings) {
+            console.log('DataTables drawCallback triggered');
+            // Update summary cards
+            updateSummaryCards();
+        },
+        initComplete: function(settings, json) {
+            console.log('DataTables initComplete triggered');
+            console.log('JSON data:', json);
+        }
+    });
+
+    // Function to update summary cards
+    function updateSummaryCards() {
+        console.log('Updating summary cards...');
+        var data = table.ajax.json();
+        console.log('DataTables data:', data);
+        
+        if (data) {
+            $('#totalProducts').text(data.recordsTotal);
+            console.log('Total products:', data.recordsTotal);
+            
+            // Calculate products with/without dimensions
+            var withDimension = 0;
+            var withoutDimension = 0;
+            var brands = new Set();
+            
+            table.rows({search: 'applied'}).data().each(function(row) {
+                if (row.panjang_cm !== '-' || row.lebar_cm !== '-' || row.tinggi_cm !== '-') {
+                    withDimension++;
+                } else {
+                    withoutDimension++;
+                }
+                if (row.brand !== '-') {
+                    brands.add(row.brand);
+                }
+            });
+            
+            $('#withDimension').text(withDimension);
+            $('#withoutDimension').text(withoutDimension);
+            $('#totalBrands').text(brands.size);
+            
+            console.log('Summary updated:', {
+                withDimension: withDimension,
+                withoutDimension: withoutDimension,
+                brands: brands.size
+            });
+        } else {
+            console.log('No data available for summary cards');
+        }
+    }
+
+    // Initial summary update
+    updateSummaryCards();
+});
+</script>
+{% endblock %}

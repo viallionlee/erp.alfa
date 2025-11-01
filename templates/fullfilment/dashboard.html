@@ -1,0 +1,612 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Progress Fulfillment{% endblock %}
+
+{% block extra_css %}
+<style>
+.dashboard-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+    transition: all 0.4s ease;
+    overflow: hidden;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+
+.dashboard-card .card-body {
+    padding: 2rem;
+    color: white;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    transition: all 0.4s ease;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-color), var(--accent-color-light));
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+.stat-card.primary { 
+    --accent-color: #007bff; 
+    --accent-color-light: #0056b3;
+}
+.stat-card.success { 
+    --accent-color: #28a745; 
+    --accent-color-light: #1e7e34;
+}
+.stat-card.info { 
+    --accent-color: #17a2b8; 
+    --accent-color-light: #117a8b;
+}
+.stat-card.warning { 
+    --accent-color: #ffc107; 
+    --accent-color-light: #e0a800;
+}
+.stat-card.danger { 
+    --accent-color: #dc3545; 
+    --accent-color-light: #c82333;
+}
+.stat-card.secondary { 
+    --accent-color: #6c757d; 
+    --accent-color-light: #545b62;
+}
+
+.progress-ring {
+    width: 90px;
+    height: 90px;
+    position: relative;
+}
+
+.progress-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.progress-ring circle {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+}
+
+.progress-ring .bg {
+    stroke: #f8f9fa;
+}
+
+.progress-ring .progress {
+    stroke: var(--accent-color);
+    stroke-dasharray: 283;
+    stroke-dashoffset: calc(283 - (283 * var(--progress)) / 100);
+    transition: stroke-dashoffset 0.8s ease;
+}
+
+.activity-item {
+    padding: 1rem;
+    border-left: 4px solid var(--accent-color, #007bff);
+    margin-bottom: 0.75rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 0 12px 12px 0;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.activity-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.activity-item:hover {
+    transform: translateX(8px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.activity-item:hover::before {
+    opacity: 1;
+}
+
+.alert-card {
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.performance-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px;
+    box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.performance-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+.rank-badge {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.rank-1 { background: linear-gradient(135deg, #ffd700, #ffed4e); }
+.rank-2 { background: linear-gradient(135deg, #c0c0c0, #e5e5e5); }
+.rank-3 { background: linear-gradient(135deg, #cd7f32, #daa520); }
+.rank-4 { background: linear-gradient(135deg, #17a2b8, #20c997); }
+.rank-5 { background: linear-gradient(135deg, #6c757d, #adb5bd); }
+
+.refresh-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 30px;
+    padding: 0.75rem 2rem;
+    color: white;
+    font-weight: 600;
+    transition: all 0.4s ease;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.refresh-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.progress-bar-custom {
+    height: 30px;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.progress-bar-custom .progress-bar {
+    transition: width 1s ease;
+    position: relative;
+}
+
+.progress-bar-custom .progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--accent-color), var(--accent-color-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-percentage {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--accent-color);
+    margin-top: 0.25rem;
+}
+
+.batch-item {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    border: 1px solid #dee2e6;
+}
+
+.batch-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    border-color: var(--accent-color, #007bff);
+}
+
+.section-header {
+    background: linear-gradient(135deg, var(--accent-color), var(--accent-color-light));
+    color: white;
+    border-radius: 12px 12px 0 0;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.section-header i {
+    margin-right: 0.75rem;
+    font-size: 1.2rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header Dashboard -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1 class="mb-2 text-white">
+                                <i class="bi bi-speedometer2 me-2"></i>
+                                Dashboard Progress Fulfillment
+                            </h1>
+                            <p class="mb-0 text-white-50">
+                                Monitoring real-time progress batch dan status order
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="refresh-btn" onclick="refreshDashboard()">
+                                <i class="bi bi-arrow-clockwise me-2"></i>
+                                Refresh
+                            </button>
+                            <div class="mt-2 text-white-50">
+                                <small>Last updated: {{ current_time|date:"H:i" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistik Utama -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-2 col-md-4 col-6">
+            <div class="stat-card primary">
+                <div class="card-body text-center">
+                    <div class="progress-ring mx-auto mb-3">
+                        <svg>
+                            <circle class="bg" cx="45" cy="45" r="40"></circle>
+                            <circle class="progress" cx="45" cy="45" r="40" style="--progress: {{ status_stats.ready_to_pick_pct }}"></circle>
+                        </svg>
+                    </div>
+                    <div class="stat-value">{{ dashboard_stats.total_orders }}</div>
+                    <div class="stat-label">Total Orders</div>
+                    <div class="stat-percentage">{{ status_stats.ready_to_pick_pct }}% Ready to Pick</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-6">
+            <div class="stat-card success">
+                <div class="card-body text-center">
+                    <div class="progress-ring mx-auto mb-3">
+                        <svg>
+                            <circle class="bg" cx="45" cy="45" r="40"></circle>
+                            <circle class="progress" cx="45" cy="45" r="40" style="--progress: {{ status_stats.printed_pct }}"></circle>
+                        </svg>
+                    </div>
+                    <div class="stat-value">{{ dashboard_stats.total_printed }}</div>
+                    <div class="stat-label">Printed</div>
+                    <div class="stat-percentage">{{ status_stats.printed_pct }}% Progress</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-6">
+            <div class="stat-card info">
+                <div class="card-body text-center">
+                    <div class="progress-ring mx-auto mb-3">
+                        <svg>
+                            <circle class="bg" cx="45" cy="45" r="40"></circle>
+                            <circle class="progress" cx="45" cy="45" r="40" style="--progress: {{ status_stats.picked_pct }}"></circle>
+                        </svg>
+                    </div>
+                    <div class="stat-value">{{ dashboard_stats.total_picked }}</div>
+                    <div class="stat-label">Picked</div>
+                    <div class="stat-percentage">{{ status_stats.picked_pct }}% Progress</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-6">
+            <div class="stat-card warning">
+                <div class="card-body text-center">
+                    <div class="progress-ring mx-auto mb-3">
+                        <svg>
+                            <circle class="bg" cx="45" cy="45" r="40"></circle>
+                            <circle class="progress" cx="45" cy="45" r="40" style="--progress: {{ status_stats.packed_pct }}"></circle>
+                        </svg>
+                    </div>
+                    <div class="stat-value">{{ dashboard_stats.total_packed }}</div>
+                    <div class="stat-label">Packed</div>
+                    <div class="stat-percentage">{{ status_stats.packed_pct }}% Progress</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-6">
+            <div class="stat-card secondary">
+                <div class="card-body text-center">
+                    <div class="progress-ring mx-auto mb-3">
+                        <svg>
+                            <circle class="bg" cx="45" cy="45" r="40"></circle>
+                            <circle class="progress" cx="45" cy="45" r="40" style="--progress: {{ status_stats.shipped_pct }}"></circle>
+                        </svg>
+                    </div>
+                    <div class="stat-value">{{ dashboard_stats.total_shipped }}</div>
+                    <div class="stat-label">Shipped</div>
+                    <div class="stat-percentage">{{ status_stats.shipped_pct }}% Progress</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-6">
+            <div class="stat-card danger">
+                <div class="card-body text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-3">
+                        <i class="bi bi-x-circle fs-1 text-danger"></i>
+                    </div>
+                    <div class="stat-value">{{ dashboard_stats.total_cancelled }}</div>
+                    <div class="stat-label">Cancelled</div>
+                    <div class="stat-percentage">Today</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Bar Overall -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-graph-up me-2"></i>
+                        Overall Progress
+                    </h5>
+                    <div class="progress-bar-custom mb-2">
+                        <div class="progress-bar bg-primary" style="width: {{ status_stats.ready_to_pick_pct }}%">
+                            Ready to Pick ({{ status_stats.ready_to_pick_pct }}%)
+                        </div>
+                        <div class="progress-bar bg-info" style="width: {{ status_stats.printed_pct }}%">
+                            Printed ({{ status_stats.printed_pct }}%)
+                        </div>
+                        <div class="progress-bar bg-success" style="width: {{ status_stats.picked_pct }}%">
+                            Picked ({{ status_stats.picked_pct }}%)
+                        </div>
+                        <div class="progress-bar bg-warning" style="width: {{ status_stats.packed_pct }}%">
+                            Packed ({{ status_stats.packed_pct }}%)
+                        </div>
+                        <div class="progress-bar bg-dark" style="width: {{ status_stats.shipped_pct }}%">
+                            Shipped ({{ status_stats.shipped_pct }}%)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Top Performing Batches -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="section-header">
+                    <i class="bi bi-trophy"></i>
+                    Top Performing Batches
+                </div>
+                <div class="card-body">
+                    {% for batch in top_batches %}
+                    <div class="batch-item">
+                        <div class="d-flex align-items-center">
+                            <div class="rank-badge rank-{{ batch.rank }} me-3">
+                                {{ batch.rank }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1 fw-bold">{{ batch.batch.nama_batch }}</h6>
+                                <div class="progress mb-2" style="height: 10px;">
+                                    <div class="progress-bar bg-success" style="width: {{ batch.order_progress }}%"></div>
+                                </div>
+                                <small class="text-muted">
+                                    {{ batch.shipped_orders }}/{{ batch.total_orders }} orders shipped 
+                                    ({{ batch.order_progress }}%)
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center">No batches available</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activities -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="section-header">
+                    <i class="bi bi-activity"></i>
+                    Recent Activities
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% for activity in recent_activities %}
+                    <div class="activity-item">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3">
+                                <i class="bi {{ activity.icon }} text-{{ activity.color }} fs-5"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">{{ activity.message }}</div>
+                                <div class="text-muted small">
+                                    by {{ activity.user.username|default:"System" }} • 
+                                    {{ activity.time|timesince }} ago
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center">No recent activities</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts & Issues -->
+    {% if alerts %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="section-header">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Alerts & Issues
+                </div>
+                <div class="card-body">
+                    {% for alert in alerts %}
+                    <div class="alert alert-{{ alert.type }} alert-dismissible fade show" role="alert">
+                        <div class="d-flex align-items-start">
+                            <i class="bi {{ alert.icon }} me-2 fs-5"></i>
+                            <div class="flex-grow-1">
+                                <h6 class="alert-heading">{{ alert.title }}</h6>
+                                <p class="mb-2">{{ alert.message }}</p>
+                                {% if alert.details %}
+                                <ul class="mb-0">
+                                    {% for detail in alert.details %}
+                                    <li>
+                                        {% if detail.batch %}
+                                        <strong>{{ detail.batch.nama_batch }}</strong>
+                                        {% endif %}
+                                        {% if detail.progress %}
+                                        - Progress: {{ detail.progress }}%
+                                        {% endif %}
+                                        {% if detail.shortage %}
+                                        - Shortage: {{ detail.shortage }} units
+                                        {% endif %}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Daily Progress -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="performance-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h4 class="text-white mb-2">Today's Performance</h4>
+                            <p class="text-white-50 mb-0">
+                                {{ daily_progress.today_shipped }} orders shipped today
+                            </p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="h2 text-white mb-1">{{ daily_progress.growth_rate }}%</div>
+                            <div class="text-white-50">
+                                {% if daily_progress.growth_rate > 0 %}
+                                <i class="bi bi-arrow-up"></i> Growth from yesterday
+                                {% else %}
+                                <i class="bi bi-arrow-down"></i> Decline from yesterday
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+function refreshDashboard() {
+    const refreshBtn = document.querySelector('.refresh-btn');
+    const originalText = refreshBtn.innerHTML;
+    refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-2"></i>Refreshing...';
+    refreshBtn.disabled = true;
+    
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
+}
+
+// Auto refresh every 5 minutes
+setInterval(() => {
+    window.location.reload();
+}, 300000);
+</script>
+{% endblock %}

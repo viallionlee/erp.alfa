@@ -1,0 +1,669 @@
+{% extends 'base_mobile.html' %}
+{% load static %}
+
+{% block title %}Detail Opname Rak - {{ session.session_code }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .content-wrapper {
+        padding-bottom: 80px;
+    }
+    
+    .detail-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem;
+        border-radius: 8px;
+        margin-bottom: 0.25rem;
+    }
+    
+    .header-content h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+    
+    .header-content p {
+        margin: 0.1rem 0 0 0;
+        opacity: 0.9;
+        font-size: 0.7rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-weight: 700;
+        font-size: 1.2rem;
+        line-height: 1;
+        margin-bottom: 0.2rem;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.6rem;
+        line-height: 1;
+    }
+    
+    .stat-total { color: #0d6efd; }
+    .stat-selisih { color: #dc3545; }
+    .stat-status { 
+        color: #28a745; 
+        font-size: 0.8rem !important;
+    }
+    .stat-user { color: #6c757d; }
+    
+    /* Minimal Session Info */
+    .session-info-mini {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+    }
+    
+    .session-info-header {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: #495057;
+    }
+    
+    .session-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.3rem;
+        font-size: 0.7rem;
+    }
+    
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+    }
+    
+    .info-label {
+        color: #6c757d;
+        font-weight: 600;
+        font-size: 0.6rem;
+    }
+    
+    .info-value {
+        color: #495057;
+        font-weight: 500;
+    }
+    
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.25rem;
+        margin-top: 0.5rem;
+    }
+    
+    .summary-item {
+        text-align: center;
+        padding: 0.3rem 0.2rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+        font-size: 0.6rem;
+    }
+    
+    .summary-value {
+        font-weight: 700;
+        font-size: 0.9rem;
+        line-height: 1;
+    }
+    
+    .summary-label {
+        color: #6c757d;
+        font-size: 0.55rem;
+        line-height: 1;
+        margin-top: 0.1rem;
+    }
+    
+    .items-card {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+    }
+    
+    .item-card {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-bottom: 0.25rem;
+        border-left: 4px solid #0d6efd;
+    }
+    
+    .item-card:last-child {
+        margin-bottom: 0;
+    }
+    
+    .item-header {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.3rem;
+    }
+    
+    .item-photo {
+        width: 60px;
+        height: 60px;
+        border-radius: 6px;
+        object-fit: cover;
+        border: 1px solid #dee2e6;
+        background: white;
+        flex-shrink: 0;
+    }
+    
+    .item-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+    }
+    
+    .item-name {
+        font-weight: 700;
+        font-size: 0.75rem;
+        color: #495057;
+        line-height: 1.2;
+    }
+    
+    .item-variant-brand {
+        display: flex;
+        gap: 0.5rem;
+        font-size: 0.6rem;
+    }
+    
+    .item-variant {
+        color: #6c757d;
+        font-style: italic;
+    }
+    
+    .item-brand {
+        color: #0d6efd;
+        font-weight: 600;
+    }
+    
+    .item-sku-barcode {
+        display: flex;
+        gap: 0.5rem;
+        font-size: 0.6rem;
+    }
+    
+    .item-sku {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .item-barcode {
+        color: #6c757d;
+        font-family: monospace;
+    }
+    
+    .item-status {
+        font-size: 0.6rem;
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        font-weight: 600;
+        align-self: flex-start;
+    }
+    
+    .status-lebih {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .status-kurang {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-sesuai {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .item-quantities {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-top: 0.3rem;
+        padding-top: 0.3rem;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .quantity-item {
+        text-align: center;
+        flex: 1;
+    }
+    
+    .quantity-label {
+        font-size: 0.55rem;
+        color: #6c757d;
+        font-weight: 600;
+        margin-bottom: 0.1rem;
+    }
+    
+    .quantity-value {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #495057;
+    }
+    
+    .quantity-selisih {
+        color: #dc3545;
+    }
+    
+
+    
+    
+    
+    .sticky-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #dee2e6;
+        padding: 0.5rem;
+        z-index: 1000;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .sticky-actions {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+    }
+    
+    .action-icon-btn {
+        background: none;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 8px;
+        color: #6c757d;
+        font-size: 1.2rem;
+        min-width: 44px;
+        min-height: 44px;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+         .btn-back {
+         color: #6c757d;
+     }
+     
+     .btn-history {
+         color: #17a2b8;
+     }
+    
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: white;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 3000;
+        max-width: 300px;
+        display: none;
+    }
+    
+    .notification.success {
+        border-left: 4px solid #28a745;
+    }
+    
+    .notification.error {
+        border-left: 4px solid #dc3545;
+    }
+    
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 2000;
+        display: none;
+    }
+    
+    .modal-content {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 400px;
+        max-height: 80vh;
+        overflow: hidden;
+        z-index: 2001;
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .modal-title {
+        font-weight: 700;
+        font-size: 1rem;
+        margin: 0;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+    
+    .modal-log-item {
+        border-left: 3px solid #007bff;
+        padding-left: 0.75rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.75rem;
+    }
+    
+    .modal-log-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .modal-log-item.create { border-left-color: #28a745; }
+    .modal-log-item.update_item { border-left-color: #ffc107; }
+    .modal-log-item.delete_item { border-left-color: #dc3545; }
+    .modal-log-item.selesai { border-left-color: #17a2b8; }
+    .modal-log-item.batal { border-left-color: #6c757d; }
+    
+    .modal-log-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.25rem;
+    }
+    
+    .modal-log-action {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .modal-log-time {
+        color: #6c757d;
+        font-size: 0.65rem;
+    }
+    
+    .modal-log-details {
+        color: #6c757d;
+        font-size: 0.7rem;
+        line-height: 1.3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="content-wrapper">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="detail-header">
+            <div class="header-content">
+                <h4><i class="bi bi-clipboard-check"></i> Detail Opname Rak</h4>
+                <p>Sesi: {{ session.session_code }} | Rak: {{ session.rak.kode_rak }}</p>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value stat-total">{{ session.total_items }}</div>
+                <div class="stat-label">Total Items</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value stat-selisih">{{ session.total_selisih }}</div>
+                <div class="stat-label">Total Selisih</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value stat-status">{{ session.get_status_display }}</div>
+                <div class="stat-label">Status</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value stat-user">{{ session.created_by.username|default:"-" }}</div>
+                <div class="stat-label">Dibuat Oleh</div>
+            </div>
+        </div>
+
+        <!-- Minimal Session Info -->
+        <div class="session-info-mini">
+            <div class="session-info-header">
+                <i class="bi bi-info-circle"></i>
+                Info Sesi
+            </div>
+            <div class="session-info-grid">
+                <div class="info-item">
+                    <span class="info-label">Mulai</span>
+                    <span class="info-value">{{ session.tanggal_mulai|date:"d/m H:i" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Selesai</span>
+                    <span class="info-value">{{ session.tanggal_selesai|date:"d/m H:i"|default:"-" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="session-info-mini">
+            <div class="session-info-header">
+                <i class="bi bi-graph-up"></i>
+                Ringkasan Selisih
+            </div>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-value text-success">{{ items_with_positive_selisih|default:0 }}</div>
+                    <div class="summary-label">Positif</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value text-danger">{{ items_with_negative_selisih|default:0 }}</div>
+                    <div class="summary-label">Negatif</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value text-info">{{ items_with_zero_selisih|default:0 }}</div>
+                    <div class="summary-label">Sesuai</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Items List -->
+        <div class="items-card">
+            <div class="session-info-header">
+                <i class="bi bi-list-ul"></i>
+                Daftar Item Opname ({{ items|length }})
+            </div>
+                         {% for item in items %}
+             <div class="item-card">
+                 <div class="item-header">
+                     <img src="{{ item.product.photo.url|default:'/static/images/no-image.png' }}" 
+                          alt="{{ item.product.nama_produk }}" 
+                          class="item-photo"
+                          onerror="this.src='/static/images/no-image.png'">
+                                           <div class="item-info">
+                          <div class="item-name">{{ item.product.nama_produk }}</div>
+                          <div class="item-variant-brand">
+                              {% if item.product.variant_produk %}
+                                  <span class="item-variant">{{ item.product.variant_produk }}</span>
+                              {% endif %}
+                              {% if item.product.brand %}
+                                  <span class="item-brand">{{ item.product.brand }}</span>
+                              {% endif %}
+                          </div>
+                          <div class="item-sku-barcode">
+                              <span class="item-sku">{{ item.product.sku }}</span>
+                              {% if item.product.barcode %}
+                                  <span class="item-barcode">{{ item.product.barcode }}</span>
+                              {% endif %}
+                          </div>
+                      </div>
+                     <div class="item-status {% if item.qty_selisih > 0 %}status-lebih{% elif item.qty_selisih < 0 %}status-kurang{% else %}status-sesuai{% endif %}">
+                         {% if item.qty_selisih > 0 %}
+                             Lebih
+                         {% elif item.qty_selisih < 0 %}
+                             Kurang
+                         {% else %}
+                             Sesuai
+                         {% endif %}
+                     </div>
+                 </div>
+                 <div class="item-quantities">
+                     <div class="quantity-item">
+                         <div class="quantity-label">Sistem</div>
+                         <div class="quantity-value">{{ item.qty_sistem }}</div>
+                     </div>
+                     <div class="quantity-item">
+                         <div class="quantity-label">Fisik</div>
+                         <div class="quantity-value">{{ item.qty_fisik }}</div>
+                     </div>
+                     <div class="quantity-item">
+                         <div class="quantity-label">Selisih</div>
+                         <div class="quantity-value quantity-selisih">{{ item.qty_selisih }}</div>
+                     </div>
+                 </div>
+             </div>
+            {% empty %}
+            <div style="text-align: center; padding: 2rem; color: #6c757d;">
+                Tidak ada item opname
+            </div>
+            {% endfor %}
+        </div>
+
+        
+    </div>
+</div>
+
+ <!-- Sticky Action Bar -->
+ <div class="sticky-action-bar">
+     <div class="sticky-actions">
+         <a href="{% url 'inventory:opname_rak_list' %}" class="action-icon-btn btn-back">
+             <i class="bi bi-arrow-left"></i>
+         </a>
+         <button class="action-icon-btn btn-history" onclick="showHistory()">
+             <i class="bi bi-clock-history"></i>
+         </button>
+     </div>
+ </div>
+
+ <!-- Notification -->
+ <div id="notification" class="notification"></div>
+ 
+ <!-- History Modal -->
+ <div id="historyModal" class="modal-overlay" onclick="closeHistory()">
+     <div class="modal-content" onclick="event.stopPropagation()">
+         <div class="modal-header">
+             <h3 class="modal-title">
+                 <i class="bi bi-clock-history"></i>
+                 Log Aktivitas ({{ logs|length }})
+             </h3>
+             <button class="modal-close" onclick="closeHistory()">
+                 <i class="bi bi-x"></i>
+             </button>
+         </div>
+         <div class="modal-body">
+             {% if logs %}
+                 {% for log in logs %}
+                 <div class="modal-log-item {{ log.action }}">
+                     <div class="modal-log-header">
+                         <div class="modal-log-action">
+                             {{ log.get_action_display }}
+                             {% if log.user %}
+                                 oleh {{ log.user.username }}
+                             {% endif %}
+                         </div>
+                         <div class="modal-log-time">{{ log.timestamp|date:"d/m H:i" }}</div>
+                     </div>
+                     {% if log.details %}
+                         <div class="modal-log-details">{{ log.details }}</div>
+                     {% endif %}
+                 </div>
+                 {% endfor %}
+             {% else %}
+                 <div style="text-align: center; padding: 2rem; color: #6c757d;">
+                     Tidak ada log aktivitas
+                 </div>
+             {% endif %}
+         </div>
+     </div>
+ </div>
+{% endblock %}
+
+ {% block extra_script %}
+ <script>
+ function showHistory() {
+     const modal = document.getElementById('historyModal');
+     modal.style.display = 'block';
+     document.body.style.overflow = 'hidden';
+ }
+ 
+ function closeHistory() {
+     const modal = document.getElementById('historyModal');
+     modal.style.display = 'none';
+     document.body.style.overflow = 'auto';
+ }
+ 
+ function showNotification(message, type) {
+     const notification = document.getElementById('notification');
+     notification.textContent = message;
+     notification.className = `notification ${type}`;
+     notification.style.display = 'block';
+     
+     setTimeout(() => {
+         notification.style.display = 'none';
+     }, 3000);
+ }
+ 
+ // Close modal when pressing Escape key
+ document.addEventListener('keydown', function(event) {
+     if (event.key === 'Escape') {
+         closeHistory();
+     }
+ });
+ </script>
+{% endblock %}

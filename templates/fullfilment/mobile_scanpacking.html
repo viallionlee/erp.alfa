@@ -1,0 +1,306 @@
+{% extends "base_mobile.html" %}
+{% load static %}
+{% block title %}Ready to Pack (Mobile){% endblock %}
+{% block content %}
+<style>
+:root {
+    --scanbar-height: 80px; /* ganti sesuai tinggi sticky scan bar kamu */
+}
+body {
+    padding-bottom: 120px !important; /* Menambahkan ruang di bawah untuk scan bar */
+    margin-bottom: 0 !important;
+    background: #f5f7fa;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+.sticky-scan-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 99999;
+    background: #ffffff;
+    padding: 1rem;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+    border-top: 1px solid #e0e0e0;
+    border-radius: 1rem 1rem 0 0;
+}
+
+.scrollable-history {
+    max-height: calc(100vh - 340px);
+    overflow-y: auto;
+    margin-bottom: 1rem;
+}
+
+.container, .container-fluid {
+    padding-bottom: 0 !important;
+}
+
+h4.stat-gold {
+    color: #333333;
+    font-weight: 700;
+}
+
+.stat-gold small {
+    font-size: 0.85em;
+    color: #666;
+}
+
+.card-gold {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 1rem;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05);
+}
+
+.badge-rank1, .badge-rank2, .badge-rank3 {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    font-weight: bold;
+    font-size: 1.2em;
+    border-radius: 9999px;
+    padding: 0.3em 1em;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+}
+
+.badge-rank1 {
+    background: linear-gradient(135deg, #ffe066, #ffd700);
+    color: #4b3c00;
+}
+
+.badge-rank2 {
+    background: linear-gradient(135deg, #e0e0e0, #b0b0b0);
+    color: #555555;
+}
+
+.badge-rank3 {
+    background: linear-gradient(135deg, #ffcc80, #cd7f32);
+    color: #5a3e1b;
+}
+
+.fab-reload {
+    position: fixed;
+    bottom: 0; /* Mengatur posisi awal */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1050;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #1976d2;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    font-size: 2rem;
+    border: none;
+    transition: background 0.2s;
+}
+.fab-reload:hover {
+    background: #1565c0;
+}
+
+#scanInput {
+    border-radius: 0.8rem;
+    border: 1px solid #ddd;
+    padding: 0.8rem 1rem;
+    font-size: 1.1rem;
+}
+
+.btn-primary {
+    border-radius: 0.8rem;
+    padding: 0.8rem;
+    font-size: 1.1rem;
+}
+
+.alert {
+    border-radius: 0.7rem;
+}
+</style>
+
+<div class="container mt-3">
+    <h4 class="mb-3 stat-gold">Statistik Pengepakan Hari Ini</h4>
+    <p class="mb-3 stat-gold">{{ motivational_message|safe }}</p>
+    <div class="card mb-3 card-gold">
+        <div class="card-body p-2">
+            <div class="d-flex justify-content-between">
+                <div class="stat-gold"><b>{{ user_packs_today }}</b><br><small>Total Pack</small></div>
+                <div class="stat-gold"><b>{{ packs_per_hour|floatformat:1 }}</b><br><small>Pack/Jam</small></div>
+                <div>
+                  {% if user_rank_today == 1 %}
+                    <span class="badge-rank1">🏆 #1</span>
+                    <br><small class="stat-gold">Peringkat</small>
+                  {% elif user_rank_today == 2 %}
+                    <span class="badge-rank2">🏆 #2</span>
+                    <br><small style="color:#555;">Peringkat</small>
+                  {% elif user_rank_today == 3 %}
+                    <span class="badge-rank3">🏆 #3</span>
+                    <br><small style="color:#5a3e1b;">Peringkat</small>
+                  {% else %}
+                    <b>#{{ user_rank_today }}</b><br><small>Peringkat</small>
+                  {% endif %}
+                </div>
+                <div class="stat-gold"><b>{{ total_packers_today }}</b><br><small>Packer</small></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if last_10_packing %}
+<div class="container scrollable-history">
+    <div class="card mt-3">
+        <div class="card-header p-2 d-flex justify-content-between align-items-center">
+            <span>10 Packing Terakhir</span>
+            <span>
+                <span class="fw-bold text-warning">{{ total_packed }}/{{ total_batched }}</span>
+                <span class="small text-muted">Order Packed</span>
+            </span>
+        </div>
+        <ul class="list-group list-group-flush">
+            {% for p in last_10_packing %}
+            <li class="list-group-item p-2">
+                <b>{{ p.order.id_pesanan }}</b> - {{ p.user.username }}<br>
+                <small>{{ p.waktu_pack|date:"d M Y, H:i:s" }}</small>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+<!-- Notification Area dihapus - menggunakan SweetAlert2 modal -->
+
+<div class="sticky-scan-bar d-flex align-items-center">
+    <form id="scanForm" method="POST" class="flex-grow-1 me-2">
+        {% csrf_token %}
+        <input type="text" id="scanInput" class="form-control form-control-lg mb-2" placeholder="Scan/Ketik ID Pesanan/Resi..." autofocus>
+        <button type="submit" class="btn btn-primary w-100">Konfirmasi Packing</button>
+    </form>
+</div>
+<button class="fab-reload" id="fabReloadBtn" title="Reload">
+  <i class="bi bi-arrow-clockwise"></i>
+</button>
+{% endblock %}
+{% block extra_script %}
+<!-- SweetAlert2 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<audio id="soundSuccess" src="{% static 'sounds/completedsound.mp3' %}" preload="auto"></audio>
+<audio id="soundError" src="{% static 'sounds/errorsound.mp3' %}" preload="auto"></audio>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('scanForm');
+    const scanInput = document.getElementById('scanInput');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const soundSuccess = document.getElementById('soundSuccess');
+    const soundError = document.getElementById('soundError');
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const orderId = scanInput.value.trim();
+        if (!orderId) return;
+
+        // Langsung tampilkan hasil tanpa loading modal
+        fetch("{% url 'scanpacking' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ 'order_id': orderId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                soundSuccess.play();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: data.message,
+                    timer: 2000,
+                    showConfirmButton: false,
+                    position: 'center'
+                }).then(() => {
+                    location.reload(); 
+                });
+            } else {
+                soundError.play();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: data.message,
+                    confirmButtonText: 'OK',
+                    position: 'center'
+                });
+            }
+        })
+        .catch(error => {
+            soundError.play();
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Terjadi kesalahan koneksi. Silakan coba lagi.',
+                confirmButtonText: 'OK',
+                position: 'center'
+            });
+        });
+
+        scanInput.value = '';
+        scanInput.focus();
+    });
+
+    let scanBuffer = '';
+    let scanTimeout = null;
+
+    document.addEventListener('keydown', function(e) {
+        if (document.activeElement === scanInput) return;
+
+        if (e.key === 'Enter') {
+            if (scanBuffer.length > 0) {
+                scanInput.value = scanBuffer;
+                scanBuffer = '';
+                scanInput.focus();
+                form.requestSubmit();
+            }
+            e.preventDefault();
+            return;
+        }
+
+        if (e.key.length === 1) {
+            scanBuffer += e.key;
+        }
+
+        if (scanTimeout) clearTimeout(scanTimeout);
+        scanTimeout = setTimeout(() => scanBuffer = '', 500);
+
+        if (scanBuffer.startsWith('*') && scanBuffer.endsWith('*')) {
+            scanInput.value = scanBuffer.slice(1, -1);
+            scanBuffer = '';
+            scanInput.focus();
+            form.requestSubmit();
+        }
+    });
+});
+
+document.getElementById('fabReloadBtn').onclick = function() {
+    window.location.reload();
+};
+
+function updateFabPosition() {
+    const scanBar = document.querySelector('.sticky-scan-bar');
+    const fab = document.getElementById('fabReloadBtn');
+    if (scanBar && fab) {
+        const scanBarRect = scanBar.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        // Hitung jarak dari bawah window ke atas sticky bar
+        const distanceFromBottom = windowHeight - scanBarRect.top;
+        // Set posisi tombol refresh tepat di atas sticky bar (plus sedikit gap, misal 12px)
+        fab.style.bottom = (distanceFromBottom + 12) + 'px';
+    }
+}
+window.addEventListener('resize', updateFabPosition);
+window.addEventListener('DOMContentLoaded', updateFabPosition);
+window.addEventListener('scroll', updateFabPosition);
+</script>
+{% endblock %}

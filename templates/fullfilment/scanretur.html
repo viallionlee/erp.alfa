@@ -1,0 +1,410 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="container mt-4">
+    {% if not show_tables %}
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="me-3 mb-0">Return Batch Overstock{% if selected_batch %} - Batch: <span class="text-primary">{{ selected_batch.nama_batch }}</span>{% endif %}</h4>
+    </div>
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Pilih Batch Overstock untuk Retur</h5>
+        <a href="{% url 'returnlist_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Kembali ke Dashboard Return
+        </a>
+    </div>
+    <div class="card-body">
+        <form id="batchSelectForm" method="GET" action="" class="mb-3">
+            <label for="selectBatch" class="form-label">Pilih Batch Overstock:</label>
+            <div class="input-group">
+                <select id="selectBatch" name="batch_id" class="form-select">
+                    <option value="">-- Pilih Batch --</option>
+                    {% for batch in batchlist_overstock %}
+                        <option value="{{ batch.id }}" {% if selected_batch.id == batch.id %}selected{% endif %}>
+                            {{ batch.nama_batch }} ({{ batch.jumlah_overstock }} item overstock)
+                        </option>
+                    {% endfor %}
+                </select>
+                <button class="btn btn-primary" type="submit" id="selectBatchBtn">Tampilkan</button>
+                {% if selected_batch %}
+                <a href="/fullfilment/scanretur/{{ return_list.id }}/" class="btn btn-outline-secondary">Clear</a>
+                {% endif %}
+            </div>
+        </form>
+
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if show_tables %}
+        <div class="d-flex align-items-center mb-3">
+            <h4 class="me-3 mb-0">Return Batch Overstock - Batch: <span class="text-primary">{{ selected_batch.nama_batch }}</span></h4>
+        </div>
+        <div class="row">
+            <!-- KOLOM 1: Monitoring Item -->
+            <div class="col-md-4 mb-3">
+                <!-- Kartu Monitoring Item -->
+                <div id="monitoring-card" class="card mb-3 shadow-sm text-center" style="background-color: #e3f2fd;">
+                    <div class="d-flex justify-content-center align-items-center p-3" style="min-height: 400px;">
+                        <img id="monitor-photo" src="" class="img-fluid rounded d-none" style="max-height: 400px; width: auto; border: 1px solid #dee2e6;">
+                        <i id="monitor-photo-placeholder" class="bi bi-box" style="font-size: 10rem; color: #6c757d;"></i>
+                    </div>
+                    <div class="card-body py-3">
+                        <h5 id="monitor-nama" class="card-title mb-2" style="font-size: 1.4rem;">---</h5>
+                        <p class="card-text text-muted mb-3">
+                            <span id="monitor-brand">---</span> - <span id="monitor-variant">---</span>
+                        </p>
+                        <div class="mb-3">
+                            <span class="badge bg-secondary">SKU: <span id="monitor-sku">---</span></span>
+                            <br class="mb-1">
+                            <span class="badge bg-secondary mt-1">Barcode: <span id="monitor-barcode">---</span></span>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-muted mb-1" style="font-size: 1rem;">Jumlah Target / Jumlah Scan</p>
+                            <p class="fw-bold text-primary mb-0" style="font-size: 3rem; line-height: 1;" id="monitor-jumlah">- / -</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KOLOM 2: Scan Barcode, Pending Items, Completed Items -->
+            <div class="col-md-8 mb-3">
+                <form id="barcodeForm" class="mb-3" autocomplete="off">
+                    <label for="orderBarcodeInput" class="form-label fw-bold">Scan Barcode</label>
+                    <input type="text" id="orderBarcodeInput" class="form-control" placeholder="Scan barcode..." autofocus autocomplete="off">
+                    <div id="barcodeFeedback" class="mt-2"></div>
+                </form>
+                <div id="barcodeError" class="alert alert-danger mt-2 d-none"></div>
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body p-2">
+                        <div class="fw-bold text-white px-3 py-2 mb-0 rounded-top" style="background:#ffc107;">PENDING ITEMS</div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover table-sm align-middle mb-0" id="pendingTable">
+                                <thead class="table-warning">
+                                    <tr>
+                                        <th style="width: auto;">Photo</th>
+                                        <th>Detail Produk</th>
+                                        <th style="width: 80px;">J.Target</th>
+                                        <th style="width: 80px;">J.Check</th>
+                                        <th style="width: 100px;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pendingTableBody">
+                                    <!-- Data akan diisi oleh JavaScript dari API -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-body p-2">
+                        <div class="fw-bold text-white px-3 py-2 mb-0 rounded-top" style="background:#28a745;">COMPLETED ITEMS</div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover table-sm align-middle mb-0" id="completedTable">
+                                <thead class="table-success">
+                                    <tr>
+                                        <th style="width: 80px;">Photo</th>
+                                        <th>Detail Produk</th>
+                                        <th style="width: 80px;">J.Target</th>
+                                        <th style="width: 80px;">J.Check</th>
+                                        <th style="width: 100px;">Status QC</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="completedTableBody">
+                                    <!-- Baris-baris completed akan diisi oleh JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <button id="submitReturnBtn" class="btn btn-primary w-100 mt-3" disabled>Submit Return</button>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+<script>
+    // Inisialisasi variabel global untuk digunakan
+    window.BATCH_ID = "{{ selected_batch.id|escapejs }}";
+    window.RETURN_SESSION_ID = "{{ return_list.id|escapejs }}";
+    window.CSRF_TOKEN = "{{ csrf_token }}";
+
+    function playSound(type) {
+        if (type === 'completed') {
+            new Audio('/static/sounds/completedsound.mp3').play();
+        } else if (type === 'success') {
+            new Audio('/static/sounds/ding.mp3').play();
+        } else if (type === 'error' || type === 'fail') {
+            new Audio('/static/sounds/wrong_barcode.mp3').play();
+        } else {
+            new Audio('/static/sounds/over_scan.mp3').play();
+        }
+    }
+
+    function showFeedback(message, type, qc_status, sku) {
+        const feedback = document.getElementById('barcodeFeedback');
+        if (!feedback) return;
+        feedback.innerHTML = message;
+        feedback.className = type === 'success' ? 'alert alert-success' : 'alert alert-danger';
+
+        if (qc_status === 'pass') {
+            playSound('success');
+            Swal.fire({
+                icon: 'success',
+                title: 'SKU Selesai di Scan!',
+                html: `<b>SKU <span style='color:#1769aa;'>${sku || ''}</span> sudah selesai di scan.</b>`,
+                showConfirmButton: false,
+                timer: 1500,
+                customClass: { title: 'fw-bold' }
+            });
+        }
+    }
+
+    // Function to update monitoring card
+    function updateMonitoringCard(sku, barcode, nama, variant, brand, photoUrl, jumlahTarget, jumlahCheck) {
+        const monitorPhoto = document.getElementById('monitor-photo');
+        const monitorPhotoPlaceholder = document.getElementById('monitor-photo-placeholder');
+        const monitorNama = document.getElementById('monitor-nama');
+        const monitorBrand = document.getElementById('monitor-brand');
+        const monitorVariant = document.getElementById('monitor-variant');
+        const monitorSku = document.getElementById('monitor-sku');
+        const monitorBarcode = document.getElementById('monitor-barcode');
+        const monitorJumlah = document.getElementById('monitor-jumlah');
+
+        if (photoUrl && !photoUrl.endsWith('/alfaicon.png')) {
+            monitorPhoto.src = photoUrl;
+            monitorPhoto.classList.remove('d-none');
+            monitorPhotoPlaceholder.classList.add('d-none');
+        } else {
+            monitorPhoto.classList.add('d-none');
+            monitorPhotoPlaceholder.classList.remove('d-none');
+        }
+
+        monitorNama.textContent = nama || '---';
+        monitorBrand.textContent = brand || '---';
+        monitorVariant.textContent = variant || '---';
+        monitorSku.textContent = sku || '---';
+        monitorBarcode.textContent = barcode || '---';
+        monitorJumlah.textContent = `${jumlahCheck || 0} / ${jumlahTarget || 0}`;
+    }
+
+    // Load batch overstock data when page loads
+    $(document).ready(function() {
+        if (window.BATCH_ID && window.RETURN_SESSION_ID) {
+            loadBatchOverstockData();
+        }
+    });
+
+    // Function to load batch overstock data
+    function loadBatchOverstockData() {
+        fetch(`/fullfilment/return/session/${window.RETURN_SESSION_ID}/overstock/data/?batch_id=${window.BATCH_ID}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    populatePendingTable(data.pending_items);
+                } else {
+                    console.error('Error loading data:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+
+    // Function to populate pending table
+    function populatePendingTable(items) {
+        const tbody = document.getElementById('pendingTableBody');
+        tbody.innerHTML = '';
+
+        items.forEach(item => {
+            const row = document.createElement('tr');
+            row.setAttribute('data-item-id', item.id);
+            row.setAttribute('data-sku', item.sku);
+            row.setAttribute('data-barcode', item.barcode);
+            row.setAttribute('data-nama', item.nama_produk);
+            row.setAttribute('data-variant', item.variant_produk);
+            row.setAttribute('data-brand', item.brand);
+            row.setAttribute('data-photo', item.photo_url);
+            row.setAttribute('data-jumlah-target', item.jumlah_over);
+
+            row.innerHTML = `
+                <td style="width: 50px;">
+                    ${item.photo_url && !item.photo_url.endsWith('/alfaicon.png') 
+                        ? `<img src="${item.photo_url}" alt="Product Image" class="img-thumbnail" style="width: 40px; height: 40px; object-fit: cover;">`
+                        : `<i class="bi bi-box" style="font-size: 2rem; color: #6c757d;"></i>`
+                    }
+                </td>
+                <td>
+                    <div class="fw-bold text-dark">${item.nama_produk}</div>
+                    <small class="d-block text-primary fw-bold">${item.variant_produk || ''}</small>
+                    <div>
+                        <span class="badge bg-light text-dark border me-1">SKU: ${item.sku}</span>
+                        <span class="badge bg-light text-dark border me-1"><i class="bi bi-upc me-1"></i>${item.barcode}</span>
+                        ${item.brand ? `<span class="badge bg-light text-success border">${item.brand}</span>` : ''}
+                    </div>
+                </td>
+                <td class="jumlah-target text-end">${item.jumlah_over}</td>
+                <td class="jumlah-check text-end">0</td>
+                <td class="status-check text-center"><span class="badge bg-warning text-dark">Pending</span></td>
+            `;
+
+            tbody.appendChild(row);
+        });
+
+        if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Tidak ada data pending.</td></tr>';
+        }
+        // Setelah data batch overstock dimuat:
+        $('#submitReturnBtn').prop('disabled', false);
+    }
+
+    // Handle barcode scanning
+    $('#barcodeForm').on('submit', function(e) {
+        e.preventDefault();
+        const barcode = $('#orderBarcodeInput').val().trim();
+
+        // KOSONGKAN DAN FOKUS INPUT DI AWAL
+        $('#orderBarcodeInput').val('').focus();
+
+        if (!barcode) return; // Jika kosong, langsung keluar
+
+        // Find item in pending table
+        const pendingRow = $(`#pendingTableBody tr[data-barcode="${barcode}"]`);
+        if (pendingRow.length === 0) {
+            showFeedback('Barcode tidak ditemukan dalam daftar pending!', 'error');
+            playSound('error');
+            return;
+        }
+
+        // Process the scan
+        processBarcodeScan(pendingRow, barcode);
+        // Baris untuk mengosongkan input sudah tidak diperlukan lagi di sini
+    });
+
+    // Function to process barcode scan
+    function processBarcodeScan(row, barcode) {
+        const currentCheck = parseInt(row.find('.jumlah-check').text()) || 0;
+        const target = parseInt(row.find('.jumlah-target').text()) || 0;
+        const newCheck = currentCheck + 1;
+
+        row.find('.jumlah-check').text(newCheck);
+
+        if (newCheck >= target) {
+            // Move to completed table
+            moveToCompletedTable(row);
+            showFeedback(`SKU ${row.attr('data-sku')} selesai di scan!`, 'success', 'pass', row.attr('data-sku'));
+        } else {
+            showFeedback(`SKU ${row.attr('data-sku')} di scan (${newCheck}/${target})`, 'success');
+        }
+
+        // Update monitoring card
+        updateMonitoringCard(
+            row.attr('data-sku'),
+            row.attr('data-barcode'),
+            row.attr('data-nama'),
+            row.attr('data-variant'),
+            row.attr('data-brand'),
+            row.attr('data-photo'),
+            target,
+            newCheck
+        );
+
+        // Check if all items are completed (LOGIC INI DIHAPUS)
+        // checkAllCompleted(); // Pemanggilan fungsi ini dihapus
+    }
+
+    // Function to move item to completed table
+    function moveToCompletedTable(row) {
+        const completedTbody = document.getElementById('completedTableBody');
+        const newRow = row.clone();
+        
+        newRow.find('.status-check').html('<span class="badge bg-success">Completed</span>');
+        newRow.removeAttr('data-jumlah-target');
+        
+        completedTbody.appendChild(newRow[0]);
+        row.remove();
+
+        // BARU: Aktifkan tombol submit karena sudah ada item yang selesai.
+        $('#submitReturnBtn').prop('disabled', false);
+    }
+
+    // HAPUS FUNGSI checkAllCompleted() SELURUHNYA
+    /*
+    function checkAllCompleted() {
+        const pendingCount = $('#pendingTableBody tr').length;
+        const completedCount = $('#completedTableBody tr').length;
+        
+        if (pendingCount === 0 && completedCount > 0) {
+            $('#submitReturnBtn').prop('disabled', false);
+        }
+    }
+    */
+
+    // Handle submit return
+    $('#submitReturnBtn').on('click', function() {
+        const completedItems = [];
+        $('#completedTableBody tr').each(function() {
+            const row = $(this);
+            completedItems.push({
+                item_id: row.attr('data-item-id'),
+                sku: row.attr('data-sku'),
+                barcode: row.attr('data-barcode'),
+                jumlah_check: parseInt(row.find('.jumlah-check').text()) || 0
+            });
+        });
+
+        // Submit to backend
+        submitReturnData(completedItems);
+    });
+
+    // Function to submit return data
+    function submitReturnData(items) {
+        fetch(`/fullfilment/return/session/${window.RETURN_SESSION_ID}/batch-overstock-submit/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.CSRF_TOKEN
+            },
+            body: JSON.stringify({
+                batchlist_id: window.BATCH_ID, // GANTI batch_id → batchlist_id
+                items: items
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Tampilkan notifikasi berhasil dengan SweetAlert2
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Return Berhasil!',
+                    text: 'Data return telah disimpan.',
+                    showConfirmButton: false,
+                    timer: 2000 // Modal akan tertutup setelah 2 detik
+                }).then(() => {
+                    // Alihkan halaman setelah modal tertutup
+                    window.location.href = '/fullfilment/returnlist/';
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: data.error || 'Terjadi kesalahan saat menyimpan data.'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: 'Terjadi kesalahan saat mengirim data.'
+            });
+        });
+    }
+</script>
+{% endblock %}

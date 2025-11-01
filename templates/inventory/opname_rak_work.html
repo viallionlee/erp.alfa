@@ -1,0 +1,3278 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Kerja Opname Rak - {{ session.session_code }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<style>
+    /* Minimalis Table Styling */
+    .table {
+        font-size: 0.9rem;
+    }
+    
+    .table thead th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 8px 4px;
+        vertical-align: middle;
+        text-align: center;
+    }
+    
+    .table tbody td {
+        padding: 8px 4px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    /* Compact form controls */
+    .form-control-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        border-radius: 0.2rem;
+    }
+    
+    /* Small buttons */
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        border-radius: 0.2rem;
+    }
+    
+    /* Badge styling */
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.25em 0.5em;
+    }
+    
+    /* Text sizing for compact display */
+    .small {
+        font-size: 0.8rem;
+        line-height: 1.2;
+    }
+    
+    /* Column width constraints */
+    .table th[style*="width: 50px"],
+    .table td[style*="width: 50px"] {
+        width: 50px !important;
+        max-width: 50px !important;
+        min-width: 50px !important;
+        text-align: center;
+    }
+    
+    /* Photo column styling */
+    .table th[style*="width: 60px"],
+    .table td[style*="width: 60px"] {
+        width: 60px !important;
+        max-width: 60px !important;
+        min-width: 60px !important;
+        text-align: center;
+        vertical-align: middle;
+    }
+    
+    /* Product photo styling */
+    .img-thumbnail {
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    /* Current Product Photo styling */
+    #currentProductPhoto img {
+        height: 150px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: 150px !important;
+        object-fit: contain !important;
+        border-radius: 8px;
+        border: 2px solid #dee2e6;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* More specific selector for the exact structure */
+    
+    /* Selisih display styling */
+    .selisih-display {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-align: center;
+        min-width: 60px;
+    }
+    
+    .selisih-display.positive {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .selisih-display.negative {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .selisih-display.zero {
+        background-color: #e2e3e5;
+        color: #383d41;
+        border: 1px solid #d6d8db;
+    }
+    
+    .selisih-badge {
+        font-weight: 700;
+    }
+    .col-md-3.text-center #currentProductPhoto img {
+        height: 150px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: 150px !important;
+        object-fit: contain !important;
+    }
+    
+    /* Override any inherited styles from parent containers */
+    .card-body .col-md-3 #currentProductPhoto img,
+    .row .col-md-3 #currentProductPhoto img {
+        height: 150px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: 150px !important;
+        object-fit: contain !important;
+    }
+    
+    /* Modern Interactive Design Enhancements */
+    
+    /* Card styling with shadows and hover effects */
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+        border-radius: 12px 12px 0 0;
+    }
+    
+    /* Enhanced table styling */
+    .table {
+        font-size: 0.9rem;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .table thead th {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: none;
+        font-weight: 700;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 8px;
+        vertical-align: middle;
+        text-align: center;
+        color: #495057;
+        position: relative;
+    }
+    
+    .table thead th::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+    
+    .table tbody td {
+        padding: 12px 8px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f3f4;
+        transition: all 0.2s ease;
+    }
+    
+    .table tbody tr {
+        transition: all 0.2s ease;
+        position: relative;
+    }
+    
+    .table tbody tr:hover {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e3f2fd 100%);
+        transform: scale(1.01);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        z-index: 1;
+    }
+    
+    /* Enhanced button styling */
+    .btn {
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+    
+    .btn:hover::before {
+        left: 100%;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+        border: none;
+        box-shadow: 0 4px 6px rgba(86, 171, 47, 0.3);
+    }
+    
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(86, 171, 47, 0.4);
+    }
+    
+    .btn-warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border: none;
+        color: white;
+        box-shadow: 0 4px 6px rgba(245, 87, 108, 0.3);
+    }
+    
+    .btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(245, 87, 108, 0.4);
+        color: white;
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        border: none;
+        box-shadow: 0 4px 6px rgba(255, 107, 107, 0.3);
+    }
+    
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(255, 107, 107, 0.4);
+    }
+    
+    .btn-info {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        border: none;
+        box-shadow: 0 4px 6px rgba(79, 172, 254, 0.3);
+    }
+    
+    .btn-info:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(79, 172, 254, 0.4);
+    }
+    
+    /* Enhanced form controls */
+    .form-control {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+        padding: 0.75rem 1rem;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        transform: translateY(-1px);
+    }
+    
+    /* Enhanced selisih display */
+    .selisih-display {
+        display: inline-block;
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.875rem;
+        text-align: center;
+        min-width: 70px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .selisih-display::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.6s;
+    }
+    
+    .selisih-display:hover::before {
+        left: 100%;
+    }
+    
+    .selisih-display.positive {
+        background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 6px rgba(86, 171, 47, 0.3);
+    }
+    
+    .selisih-display.positive:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(86, 171, 47, 0.4);
+    }
+    
+    .selisih-display.negative {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 6px rgba(255, 107, 107, 0.3);
+    }
+    
+    .selisih-display.negative:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(255, 107, 107, 0.4);
+    }
+    
+    .selisih-display.zero {
+        background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 6px rgba(108, 117, 125, 0.3);
+    }
+    
+    .selisih-display.zero:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(108, 117, 125, 0.4);
+    }
+    
+    /* Enhanced badge styling */
+    .badge {
+        border-radius: 6px;
+        font-weight: 600;
+        padding: 0.5em 0.75em;
+        transition: all 0.3s ease;
+    }
+    
+    .badge:hover {
+        transform: scale(1.1);
+    }
+    
+    /* Progress bar enhancement */
+    .progress {
+        border-radius: 10px;
+        height: 12px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        overflow: hidden;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .progress-bar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+        transition: width 0.6s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+    
+    /* Enhanced product photo styling */
+    .img-thumbnail {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .img-thumbnail:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        border-color: #667eea;
+    }
+    
+    /* Current Product Photo enhancement */
+    #currentProductPhoto img {
+        border-radius: 12px;
+        border: 3px solid #e9ecef;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        transition: all 0.3s ease;
+    }
+    
+    #currentProductPhoto img:hover {
+        transform: scale(1.02);
+        box-shadow: 0 12px 25px rgba(0,0,0,0.2);
+        border-color: #667eea;
+    }
+    
+    /* Loading animation */
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255,255,255,.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Pulse animation for important elements */
+    .pulse {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    
+    
+    /* Status indicator enhancement */
+    .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+        animation: status-pulse 2s infinite;
+    }
+    
+    .status-indicator.active {
+        background: #28a745;
+        box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+    }
+    
+    .status-indicator.inactive {
+        background: #dc3545;
+        box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+    }
+    
+    @keyframes status-pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+    /* Responsive enhancements */
+    @media (max-width: 768px) {
+        .card {
+            margin-bottom: 1rem;
+        }
+        
+        .table {
+            font-size: 0.8rem;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+        
+        .selisih-display {
+            min-width: 60px;
+            padding: 0.4rem 0.6rem;
+        }
+        
+        .floating-btn {
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+        }
+        
+    }
+    
+    /* Additional interactive effects */
+    
+    /* Hover effects for cards */
+    .card:hover .card-header {
+        background: linear-gradient(135deg, #5a67d8 0%, #667eea 100%);
+    }
+    
+    /* Animated background for active elements */
+    .active-element {
+        background: linear-gradient(45deg, #667eea, #764ba2, #667eea);
+        background-size: 200% 200%;
+        animation: gradientShift 3s ease infinite;
+    }
+    
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    /* Glow effect for important buttons */
+    .btn-important {
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        animation: glow 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes glow {
+        from { box-shadow: 0 0 20px rgba(102, 126, 234, 0.5); }
+        to { box-shadow: 0 0 30px rgba(102, 126, 234, 0.8); }
+    }
+    
+    /* Success animation for verified items */
+    .verified-animation {
+        animation: verifiedSuccess 0.6s ease;
+    }
+    
+    @keyframes verifiedSuccess {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    
+    /* Bounce animation for new items */
+    .new-item-animation {
+        animation: bounceIn 0.8s ease;
+    }
+    
+    @keyframes bounceIn {
+        0% { 
+            opacity: 0;
+            transform: scale(0.3) translateY(-50px);
+        }
+        50% { 
+            opacity: 1;
+            transform: scale(1.05);
+        }
+        70% { 
+            transform: scale(0.9);
+        }
+        100% { 
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+    
+    /* Typing animation for input focus */
+    .typing-animation {
+        border-right: 2px solid #667eea;
+        animation: typing 1s steps(40, end);
+    }
+    
+    @keyframes typing {
+        from { border-right-color: transparent; }
+        to { border-right-color: #667eea; }
+    }
+    
+    /* Filter section styling */
+    .filter-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-bottom: 2px solid #dee2e6;
+        padding: 1rem;
+    }
+    
+    .filter-section .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    
+    .filter-section .form-select,
+    .filter-section .form-control {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-section .form-select:focus,
+    .filter-section .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        transform: translateY(-1px);
+    }
+    
+    .filter-section .btn-group .btn {
+        border-radius: 6px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-section .btn-group .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    /* Filter info styling */
+    #filterInfo {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    /* Filter animation */
+    .filter-active {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border-left: 4px solid #667eea;
+    }
+    
+    /* Responsive filter */
+    @media (max-width: 768px) {
+        .filter-section .row {
+            margin-bottom: 0.5rem;
+        }
+        
+        .filter-section .col-md-3 {
+            margin-bottom: 1rem;
+        }
+        
+        .filter-section .btn-group {
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .filter-section .btn-group .btn {
+            margin-bottom: 0.25rem;
+        }
+    }
+    
+    /* Override any Bootstrap img-fluid or other classes */
+    #currentProductPhoto img.img-fluid,
+    #currentProductPhoto img[class*="img-"] {
+        height: 150px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: 150px !important;
+        object-fit: contain !important;
+    }
+    
+    /* Override any responsive or global img styles */
+    #currentProductPhoto img[src*="product_photos"] {
+        height: 150px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: 150px !important;
+        object-fit: contain !important;
+    }
+    
+    /* Override inline styles - highest specificity */
+    #currentProductPhoto img[style*="width"],
+    #currentProductPhoto img[style*="height"] {
+        height: 150px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: 150px !important;
+        object-fit: contain !important;
+    }
+    
+    /* Force override for any inline styles */
+    #currentProductPhoto img[style] {
+        height: 150px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: 150px !important;
+        object-fit: contain !important;
+    }
+    
+    #currentProductPhoto .bi-box {
+        font-size: 4rem;
+        color: #6c757d;
+        height: 150px;
+        width: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Ensure container doesn't affect image size */
+    #currentProductPhoto {
+        height: 150px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: 150px !important;
+        overflow: visible !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    /* Override parent container styles */
+    .col-md-3.text-center #currentProductPhoto {
+        height: 150px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: 150px !important;
+        overflow: visible !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    /* Force override for any inherited dimensions */
+    .card-body .col-md-3 #currentProductPhoto,
+    .row .col-md-3 #currentProductPhoto {
+        height: 150px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: 150px !important;
+        overflow: visible !important;
+    }
+    
+    /* Override any parent container styles */
+    .col-md-3 #currentProductPhoto,
+    .col-md-4 #currentProductPhoto,
+    .col-md-5 #currentProductPhoto,
+    .col-md-6 #currentProductPhoto,
+    .col-md-8 #currentProductPhoto,
+    .col-md-12 #currentProductPhoto {
+        height: 150px !important;
+        width: auto !important;
+        max-width: none !important;
+        max-height: 150px !important;
+        overflow: visible !important;
+    }
+    
+    /* Qty input styling */
+    .qty-input {
+        width: 60px;
+        text-align: center;
+        border: 1px solid #dee2e6;
+        transition: all 0.2s ease;
+        /* Remove spinner arrows for number input */
+        -moz-appearance: textfield; /* Firefox */
+    }
+    
+    /* Hide spinner arrows for all browsers */
+    .qty-input::-webkit-outer-spin-button,
+    .qty-input::-webkit-inner-spin-button {
+        -webkit-appearance: none; /* Chrome, Safari, Edge */
+        margin: 0;
+    }
+    
+    
+    
+    .product-details small {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    
+    /* Qty badges styling - sama ukuran font */
+    .qty-number, .qty-fisik-badge, .selisih-badge {
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        padding: 6px 12px !important;
+        min-width: 45px !important;
+        text-align: center !important;
+    }
+    
+    /* Qty Fisik badge - biru */
+    .qty-fisik-badge {
+        background-color: #0d6efd !important;
+        color: white !important;
+    }
+    
+    /* Selisih badge colors */
+    .selisih-badge.bg-danger {
+        background-color: #dc3545 !important; /* Merah untuk minus */
+        color: white !important;
+    }
+    
+    .selisih-badge.bg-warning {
+        background-color: #ffc107 !important; /* Kuning untuk surplus */
+        color: #000 !important;
+    }
+    
+    .selisih-badge.bg-success {
+        background-color: #198754 !important; /* Hijau untuk pas */
+        color: white !important;
+    }
+    
+    .qty-input:disabled {
+        background-color: #f8f9fa;
+        border-color: #ced4da;
+        color: #6c757d;
+        cursor: not-allowed;
+    }
+    
+    /* Enhanced card styling for better symmetry */
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border: 1px solid rgba(0, 0, 0, 0.125);
+        border-radius: 0.5rem;
+    }
+    
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+        font-weight: 600;
+        border-radius: 0.5rem 0.5rem 0 0 !important;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    /* Improved spacing and alignment */
+    .row.g-3 > [class*="col-"] {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+    
+    .row.g-2 > [class*="col-"] {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    
+    /* Better form styling */
+    .form-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: #495057;
+    }
+    
+    .form-text {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+    
+    /* Enhanced progress bar */
+    .progress {
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .progress-bar {
+        border-radius: 8px;
+        transition: width 0.6s ease;
+        background: linear-gradient(90deg, #007bff, #0056b3);
+    }
+    
+    /* Better badge styling */
+    .badge {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    /* Input group improvements */
+    .input-group-text {
+        font-size: 0.875rem;
+        background-color: #f8f9fa;
+        border-color: #ced4da;
+    }
+    
+    /* Table improvements */
+    .table-responsive {
+        border-radius: 0.375rem;
+    }
+    
+    .table thead th {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .table tbody td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+
+    
+    /* Enhanced button styling */
+    .btn {
+        border-radius: 0.375rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Better alert styling */
+    .alert {
+        border-radius: 0.5rem;
+        border: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    /* Improved spacing for better visual hierarchy */
+    .card + .card {
+        margin-top: 1rem;
+    }
+    
+    /* Better responsive behavior */
+    @media (max-width: 768px) {
+        .col-md-4, .col-md-8 {
+            margin-bottom: 1rem;
+        }
+        
+        .d-flex.gap-2 {
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            margin-bottom: 0.25rem;
+        }
+        
+        /* Responsive stats layout */
+        .card-body .row.text-center .col-3 {
+            margin-bottom: 1rem;
+        }
+        
+        .card-body .row.text-center .col-3 h3 {
+            font-size: 1.5rem;
+        }
+        
+        /* Stack columns on mobile */
+        .col-md-4, .col-md-8 {
+            width: 100% !important;
+        }
+    }
+    
+    /* Ensure left column has enough height and no overlap */
+    .col-md-4:first-child {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .col-md-4:first-child > .card {
+        flex: 1;
+        margin-bottom: 1rem;
+    }
+    
+    .col-md-4:first-child > .card:last-child {
+        margin-bottom: 0;
+    }
+    
+
+    
+    /* Ensure proper card spacing */
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .card:last-child {
+        margin-bottom: 0;
+    }
+    
+    /* Right column styling */
+    .col-md-8:last-child {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .col-md-8:last-child .card {
+        flex: 1;
+        margin-bottom: 1rem;
+    }
+    
+    .col-md-8:last-child .card:last-child {
+        margin-bottom: 0;
+    }
+    
+    /* Compact card body for action buttons */
+    .card-body.p-3 {
+        padding: 0.75rem !important;
+    }
+    
+
+    
+    /* Compact current product card */
+
+        margin: 0 !important;
+        max-height: 80px !important;
+        overflow: hidden !important;
+    }
+    
+    
+    /* Better table number styling */
+    .qty-display {
+        background-color: #e3f2fd;
+        border: 2px solid #2196f3;
+        border-radius: 8px;
+        padding: 0.5rem;
+        min-width: 60px;
+        display: inline-block;
+    }
+    
+    .qty-number {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1976d2;
+        display: block;
+        text-align: center;
+    }
+    
+    .selisih-display {
+        border-radius: 8px;
+        padding: 0.5rem;
+        min-width: 60px;
+        display: inline-block;
+        border: 2px solid;
+    }
+    
+    .selisih-badge {
+        font-size: 1.1rem;
+        font-weight: 700;
+        display: block;
+        text-align: center;
+    }
+    
+    /* Selisih color coding */
+    .selisih-display.positive {
+        background-color: #e8f5e8;
+        border-color: #4caf50;
+    }
+    
+    .selisih-display.positive .selisih-badge {
+        color: #2e7d32;
+    }
+    
+    .selisih-display.negative {
+        background-color: #fff3e0;
+        border-color: #ff9800;
+    }
+    
+    .selisih-display.negative .selisih-badge {
+        color: #e65100;
+    }
+    
+    .selisih-display.zero {
+        background-color: #f5f5f5;
+        border-color: #9e9e9e;
+    }
+    
+    .selisih-display.zero .selisih-badge {
+        color: #616161;
+    }
+    
+    /* Better qty input styling */
+    .qty-input {
+        text-align: center;
+        font-weight: 600;
+        font-size: 1rem;
+        border: 2px solid #ff9800;
+        background-color: #fff3e0;
+    }
+    
+    .qty-input:disabled {
+        background-color: #fff3e0;
+        border-color: #ff9800;
+        color: #e65100;
+        font-weight: 700;
+    }
+    
+    /* Better stats styling */
+    .card-body .row.text-center h3 {
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+    
+    .card-body .row.text-center h4 {
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+    
+    .card-body .row.text-center small {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    /* Stats in session info card */
+    .border-top {
+        border-top: 1px solid #dee2e6 !important;
+    }
+    
+    .mt-3.pt-3.border-top h6 {
+        color: #495057;
+        font-weight: 600;
+    }
+    
+    .mt-3.pt-3.border-top .row.text-center h4 {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    
+    .mt-3.pt-3.border-top .row.text-center small {
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+    
+    /* Stats color coding */
+    .text-success {
+        color: #28a745 !important;
+    }
+    
+    .text-danger {
+        color: #dc3545 !important;
+    }
+    
+    .text-warning {
+        color: #ffc107 !important;
+    }
+    
+    .text-info {
+        color: #17a2b8 !important;
+    }
+    
+    /* Better table layout for wider column */
+    .col-md-8 .table-responsive {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+    
+    .col-md-8 .table th {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 10;
+    }
+    
+    /* Compact left column */
+    .col-md-4 .card-body {
+        padding: 0.75rem;
+    }
+    
+    .col-md-4 .card-header {
+        padding: 0.75rem;
+    }
+    
+    /* Combined session info and action buttons */
+    .col-md-8 .card-header {
+        padding: 1rem;
+    }
+    
+    .col-md-8 .card-header .row.g-2 {
+        margin-bottom: 0.5rem;
+    }
+    
+    .col-md-8 .card-header .progress {
+        margin-bottom: 0.25rem;
+    }
+    }
+    
+    .qty-input.unlocked {
+        border-color: #28a745;
+        background-color: #f8fff9;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+    
+    /* Selisih styling */
+    .selisih-positive {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    .selisih-negative {
+        color: #fd7e14;
+        font-weight: bold;
+    }
+    .selisih-zero {
+        color: #28a745;
+        font-weight: bold;
+    }
+    
+    /* Verification button styling */
+    .btn-verify {
+        transition: all 0.3s ease;
+    }
+    
+    .btn-verify:hover {
+        transform: scale(1.1);
+    }
+    
+    .btn-verify.btn-success {
+        box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+    }
+    
+    .btn-verify.btn-outline-secondary:hover {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+    
+    /* Scan area styling */
+    .scan-area {
+        background: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .scan-area.active {
+        border-color: #007bff;
+        background: #e3f2fd;
+        animation: pulse 1s infinite;
+    }
+    
+    .scan-area.success {
+        border-color: #28a745;
+        background: #f8fff9;
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
+    }
+    
+    /* Compact card styling */
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .card-header {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+
+    
+    /* Qty Fisik badge animation */
+    #currentQtyFisik.bg-success {
+        transition: all 0.3s ease;
+        transform: scale(1.1);
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .table {
+            font-size: 0.8rem;
+        }
+        
+        .table thead th,
+        .table tbody td {
+            padding: 4px 2px;
+        }
+        
+        .small {
+            font-size: 0.75rem;
+        }
+        
+
+    }
+    
+    /* Add Product Modal Styling */
+    #addProductModal .modal-dialog {
+        max-width: 1200px;
+    }
+    
+    #addProductModal .table-sm th,
+    #addProductModal .table-sm td {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        vertical-align: middle;
+    }
+    
+    #addProductModal .table-warning {
+        background-color: #fff3cd;
+    }
+    
+    #addProductModal .alert {
+        margin-bottom: 1rem;
+    }
+    
+    #searchResults {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+    }
+    
+    #searchResults .table {
+        margin-bottom: 0;
+        font-size: 0.875rem;
+    }
+    
+    #searchResults .table th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.75rem 0.5rem;
+        vertical-align: middle;
+    }
+    
+    #searchResults .table td {
+        padding: 0.5rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    #searchResults .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    #searchResults .product-photo {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        cursor: zoom-in;
+        transition: box-shadow 0.2s;
+    }
+    
+    #searchResults .product-photo-placeholder {
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        border: 1px dashed #dee2e6;
+        border-radius: 4px;
+        color: #6c757d;
+        font-size: 1.5rem;
+    }
+    
+    /* Responsive adjustments for product photos */
+    @media (max-width: 768px) {
+        #searchResults .product-photo,
+        #searchResults .product-photo-placeholder {
+            width: 60px;
+            height: 60px;
+        }
+    }
+    
+
+    
+
+    
+    /* Button spacing in header */
+    .d-flex.gap-2 .btn {
+        margin-left: 0.25rem;
+    }
+    
+    /* Qty input in modal */
+    .qty-input-modal {
+        text-align: center;
+        font-weight: bold;
+    }
+
+    #searchResultsContainer {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+    }
+    
+    #searchResultsContainer .table {
+        margin-bottom: 0;
+        font-size: 0.875rem;
+        table-layout: fixed;
+    }
+    
+    #searchResultsContainer .table th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.5rem 0.25rem;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    #searchResultsContainer .table td {
+        padding: 0.5rem 0.25rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f3f4;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    #searchResultsContainer .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    #searchResultsContainer img {
+        max-height: 60px;
+        width: auto;
+        object-fit: contain;
+    }
+    
+    /* Responsive adjustments for modal table */
+    @media (max-width: 1200px) {
+        #searchResultsContainer .table {
+            font-size: 0.8rem;
+        }
+        
+        #searchResultsContainer .table th,
+        #searchResultsContainer .table td {
+            padding: 0.25rem 0.125rem;
+        }
+        
+        #searchResultsContainer img {
+            max-height: 50px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="container-fluid">
+    <!-- Bagian Pertama: Dibagi menjadi 2 Kolom -->
+    <div class="row mb-4 align-items-stretch">
+        <!-- Kolom Kiri (35%) -->
+        <div class="col-md-4">
+            <!-- Header Utama -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">
+                                <i class="bi bi-clipboard-check text-white"></i>
+                                Kerja Opname Rak: {{ session.session_code }}
+                                {% if session.tipe_session == 'partial_opname' %}
+                                    <span class="badge bg-warning ms-2">Partial Opname</span>
+                                {% elif session.tipe_session == 'full_opname' %}
+                                    <span class="badge bg-primary ms-2">Full Opname</span>
+                                {% else %}
+                                    <span class="badge bg-info ms-2">Reguler Opname</span>
+                                {% endif %}
+                            </h5>
+                            <p class="text-white mb-0 opacity-75">
+                                <span class="status-indicator active"></span>
+                                Rak: <strong>{{ session.rak.lokasi }} ({{ session.rak.kode_rak }})</strong>
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            <div class="badge bg-light text-dark pulse">
+                                <i class="bi bi-clock"></i> Live
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- Enhanced Barcode Scan Section -->
+            <div class="card border-primary mb-3">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="bi bi-upc-scan"></i> Scan Barcode
+                        </h6>
+                        <div class="badge bg-light text-primary">
+                            <i class="bi bi-lightning"></i> Ready
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <label for="barcodeInput" class="form-label">
+                                <strong><i class="bi bi-upc-scan"></i> Scan Barcode / SKU:</strong>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">
+                                    <i class="bi bi-upc-scan text-primary"></i>
+                                </span>
+                                <input type="text" id="barcodeInput" class="form-control" 
+                                       placeholder="Scan barcode atau ketik SKU..." 
+                                       autocomplete="off">
+                                <button class="btn btn-outline-primary" type="button" id="clearBarcodeBtn">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </div>
+                            <div class="form-text mt-2">
+                                {% if session.tipe_session == 'partial_opname' %}
+                                <i class="bi bi-exclamation-triangle text-warning"></i> <strong>Partial Opname:</strong> Semua produk sudah terverifikasi. Scan untuk menambah produk baru atau mengubah qty yang ada.
+                                {% else %}
+                                <i class="bi bi-info-circle"></i> Scan barcode produk untuk menambah qty fisik
+                                {% endif %}
+                            </div>
+                            <input type="hidden" id="currentProductItemId" value="">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Scanned Product Card -->
+            <div class="card border-success" id="currentProductCard" style="display: none;">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-box-seam"></i> Produk yang Sedang Di-Scan
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-start mb-3">
+                        <div class="col-md-3 text-center">
+                            <div id="currentProductPhoto">
+                                <!-- Product photo will be inserted here -->
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div id="currentProductInfo">
+                                <!-- Product info will be inserted here -->
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="row g-3">
+                                                            <div class="col-6">
+                                <div class="text-center">
+                                    <div class="form-label small mb-1">
+                                        <i class="bi bi-database"></i> <strong>Qty Sistem</strong>
+                                    </div>
+                                    <div id="currentQtySistem" class="badge bg-info fs-5 pulse">0</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <div class="form-label small mb-1">
+                                        <i class="bi bi-box-seam"></i> <strong>Qty Fisik</strong>
+                                    </div>
+                                    <div id="currentQtyFisik" class="badge bg-warning fs-5 pulse">0</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <div class="form-label small mb-1">
+                                        <i class="bi bi-arrow-left-right"></i> <strong>Selisih</strong>
+                                    </div>
+                                    <div id="currentSelisih" class="badge bg-secondary fs-5 pulse">0</div>
+                                </div>
+                            </div>
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <div class="form-label small mb-1">
+                                            <i class="bi bi-cursor"></i> <strong>Scan Count</strong>
+                                        </div>
+                                        <div id="currentScanCount" class="badge bg-primary fs-5 pulse">0</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">Qty Fisik:</span>
+                                <input type="number" id="manualQtyInput" class="form-control" value="0" min="0" placeholder="Masukkan qty manual" style="min-width: 120px; font-size: 1.1rem;">
+                                <button class="btn btn-outline-primary" type="button" onclick="updateManualQty()">
+                                    <i class="bi bi-check"></i> Update
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success btn-sm" onclick="incrementQty()">
+                                    <i class="bi bi-plus-circle"></i> +1
+                                </button>
+                                <button class="btn btn-warning btn-sm" onclick="decrementQty()">
+                                    <i class="bi bi-dash-circle"></i> -1
+                                </button>
+                                <button class="btn btn-info btn-sm" onclick="clearCurrentProduct()">
+                                    <i class="bi bi-x-circle"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+
+            
+
+        </div>
+
+        <!-- Kolom Kanan (65%) -->
+        <div class="col-md-8">
+            <!-- Informasi Sesi dan Tombol Aksi -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-1">
+                        <i class="bi bi-info-circle"></i> Informasi Sesi
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Informasi Sesi (Kiri) -->
+                        <div class="col-md-6">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <strong>Kode Sesi:</strong><br>
+                                    <small class="text-muted">{{ session.session_code }}</small>
+                                </div>
+                                <div class="col-6">
+                                    <strong>Status:</strong><br>
+                                    <span class="badge bg-warning" id="sessionStatusBadge">{{ session.get_status_display }}</span>
+                                </div>
+                                <div class="col-6">
+                                    <strong>Tipe Session:</strong><br>
+                                    {% if session.tipe_session == 'partial_opname' %}
+                                        <span class="badge bg-warning">Partial Opname</span>
+                                    {% elif session.tipe_session == 'full_opname' %}
+                                        <span class="badge bg-primary">Full Opname</span>
+                                    {% else %}
+                                        <span class="badge bg-info">Reguler Opname</span>
+                                    {% endif %}
+                                </div>
+                                <div class="col-6">
+                                    <strong>Rak:</strong><br>
+                                    <small class="text-muted">{{ session.rak.lokasi }} - {{ session.rak.kode_rak }}</small>
+                                </div>
+                                <div class="col-6">
+                                    <strong>Total Items:</strong><br>
+                                    <span id="totalItems" class="badge bg-info">{{ session.total_items }}</span>
+                                </div>
+                                <div class="col-6">
+                                    <strong>Status Verifikasi:</strong><br>
+                                    <span class="badge {% if all_verified %}bg-success{% else %}bg-warning{% endif %}" id="verificationStatusBadge">
+                                        {{ verified_items }}/{{ total_items }} Diverifikasi
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar" role="progressbar" id="sessionProgressBarFill" style="width: {{ session.progress_percentage }}%;"></div>
+                                </div>
+                                <p class="text-muted small mt-1 mb-0" id="sessionProgressText">{{ session.progress_percentage|floatformat:1 }}%</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Tombol Aksi dan Statistik (Kanan) -->
+                        <div class="col-md-6">
+                            <!-- Tombol Aksi -->
+                            <div class="d-grid gap-2 mb-3">
+                                <a href="{% if session.full_opname_session %}{% url 'inventory:full_opname_detail' session.full_opname_session.id %}{% else %}{% url 'inventory:opname_rak_list' %}{% endif %}" 
+                                   class="btn btn-outline-secondary btn-sm" title="Kembali ke halaman sebelumnya">
+                                    <i class="bi bi-arrow-left"></i> Kembali
+                                </a>
+                                <button type="button" 
+                                        class="btn {% if all_verified or total_items == 0 %}btn-success{% else %}btn-secondary{% endif %} btn-sm" 
+                                        onclick="finishOpname()"
+                                        {% if not all_verified and total_items > 0 %}disabled{% endif %}
+                                        title="{% if all_verified or total_items == 0 %}Selesai opname{% else %}Semua item harus diverifikasi terlebih dahulu{% endif %}">
+                                    <i class="bi bi-check-circle"></i> 
+                                    {% if session.tipe_session == 'partial_opname' %}
+                                    Selesai Partial Opname
+                                    {% else %}
+                                    Selesai Opname
+                                    {% endif %}
+                                    {% if not all_verified and total_items > 0 %}
+                                    <span class="badge bg-warning ms-1">{{ unverified_items }}</span>
+                                    {% endif %}
+                                    {% if all_verified or total_items == 0 %}
+                                    <span class="badge bg-light text-success ms-1 pulse">
+                                        <i class="bi bi-lightning"></i> Ready
+                                    </span>
+                                    {% endif %}
+                                </button>
+                            </div>
+                            
+                            <!-- Statistik Opname -->
+                            <div class="border-top pt-3">
+                                <h6 class="mb-2">
+                                    <i class="bi bi-bar-chart"></i> Statistik Opname
+                                    {% if session.tipe_session == 'partial_opname' %}
+                                    <span class="badge bg-warning ms-2">Partial Mode</span>
+                                    {% endif %}
+                                </h6>
+                                <div class="row text-center g-2">
+                                    <div class="col-3">
+                                        <div class="text-primary fw-bold pulse" id="inputCount">0</div>
+                                        <small class="text-muted">
+                                            <i class="bi bi-box-seam"></i> 
+                                            {% if session.tipe_session == 'partial_opname' %}
+                                            Items (Partial)
+                                            {% else %}
+                                            Items
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="text-success fw-bold pulse" id="skuLebih">0</div>
+                                        <small class="text-muted">
+                                            <i class="bi bi-plus-circle"></i> 
+                                            {% if session.tipe_session == 'partial_opname' %}
+                                            SKU+ (Partial)
+                                            {% else %}
+                                            SKU+
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="text-danger fw-bold pulse" id="skuKurang">0</div>
+                                        <small class="text-muted">
+                                            <i class="bi bi-dash-circle"></i> 
+                                            {% if session.tipe_session == 'partial_opname' %}
+                                            SKU- (Partial)
+                                            {% else %}
+                                            SKU-
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="text-info fw-bold pulse" id="totalScans">0</div>
+                                        <small class="text-muted">
+                                            <i class="bi bi-cursor"></i> 
+                                            {% if session.tipe_session == 'partial_opname' %}
+                                            Scan (Partial)
+                                            {% else %}
+                                            Scan
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                            </div>
+                </div>
+                
+            <!-- Daftar Item Opname Table -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <h6 class="mb-0">
+                            <i class="bi bi-list-ul"></i> Daftar Item Opname
+                        </h6>
+                        <span class="badge bg-light text-dark ms-2">
+                            <i class="bi bi-collection"></i> {{ session.total_items }} Items
+                        </span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        {% if session.tipe_session == 'partial_opname' %}
+                        <span class="badge bg-warning">
+                            <i class="bi bi-clipboard-data"></i> Partial Opname Mode
+                        </span>
+                        {% endif %}
+                        <button type="button" class="btn btn-primary btn-sm" onclick="openAddProductModal()">
+                            <i class="bi bi-plus-circle"></i> Tambah Produk
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0" id="opnameTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 120px;" class="text-center">Foto</th>
+                                    <th style="width: 30%;">Kode</th>
+                                    <th style="width: 25%;">Nama Produk</th>
+                                    <th style="width: 80px;" class="text-center">Qty Sistem</th>
+                                    <th style="width: 80px;" class="text-center">Qty Fisik</th>
+                                    <th style="width: 80px;" class="text-center">Selisih</th>
+                                    <th style="width: 80px;" class="text-center">Verifikasi</th>
+                                    <th style="width: 60px;" class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsTableBody">
+                                {% for item in items %}
+                                <tr class="product-row" data-item-id="{{ item.id }}" data-product-sku="{{ item.product.sku }}" data-product-brand="{{ item.product.brand|default:'Unknown' }}" data-product-variant="{{ item.product.variant_produk|default:'' }}" data-product-barcode="{{ item.product.barcode|default:'' }}">
+                                    <td class="text-center">
+                                        {% if item.product.photo %}
+                                            <img src="{{ item.product.photo.url }}" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;" alt="Product Photo">
+                                        {% else %}
+                                            <i class="bi bi-box" style="font-size: 2rem; color: #6c757d; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="small">
+                                            <div><strong>Product ID:</strong> {{ item.product.id }}</div>
+                                            <div><strong>SKU:</strong> {{ item.product.sku }}</div>
+                                            <div><strong>Barcode:</strong> {{ item.product.barcode|default:"-" }}</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="small">
+                                            <div><strong>{{ item.product.nama_produk }}</strong></div>
+                                            <div class="text-muted">{{ item.product.variant_produk|default:"-" }}</div>
+                                            <div class="text-muted">{{ item.product.brand|default:"-" }}</div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="qty-display">
+                                            <span class="badge bg-info qty-number">{{ item.qty_sistem }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary qty-fisik-badge" data-item-id="{{ item.id }}">{{ item.qty_fisik|default:0 }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge {% if item.qty_selisih > 0 %}bg-warning{% elif item.qty_selisih < 0 %}bg-danger{% else %}bg-success{% endif %} selisih-badge" id="selisih-{{ item.id }}">
+                                            {% if item.qty_selisih > 0 %}+{{ item.qty_selisih }}{% else %}{{ item.qty_selisih|default:0 }}{% endif %}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <button type="button" 
+                                                class="btn btn-sm btn-verify {% if item.is_verified %}btn-success{% else %}btn-outline-secondary{% endif %}" 
+                                                onclick="verifyItem({{ item.id }})"
+                                                id="verify-btn-{{ item.id }}"
+                                                title="{% if item.is_verified %}Sudah diverifikasi oleh {{ item.verified_by.username|default:'Unknown' }} pada {{ item.verified_at|date:'d/m/Y H:i'|default:'Unknown' }}{% else %}Klik untuk verifikasi{% endif %}">
+                                            <i class="bi {% if item.is_verified %}bi-check-circle-fill{% else %}bi-check-circle{% endif %}"></i>
+                                        </button>
+                                        {% if item.is_verified %}
+                                        <div class="small text-muted mt-1">
+                                            <small>
+                                                <i class="bi bi-person-check"></i> {{ item.verified_by.username|default:'Unknown' }}<br>
+                                                <i class="bi bi-clock"></i> {{ item.verified_at|date:'d/m/Y H:i'|default:'Unknown' }}
+                                            </small>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-outline-danger" onclick="deleteItem({{ item.id }})" title="Hapus Item">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-info" onclick="showItemDetails({{ item.id }})" title="Detail Item">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addProductModalLabel">
+                    <i class="bi bi-plus-circle me-2"></i> Tambah Produk Baru ke Opname
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="productSearchInput" class="form-label">Cari Produk *</label>
+                    <div class="input-group">
+                        <input type="text" id="productSearchInput" class="form-control" placeholder="Scan barcode atau ketik SKU/Nama produk untuk mencari">
+                        <button class="btn btn-outline-secondary" type="button" id="searchProductBtn">Cari</button>
+                    </div>
+                    <div class="form-text">Scan barcode atau ketik SKU/Nama produk untuk mencari</div>
+                </div>
+                <div id="searchResultsContainer" class="table-responsive">
+                    <table class="table table-bordered table-hover table-sm">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px;">Foto</th>
+                                <th style="width: 120px;">SKU</th>
+                                <th style="width: 200px;">Nama Produk</th>
+                                <th style="width: 100px;">Variant</th>
+                                <th style="width: 100px;">Brand</th>
+                                <th style="width: 100px;">Stok Master</th>
+                                <th style="width: 150px;">Lokasi Saat Ini</th>
+                                <th style="width: 80px;">Qty Fisik</th>
+                                <th style="width: 80px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="searchResultsBody">
+                            <!-- Hasil pencarian produk akan muncul di sini -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i> Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Zoom Foto Produk -->
+<div class="modal fade" id="zoomPhotoModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark">
+      <div class="modal-body text-center p-0">
+        <img id="zoomPhotoImg" src="" alt="Zoomed Product Photo" style="max-height:500px; width:auto; display:block; margin:auto;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 mb-0">Memproses...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    let sessionId = {{ session.id }};
+    let inputCount = 0;
+    let totalItems = {{ session.total_items }}; // This is initial total items loaded
+    let totalScans = 0;
+    let currentScannedProduct = null;
+    let currentProductScanCount = 0;
+    let currentProductItemId = null;
+    let isProcessingBarcode = false; // Prevent multiple simultaneous requests
+    let barcodeTimeout = null; // For debouncing
+
+    // Setup CSRF token for AJAX requests
+    function getCSRFToken() {
+        return $('[name=csrfmiddlewaretoken]').val();
+    }
+
+    // Setup AJAX CSRF token
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", getCSRFToken());
+            }
+        }
+    });
+
+    $(document).ready(function() {
+        // Focus on barcode input
+        $('#barcodeInput').focus();
+
+        // Handle barcode input - HAPUS EVENT LAMA DULU
+        $('#barcodeInput').off('keypress').on('keypress', function(e) {
+            if (e.which === 13) { // Enter key
+                e.preventDefault();
+                let barcode = $(this).val().trim();
+                if (barcode) {
+                    // Debounce barcode processing
+                    if (barcodeTimeout) {
+                        clearTimeout(barcodeTimeout);
+                    }
+                    
+                    barcodeTimeout = setTimeout(function() {
+                        processBarcode(barcode);
+                    }, 100); // 100ms delay
+                }
+            }
+        });
+
+        // Update counters
+        updateCounters();
+
+        // Keyboard shortcuts - HAPUS EVENT LAMA DULU
+        $(document).off('keydown').on('keydown', function(e) {
+            // Ctrl + R to focus barcode input
+            if (e.ctrlKey && (e.key === 'r' || e.key === 'R')) {
+                e.preventDefault();
+                $('#barcodeInput').focus();
+            }
+            // Escape to clear barcode input
+            if (e.key === 'Escape') {
+                clearScanInput();
+            }
+        });
+
+        // Handle Enter key on manual input - HAPUS EVENT LAMA DULU
+        $('#manualQtyInput').off('keypress').on('keypress', function(e) {
+            if (e.which === 13) { // Enter key
+                e.preventDefault();
+                updateManualQty();
+            }
+        });
+
+        // Initial call to update session info based on loaded data
+        // You might need to get these values from Django context initially
+        // For now, let's assume they are already rendered in the HTML
+        // For example, get initial status and progress from the rendered HTML if not passed explicitly
+
+        // Find the initial status badge and progress elements
+        let initialStatusText = $('#sessionStatusBadge').text();
+        let initialProgressText = $('#sessionProgressText').text().replace('%', '');
+        updateSessionInfo(initialStatusText, parseFloat(initialProgressText));
+        
+        // Initialize selisih colors
+        $('.selisih-badge').each(function() {
+            let selisih = parseInt($(this).text()) || 0;
+            let selisihDisplay = $(this).closest('.selisih-display');
+            
+            selisihDisplay.removeClass('positive negative zero');
+            if (selisih > 0) {
+                selisihDisplay.addClass('positive');
+            } else if (selisih < 0) {
+                selisihDisplay.addClass('negative');
+            } else {
+                selisihDisplay.addClass('zero');
+            }
+        });
+    });
+
+    function processBarcode(barcode) {
+        if (!barcode || barcode.trim() === '') {
+            console.log('Barcode kosong');
+            return;
+        }
+
+        // Prevent multiple simultaneous requests
+        if (isProcessingBarcode) {
+            console.log('Barcode sedang diproses, abaikan request ini');
+            return;
+        }
+
+        // Clear previous timeout
+        if (barcodeTimeout) {
+            clearTimeout(barcodeTimeout);
+        }
+
+        // Set processing flag
+        isProcessingBarcode = true;
+
+        // Update scan statistics
+        totalScans++;
+        updateScanStats();
+
+        // Find product by barcode
+        $.ajax({
+            url: '{% url "inventory:product_autocomplete" %}',
+            data: { q: barcode },
+            success: function(data) {
+                if (data.results && data.results.length > 0) {
+                    let product = data.results[0];
+                    
+                    // Check if product exists in the table
+                    let existingRow = $(`tr[data-product-sku="${product.sku}"]`);
+                    if (existingRow.length > 0) {
+                        // Tambahkan validasi is_verified
+                        let verifyButton = existingRow.find('.btn-verify');
+                        let isVerified = verifyButton.hasClass('btn-success');
+                        if (isVerified) {
+                            console.log(`Produk ${product.sku} sudah diverifikasi, tidak bisa opname ulang`);
+                            $('#barcodeInput').val('').focus();
+                            playErrorSound();
+                            isProcessingBarcode = false; // Reset flag
+                            return;
+                        }
+                        // Product exists - show current product card
+                        currentScannedProduct = product;
+                        currentProductItemId = existingRow.data('item-id');
+                        
+                        // Get current qty fisik from the table display
+                        let qtyValueInTable = existingRow.find('.qty-fisik-badge');
+                        let currentQtyFisik = parseInt(qtyValueInTable.text()) || 0;
+                        let qtySistem = parseInt(existingRow.find('td:nth-child(4) .qty-number').text()) || 0;
+                        
+                        // Debug logging
+                        console.log('Debug - Qty Sistem from table:', qtySistem);
+                        console.log('Debug - Current Qty Fisik from table:', currentQtyFisik);
+                        console.log('Debug - Product SKU:', product.sku);
+                        
+                        // Increment Qty Fisik by 1
+                        let newQtyFisik = currentQtyFisik + 1;
+
+                        // Update Qty Fisik in the table badge
+                        qtyValueInTable.text(newQtyFisik);
+
+                        // Update Qty Fisik in the database via AJAX
+                        updateQtyFisik(currentProductItemId, newQtyFisik);
+                        
+                        // Increment scan count for this product
+                        if (currentScannedProduct && currentScannedProduct.sku === product.sku) {
+                            currentProductScanCount++;
+                        } else {
+                            currentProductScanCount = 1;
+                        }
+                        
+                        // Show current product card with the incremented qty
+                        showCurrentProductCard(product, qtySistem, newQtyFisik); // Pass newQtyFisik
+                        
+                        // Update scan result
+                        console.log(`${product.sku} di-scan. Qty: ${newQtyFisik}, Count: ${currentProductScanCount}`);
+                        
+                        // Clear barcode input for next scan
+                        $('#barcodeInput').val('').focus();
+                        
+                        // Reset processing flag after successful completion
+                        isProcessingBarcode = false;
+                        
+                    } else {
+                        console.log(`${product.sku} tidak ada dalam daftar opname`);
+                        playErrorSound();
+                        isProcessingBarcode = false; // Reset flag
+                    }
+                } else {
+                    console.log(`Barcode "${barcode}" tidak ditemukan`);
+                    playErrorSound();
+                    isProcessingBarcode = false; // Reset flag
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Barcode scan error:', error);
+                console.log('Gagal mencari produk');
+                playErrorSound();
+                isProcessingBarcode = false; // Reset flag
+            }
+        });
+    }
+
+    function showCurrentProductCard(product, qtySistem, qtyFisik) {
+        // Update product photo
+        let photoHtml = '';
+        if (product.photo_url) {
+            photoHtml = `<img src="${product.photo_url}" alt="Product Photo">`;
+        } else {
+            photoHtml = `<i class="bi bi-box"></i>`;
+        }
+        $('#currentProductPhoto').html(photoHtml);
+        
+        // Force remove any inline styles and apply our CSS
+        setTimeout(function() {
+            const img = $('#currentProductPhoto img');
+            if (img.length > 0) {
+                img.css({
+                    'height': '150px',
+                    'width': 'auto',
+                    'max-width': 'none',
+                    'max-height': '150px',
+                    'object-fit': 'contain'
+                });
+            }
+        }, 10);
+        
+        // Update product info
+        let infoHtml = `
+            <div class="small">
+                <div class="mb-1"><strong>Product ID:</strong> ${product.id}</div>
+                <div class="mb-1"><strong>SKU:</strong> ${product.sku}</div>
+                <div class="mb-2"><strong>Barcode:</strong> ${product.barcode || '-'}</div>
+                <div class="fw-bold text-primary mb-1">${product.nama_produk}</div>
+                <div class="d-flex gap-3">
+                    <div class="text-muted small">${product.variant_produk || '-'}</div>
+                    <div class="text-muted small">${product.brand || '-'}</div>
+                </div>
+            </div>
+        `;
+        $('#currentProductInfo').html(infoHtml);
+        
+        // Update quantities
+        $('#currentQtySistem').text(qtySistem);
+        $('#currentQtyFisik').text(qtyFisik);
+        $('#currentSelisih').text(qtyFisik - qtySistem);
+        $('#currentScanCount').text(currentProductScanCount);
+        
+        // Update manual input with new qty fisik
+        $('#manualQtyInput').val(qtyFisik);
+        
+        // Show the card with animation
+        $('#currentProductCard').show();
+    }
+
+    function incrementQty() {
+        if (!currentScannedProduct || !currentProductItemId) {
+            console.log('Tidak ada produk yang sedang di-scan');
+            return;
+        }
+        
+        let existingRow = $(`tr[data-product-sku="${currentScannedProduct.sku}"]`);
+        if (existingRow.length > 0) {
+            let qtyValue = existingRow.find('.qty-fisik-badge');
+            let currentQty = parseInt(qtyValue.text()) || 0;
+            let newQty = currentQty + 1;
+            
+            // Update in table
+            qtyInput.val(newQty);
+            
+            // Update in database
+            updateQtyFisik(currentProductItemId, newQty);
+            
+            // Update card display
+            $('#currentQtyFisik').text(newQty);
+            $('#manualQtyInput').val(newQty);
+            
+            // Update selisih
+            let qtySistem = parseInt($('#currentQtySistem').text()) || 0;
+            $('#currentSelisih').text(newQty - qtySistem);
+            
+            console.log(`Qty fisik ${currentScannedProduct.sku} ditambah 1 menjadi ${newQty}`);
+        }
+    }
+
+    function updateManualQty() {
+        if (!currentScannedProduct || !currentProductItemId) {
+            console.log('Tidak ada produk yang sedang di-scan');
+            return;
+        }
+        
+        let manualQty = parseInt($('#manualQtyInput').val()) || 0;
+        let existingRow = $(`tr[data-product-sku="${currentScannedProduct.sku}"]`);
+        
+        if (existingRow.length > 0) {
+            let qtyValue = existingRow.find('.qty-fisik-badge');
+            
+            // Update in table
+            qtyInput.val(manualQty);
+            
+            // Update in database
+            updateQtyFisik(currentProductItemId, manualQty);
+            
+            // Update card display
+            $('#currentQtyFisik').text(manualQty);
+            
+            // Update selisih
+            let qtySistem = parseInt($('#currentQtySistem').text()) || 0;
+            $('#currentSelisih').text(manualQty - qtySistem);
+            
+            console.log(`Qty fisik ${currentScannedProduct.sku} diupdate menjadi ${manualQty}`);
+        }
+    }
+
+    function decrementQty() {
+        if (!currentScannedProduct || !currentProductItemId) {
+            console.log('Tidak ada produk yang sedang di-scan');
+            return;
+        }
+        
+        let existingRow = $(`tr[data-product-sku="${currentScannedProduct.sku}"]`);
+        if (existingRow.length > 0) {
+            let qtyValue = existingRow.find('.qty-fisik-badge');
+            let currentQty = parseInt(qtyValue.text()) || 0;
+            let newQty = Math.max(0, currentQty - 1); // Prevent negative values
+            
+            // Update in table
+            qtyInput.val(newQty);
+            
+            // Update in database
+            updateQtyFisik(currentProductItemId, newQty);
+            
+            // Update card display
+            $('#currentQtyFisik').text(newQty);
+            $('#manualQtyInput').val(newQty);
+            
+            // Update selisih
+            let qtySistem = parseInt($('#currentQtySistem').text()) || 0;
+            $('#currentSelisih').text(newQty - qtySistem);
+            
+            console.log(`Qty fisik ${currentScannedProduct.sku} dikurangi 1 menjadi ${newQty}`);
+        }
+    }
+
+    function clearCurrentProduct() {
+        $('#currentProductCard').hide();
+        currentScannedProduct = null;
+        currentProductItemId = null;
+        currentProductScanCount = 0;
+        $('#barcodeInput').focus();
+        console.log('Card produk dibersihkan');
+    }
+
+    function updateQtyFisik(itemId, qtyFisik) {
+        // Prevent multiple simultaneous updates for the same item
+        const updateKey = `update_${itemId}`;
+        if (window[updateKey]) {
+            console.log('Update sedang berlangsung untuk item', itemId);
+            return;
+        }
+        
+        window[updateKey] = true;
+        
+        $.ajax({
+            url: `/inventory/opname-rak/${sessionId}/work/`,
+            method: 'POST',
+            data: {
+                action: 'update_item',
+                item_id: itemId,
+                qty_fisik: qtyFisik
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    updateSelisihBadge(itemId, response.qty_selisih);
+                    updateCounters();
+                    
+                    // Play success sound only for successful updates
+                    playSuccessSound();
+                    
+                    // Update the qty input in table to ensure consistency
+                    let existingRow = $(`tr[data-item-id="${itemId}"]`);
+                    if (existingRow.length > 0) {
+                        existingRow.find('.qty-fisik-badge').text(qtyFisik);
+                    }
+
+                    // Update session status and progress on the card
+                    updateSessionInfo(response.session_status, response.session_progress_percentage);
+                    
+                    // Update verification status
+                    updateVerificationStatus(response.unverified_count, response.total_items, response.all_verified);
+                    
+                    // Update progress bar
+                    updateProgressBar();
+                } else {
+                    console.log(response.message);
+                    playErrorSound();
+                }
+                
+                // Reset update lock
+                window[updateKey] = false;
+            },
+            error: function() {
+                console.log('Gagal update qty fisik');
+                playErrorSound();
+                
+                // Reset update lock
+                window[updateKey] = false;
+            }
+        });
+    }
+
+    function deleteItem(itemId) {
+        Swal.fire({
+            title: 'Konfirmasi Hapus',
+            text: 'Apakah Anda yakin ingin menghapus item ini?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/inventory/opname-rak/${sessionId}/work/`,
+                    method: 'POST',
+                    data: {
+                        action: 'delete_item',
+                        item_id: itemId
+                    },
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            $(`tr[data-item-id="${itemId}"]`).remove();
+                            updateCounters();
+                            updateProgressBar();
+                            console.log(response.message);
+                            playSuccessSound();
+                        } else {
+                            console.log(response.message);
+                            playErrorSound();
+                        }
+                    },
+                    error: function() {
+                        console.log('Gagal menghapus item');
+                        playErrorSound();
+                    }
+                });
+            }
+        });
+    }
+
+    function verifyItem(itemId) {
+        $.ajax({
+            url: `/inventory/opname-rak/${sessionId}/work/`,
+            method: 'POST',
+            data: {
+                action: 'verify_item',
+                item_id: itemId
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    const $btn = $(`#verify-btn-${itemId}`);
+                    const $row = $btn.closest('tr');
+                    
+                    if (response.is_verified) {
+                        // Item is now verified
+                        $btn.removeClass('btn-outline-secondary').addClass('btn-success');
+                        $btn.addClass('btn-verify');
+                        $btn.find('i').removeClass('bi-check-circle').addClass('bi-check-circle-fill');
+                        
+                        // Add verification info
+                        const verificationInfo = `
+                            <div class="small text-muted mt-1">
+                                <small>${response.verified_by}<br>${response.verified_at}</small>
+                            </div>
+                        `;
+                        $btn.after(verificationInfo);
+                        
+                        // Update tooltip
+                        $btn.attr('title', `Sudah diverifikasi oleh ${response.verified_by} pada ${response.verified_at}`);
+                        
+                        // Move row to bottom (verified items go to bottom)
+                        const $row = $btn.closest('tr');
+                        $('#itemsTableBody').append($row);
+                        
+                        console.log(response.message);
+                        playSuccessSound();
+                    } else {
+                        // Item is now unverified
+                        $btn.removeClass('btn-success').addClass('btn-outline-secondary');
+                        $btn.addClass('btn-verify');
+                        $btn.find('i').removeClass('bi-check-circle-fill').addClass('bi-check-circle');
+                        
+                        // Remove verification info
+                        $btn.siblings('.small.text-muted').remove();
+                        
+                        // Update tooltip
+                        $btn.attr('title', 'Klik untuk verifikasi');
+                        
+                        // Move row to top based on qty_fisik
+                        const $row = $btn.closest('tr');
+                        const qtyFisik = parseInt($row.find('.qty-fisik-badge').text()) || 0;
+                        
+                        if (qtyFisik > 0) {
+                            // Move to very top (qty_fisik > 0 and not verified)
+                            $('#itemsTableBody').prepend($row);
+                        } else {
+                            // Move after items with qty_fisik > 0 but before verified items
+                            const $firstVerifiedRow = $('#itemsTableBody tr').filter(function() {
+                                return $(this).find('.btn-verify.btn-success').length > 0;
+                            }).first();
+                            
+                            if ($firstVerifiedRow.length > 0) {
+                                $row.insertBefore($firstVerifiedRow);
+                            } else {
+                                $('#itemsTableBody').append($row);
+                            }
+                        }
+                        
+                        console.log(response.message);
+                        playSuccessSound();
+                    }
+                    
+                    // Update verification status
+                    updateVerificationStatus(response.unverified_count, response.total_items, response.all_verified);
+                    
+                    // Update progress bar
+                    updateProgressBar();
+                } else {
+                    console.log(response.message);
+                    playErrorSound();
+                }
+            },
+            error: function() {
+                console.log('Terjadi kesalahan saat verifikasi item');
+                playErrorSound();
+            }
+        });
+    }
+
+    function finishOpname() {
+        var isPartialOpname = {% if session.tipe_session == 'partial_opname' %}true{% else %}false{% endif %};
+        var title = isPartialOpname ? 'Selesai Partial Opname?' : 'Selesai Opname?';
+        var text = isPartialOpname ? 
+            'Apakah Anda yakin ingin menyelesaikan sesi partial opname ini? Stok rak akan dikoreksi sesuai hasil opname.' :
+            'Apakah Anda yakin ingin menyelesaikan sesi opname ini? Stok rak akan dikoreksi sesuai hasil opname.';
+        
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Selesai!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#loadingModal').modal('show');
+                
+                $.ajax({
+                    url: `/inventory/opname-rak/${sessionId}/work/`,
+                    method: 'POST',
+                    data: {
+                        action: 'selesai'
+                    },
+                    success: function(response) {
+                        $('#loadingModal').modal('hide');
+                        if (response.status === 'success') {
+                            playCompletionSound();
+                            Swal.fire({
+                                title: 'Berhasil!',
+                                text: 'Sesi opname berhasil diselesaikan',
+                                icon: 'success',
+                                confirmButtonText: 'OK',
+                                allowOutsideClick: false,
+                                allowEscapeKey: false
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    if (response.redirect_to_full_opname) {
+                                        window.location.href = `{% url "inventory:full_opname_detail" 0 %}`.replace('0', response.full_opname_session_id);
+                                    } else {
+                                        window.location.href = '{% url "inventory:opname_rak_list" %}';
+                                    }
+                                }
+                            });
+                        } else {
+                            console.log(response.message);
+                            playErrorSound();
+                        }
+                    },
+                    error: function() {
+                        $('#loadingModal').modal('hide');
+                        console.log('Gagal menyelesaikan opname');
+                        playErrorSound();
+                    }
+                });
+            }
+        });
+    }
+
+    function updateSelisihBadge(itemId, selisih) {
+        let selisihBadge = $(`#selisih-${itemId}`);
+        
+        // Format selisih with minus sign for negative values
+        let displayText = selisih > 0 ? `+${selisih}` : selisih.toString();
+        selisihBadge.text(displayText);
+        
+        // Update badge color based on selisih value
+        selisihBadge.removeClass('bg-danger bg-warning bg-success');
+        if (selisih > 0) {
+            selisihBadge.addClass('bg-warning'); // Kuning untuk surplus
+        } else if (selisih < 0) {
+            selisihBadge.addClass('bg-danger'); // Merah untuk minus
+        } else {
+            selisihBadge.addClass('bg-success'); // Hijau untuk pas
+        }
+        
+    }
+
+    function updateCounters() {
+        // Count items with qty_fisik > 0
+        inputCount = $('.qty-fisik-badge').filter(function() {
+            return parseInt($(this).text()) > 0;
+        }).length;
+        
+        $('#inputCount').text(inputCount);
+        $('#totalItems').text(totalItems);
+        
+        // Calculate SKU LEBIH, SKU KURANG, and total selisih
+        let totalSelisih = 0;
+        let skuLebih = 0;
+        let skuKurang = 0;
+        
+        $('.selisih-badge').each(function() {
+            let selisih = parseInt($(this).text()) || 0;
+            totalSelisih += selisih;
+            
+            if (selisih > 0) {
+                skuLebih++;
+            } else if (selisih < 0) {
+                skuKurang++;
+            }
+        });
+        
+        $('#totalSelisih').text(totalSelisih);
+        $('#skuLebih').text(skuLebih);
+        $('#skuKurang').text(skuKurang);
+        
+        // Update scan stats
+        updateScanStats();
+        
+        // Update progress bar based on verification status
+        updateProgressBar();
+    }
+    
+    function updateProgressBar() {
+        // Count verified items
+        let verifiedCount = $('.btn-verify.btn-success').length;
+        let totalItemsCount = $('.btn-verify').length;
+        
+        // Calculate progress percentage
+        let progressPercentage = totalItemsCount > 0 ? (verifiedCount / totalItemsCount) * 100 : 0;
+        
+        // Update progress bar
+        let progressBarFill = $('#sessionProgressBarFill');
+        let progressText = $('#sessionProgressText');
+        
+        if (progressBarFill.length && progressText.length) {
+            progressBarFill.css('width', `${progressPercentage}%`);
+            progressText.text(`${progressPercentage.toFixed(1)}%`);
+        }
+        
+        // Update verification status badge
+        let verificationBadge = $('#verificationStatusBadge');
+        if (verificationBadge.length) {
+            verificationBadge.text(`${verifiedCount}/${totalItemsCount} Diverifikasi`);
+            
+            if (verifiedCount === totalItemsCount && totalItemsCount > 0) {
+                verificationBadge.removeClass('bg-warning').addClass('bg-success');
+            } else {
+                verificationBadge.removeClass('bg-success').addClass('bg-warning');
+            }
+        }
+        
+        // Update finish button status
+        let finishBtn = $('button[onclick="finishOpname()"]');
+        if (finishBtn.length) {
+            if (verifiedCount === totalItemsCount || totalItemsCount === 0) {
+                finishBtn.removeClass('btn-secondary').addClass('btn-success').prop('disabled', false);
+                finishBtn.attr('title', 'Klik untuk menyelesaikan opname');
+                finishBtn.find('.badge').remove();
+            } else {
+                finishBtn.removeClass('btn-success').addClass('btn-secondary').prop('disabled', true);
+                finishBtn.attr('title', 'Semua item harus diverifikasi terlebih dahulu');
+                let unverifiedCount = totalItemsCount - verifiedCount;
+                if (finishBtn.find('.badge').length === 0) {
+                    finishBtn.append(`<span class="badge bg-warning ms-1">${unverifiedCount}</span>`);
+                } else {
+                    finishBtn.find('.badge').text(unverifiedCount);
+                }
+            }
+        }
+    }
+
+    function clearScanInput() {
+        $('#barcodeInput').val('').focus();
+        
+        // Clear current product card
+        clearCurrentProduct();
+    }
+
+    function playScanSound() {
+        try {
+            let audio = new Audio('{% static "sounds/ding.mp3" %}');
+            audio.volume = 0.3;
+            audio.play().catch(function(error) {
+                console.log('Audio play failed:', error);
+            });
+        } catch (error) {
+            console.log('Audio not supported:', error);
+        }
+    }
+
+    function playErrorSound() {
+        try {
+            let audio = new Audio('{% static "sounds/errorsound.mp3" %}');
+            audio.volume = 0.2;
+            audio.play().catch(function(error) {
+                console.log('Audio play failed:', error);
+            });
+        } catch (error) {
+            console.log('Audio not supported:', error);
+        }
+    }
+
+        function updateScanStats() {
+        $('#totalScans').text(totalScans);
+    }
+
+
+ 
+
+    // Add Product Modal Functions
+
+    function openAddProductModal() {
+        // Reset modal state
+        $('#productSearchInput').val('');
+        $('#searchResultsBody').empty(); // Clear only the table body
+
+        // Show modal
+        $('#addProductModal').modal('show');
+
+        // Focus on search input
+        setTimeout(function() {
+            $('#productSearchInput').focus();
+        }, 500);
+    }
+
+    function searchProduct() {
+        const searchTerm = $('#productSearchInput').val().trim();
+        
+        if (!searchTerm) {
+            showModalAlert('error', 'Silakan masukkan SKU, barcode, atau nama produk');
+            return;
+        }
+
+        // Show loading
+        $('#searchResultsBody').html('<tr><td colspan="9" class="text-center"><div class="spinner-border spinner-border-sm"></div> Mencari produk...</td></tr>');
+        $('#searchResultsContainer').show();
+
+        // Search products
+        $.ajax({
+            url: '{% url "inventory:product_autocomplete" %}',
+            data: { q: searchTerm },
+            success: function(data) {
+                if (data.results && data.results.length > 0) {
+                    displaySearchResults(data.results);
+
+                    // Jika hanya 1 hasil, langsung fokus ke input qty
+                    if (data.results.length === 1) {
+                        setTimeout(function() {
+                            $('.qty-input-modal[data-product-id="' + data.results[0].id + '"]').focus().select();
+                        }, 200);
+                    }
+                } else {
+                    $('#searchResultsBody').html('<tr><td colspan="9" class="text-center text-danger">Produk tidak ditemukan. Pastikan barcode/SKU benar.</td></tr>');
+                }
+            },
+            error: function() {
+                $('#searchResultsBody').html('<tr><td colspan="9" class="text-center text-danger">Gagal mencari produk</td></tr>');
+            }
+        });
+    }
+
+    function displaySearchResults(products) {
+        let html = '';
+        
+        products.forEach(function(product) {
+            // Check if product already exists in opname table
+            const existingRow = $(`tr[data-product-sku="${product.sku}"]`);
+            const isAlreadyAdded = existingRow.length > 0;
+            
+            // Create location display with warning if product exists in other racks
+            let locationDisplay = '';
+            let locationWarning = '';
+            
+            if (product.rak_locations && product.rak_locations.length > 0) {
+                // Check if product exists in current rack being opnamed
+                const currentRakExists = product.rak_locations.some(rak => 
+                    rak.lokasi === '{{ session.rak.lokasi }}' && rak.kode_rak === '{{ session.rak.kode_rak }}'
+                );
+                
+                if (currentRakExists) {
+                    locationWarning = '<div class="alert alert-warning alert-sm mb-1" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">⚠️ Produk sudah ada di rak ini!</div>';
+                }
+                
+                // Build location list with badges
+                let locationBadges = [];
+                product.rak_locations.forEach(function(rak) {
+                    const isCurrent = rak.lokasi === '{{ session.rak.lokasi }}' && rak.kode_rak === '{{ session.rak.kode_rak }}';
+                    const badgeClass = isCurrent ? 'bg-warning' : 'bg-secondary';
+                    locationBadges.push(`<span class="badge ${badgeClass} me-1" style="font-size: 0.7rem;">${rak.lokasi} (${rak.kode_rak}}): ${rak.quantity}</span>`);
+                });
+                
+                locationDisplay = `
+                    <div class="small">
+                        ${locationWarning}
+                        <div><strong>Total:</strong> ${product.total_rak_qty || 0}</div>
+                        <div class="mt-1">${locationBadges.join(' ')}</div>
+                    </div>
+                `;
+            } else {
+                locationDisplay = '<div class="small text-muted"><i class="bi bi-info-circle"></i> Belum ada di rak manapun</div>';
+            }
+            
+            html += `
+                <tr class="${isAlreadyAdded ? 'table-warning' : ''}">
+                    <td class="text-center">
+                        ${product.photo_url ? 
+                            `<img src="${product.photo_url}" class="product-photo" alt="Product Photo" style="width: 60px; height: 60px; object-fit: cover; cursor: zoom-in;" onclick="showZoomPhotoModal('${product.photo_url.replace(/'/g, "\\'")}')">` :
+                            `<div class="product-photo-placeholder" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-box"></i>
+                            </div>`
+                        }
+                    </td>
+                    <td><strong>${product.sku}</strong></td>
+                    <td>
+                        <div class="small">
+                            <div><strong>${product.nama_produk}</strong></div>
+                        </div>
+                    </td>
+                    <td>${product.variant_produk || '-'}</td>
+                    <td>${product.brand || '-'}</td>
+                    <td class="text-center">
+                        <span class="badge bg-info">${product.stok_master || 0}</span>
+                    </td>
+                    <td>
+                        ${locationDisplay}
+                    </td>
+                    <td class="text-center">
+                        ${isAlreadyAdded ? 
+                            '<span class="badge bg-warning">Sudah Ada</span>' :
+                            `<input type="number" class="form-control form-control-sm qty-input-modal" 
+                                value="1" min="0" max="9999" style="width: 60px;"
+                                data-product-id="${product.id}">`
+                        }
+                    </td>
+                    <td class="text-center">
+                        ${isAlreadyAdded ? 
+                            '<span class="badge bg-warning">Sudah Ada</span>' :
+                            `<button type="button" class="btn btn-sm btn-primary add-product-btn" 
+                                data-product-id="${product.id}" 
+                                data-product-sku="${product.sku}" 
+                                data-product-name="${product.nama_produk}" 
+                                data-product-variant="${product.variant_produk || ''}" 
+                                data-product-brand="${product.brand || ''}" 
+                                data-product-barcode="${product.barcode || ''}" 
+                                data-product-photo="${product.photo_url || ''}">
+                                <i class="bi bi-plus-circle"></i> Tambah
+                            </button>`
+                        }
+                    </td>
+                </tr>
+            `;
+        });
+        
+        $('#searchResultsBody').html(html);
+    }
+
+
+
+    function addProductDirectly(productId, sku, nama_produk, variant_produk, brand, barcode, photo_url) {
+        // Get qty from input
+        const qtyInput = $(`.qty-input-modal[data-product-id="${productId}"]`);
+        const qtyFisik = parseInt(qtyInput.val()) || 1;
+        
+        if (qtyFisik < 0) {
+            showModalAlert('error', 'Qty fisik tidak boleh negatif');
+            return;
+        }
+        
+        // Add product to opname session
+        $.ajax({
+            url: `/inventory/opname-rak/${sessionId}/work/`,
+            method: 'POST',
+            data: {
+                action: 'add_item',
+                product_id: productId,
+                qty_fisik: qtyFisik
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    // Add new row to table
+                    addProductRowToTable(response.item);
+                    
+                    // Update counters (will also update totalItems based on new row)
+                    updateCounters();
+                    
+                    // Update session status and progress on the card
+                    updateSessionInfo(response.session_status, response.session_progress_percentage);
+
+                    // Show success message
+                    console.log(`Produk ${sku} berhasil ditambahkan ke opname (qty: ${qtyFisik})`);
+                    
+                    // Play success sound
+                    playSuccessSound();
+                    
+                    // Reset qty input to 1
+                    qtyInput.val(1);
+
+                    // If it was the first item added, totalItems should be 1
+                    // Set totalItems directly from response to ensure accuracy
+                    totalItems = response.total_items_in_session;
+                    
+                    // Update progress bar
+                    updateProgressBar();
+
+                } else {
+                    showModalAlert('error', response.message);
+                    playErrorSound();
+                }
+            },
+            error: function() {
+                showModalAlert('error', 'Gagal menambahkan produk');
+                playErrorSound();
+            }
+        });
+    }
+
+    function addProductRowToTable(item) {
+        const newRow = `
+            <tr class="product-row" data-item-id="${item.id}" data-product-sku="${item.sku}" data-product-brand="${item.brand || 'Unknown'}" data-product-variant="${item.variant_produk || ''}" data-product-barcode="${item.barcode || ''}">
+                <td style="width: 120px;">
+                    ${item.photo_url ? 
+                        `<img src="${item.photo_url}" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;" alt="Product Photo">` :
+                        `<i class="bi bi-box" style="font-size: 2rem; color: #6c757d; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;"></i>`
+                    }
+                </td>
+                <td>
+                    <div class="small">
+                        <div><strong>Product ID:</strong> ${item.id}</div>
+                        <div><strong>SKU:</strong> ${item.sku}</div>
+                        <div><strong>Barcode:</strong> ${item.barcode || '-'}</div>
+                    </div>
+                </td>
+                <td>
+                    <div class="small">
+                        <div><strong>${item.nama_produk}</strong></div>
+                        <div class="text-muted">${item.variant_produk || '-'}</div>
+                        <div class="text-muted">${item.brand || '-'}</div>
+                    </div>
+                </td>
+                <td class="text-center">
+                    <span class="badge bg-info qty-number">${item.qty_sistem}</span>
+                </td>
+                <td class="text-center">
+                    <span class="badge bg-primary qty-fisik-badge" data-item-id="${item.id}">${item.qty_fisik}</span>
+                </td>
+                <td class="text-center">
+                    <span class="badge ${item.qty_selisih > 0 ? 'bg-warning' : item.qty_selisih < 0 ? 'bg-danger' : 'bg-success'} selisih-badge" id="selisih-${item.id}">
+                        ${item.qty_selisih > 0 ? '+' + item.qty_selisih : (item.qty_selisih || 0)}
+                    </span>
+                </td>
+                <td class="text-center">
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-secondary btn-verify" 
+                            onclick="verifyItem(${item.id})"
+                            id="verify-btn-${item.id}"
+                            title="Klik untuk verifikasi">
+                        <i class="bi bi-check-circle"></i>
+                    </button>
+                </td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteItem(${item.id})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+        
+        $('#itemsTableBody').append(newRow);
+        
+        // Update total items count - This line is now redundant if totalItems is updated from backend response
+        // totalItems++;
+        // $('#totalItems').text(totalItems);
+        
+        // Update progress bar for new item
+        updateProgressBar();
+    }
+
+    function showModalAlert(type, message) {
+        // Create alert element
+        const alertHtml = `
+            <div class="alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show" role="alert">
+                <i class="bi bi-${type === 'error' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        // Insert alert at the top of modal body
+        $('#addProductModal .modal-body').prepend(alertHtml);
+        
+        // Auto remove after 3 seconds
+        setTimeout(function() {
+            $('#addProductModal .alert').fadeOut();
+        }, 3000);
+    }
+
+    // Handle Enter key on search input - HAPUS EVENT LAMA DULU
+    $('#productSearchInput').off('keypress').on('keypress', function(e) {
+        if (e.which === 13) { // Enter key
+            e.preventDefault();
+            searchProduct();
+        }
+    });
+
+    // Handle click on search button - HAPUS EVENT LAMA DULU
+    $('#searchProductBtn').off('click').on('click', function(e) {
+        e.preventDefault();
+        searchProduct();
+    });
+
+    // Handle Enter key on qty input
+    $('#qtyFisikInput').on('keypress', function(e) {
+        if (e.which === 13) { // Enter key
+            e.preventDefault();
+            if (selectedProduct) {
+                addProductToOpname();
+            }
+        }
+    });
+
+    // Clear alerts when modal is hidden - HAPUS EVENT LAMA DULU
+    $('#addProductModal').off('hidden.bs.modal').on('hidden.bs.modal', function() {
+        $('#addProductModal .alert').remove();
+    });
+
+    // Handle product selection via data attributes
+    // Event listener for add-product-btn
+    $(document).on('click', '.add-product-btn', function() {
+        const $btn = $(this);
+        const productData = {
+            id: $btn.data('product-id'),
+            sku: $btn.data('product-sku'),
+            nama_produk: $btn.data('product-name'),
+            variant_produk: $btn.data('product-variant'),
+            brand: $btn.data('product-brand'),
+            barcode: $btn.data('product-barcode'),
+            photo_url: $btn.data('product-photo')
+        };
+        addProductDirectly(productData.id, productData.sku, productData.nama_produk, productData.variant_produk, productData.brand, productData.barcode, productData.photo_url);
+    });
+    
+    // Event listener for Enter key on qty input
+    $(document).on('keypress', '.qty-input-modal', function(e) {
+        if (e.which === 13) { // Enter key
+            const productId = $(this).data('product-id');
+            const $btn = $(this).closest('tr').find('.add-product-btn');
+            if ($btn.length > 0) {
+                $btn.click();
+            }
+        }
+    });
+    
+    // Remove duplicate event listener for search input
+    // $('#productSearchInput').on('keypress', function(e) {
+    //     if (e.which === 13) { // Enter key
+    //         searchProduct();
+    //     }
+    // });
+
+    // Modal Zoom Foto Produk Functions
+    function showZoomPhotoModal(photoUrl) {
+        $('#zoomPhotoImg').attr('src', photoUrl);
+        $('#zoomPhotoModal').modal('show');
+    }
+
+    // Menambahkan fungsi sound success dan completion
+    function playSuccessSound() {
+        try {
+            let audio = new Audio('{% static "sounds/ding.mp3" %}');
+            audio.volume = 0.3;
+            audio.play().catch(function(error) {
+                console.log('Audio play failed:', error);
+            });
+        } catch (error) {
+            console.log('Audio not supported:', error);
+        }
+    }
+
+    function playCompletionSound() {
+        try {
+            let audio = new Audio('{% static "sounds/completedsound.mp3" %}');
+            audio.volume = 0.4;
+            audio.play().catch(function(error) {
+                console.log('Audio play failed:', error);
+            });
+        } catch (error) {
+            console.log('Audio not supported:', error);
+        }
+    }
+
+    // New function to update session status and progress display
+    function updateVerificationStatus(unverifiedCount, totalItems, allVerified) {
+        const verifiedCount = totalItems - unverifiedCount;
+        
+        // Update verification status badge
+        const $verificationBadge = $('#verificationStatusBadge');
+        $verificationBadge.text(`${verifiedCount}/${totalItems} Diverifikasi`);
+        
+        if (allVerified || totalItems === 0) {
+            $verificationBadge.removeClass('bg-warning').addClass('bg-success');
+        } else {
+            $verificationBadge.removeClass('bg-success').addClass('bg-warning');
+        }
+        
+        // Update finish button
+        const $finishBtn = $('button[onclick="finishOpname()"]');
+        if (allVerified || totalItems === 0) {
+            $finishBtn.removeClass('btn-secondary').addClass('btn-success').prop('disabled', false);
+            $finishBtn.attr('title', 'Klik untuk menyelesaikan opname');
+            $finishBtn.find('.badge').remove();
+        } else {
+            $finishBtn.removeClass('btn-success').addClass('btn-secondary').prop('disabled', true);
+            $finishBtn.attr('title', 'Semua item harus diverifikasi terlebih dahulu');
+            if ($finishBtn.find('.badge').length === 0) {
+                $finishBtn.append(`<span class="badge bg-warning ms-1">${unverifiedCount}/${totalItems}</span>`);
+            } else {
+                $finishBtn.find('.badge').text(`${unverifiedCount}/${totalItems}`);
+            }
+        }
+    }
+
+    function updateSessionInfo(status, progressPercentage) {
+        // Update Status Badge
+        let statusBadge = $('#sessionStatusBadge'); // ID for the status badge in the session info card
+        statusBadge.text(status);
+        statusBadge.removeClass('bg-warning bg-info bg-success bg-secondary'); // Remove all old status classes
+        if (status === 'Draft') {
+            statusBadge.addClass('bg-warning');
+        } else if (status === 'Sedang Berlangsung') {
+            statusBadge.addClass('bg-info');
+        } else if (status === 'Selesai') {
+            statusBadge.addClass('bg-success');
+        } else {
+            statusBadge.addClass('bg-secondary'); // Fallback
+        }
+
+        // Update Progress Bar
+        let progressBarFill = $('#sessionProgressBarFill'); // ID for the progress bar fill
+        let progressText = $('#sessionProgressText'); // ID for the progress text
+
+        // Check if progress elements exist before updating (they only exist if session status is 'in_progress')
+        if (progressBarFill.length && progressText.length) {
+            progressBarFill.css('width', `${progressPercentage}%`);
+            progressText.text(`${progressPercentage.toFixed(1)}%`);
+        } else {
+            // If elements don't exist, we might need to dynamically create them if status becomes 'in_progress'
+            // For now, let's just make sure the relevant section is visible if status is 'in_progress'
+            if (status === 'Sedang Berlangsung') {
+                // This implies the progress section was hidden and needs to be shown/initialized
+                // The current HTML structure doesn't have a direct div to hide/show the entire progress section easily.
+                // For simplicity, we assume the progress section is always there but its content is updated.
+                // If it needs to be dynamically added/removed, that would be a larger refactor.
+            }
+        }
+    }
+    
+    // Floating Action Button functionality
+    $(document).ready(function() {
+        
+        
+        // Clear barcode input button
+        $('#clearBarcodeBtn').click(function() {
+            $('#barcodeInput').val('').focus();
+        });
+        
+        // Add loading animation to buttons
+        $('.btn').click(function() {
+            if (!$(this).hasClass('btn-verify') && !$(this).hasClass('btn-danger')) {
+                $(this).append('<span class="loading-spinner ms-2"></span>');
+                setTimeout(() => {
+                    $(this).find('.loading-spinner').remove();
+                }, 1000);
+            }
+        });
+    });
+    
+    
+    // Enhanced interactive functions
+    function addVerifiedAnimation(element) {
+        $(element).addClass('verified-animation');
+        setTimeout(() => {
+            $(element).removeClass('verified-animation');
+        }, 600);
+    }
+    
+    function addNewItemAnimation(element) {
+        $(element).addClass('new-item-animation');
+        setTimeout(() => {
+            $(element).removeClass('new-item-animation');
+        }, 800);
+    }
+    
+    // Enhanced input focus effects
+    $('#barcodeInput').on('focus', function() {
+        $(this).addClass('typing-animation');
+    }).on('blur', function() {
+        $(this).removeClass('typing-animation');
+    });
+    
+    
+    // Add glow effect to important buttons
+    $('button[onclick="finishOpname()"]').addClass('btn-important');
+    
+    // Enhanced table row interactions
+    $(document).on('mouseenter', '.table tbody tr', function() {
+        $(this).addClass('active-element');
+    }).on('mouseleave', '.table tbody tr', function() {
+        $(this).removeClass('active-element');
+    });
+    
+    
+    
+    // Show item details function
+    function showItemDetails(itemId) {
+        const row = $(`tr[data-item-id="${itemId}"]`);
+        const productName = row.find('td:nth-child(3) strong').text();
+        const sku = row.find('td:nth-child(2) .small div:nth-child(2)').text().replace('SKU:', '').trim();
+        const qtySistem = row.find('.qty-number').text();
+        const qtyFisik = row.find('.qty-fisik-badge').text();
+        const selisih = row.find('.selisih-badge').text();
+        
+        Swal.fire({
+            title: `<i class="bi bi-info-circle text-primary"></i> Detail Item`,
+            html: `
+                <div class="text-start">
+                    <p><strong>Produk:</strong> ${productName}</p>
+                    <p><strong>SKU:</strong> ${sku}</p>
+                    <p><strong>Qty Sistem:</strong> <span class="badge bg-info">${qtySistem}</span></p>
+                    <p><strong>Qty Fisik:</strong> <span class="badge bg-warning">${qtyFisik}</span></p>
+                    <p><strong>Selisih:</strong> <span class="badge bg-secondary">${selisih}</span></p>
+                </div>
+            `,
+            icon: 'info',
+            confirmButtonText: 'Tutup',
+            confirmButtonColor: '#667eea'
+        });
+    }
+    
+</script>
+
+
+{% endblock %}
+
+

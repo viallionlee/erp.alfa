@@ -1,0 +1,183 @@
+{% extends 'base_mobile.html' %} {# Asumsi Anda punya base_mobile.html #}
+{% load static %}
+
+{% block title %}Cek Stok Produk per Rak{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.2/dist/sweetalert2.min.css">
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-3">
+    <h4 class="mb-3 text-center"><i class="bi bi-box-seam-fill"></i> Cek Stok Produk per Rak</h4>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-primary text-white">
+            <strong>Cari Produk</strong>
+        </div>
+        <div class="card-body">
+            <div class="input-group">
+                <input type="text" id="product-query-input" class="form-control" placeholder="SKU / Barcode..." autofocus>
+                <button class="btn btn-primary" type="button" id="search-product-button">Cari</button>
+            </div>
+            <p class="text-muted small mt-2 text-center">Tekan Enter atau klik Cari.</p>
+        </div>
+    </div>
+
+    <div id="product-info-card" class="card shadow-sm mb-3" style="display: none;">
+        <div class="card-header bg-success text-white">
+            <strong>Informasi Produk</strong>
+        </div>
+        <div class="card-body small">
+            <p class="mb-1"><strong>SKU:</strong> <span id="product-sku"></span></p>
+            <p class="mb-1"><strong>Nama:</strong> <span id="product-name"></span></p>
+            <p class="mb-1"><strong>Barcode:</strong> <span id="product-barcode"></span></p>
+            <hr class="my-2">
+            <p class="mb-1"><strong>Qty Putaway:</strong> <span id="product-qty-putaway"></span></p>
+            <p class="mb-1"><strong>Qty Ready (Total):</strong> <span id="product-qty-ready"></span></p>
+            <p class="mb-0"><strong>Total Qty di Rak:</strong> <span id="product-total-qty-di-rak"></span></p>
+        </div>
+    </div>
+
+    <div id="rak-stock-table-card" class="card shadow-sm mb-3" style="display: none;">
+        <div class="card-header bg-info text-white">
+            <strong>Lokasi Stok di Rak</strong>
+        </div>
+        <ul class="list-group list-group-flush" id="rak-locations-list">
+            <!-- Data akan dimuat oleh JavaScript -->
+        </ul>
+    </div>
+
+    <div id="no-product-found" class="alert alert-warning text-center" style="display: none;">
+        Produk tidak ditemukan atau tidak ada stok di rak.
+    </div>
+
+    <div class="d-grid mt-3">
+        <a href="{% url 'inventory:index' %}" class="btn btn-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Kembali ke Produk
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+    <script>
+        $(document).ready(function() {
+            // Event listener untuk tombol Cari
+            $('#search-product-button').on('click', function() {
+                searchProductStock();
+            });
+
+            // Event listener untuk Enter di input
+            $('#product-query-input').on('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchProductStock();
+                }
+            });
+
+            function searchProductStock() {
+                const query = $('#product-query-input').val().trim();
+                if (!query) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Perhatian',
+                        text: 'Silakan masukkan SKU atau Barcode produk.',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                    return;
+                }
+
+                // Sembunyikan semua hasil sebelumnya
+                $('#product-info-card').hide();
+                $('#rak-stock-table-card').hide();
+                $('#no-product-found').hide();
+                $('#rak-locations-list').empty(); // Kosongkan daftar
+
+                $.ajax({
+                    url: "{% url 'products:api_get_product_rak_stock' %}",
+                    type: "GET",
+                    data: { query: query },
+                    success: function(response) {
+                        if (response.success) {
+                            // Tampilkan informasi produk
+                            $('#product-sku').text(response.product_info.sku);
+                            $('#product-name').text(response.product_info.nama_produk);
+                            $('#product-barcode').text(response.product_info.barcode || '-');
+                            $('#product-qty-putaway').text(response.product_info.quantity_putaway);
+                            $('#product-qty-ready').text(response.product_info.quantity_ready);
+                            $('#product-total-qty-di-rak').text(response.product_info.total_qty_di_rak);
+                            $('#product-info-card').show();
+
+                            // Muat data rak ke daftar
+                            if (response.rak_locations && response.rak_locations.length > 0) {
+                                let listHtml = '';
+                                response.rak_locations.forEach(function(item) {
+                                    listHtml += `
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <strong>${item.kode_rak}</strong> (${item.nama_rak})<br>
+                                                <small class="text-muted">Lokasi: ${item.lokasi_rak}</small>
+                                            </div>
+                                            <span class="badge bg-primary rounded-pill">${item.quantity}</span>
+                                        </li>
+                                    `;
+                                });
+                                $('#rak-locations-list').html(listHtml);
+                                $('#rak-stock-table-card').show();
+                            } else {
+                                $('#no-product-found').text('Produk ditemukan, tetapi tidak ada stok di rak manapun.').show();
+                            }
+                            
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: response.message,
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+
+                        } else {
+                            $('#no-product-found').text(response.error).show();
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal!',
+                                text: response.error,
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        var errorMsg = "Terjadi kesalahan saat mencari stok produk.";
+                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errorMsg = xhr.responseJSON.error;
+                        }
+                        $('#no-product-found').text(errorMsg).show();
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: errorMsg,
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock %} 

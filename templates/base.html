@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,65 +7,524 @@
     <title>{% block title %}ERP Alfa{% endblock %}</title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="icon" href="{% static 'icons/alfaicon.png' %}" type="image/png">
     {% block extra_head %}{% endblock %}
     <style>
-        body { background: #f7f8fa; }
-        .navbar { min-height: 60px; }
-        .btn-group .btn { min-width: 110px; }
-        .container { max-width: 1500px; }
-        @media (max-width: 600px) {
-            .container, .container-fluid {
-                padding-left: 4px !important;
-                padding-right: 4px !important;
-            }
-            .form-control, .form-label, .btn, .badge, .list-group-item {
-                font-size: 1em !important;
-            }
-            h3, h4, h5 { font-size: 1.1em !important; }
-            .navbar { min-height: 48px; }
+        body { background-color: #f8f9fa; }
+        .navbar-custom {
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,.08);
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
         }
+        .main-nav .nav-link {
+            color: #495057;
+            font-weight: 500;
+            padding: 0.6rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .main-nav .nav-link.active,
+        .main-nav .nav-link:hover {
+            color: #fff;
+            background-color: #0d6efd;
+        }
+        .main-nav .nav-link.active {
+            box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+        }
+        .nav-pills .dropdown-menu {
+            border-radius: 0.5rem;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .nav-pills .dropdown-item:hover {
+            background-color: #f1f3f5;
+        }
+        .nav-pills .dropdown-item.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .dropdown-menu {
+            border-radius: 0.5rem;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 0.5rem 0;
+        }
+        .dropdown-item {
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+            transform: translateX(2px);
+        }
+        .dropdown-divider {
+            margin: 0.25rem 0;
+            border-color: #dee2e6;
+        }
+        .main-content-area {
+            width: 80%;
+            margin: 0 auto; /* Ini akan membuat kontainer berada di tengah */
+        }
+        .dropdown-item .badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+        }
+        .dropdown-item:hover .badge {
+            opacity: 0.8;
+        }
+        
+        /* Icon tile default */
+        .icon-bg{
+            width:60px;height:60px;border-radius:16px;
+            display:flex;align-items:center;justify-content:center;font-size:24px;
+            line-height:1;
+        }
+        /* Jika tile putih, pakai ikon gelap agar kontras */
+        .icon-bg.bg-white i{ color: rgba(33,37,41,.92) !important; }
+        /* Jika tile bukan putih (mis. bg-*), pakai ikon putih */
+        .icon-bg:not(.bg-white) i{ color:#fff !important; }
     </style>
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
+    {% if not hide_navbar %}
+    <nav class="navbar navbar-expand-lg navbar-custom mb-4">
         <div class="container-fluid">
-            <div class="d-flex align-items-center">
-                <button id="backBtn" class="btn btn-outline-secondary me-2 position-relative" onclick="window.history.back()" accesskey="s" title="Alt+S untuk kembali">
-                    Back
-                    <span class="ms-2 badge bg-primary-subtle text-primary fw-normal" style="font-size:0.8em; background-color:#e7f1ff !important; color:#1976d2 !important;">Alt+S</span>
-                </button>
-            </div>
-            <div class="mx-auto">
-                <div class="btn-group" role="group" aria-label="Main navigation">
-                    <a class="btn btn-outline-primary {% if request.path == '/' %}active{% endif %}" href="/">Home</a>
-                    <a class="btn btn-outline-success {% if '/products' in request.path %}active{% endif %}" href="/products/">Products</a>
-                    <a class="btn btn-outline-info {% if '/inventory' in request.path %}active{% endif %}" href="/inventory/">Inventory</a>
-                    <a class="btn btn-outline-warning {% if '/orders' in request.path %}active{% endif %}" href="/orders/">Orders</a>
-                    <a class="btn btn-outline-secondary {% if '/fullfilment' in request.path and not '/orders_checking' in request.path %}active{% endif %}" href="/fullfilment/">Fullfilment</a>
-                    <a class="btn btn-outline-dark {% if '/fullfilment/orders_checking' in request.path %}active{% endif %}" href="/fullfilment/orders_checking/all/">Order Checking</a>
+            <!-- Tombol Back -->
+            <button id="backBtn" class="btn btn-dark btn-lg me-3" onclick="window.history.back()" accesskey="s" title="Alt+S untuk kembali">
+                <i class="bi bi-arrow-left"></i> Back
+            </button>
+            
+            <!-- Tombol Toggler/Hamburger untuk mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Navigasi Utama -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="nav nav-pills main-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">Home</a>
+                    </li>
+                    
+                    {% if perms.products.view_product %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if '/products/' in request.path %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Products
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item {% if '/products/' in request.path %}active{% endif %}" href="/products/">All Products</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if '/products/add/' in request.path %}active{% endif %}" href="/products/add/">Add Product</a></li>
+                            <li><a class="dropdown-item {% if '/products/import/' in request.path %}active{% endif %}" href="/products/import/">Import Products</a></li>
+                            <li><a class="dropdown-item {% if '/products/import-history/' in request.path %}active{% endif %}" href="/products/import-history/">Import History</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if '/products/extrabarcode/' in request.path %}active{% endif %}" href="/products/extrabarcode/">Extra Barcode</a></li>
+                            <li><a class="dropdown-item {% if '/products/sku_bundling/' in request.path %}active{% endif %}" href="/products/sku_bundling/">SKU Bundling</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if '/products/dimension/' in request.path %}active{% endif %}" href="/products/dimension/">Product Dimension</a></li>
+                            <li><a class="dropdown-item {% if '/products/edit-logs/' in request.path %}active{% endif %}" href="/products/edit-logs/">Log History</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    
+                    {% if perms.inventory.view_stock %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if '/inventory/' in request.path and '/inbound/' not in request.path and '/rak/' not in request.path %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Inventory
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item {% if '/inventory/' in request.path and '/inbound/' not in request.path and '/rak/' not in request.path %}active{% endif %}" href="/inventory/">Dashboard</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if '/inventory/inbound/' in request.path %}active{% endif %}" href="/inventory/inbound/">Inbound List</a></li>
+                            <li><a class="dropdown-item {% if '/inventory/stock_card/' in request.path %}active{% endif %}" href="/inventory/stock_card/">Kartu Stok</a></li>
+                            <li><a class="dropdown-item {% if '/inventory/putaway/' in request.path %}active{% endif %}" href="/inventory/putaway/">
+                                Putaway
+                                {% if putaway_count > 0 %}
+                                    <span class="badge bg-danger ms-2" title="Regular: {{ regular_putaway_count|default:0 }}, Transfer: {{ transfer_putaway_count|default:0 }}">
+                                        {{ putaway_count }}
+                                    </span>
+                                    {% if regular_putaway_count > 0 and transfer_putaway_count > 0 %}
+                                        <small class="text-muted d-block mt-1">
+                                            <span class="badge bg-primary">{{ regular_putaway_count }} Regular</span>
+                                            <span class="badge bg-info">{{ transfer_putaway_count }} Transfer</span>
+                                        </small>
+                                    {% endif %}
+                                {% endif %}
+                            </a></li>
+                            <li><a class="dropdown-item {% if '/inventory/daftar_supplier/' in request.path %}active{% endif %}" href="/inventory/daftar_supplier/">Database Supplier</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if '/inventory/rak/' in request.path %}active{% endif %}" href="/inventory/rak/stock/">Stok Rak</a></li>
+                            <li><a class="dropdown-item {% if '/inventory/rak/' in request.path %}active{% endif %}" href="/inventory/rak/">Rak Management</a></li>
+                            <li><a class="dropdown-item {% if '/inventory/rak-capacity/' in request.path %}active{% endif %}" href="/inventory/rak-capacity/">Rak Capacity</a></li>
+                            <li><a class="dropdown-item {% if '/inventory/transfer-rak/' in request.path %}active{% endif %}" href="/inventory/transfer-rak/">Transfer Rak</a></li>
+                            <li><a class="dropdown-item {% if '/inventory/opname-rak/' in request.path %}active{% endif %}" href="{% url 'inventory:opname_rak_list' %}">Opname Rak</a></li>
+                            <li><a class="dropdown-item {% if '/inventory/full-opname/' in request.path %}active{% endif %}" href="/inventory/full-opname/">Full Opname Rak</a></li>
+                            <li><a class="dropdown-item {% if '/inventory/opname/queue/' in request.path %}active{% endif %}" href="/inventory/opname/queue/">
+                                Opname Queue
+                                {% if opname_queue_count > 0 %}
+                                    <span class="badge bg-warning ms-2">{{ opname_queue_count }}</span>
+                                {% endif %}
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    
+                    {% if perms.purchasing.view_purchaseorder %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if '/purchaseorder/' in request.path %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Purchasing
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item {% if '/purchaseorder/dashboard/' in request.path %}active{% endif %}" href="{% url 'purchasing:po_dashboard' %}">Dashboard</a></li>
+                            <li><a class="dropdown-item {% if '/purchaseorder/' in request.path and '/purchaseorder/dashboard/' not in request.path and '/purchaseorder/create/' not in request.path and '/purchaseorder/history/' not in request.path and '/purchaseorder/purchase/' not in request.path and '/purchaseorder/purchase-payment/' not in request.path and '/purchaseorder/purchase-taxinvoice/' not in request.path %}active{% endif %}" href="{% url 'purchasing:po_list' %}">Purchase Order List</a></li>
+                            <li><a class="dropdown-item {% if '/purchaseorder/history/' in request.path %}active{% endif %}" href="{% url 'purchasing:po_history_global' %}">PO History Global</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if '/purchaseorder/create/' in request.path %}active{% endif %}" href="{% url 'purchasing:po_create' %}">Buat PO Baru</a></li>
+                            {% if perms.purchasing.view_purchase %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if '/purchaseorder/purchase/' in request.path and '/purchaseorder/purchase/create/' not in request.path and '/purchaseorder/purchase-payment/' not in request.path and '/purchaseorder/purchase-taxinvoice/' not in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_list' %}">Purchase List</a></li>
+                            {% if perms.purchasing.purchase_warehouse %}
+                            <li><a class="dropdown-item {% if '/purchaseorder/purchase/create/' in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_create' %}">Buat Purchase Baru</a></li>
+                            {% endif %}
+                            <li><a class="dropdown-item {% if '/purchaseorder/purchase-report/' in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_report' %}">Report</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
+                    
+                    {% if perms.orders.view_order %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if '/orders/' in request.path %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Orders
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item {% if '/orders/' in request.path and '/orders/add/' not in request.path and '/orders/all/' not in request.path and '/orders/list/' not in request.path and '/orders/import/' not in request.path %}active{% endif %}" href="/orders/">View Order</a></li>
+                            <li><a class="dropdown-item {% if '/orders/all/' in request.path %}active{% endif %}" href="/orders/all/">View All</a></li>
+                            <li><a class="dropdown-item {% if '/orders/list/' in request.path %}active{% endif %}" href="/orders/list/">Order List</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if '/orders/add/' in request.path %}active{% endif %}" href="/orders/add/">Add Order</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if '/orders/import/history/' in request.path %}active{% endif %}" href="/orders/import/history/">Order Import History</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    
+                    {% if perms.fullfilment.add_batchlist %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/fullfilment/generatebatch/' in request.path %}active{% endif %}" href="/fullfilment/generatebatch/">Generate Batch</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% if perms.fullfilment.view_batchlist %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if '/fullfilment/' in request.path and '/generatebatch/' not in request.path %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Fullfilment
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item {% if '/fullfilment/' in request.path and '/generatebatch/' not in request.path and '/scanpicking/' not in request.path and '/printedlist/' not in request.path and '/scanpacking/' not in request.path and '/scanshipping/' not in request.path and '/order-packing-list/' not in request.path and '/order-shipping-list/' not in request.path and '/order-checking-list/' not in request.path and '/returnlist/' not in request.path %}active{% endif %}" href="/fullfilment/">
+                                Batch List
+                                {% if batch_open_count > 0 %}
+                                    <span class="badge bg-success ms-2">{{ batch_open_count }}</span>
+                                {% endif %}
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% if perms.fullfilment.generate_batch %}
+                            <li><a class="dropdown-item {% if '/fullfilment/printedlist/' in request.path %}active{% endif %}" href="/fullfilment/printedlist/">
+                                Ready to Print List
+                                {% if ready_to_print_not_handed_over > 0 %}
+                                    <span class="badge bg-warning ms-2" title="Order yang sudah di-print tapi belum diserahkan">
+                                        {{ ready_to_print_not_handed_over }}
+                                    </span>
+                                {% endif %}
+                            </a></li>
+                            {% endif %}
+                            {% if perms.fullfilment.view_picking_module %}
+                            <li><a class="dropdown-item {% if '/fullfilment/order-checking-list/' in request.path %}active{% endif %}" href="/fullfilment/order-checking-list/">Order Checking List</a></li>
+                            {% endif %}
+                            {% if perms.fullfilment.view_packing_module %}
+                            <li><a class="dropdown-item {% if '/fullfilment/order-packing-list/' in request.path %}active{% endif %}" href="/fullfilment/order-packing-list/">Order Packing List</a></li>
+                            {% endif %}
+                            {% if perms.fullfilment.view_shipping_module %}
+                            <li><a class="dropdown-item {% if '/fullfilment/order-shipping-list/' in request.path %}active{% endif %}" href="/fullfilment/order-shipping-list/">Order Shipping List</a></li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            {% if perms.fullfilment.view_returnlist %}
+                            <li><a class="dropdown-item {% if '/fullfilment/returnlist/' in request.path %}active{% endif %}" href="/fullfilment/returnlist/">
+                                Return List
+                                {% if return_session_open_count > 0 %}
+                                    <span class="badge bg-warning ms-2" title="SKU Pending Putaway: {{ return_sku_pending_putaway|default:0 }}">
+                                        {{ return_session_open_count }}
+                                    </span>
+                                    {% if return_sku_pending_putaway > 0 %}
+                                        <small class="text-muted d-block mt-1">
+                                            <span class="badge bg-danger">{{ return_sku_pending_putaway }} SKU Pending</span>
+                                        </small>
+                                    {% endif %}
+                                {% endif %}
+                            </a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
+                    
+                    {% if perms.finance.view_account or user.is_superuser %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if '/finance/' in request.path %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Finance
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item {% if '/finance/' in request.path and '/finance/account-types/' not in request.path and '/finance/accounts/' not in request.path and '/finance/journal-entries/' not in request.path and '/finance/cash-flow/' not in request.path and '/finance/budget/' not in request.path and '/finance/reports/' not in request.path %}active{% endif %}" href="{% url 'finance:dashboard' %}">Dashboard</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if '/finance/account-types/' in request.path %}active{% endif %}" href="{% url 'finance:account_type_list' %}">Account Types</a></li>
+                            <li><a class="dropdown-item {% if '/finance/coa/' in request.path %}active{% endif %}" href="{% url 'finance:chart_of_accounts' %}">Chart of Accounts</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if '/finance/journal-entries/' in request.path %}active{% endif %}" href="{% url 'finance:journal_entry_list' %}">Journal Entries</a></li>
+                            <li><a class="dropdown-item {% if '/finance/cash-flow/' in request.path %}active{% endif %}" href="{% url 'finance:cash_flow_list' %}">Cash Flow</a></li>
+                            <li><a class="dropdown-item {% if '/finance/budget/' in request.path %}active{% endif %}" href="{% url 'finance:budget_list' %}">Budget</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if '/purchasing/purchase-verify/' in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_verify_list' %}">
+                                Purchase Verify
+                                {% if purchase_verify_pending_count > 0 %}
+                                    <span class="badge bg-warning ms-2" title="Belum Verified: {{ purchase_verify_pending_count }}">
+                                        {{ purchase_verify_pending_count }}
+                                    </span>
+                                {% endif %}
+                            </a></li>
+                            <li><a class="dropdown-item {% if '/purchasing/purchase-payment/' in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_payment_list' %}">
+                                Purchase Payment
+                                {% if purchase_payment_unpaid_count > 0 %}
+                                    <span class="badge bg-danger ms-2" title="Unpaid/Partial: {{ purchase_payment_unpaid_count }}">
+                                        {{ purchase_payment_unpaid_count }}
+                                    </span>
+                                {% endif %}
+                            </a></li>
+                            <li><a class="dropdown-item {% if '/purchasing/purchase-taxinvoice/' in request.path %}active{% endif %}" href="{% url 'purchasing:purchase_taxinvoice_list' %}">
+                                Purchase Tax Invoice
+                                {% if purchase_taxinvoice_pending_count > 0 %}
+                                    <span class="badge bg-info ms-2" title="Pending Tax Invoice: {{ purchase_taxinvoice_pending_count }}">
+                                        {{ purchase_taxinvoice_pending_count }}
+                                    </span>
+                                {% endif %}
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {% if '/finance/reports/' in request.path %}active{% endif %}" href="{% url 'finance:financial_reports' %}">Financial Reports</a></li>
+                            <li><a class="dropdown-item {% if '/finance/reports/trial-balance/' in request.path %}active{% endif %}" href="{% url 'finance:trial_balance' %}">Trial Balance</a></li>
+                            <li><a class="dropdown-item {% if '/finance/reports/profit-loss/' in request.path %}active{% endif %}" href="{% url 'finance:profit_loss_statement' %}">Profit & Loss</a></li>
+                            <li><a class="dropdown-item {% if '/finance/reports/balance-sheet/' in request.path %}active{% endif %}" href="{% url 'finance:balance_sheet' %}">Balance Sheet</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                </ul>
+                <div class="d-flex align-items-center ms-auto">
+                    <span id="clock" class="badge bg-dark text-white" style="font-size:1rem;"></span>
                 </div>
             </div>
         </div>
     </nav>
+    {% endif %}
 
     <!-- Main Content -->
-    <div class="container">
-        {% block content %}{% endblock %}
+    <div class="main-content-area">
+        {% csrf_token %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        <div class="container-fluid">
+            {% block content %}{% endblock %}
+        </div>
     </div>
 
+    <!-- Tempatkan di bagian yang ingin menampilkan jam -->
+    <div id="clock"></div>
+
     <!-- JS Dependencies -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- DataTables -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     {% block extra_script %}{% endblock %}
+    <script src="{% static 'js/idle_timer.js' %}"></script>
     <script>
-    // Shortcut Alt+S untuk tombol back
+    // Optimized notification counts refresh with exponential backoff
+    let notificationRefreshInterval = 30000; // Start with 30 seconds
+    let consecutiveErrors = 0;
+    let maxInterval = 300000; // Max 5 minutes
+    
+    function refreshNotificationCounts() {
+        fetch('/api/notification-counts/')
+            .then(response => response.json())
+            .then(data => {
+                // Reset error counter on success
+                consecutiveErrors = 0;
+                notificationRefreshInterval = 30000; // Reset to 30 seconds
+                
+                // Update putaway count
+                const putawayBadge = document.querySelector('a[href="/inventory/putaway/"] .badge');
+                if (putawayBadge) {
+                    if (data.putaway_count > 0) {
+                        putawayBadge.textContent = data.putaway_count;
+                        putawayBadge.style.display = 'inline';
+                    } else {
+                        putawayBadge.style.display = 'none';
+                    }
+                }
+                
+                // Update opname queue count
+                const opnameQueueBadge = document.querySelector('a[href="/inventory/opname/queue/"] .badge');
+                if (opnameQueueBadge) {
+                    if (data.opname_queue_count > 0) {
+                        opnameQueueBadge.textContent = data.opname_queue_count;
+                        opnameQueueBadge.style.display = 'inline';
+                    } else {
+                        opnameQueueBadge.style.display = 'none';
+                    }
+                }
+                
+                // Update return list count
+                const returnListBadge = document.querySelector('a[href="/fullfilment/returnlist/"] .badge');
+                if (returnListBadge) {
+                    if (data.return_session_open_count > 0) {
+                        returnListBadge.textContent = data.return_session_open_count;
+                        returnListBadge.style.display = 'inline';
+                    } else {
+                        returnListBadge.style.display = 'none';
+                    }
+                }
+                
+                // Update ready to print list count
+                const readyToPrintBadge = document.querySelector('a[href="/fullfilment/printedlist/"] .badge');
+                if (readyToPrintBadge) {
+                    if (data.ready_to_print_not_handed_over > 0) {
+                        readyToPrintBadge.textContent = data.ready_to_print_not_handed_over;
+                        readyToPrintBadge.style.display = 'inline';
+                    } else {
+                        readyToPrintBadge.style.display = 'none';
+                    }
+                }
+                
+                // Update batch open count
+                const batchBadge = document.querySelector('a[href="/fullfilment/"] .badge');
+                if (batchBadge) {
+                    if (data.batch_open_count > 0) {
+                        batchBadge.textContent = data.batch_open_count;
+                        batchBadge.style.display = 'inline';
+                    } else {
+                        batchBadge.style.display = 'none';
+                    }
+                }
+                
+                // Update purchase verify count
+                const purchaseVerifyBadge = document.querySelector('a[href*="/purchasing/purchase-verify/"] .badge');
+                if (purchaseVerifyBadge) {
+                    if (data.purchase_verify_pending_count > 0) {
+                        purchaseVerifyBadge.textContent = data.purchase_verify_pending_count;
+                        purchaseVerifyBadge.style.display = 'inline';
+                    } else {
+                        purchaseVerifyBadge.style.display = 'none';
+                    }
+                }
+                
+                // Update purchase payment count
+                const purchasePaymentBadge = document.querySelector('a[href*="/purchasing/purchase-payment/"] .badge');
+                if (purchasePaymentBadge) {
+                    if (data.purchase_payment_unpaid_count > 0) {
+                        purchasePaymentBadge.textContent = data.purchase_payment_unpaid_count;
+                        purchasePaymentBadge.style.display = 'inline';
+                    } else {
+                        purchasePaymentBadge.style.display = 'none';
+                    }
+                }
+                
+                // Update purchase tax invoice count
+                const purchaseTaxInvoiceBadge = document.querySelector('a[href*="/purchasing/purchase-taxinvoice/"] .badge');
+                if (purchaseTaxInvoiceBadge) {
+                    if (data.purchase_taxinvoice_pending_count > 0) {
+                        purchaseTaxInvoiceBadge.textContent = data.purchase_taxinvoice_pending_count;
+                        purchaseTaxInvoiceBadge.style.display = 'inline';
+                    } else {
+                        purchaseTaxInvoiceBadge.style.display = 'none';
+                    }
+                }
+                
+                // Log cache status for debugging
+                if (data.cached) {
+                    console.log('📦 Notification counts served from cache');
+                }
+                
+                // Schedule next refresh
+                scheduleNextRefresh();
+            })
+            .catch(error => {
+                console.log('Error refreshing notification counts:', error);
+                consecutiveErrors++;
+                
+                // Exponential backoff: double the interval on errors
+                notificationRefreshInterval = Math.min(
+                    notificationRefreshInterval * 2, 
+                    maxInterval
+                );
+                
+                // Schedule next refresh with longer interval
+                scheduleNextRefresh();
+            });
+    }
+    
+    function scheduleNextRefresh() {
+        setTimeout(refreshNotificationCounts, notificationRefreshInterval);
+    }
+    
+    // Start the refresh cycle
+    refreshNotificationCounts();
+    </script>
+    <script>
+    // Shortcut Ctrl+B untuk tombol back
     document.addEventListener('keydown', function(e) {
-        if ((e.altKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        if (e.ctrlKey && (e.key === 'b' || e.key === 'B')) { // Diubah dari Alt+S menjadi Ctrl+B
+            e.preventDefault(); // Mencegah perilaku default browser untuk Ctrl+B (jika ada)
             const btn = document.getElementById('backBtn');
             if (btn) btn.click();
         }
     });
+    document.addEventListener('DOMContentLoaded', function() {
+        const overlay = document.getElementById('global-idle-overlay');
+        // Check if overlay exists before adding event listeners
+        if (overlay) {
+            // Hilangkan overlay saat overlay di-klik
+            overlay.addEventListener('click', function() {
+                overlay.style.display = 'none';
+            });
+            // Hilangkan overlay saat ada input keyboard
+            document.addEventListener('keydown', function(e) {
+                if (overlay.style.display !== 'none') {
+                    overlay.style.display = 'none';
+                }
+            });
+            // Jangan hilangkan overlay hanya karena mouse bergerak!
+        }
+    });
+    </script>
+    <script>
+    function updateClock() {
+        var now = new Date();
+        var jam = now.getHours().toString().padStart(2, '0');
+        var menit = now.getMinutes().toString().padStart(2, '0');
+        var detik = now.getSeconds().toString().padStart(2, '0');
+        document.getElementById('clock').innerText = jam + ':' + menit + ':' + detik;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
     </script>
 </body>
 </html>

@@ -23,21 +23,31 @@ from products.models import Product
 from django.db.models import Q
 from django.conf import settings
 from django.conf.urls.static import static
-
-from .views import home
+from django.contrib.auth import views as auth_views
+import os
+from django.contrib.auth.decorators import login_required
+from .views import home, CustomLoginView, api_notification_counts, favicon
 from .mobile_views import mobile_home
+from accounts import views as account_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', home, name='home'),
+    path('', login_required(home), name='home'),
+    path('favicon.ico', favicon, name='favicon'),
     path('inventory/', include('inventory.urls')),
     path('orders/', include('orders.urls')),
     path('products/', include('products.urls')),
     path('fullfilment/', include('fullfilment.urls')),
-    path('demo/', include('demo.urls')),
+    path('purchaseorder/', include('purchasing.urls')),
+    path('finance/', include('finance.urls')),
     path('mobile/', mobile_home, name='mobile_home'),
+    path('login/', CustomLoginView.as_view(), name='login'),  # Update ini
+    path('logout/', account_views.custom_logout, name='logout'),
+    path('accounts/', include('accounts.urls')),
+    path('api/notification-counts/', api_notification_counts, name='api_notification_counts'),
 ]
 
-# Serve media files during development
+# Serve static and media files during development
 if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

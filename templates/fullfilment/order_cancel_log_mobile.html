@@ -1,0 +1,740 @@
+{% extends 'base_mobile.html' %}
+{% load static %}
+{% load l10n %}
+
+{% block title %}Order Cancel Log - Mobile{% endblock %}
+
+{% block extra_head %}
+<style>
+    .content-wrapper {
+        padding-bottom: 80px; /* Space for sticky bar */
+    }
+    
+    .log-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem;
+        border-radius: 8px;
+        margin-bottom: 0.25rem;
+        text-align: center;
+    }
+    
+    .log-header h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+    
+    .log-header p {
+        margin: 0.1rem 0 0 0;
+        opacity: 0.9;
+        font-size: 0.7rem;
+    }
+    
+    .filter-card {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+    }
+    
+    .filter-buttons {
+        display: flex;
+        gap: 0.25rem;
+    }
+    
+    .filter-btn {
+        flex: 1;
+        padding: 0.4rem 0.5rem;
+        border: 1px solid #e9ecef;
+        background: #f8f9fa;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #6c757d;
+        transition: all 0.2s;
+    }
+    
+    .filter-btn.active {
+        background: #0d6efd;
+        color: white;
+        border-color: #0d6efd;
+    }
+    
+    .log-item {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+        border-left: 4px solid #0d6efd;
+    }
+    
+    .log-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.25rem;
+    }
+    
+    .log-order-id {
+        font-weight: 700;
+        color: #0d6efd;
+        font-size: 0.85rem;
+    }
+    
+    .log-status-badge {
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 0.7rem;
+    }
+    
+    .status-N {
+        background: #ffc107;
+        color: #343a40;
+    }
+    
+    .status-Y {
+        background: #28a745;
+        color: white;
+    }
+    
+    .log-details {
+        font-size: 0.7rem;
+        color: #6c757d;
+        margin-bottom: 0.15rem;
+    }
+    
+    .log-user {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .log-time {
+        font-style: italic;
+        color: #6c757d;
+    }
+    
+    .log-payment-status {
+        background: #e3f2fd;
+        padding: 0.1rem 0.3rem;
+        border-radius: 3px;
+        font-size: 0.65rem;
+        color: #1976d2;
+        margin-right: 0.25rem;
+    }
+    
+    .log-fulfillment-status {
+        background: #e8f5e8;
+        padding: 0.1rem 0.3rem;
+        border-radius: 3px;
+        font-size: 0.65rem;
+        color: #2e7d32;
+    }
+    
+    .loading-container {
+        text-align: center;
+        padding: 2rem;
+        color: #6c757d;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #0d6efd;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 0.5rem;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        opacity: 0.5;
+        margin-bottom: 1rem;
+    }
+    
+    .error-state {
+        text-align: center;
+        padding: 2rem;
+        color: #dc3545;
+    }
+    
+    .error-state i {
+        font-size: 3rem;
+        opacity: 0.7;
+        margin-bottom: 1rem;
+    }
+    
+    /* Sticky Action Bar */
+    .sticky-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #e9ecef;
+        padding: 0.5rem;
+        z-index: 100;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .action-btn {
+        flex: 1;
+        padding: 0.5rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: white;
+        transition: all 0.2s;
+    }
+    
+    .btn-back {
+        background: #6c757d;
+    }
+    
+    .btn-refresh {
+        background: #0d6efd;
+    }
+    
+    .btn-export {
+        background: #198754;
+    }
+    
+    .hidden {
+        display: none !important;
+    }
+    
+    .form-select {
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 0.4rem 0.5rem;
+        background-color: #f8f9fa;
+        color: #495057;
+    }
+    
+    .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem;
+    }
+    
+    .modal-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        width: 100%;
+        max-width: 400px;
+        max-height: 90vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        animation: modalSlideIn 0.3s ease-out;
+    }
+    
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    
+    .modal-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .modal-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+    }
+    
+    .modal-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .modal-body {
+        padding: 1rem;
+        overflow-y: auto;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        color: #495057;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+    
+    .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        background-color: white;
+    }
+    
+    .filter-info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-size: 0.8rem;
+        color: #1976d2;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        font-size: 0.75rem;
+    }
+    
+    .filter-info i {
+        margin-top: 0.1rem;
+        flex-shrink: 0;
+    }
+    
+    .modal-footer {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        flex-shrink: 0;
+    }
+    
+    .btn {
+        padding: 0.6rem 1.2rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-1px);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="content-wrapper">
+        <!-- Header -->
+        <div class="log-header">
+            <h4><i class="bi bi-clipboard-data"></i> Order Cancel Log</h4>
+            <p>Dashboard Order Dibatalkan - Packer View</p>
+        </div>
+
+
+        <!-- Filter Card -->
+        <div class="filter-card">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="belum_return">
+                    <i class="bi bi-hourglass-split"></i> Belum Retur (<span id="belum-return-count">0</span>)
+                </button>
+                <button class="filter-btn" data-filter="sudah_return">
+                    <i class="bi bi-check-circle"></i> Sudah Retur
+                </button>
+            </div>
+        </div>
+
+
+        <!-- Summary Card -->
+        <div class="filter-card" id="summary-card" style="display: none;">
+            <div style="text-align: center; font-size: 0.8rem; color: #6c757d;">
+                <div style="margin-bottom: 0.25rem;">
+                    <strong>Filter Aktif:</strong> <span id="current-filter">Belum Return</span> - <span id="total-logs">0</span> order
+                </div>
+                <div style="font-size: 0.7rem; color: #28a745;">
+                    <i class="bi bi-info-circle"></i> Data menggunakan status retur terbaru dari Order model
+                </div>
+            </div>
+        </div>
+
+        <!-- Log List -->
+        <div id="log-list">
+            <div class="loading-container">
+                <div class="loading-spinner"></div>
+                Memuat data log...
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sticky Action Bar -->
+<div class="sticky-action-bar">
+    <div class="action-buttons">
+        <button class="action-btn btn-back" onclick="goBack()">
+            <i class="bi bi-arrow-left"></i> Kembali
+        </button>
+        <button class="action-btn btn-refresh" onclick="loadLogs()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+        <button class="action-btn btn-export" onclick="toggleUserFilter()">
+            <i class="bi bi-funnel"></i> Filter User
+        </button>
+    </div>
+</div>
+
+<!-- User Filter Modal -->
+<div class="modal-overlay" id="user-filter-modal" style="display: none;">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h5 class="modal-title">
+                <i class="bi bi-funnel"></i> Filter by User Fulfillment
+            </h5>
+            <button class="modal-close" onclick="closeUserFilterModal()">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="bi bi-person-gear"></i> Pilih User Fulfillment:
+                </label>
+                <select id="user-filter-select" class="form-select">
+                    <option value="">Semua User</option>
+                </select>
+            </div>
+            <div class="filter-info">
+                <i class="bi bi-info-circle"></i>
+                <span>Filter akan menampilkan order berdasarkan user yang menangani fulfillment</span>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="clearUserFilter()">
+                <i class="bi bi-x-circle"></i> Reset
+            </button>
+            <button class="btn btn-primary" onclick="applyUserFilter()">
+                <i class="bi bi-funnel"></i> Terapkan Filter
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentFilter = 'belum_return';
+let currentUserFilter = '';
+let logsData = [];
+let allUsers = [];
+
+// Load logs on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadBelumReturnCount();
+    loadLogs();
+    
+    // Add filter button event listeners
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const filter = this.getAttribute('data-filter');
+            setActiveFilter(filter);
+            filterLogs(filter);
+        });
+    });
+    
+    // Close modal when clicking outside
+    document.getElementById('user-filter-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeUserFilterModal();
+        }
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeUserFilterModal();
+        }
+    });
+});
+
+function loadBelumReturnCount() {
+    // Fetch count for "Belum Return" only
+    fetch('/fullfilment/order-cancel-log/data/?filter=belum_return')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data) {
+                const count = data.data.length;
+                document.getElementById('belum-return-count').textContent = count;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading belum return count:', error);
+        });
+}
+
+function setActiveFilter(filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+}
+
+function loadLogs() {
+    const logList = document.getElementById('log-list');
+    
+    // Show loading
+    logList.innerHTML = `
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            Memuat data log...
+        </div>
+    `;
+    
+    // Fetch logs data with current filter
+    const url = `/fullfilment/order-cancel-log/data/?filter=${currentFilter}`;
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data) {
+                logsData = data.data;
+                
+                // Apply user filter if active
+                let filteredData = data.data;
+                if (currentUserFilter) {
+                    filteredData = data.data.filter(log => log.fulfillment_user === currentUserFilter);
+                }
+                
+                renderLogs(filteredData);
+            } else {
+                throw new Error(data.error || 'Gagal memuat data');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading logs:', error);
+            logList.innerHTML = `
+                <div class="error-state">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <div>Gagal memuat data log</div>
+                    <div style="font-size: 0.7rem; margin-top: 0.5rem;">
+                        Silakan coba lagi
+                    </div>
+                </div>
+            `;
+        });
+}
+
+function renderLogs(logs) {
+    const logList = document.getElementById('log-list');
+    const summaryCard = document.getElementById('summary-card');
+    
+    if (logs.length === 0) {
+        summaryCard.style.display = 'none';
+        logList.innerHTML = `
+            <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <div>Tidak ada data order dibatalkan</div>
+                <div style="font-size: 0.7rem; margin-top: 0.5rem;">
+                    Belum ada order yang statusnya dibatalkan dan sudah discan oleh user
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    // Update summary
+    const totalLogs = logs.length;
+    let filterText = 'Belum Return';
+    if (currentFilter === 'sudah_return') filterText = 'Sudah Return';
+    
+    // Add user filter info if active
+    if (currentUserFilter) {
+        filterText += ` | User: ${currentUserFilter}`;
+    }
+    
+    document.getElementById('total-logs').textContent = totalLogs;
+    document.getElementById('current-filter').textContent = filterText;
+    summaryCard.style.display = 'block';
+    
+    const logsHtml = logs.map(log => `
+        <div class="log-item" data-status-retur="${log.status_retur}">
+            <div class="log-item-header">
+                <div class="log-order-id">${log.order_id}</div>
+                <span class="log-status-badge status-${log.status_retur}">
+                    ${log.status_retur === 'N' ? 'Belum Retur' : 'Sudah Retur'}
+                </span>
+            </div>
+            <div class="log-details">
+                <div class="log-user">
+                    ${log.scanner_user ? `<i class="bi bi-person"></i> Scanner: ${log.scanner_user} | ` : ''}
+                    <i class="bi bi-person-gear"></i> Fulfillment: ${log.fulfillment_user || 'N/A'}
+                </div>
+                ${log.return_user && log.return_user !== '-' ? `
+                <div class="log-user" style="color: #28a745;">
+                    <i class="bi bi-person-check"></i> Diterima oleh: ${log.return_user}
+                </div>
+                ` : ''}
+                <div style="margin-top: 0.25rem; display: flex; justify-content: space-between; align-items: center;">
+                    ${log.fulfillment_status !== '-' ? `<span class="log-fulfillment-status">Fulfillment: ${log.fulfillment_status}</span>` : ''}
+                    <div style="font-size: 0.7rem; color: #6c757d;">
+                        <i class="bi bi-clock"></i> ${log.scan_time}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    logList.innerHTML = logsHtml;
+}
+
+function filterLogs(filter) {
+    // Reset user filter when changing main filter
+    currentUserFilter = '';
+    document.getElementById('user-filter-select').value = '';
+    closeUserFilterModal();
+    
+    // Reload data with new filter instead of client-side filtering
+    loadLogs();
+}
+
+function goBack() {
+    window.location.href = '/mobile/';
+}
+
+function toggleUserFilter() {
+    const modal = document.getElementById('user-filter-modal');
+    modal.style.display = 'flex';
+    loadUserList();
+}
+
+function closeUserFilterModal() {
+    const modal = document.getElementById('user-filter-modal');
+    modal.style.display = 'none';
+}
+
+function loadUserList() {
+    // Extract unique users from current logs data
+    const users = [...new Set(logsData.map(log => log.fulfillment_user).filter(user => user && user !== 'N/A'))];
+    allUsers = users;
+    
+    const select = document.getElementById('user-filter-select');
+    select.innerHTML = '<option value="">Semua User</option>';
+    
+    users.forEach(user => {
+        const option = document.createElement('option');
+        option.value = user;
+        option.textContent = user;
+        select.appendChild(option);
+    });
+}
+
+function applyUserFilter() {
+    const selectedUser = document.getElementById('user-filter-select').value;
+    currentUserFilter = selectedUser;
+    
+    // Filter logs data
+    let filteredLogs = logsData;
+    if (selectedUser) {
+        filteredLogs = logsData.filter(log => log.fulfillment_user === selectedUser);
+    }
+    
+    renderLogs(filteredLogs);
+    
+    // Close modal
+    closeUserFilterModal();
+}
+
+function clearUserFilter() {
+    currentUserFilter = '';
+    document.getElementById('user-filter-select').value = '';
+    renderLogs(logsData);
+    closeUserFilterModal();
+}
+</script>
+{% endblock %}

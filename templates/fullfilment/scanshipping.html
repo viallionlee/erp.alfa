@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Ready to Ship{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h4 class="card-title">Ready to Ship</h4>
+                    
+                    {% if last_10_shipping %}
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">10 Pengiriman Terakhir</h5>
+                            <a href="{% url 'shipping_history' %}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-clock-history me-1"></i> Tampilkan Semua Riwayat
+                            </a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Waktu</th>
+                                        <th>ID Pesanan</th>
+                                        <th>Kurir</th>
+                                        <th>User</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for s in last_10_shipping %}
+                                    <tr>
+                                        <td>{{ s.waktu_ship|date:"d M Y, H:i:s"|default:"N/A" }}</td>
+                                        <td>{{ s.order.id_pesanan }}</td>
+                                        <td>{{ s.order.kurir|default:"N/A" }}</td>
+                                        <td>{{ s.user.username }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Pilih Kurir:</label>
+                        <div class="row g-3" id="courierBtnGroup">
+                            <div class="col-6 col-md-2-4">
+                                <button type="button" class="courier-btn btn w-100 py-3" data-courier="LEX" style="background:#e3f2fd;">
+                                    <img src="{% static 'icons/lex.png' %}" alt="LEX" style="height:32px;"><br>
+                                    <span>LEX</span>
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-2-4">
+                                <button type="button" class="courier-btn btn w-100 py-3" data-courier="Shopee Xpress" style="background:#ffe5e0;">
+                                    <img src="{% static 'icons/shopee.png' %}" alt="Shopee Xpress" style="height:32px;"><br>
+                                    <span>Shopee Xpress</span>
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-2-4">
+                                <button type="button" class="courier-btn btn w-100 py-3" data-courier="Ninja Pusat" style="background:#f3eaff;">
+                                    <img src="{% static 'icons/ninja.png' %}" alt="Ninja Pusat" style="height:32px;"><br>
+                                    <span>Ninja Pusat</span>
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-2-4">
+                                <button type="button" class="courier-btn btn w-100 py-3" data-courier="Ninja Agen" style="background:#e0f7fa;">
+                                    <img src="{% static 'icons/ninja.png' %}" alt="Ninja Agen" style="height:32px;"><br>
+                                    <span>Ninja Agen</span>
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-2-4">
+                                <button type="button" class="courier-btn btn w-100 py-3" data-courier="JNE" style="background:#e3e3e3;">
+                                    <img src="{% static 'icons/jne.png' %}" alt="JNE" style="height:32px;"><br>
+                                    <span>JNE</span>
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-2-4">
+                                <button type="button" class="courier-btn btn w-100 py-3" data-courier="J&T" style="background:#fff3e0;">
+                                    <img src="{% static 'icons/jnt.png' %}" alt="J&T" style="height:32px;"><br>
+                                    <span>J&T</span>
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-2-4">
+                                <button type="button" class="courier-btn btn w-100 py-3" data-courier="GTL" style="background:#e0f2f1;">
+                                    <img src="{% static 'icons/gtl.png' %}" alt="GTL" style="height:32px;"><br>
+                                    <span>GTL</span>
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-2-4">
+                                <button type="button" class="courier-btn btn w-100 py-3" data-courier="CARGO" style="background:#f9fbe7;">
+                                    <img src="{% static 'icons/cargo.png' %}" alt="CARGO" style="height:32px;"><br>
+                                    <span>CARGO</span>
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-2-4">
+                                <button type="button" class="courier-btn btn w-100 py-3" data-courier="instant" style="background:#e1f5fe;">
+                                    <img src="{% static 'icons/instant.png' %}" alt="Instant" style="height:32px;"><br>
+                                    <span>Instant</span>
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-2-4">
+                                <button type="button" class="courier-btn btn w-100 py-3" data-courier="all" style="background:#e8f5e8;">
+                                    <i class="bi bi-check-all" style="font-size:32px;color:#28a745;"></i><br>
+                                    <span>Pilih Semua</span>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="hidden" id="courierInput" name="courier" required>
+                    </div>
+
+                    <div class="card border-info">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">Scan ID Pesanan atau Resi</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="scanForm" method="POST">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="scanInput" class="form-label">ID Pesanan / No. Resi:</label>
+                                    <input type="text" id="scanInput" class="form-control form-control-lg" placeholder="Scan atau ketik di sini..." autofocus>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-info btn-lg">Konfirmasi Pengiriman</button>
+                                </div>
+                            </form>
+                            <div id="notificationArea" class="mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+function playSound(type) {
+    if (type === 'success') {
+        new Audio('/static/sounds/ding.mp3').play();
+    } else if (type === 'error') {
+        new Audio('/static/sounds/wrong_barcode.mp3').play();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('scanForm');
+    const scanInput = document.getElementById('scanInput');
+    const notificationArea = document.getElementById('notificationArea');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const courierInput = document.getElementById('courierInput');
+
+    const allCouriersBtn = document.querySelector('.courier-btn[data-courier="all"]');
+    if (allCouriersBtn) {
+        allCouriersBtn.click();
+    }
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const orderId = scanInput.value.trim();
+        if (!orderId) {
+            playSound('error');
+            return;
+        }
+
+        const selectedCourier = courierInput.value;
+        if (!selectedCourier) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Silakan pilih kurir terlebih dahulu.',
+            });
+            return;
+        }
+
+        notificationArea.innerHTML = `<div class="alert alert-info">Memproses...</div>`;
+
+        fetch("{% url 'scanshipping' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ 
+                'order_id': orderId,
+                'courier': selectedCourier
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const alertType = data.success ? 'success' : 'danger';
+            notificationArea.innerHTML = `<div class="alert alert-${alertType}">${data.message}</div>`;
+
+            if (data.success) {
+                playSound('success');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: data.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.reload(); 
+                });
+            } else {
+                 playSound('error');
+                 Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: data.message,
+                });
+            }
+        })
+        .catch(error => {
+            notificationArea.innerHTML = `<div class="alert alert-danger">Terjadi kesalahan. Silakan coba lagi.</div>`;
+            playSound('error');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Terjadi kesalahan koneksi.',
+            });
+        });
+        
+        scanInput.value = '';
+        scanInput.focus();
+    });
+});
+
+document.querySelectorAll('.courier-btn').forEach(btn => {
+    btn.onclick = function() {
+        document.querySelectorAll('.courier-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('courierInput').value = btn.getAttribute('data-courier');
+    };
+});
+</script>
+
+<style>
+/* CSS untuk 5 kolom */
+@media (min-width: 768px) {
+    .col-md-2-4 {
+        flex: 0 0 20%;
+        max-width: 20%;
+    }
+}
+
+/* Style untuk tombol aktif */
+.courier-btn.active {
+    border: 2px solid #1976d2 !important;
+    box-shadow: 0 0 8px #1976d2 !important;
+    transform: scale(1.05);
+}
+
+/* Style khusus untuk Global Scan */
+.courier-btn[data-courier="global"] {
+    font-weight: bold;
+}
+</style>
+{% endblock %} 

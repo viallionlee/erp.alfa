@@ -1,0 +1,1900 @@
+{% extends 'base_mobile.html' %}
+{% load static %}
+{% csrf_token %}
+
+{% block title %}Putaway - Mobile{% endblock %}
+
+{% block extra_head %}
+<style>
+    .putaway-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem;
+        border-radius: 8px;
+        margin-bottom: 0.25rem;
+        text-align: center;
+    }
+    
+    .putaway-header h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+    
+    .putaway-header p {
+        margin: 0.1rem 0 0 0;
+        opacity: 0.9;
+        font-size: 0.7rem;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 12px;
+        padding: 0.3rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.1rem;
+        border-left: 14px solid;
+    }
+    
+    .stats-card.primary {
+        border-left-color: #0d6efd;
+    }
+    
+    .stats-card.success {
+        border-left-color: #198754;
+    }
+    
+    .stats-card.warning {
+        border-left-color: #fd7e14;
+    }
+    
+    .stats-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 0.1rem;
+    }
+    
+    .stats-label {
+        font-size: 0.65rem;
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .product-card {
+        background: white;
+        border-radius: 16px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+        border-left: 10px solid #0d6efd;
+        max-height: 140px;
+        position: relative;
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .product-left-column {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 80px;
+        flex-shrink: 0;
+    }
+    
+    .product-photo {
+        width: 80px;
+        height: 100px;
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        overflow: hidden;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .product-photo:hover {
+        transform: scale(1.05);
+    }
+    
+    .product-photo img {
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+        border-radius: 6px;
+    }
+    
+    .product-photo .no-photo {
+        color: #6c757d;
+        font-size: 2rem;
+    }
+    
+    .product-content {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    
+    .product-info {
+        flex: 1;
+    }
+    
+    .product-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.25rem;
+    }
+    
+    .brand-variant {
+        display: flex;
+        gap: 0.3rem;
+        align-items: center;
+        font-size: 0.65rem;
+        color: #6c757d;
+        margin-top: 0.15rem;
+        justify-content: space-between;
+        width: 100%;
+    }
+    
+    .brand-variant-info {
+        display: flex;
+        gap: 0.3rem;
+        align-items: center;
+    }
+    
+    .qty-putaway-display {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.7rem;
+        flex-shrink: 0;
+    }
+    
+    .qty-putaway-display {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    
+    .product-info-right {
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+        align-items: center;
+        justify-content: flex-end;
+    }
+    
+    .suggested-rak-display {
+        background: #fff3cd;
+        color: #856404;
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.7rem;
+        border: 1px solid #ffeaa7;
+        white-space: nowrap;
+    }
+    
+    .product-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.25rem;
+    }
+    
+    .product-sku {
+        font-weight: 700;
+        color: #0d6efd;
+        font-size: 0.8rem;
+    }
+    
+    .product-barcode {
+        font-family: monospace;
+        background: #f8f9fa;
+        padding: 0.15rem 0.3rem;
+        border-radius: 3px;
+        font-size: 0.65rem;
+        color: #495057;
+    }
+    
+    .product-name {
+        font-weight: 600;
+        color: #212529;
+        margin-bottom: 0.15rem;
+        line-height: 1.1;
+        font-size: 0.75rem;
+    }
+    
+    .product-details {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        min-width: 60px;
+    }
+    
+    .detail-value {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #212529;
+    }
+    
+    .detail-label {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .qty-putaway {
+        color: #dc3545;
+    }
+    
+    .qty-ready {
+        color: #198754;
+    }
+    
+    .transfer-card {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+        border-left: 4px solid #fd7e14;
+        max-height: 100px;
+    }
+    
+    .transfer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.25rem;
+    }
+    
+    .transfer-code {
+        font-weight: 700;
+        color: #fd7e14;
+        font-size: 0.85rem;
+    }
+    
+    .transfer-date {
+        font-size: 0.7rem;
+        color: #6c757d;
+    }
+    
+    .transfer-raks {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin-bottom: 0.25rem;
+        font-size: 0.75rem;
+    }
+    
+    .rak-item {
+        background: #f8f9fa;
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.7rem;
+    }
+    
+    .rak-arrow {
+        color: #6c757d;
+        font-size: 0.7rem;
+    }
+    
+    .action-btn {
+        width: 100%;
+        padding: 0.5rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        border: none;
+        transition: all 0.2s;
+    }
+    
+    .action-btn:active {
+        transform: scale(0.98);
+    }
+    
+    .btn-primary-mobile {
+        background: #0d6efd;
+        color: white;
+    }
+    
+    .product-actions {
+        display: flex;
+        gap: 0.25rem;
+        margin-top: 0.5rem;
+    }
+    
+    .product-actions .action-btn {
+        flex: 1;
+        padding: 0.1rem 0.5rem;
+        font-size: 0.7rem;
+        border-radius: 6px;
+        font-weight: 600;
+        border: none;
+        transition: all 0.2s;
+    }
+    
+    .btn-slotting {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .btn-slotting:active {
+        background: #e0a800;
+        transform: scale(0.98);
+    }
+    
+    /* Mobile Slotting Modal Styles */
+    .mobile-slotting-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(4px);
+        z-index: 1050;
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .mobile-slotting-content {
+        position: relative;
+        background: #f8f9fa;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 95vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    
+    .mobile-slotting-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 20px 20px 0 0;
+        position: relative;
+        flex-shrink: 0;
+    }
+    
+    .mobile-slotting-header h5 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+    
+    .mobile-slotting-header .close-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    
+    .mobile-slotting-body {
+        padding: 1rem;
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    
+    /* Clean Mobile Rak Item Design */
+    .mobile-rak-item {
+        background: white;
+        border: 1px solid #e1e5e9;
+        border-radius: 12px;
+        padding: 0.8rem;
+        margin-bottom: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: all 0.2s ease;
+    }
+    
+    .mobile-rak-item.selectable {
+        cursor: pointer;
+        border-color: #e1e5e9;
+    }
+    
+    .mobile-rak-item.selectable:hover {
+        border-color: #0d6efd;
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+        transform: translateY(-1px);
+    }
+    
+    .mobile-rak-item.disabled {
+        opacity: 0.6;
+        background: #f8f9fa;
+    }
+    
+    /* Header Row */
+    .rak-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .rak-code {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #1a1a1a;
+    }
+    
+    .mobile-rak-badge {
+        padding: 0.3rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-same-product {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+    }
+    
+    .badge-new-rak {
+        background: linear-gradient(135deg, #0d6efd, #6610f2);
+        color: white;
+        box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
+    }
+    
+    /* Existing Product Info */
+    .rak-existing-info {
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        padding: 0.75rem;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        color: #155724;
+        border-left: 4px solid #28a745;
+    }
+    
+    .rak-existing-info i {
+        font-size: 1rem;
+    }
+    
+    /* Info Grid - Change from 2x2 to single row */
+    .rak-info-grid {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+    }
+    
+    .info-item {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        padding: -0.5rem 0.75rem;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid #e9ecef;
+        transition: all 0.2s ease;
+        flex: 1;
+        min-width: 60px;
+        white-space: nowrap;
+    }
+    
+    .info-item:hover {
+        background: linear-gradient(135deg, #e9ecef, #dee2e6);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .info-value {
+        font-weight: 700;
+        font-size: 0.8rem;
+        color: #1a1a1a;
+        margin-bottom: 0.15rem;
+        line-height: 1;
+    }
+    
+    .info-label {
+        font-size: 0.65rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        font-weight: 600;
+    }
+    
+    /* Action Buttons */
+    .rak-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+    
+    .btn-info, .btn-select, .btn-disabled {
+        flex: 1;
+        padding: 0.75rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn-info {
+        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        color: #1565c0;
+        border: 1px solid #90caf9;
+    }
+    
+    .btn-info:hover {
+        background: linear-gradient(135deg, #bbdefb, #90caf9);
+        transform: translateY(-1px);
+    }
+    
+    .btn-select {
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        color: #155724;
+        border: 1px solid #a8e6cf;
+    }
+    
+    .btn-select:hover {
+        background: linear-gradient(135deg, #c3e6cb, #a8e6cf);
+        transform: translateY(-1px);
+    }
+    
+    .btn-disabled {
+        background: #f8f9fa;
+        color: #6c757d;
+        border: 1px solid #dee2e6;
+        cursor: not-allowed;
+    }
+    }
+    
+    .btn-info-mobile {
+        background: #0dcaf0;
+        color: white;
+    }
+    
+    .transfer-action-btn {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.7rem;
+        border: none;
+        transition: all 0.2s;
+        background: #198754;
+        color: white;
+        width: auto;
+        float: right;
+    }
+    
+    .transfer-action-btn:active {
+        transform: scale(0.95);
+    }
+    
+    .transfer-action-btn-large {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        border: none;
+        transition: all 0.2s;
+        background: #198754;
+        color: white;
+        width: auto;
+        float: right;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .transfer-action-btn-large:hover {
+        background: #146c43;
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .transfer-action-btn-large:active {
+        transform: scale(0.95);
+    }
+    
+    .sticky-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #e9ecef;
+        padding: 0.75rem;
+        z-index: 100;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .content-wrapper {
+        padding-bottom: 120px; /* Space for sticky bar */
+    }
+    
+    .filter-sort-container {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .icon-btn {
+        width: 50px;
+        height: 50px;
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        transition: all 0.2s;
+        cursor: pointer;
+        position: relative;
+    }
+    
+    .filter-btn {
+        background: #6f42c1;
+        color: white;
+    }
+    
+    .filter-btn:hover {
+        background: #5a2d91;
+        transform: scale(1.1);
+    }
+    
+    .sort-btn {
+        background: #fd7e14;
+        color: white;
+    }
+    
+    .sort-btn:hover {
+        background: #e66a00;
+        transform: scale(1.1);
+    }
+    
+    .scan-btn {
+        background: #0d6efd;
+        color: white;
+    }
+    
+    .scan-btn:hover {
+        background: #0b5ed7;
+        transform: scale(1.1);
+    }
+    
+    .history-btn {
+        background: #17a2b8;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .history-btn:hover {
+        background: #138496;
+        transform: scale(1.1);
+        color: white;
+        text-decoration: none;
+    }
+    
+    /* Hidden select elements */
+    .hidden-select {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+        width: 0;
+        height: 0;
+    }
+    
+    /* Dropdown menus */
+    .dropdown-menu {
+        position: absolute;
+        bottom: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        min-width: 150px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 200;
+        display: none;
+    }
+    
+    .dropdown-item {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #f8f9fa;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: background 0.2s;
+    }
+    
+    .dropdown-item:hover {
+        background: #f8f9fa;
+    }
+    
+    .dropdown-item:last-child {
+        border-bottom: none;
+    }
+    
+    .dropdown-item.active {
+        background: #e3f2fd;
+        color: #1976d2;
+        font-weight: 600;
+    }
+    
+    .fab-btn:active {
+        transform: scale(0.9);
+        box-shadow: 0 2px 8px rgba(13, 110, 253, 0.6);
+    }
+    
+    /* Photo Modal Styles */
+    .photo-modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+        backdrop-filter: blur(5px);
+    }
+    
+    .photo-modal-content {
+        position: relative;
+        margin: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        padding: 1rem;
+    }
+    
+    .photo-modal-img {
+        max-width: 90%;
+        max-height: 80%;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    
+    .photo-modal-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        color: white;
+        font-size: 2rem;
+        font-weight: bold;
+        cursor: pointer;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+    }
+    
+    .photo-modal-close:hover {
+        background: rgba(0, 0, 0, 0.8);
+    }
+    
+    .photo-modal-title {
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-top: 1rem;
+        text-align: center;
+        max-width: 90%;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .tab-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+    
+    .tab-btn {
+        flex: 1;
+        min-width: 120px;
+        padding: 0.5rem;
+        border: 2px solid #e9ecef;
+        background: white;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #6c757d;
+        text-align: center;
+        white-space: nowrap;
+        transition: all 0.2s;
+    }
+    
+    .tab-btn.active {
+        border-color: #0d6efd;
+        background: #0d6efd;
+        color: white;
+    }
+    
+    .tab-btn .badge {
+        margin-left: 0.5rem;
+        font-size: 0.7rem;
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="content-wrapper">
+        <!-- Header -->
+        <div class="putaway-header">
+            <h4><i class="bi bi-box-arrow-in-down"></i> Putaway</h4>
+            <p>Kelola proses putaway produk ke rak tujuan</p>
+        </div>
+
+    <!-- Summary Stats -->
+    <div class="row g-2 mb-1">
+        <div class="col-6">
+            <div class="stats-card primary">
+                <div class="stats-value">{{ total_items }}</div>
+                <div class="stats-label">Total Produk</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="stats-card success">
+                <div class="stats-value">{{ total_quantity }}</div>
+                <div class="stats-label">Total Qty Putaway</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Buttons -->
+    <div class="tab-buttons" style="margin-bottom: 0.25rem;">
+        <button class="tab-btn active" onclick="showTab('item-putaway')">
+            <i class="bi bi-list-ul"></i> Item Putaway
+            {% if total_items > 0 %}
+                <span class="badge bg-danger">{{ total_items }}</span>
+            {% endif %}
+        </button>
+        <button class="tab-btn" onclick="showTab('transfer-rak')">
+            <i class="bi bi-arrow-left-right"></i> Transfer Rak
+            {% if transfer_sessions|length > 0 %}
+                <span class="badge bg-danger">{{ transfer_sessions|length }}</span>
+            {% endif %}
+        </button>
+    </div>
+
+    <!-- Tab 1: Item Putaway -->
+    <div id="item-putaway" class="tab-content active">
+        {% if putaway_list %}
+                                      {% for p in putaway_list %}
+             <div class="product-card">
+                 <div class="product-left-column">
+                     <div class="product-photo" onclick="openPhotoModal('{{ p.photo|default:'' }}', '{{ p.nama_produk }}')">
+                         {% if p.photo %}
+                             <img src="{{ p.photo }}" alt="{{ p.nama_produk }}" loading="lazy">
+                         {% else %}
+                             <div class="no-photo">
+                                 <i class="bi bi-box"></i>
+                             </div>
+                         {% endif %}
+                     </div>
+                     <button class="btn btn-sm btn-outline-secondary mt-1 w-100" style="font-size: 0.7rem;" onclick="showEditDimensionsModal('{{ p.sku }}', '{{ p.nama_produk }}')">
+                        <i class="bi bi-rulers"></i> Edit
+                    </button>
+                 </div>
+                 
+                 <div class="product-content">
+                     <div class="product-info">
+                         <div class="product-header">
+                             <div class="product-sku">SKU : {{ p.sku }}</div>
+                             <div class="product-barcode">Barcode : {{ p.barcode }}</div>
+                         </div>
+                         
+                         <div class="product-name">{{ p.nama_produk }}</div>
+                     </div>
+                     
+                     <div class="brand-variant">
+                         <div class="brand-variant-info">
+                             <span><i class="bi bi-tag"></i> {{ p.brand }}</span>
+                             {% if p.variant_produk %}
+                             <span>•</span>
+                             <span>{{ p.variant_produk }}</span>
+                             {% endif %}
+                         </div>
+                         <div class="product-info-right">
+                             {% if p.suggested_rak %}
+                             <div class="suggested-rak-display">
+                                 <i class="bi bi-pin-map"></i> {{ p.suggested_rak.kode_rak }}
+                             </div>
+                             {% endif %}
+                             <div class="qty-putaway-display">
+                                 {{ p.quantity_putaway }} Qty
+                             </div>
+                         </div>
+                     </div>
+                     
+                     <!-- Action Buttons -->
+                     <div class="product-actions">
+                         <button class="action-btn btn-slotting" onclick="showSlottingModal('{{ p.sku }}', '{{ p.nama_produk }}', {{ p.quantity_putaway }}, '{{ p.suggested_rak.kode_rak|default:"" }}')">
+                             <i class="bi bi-lightbulb"></i> Slotting
+                         </button>
+                         <button class="action-btn btn-primary-mobile" onclick="startPutaway('{{ p.sku }}')">
+                             <i class="bi bi-play-fill"></i> Putaway
+                         </button>
+                     </div>
+                 </div>
+              </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <h5>Tidak ada produk yang perlu di-putaway</h5>
+                <p>Semua produk sudah selesai diproses</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Tab 2: Transfer Rak -->
+    <div id="transfer-rak" class="tab-content">
+        {% if transfer_sessions %}
+            {% for s in transfer_sessions %}
+            <div class="transfer-card">
+                <div class="transfer-header">
+                    <div class="transfer-code">{{ s.session_code }}</div>
+                    <button class="transfer-action-btn-large" onclick="startTransferPutaway({{ s.id }})">
+                        <i class="bi bi-play-fill"></i> Mulai Transfer
+                    </button>
+                </div>
+                
+                <div class="transfer-raks">
+                    <div class="rak-item">{{ s.rak_asal__kode_rak }}</div>
+                    <div class="rak-arrow"><i class="bi bi-arrow-right"></i></div>
+                    <div class="rak-item">{{ s.rak_tujuan__kode_rak }}</div>
+                </div>
+                
+                <div class="transfer-date">{{ s.tanggal_transfer|date:"d/m/Y H:i" }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="bi bi-arrow-left-right"></i>
+                <h5>Tidak ada sesi transfer yang menunggu putaway</h5>
+                <p>Semua transfer sudah selesai diproses</p>
+            </div>
+        {% endif %}
+    </div>
+
+
+</div>
+
+<!-- Sticky Bar with Icon Buttons -->
+<div class="sticky-bar">
+    <div class="filter-sort-container">
+        <!-- Filter Button -->
+        <button class="icon-btn filter-btn" onclick="toggleFilterDropdown()" title="Filter Brand">
+            <i class="bi bi-funnel"></i>
+        </button>
+        
+        <!-- Sort Button -->
+        <button class="icon-btn sort-btn" onclick="toggleSortDropdown()" title="Sort Products">
+            <i class="bi bi-sort-down"></i>
+        </button>
+        
+        <!-- Scan Button -->
+        <button class="icon-btn scan-btn" onclick="startPutaway('')" title="Mulai Scan Putaway">
+            <i class="bi bi-play-fill"></i>
+        </button>
+        
+        <!-- History Button -->
+        <a href="{% url 'inventory:putaway_history' %}" class="icon-btn history-btn" title="History Putaway">
+            <i class="bi bi-clock-history"></i>
+        </a>
+    </div>
+    
+    <!-- Hidden dropdowns -->
+    <div id="filterDropdown" class="dropdown-menu">
+        <div class="dropdown-item active" onclick="selectFilter('')">Semua Brand</div>
+        {% for brand in brands %}
+            <div class="dropdown-item" onclick="selectFilter('{{ brand }}')">{{ brand }}</div>
+        {% endfor %}
+    </div>
+    
+    <div id="sortDropdown" class="dropdown-menu">
+        <div class="dropdown-item active" onclick="selectSort('qty_desc')">Qty Tertinggi</div>
+        <div class="dropdown-item" onclick="selectSort('qty_asc')">Qty Terendah</div>
+        <div class="dropdown-item" onclick="selectSort('name_asc')">Nama A-Z</div>
+        <div class="dropdown-item" onclick="selectSort('name_desc')">Nama Z-A</div>
+        <div class="dropdown-item" onclick="selectSort('sku_asc')">SKU A-Z</div>
+        <div class="dropdown-item" onclick="selectSort('sku_desc')">SKU Z-A</div>
+    </div>
+    
+    <!-- Hidden selects for compatibility -->
+    <select id="brandFilter" class="hidden-select">
+        <option value="">Semua Brand</option>
+        {% for brand in brands %}
+            <option value="{{ brand }}">{{ brand }}</option>
+        {% endfor %}
+    </select>
+    
+    <select id="sortBy" class="hidden-select">
+        <option value="qty_desc">Qty Tertinggi</option>
+        <option value="qty_asc">Qty Terendah</option>
+        <option value="name_asc">Nama A-Z</option>
+        <option value="name_desc">Nama Z-A</option>
+        <option value="sku_asc">SKU A-Z</option>
+        <option value="sku_desc">SKU Z-A</option>
+    </select>
+</div>
+
+<!-- Photo Modal -->
+ <div id="photoModal" class="photo-modal">
+     <div class="photo-modal-content">
+         <span class="photo-modal-close" onclick="closePhotoModal()">&times;</span>
+         <img id="modalPhoto" class="photo-modal-img" src="" alt="">
+         <div id="modalTitle" class="photo-modal-title"></div>
+     </div>
+ </div>
+ 
+ <!-- Mobile Slotting Modal -->
+ <div id="mobileSlottingModal" class="mobile-slotting-modal">
+     <div class="mobile-slotting-content">
+         <div class="mobile-slotting-header">
+             <h5><i class="bi bi-lightbulb"></i> Suggested Rak</h5>
+             <button class="close-btn" onclick="closeSlottingModal()">
+                 <i class="bi bi-x"></i>
+             </button>
+         </div>
+         <div class="mobile-slotting-body">
+             <div id="mobileSlottingContent">
+                 <!-- Content will be loaded here -->
+             </div>
+         </div>
+     </div>
+ </div>
+ 
+ <!-- Edit Dimensions Modal -->
+ <div id="editDimensionsModal" class="photo-modal" style="display: none; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);">
+     <div class="photo-modal-content" style="background: #f8f9fa; border-radius: 20px; padding: 1.5rem; max-width: 90%; width: 400px; color: #212529; box-shadow: 0 8px 32px rgba(0,0,0,0.2); height: 500px;">
+        <span class="photo-modal-close" onclick="closeEditDimensionsModal()" style="color: #6c757d; top: 0.8rem; right: 0.8rem; background: #e9ecef; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">&times;</span>
+        <div class="text-center mb-3">
+            <i class="bi bi-rulers text-primary" style="font-size: 2.5rem;"></i>
+            <h5 class="mt-2" style="font-weight: 700;">Edit Dimensi Produk</h5>
+        </div>
+        <form id="editDimensionsForm" onsubmit="saveDimensions(event)">
+            <input type="hidden" id="editDimensionsSku">
+            <div class="mb-3 p-2 bg-light border rounded-3">
+                <label for="editDimensionsSkuDisplay" class="form-label" style="font-size: 0.8rem; color: #6c757d;">SKU</label>
+                <input type="text" class="form-control-plaintext form-control-sm" id="editDimensionsSkuDisplay" readonly style="font-weight: 600;">
+            </div>
+            
+            <div class="row g-3 mb-3">
+                <div class="col-4">
+                    <label for="lebarInput" class="form-label"><i class="bi bi-arrows-expand"></i> Lebar</label>
+                    <input type="number" class="form-control form-control-sm" id="lebarInput" placeholder="cm" min="0" step="0.1" required>
+                </div>
+                <div class="col-4">
+                    <label for="panjangInput" class="form-label"><i class="bi bi-arrow-left-right"></i> Panjang</label>
+                    <input type="number" class="form-control form-control-sm" id="panjangInput" placeholder="cm" min="0" step="0.1" required>
+                </div>
+                <div class="col-4">
+                    <label for="tinggiInput" class="form-label"><i class="bi bi-arrow-up-down"></i> Tinggi</label>
+                    <input type="number" class="form-control form-control-sm" id="tinggiInput" placeholder="cm" min="0" step="0.1" required>
+                </div>
+            </div>
+
+            <div class="form-check form-switch mb-4 p-3 border rounded-3 bg-light d-flex align-items-center">
+                <input class="form-check-input" type="checkbox" role="switch" id="posisiTidurInput" style="margin-left: auto;">
+                <label class="form-check-label ms-3" for="posisiTidurInput"><i class="bi bi-box-seam"></i> Posisi Tidur?</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 fw-bold" id="saveDimensionsBtn" style="padding: 0.75rem;">
+                <i class="bi bi-check-circle-fill"></i> Simpan Perubahan
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function showTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // Remove active class from all tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab content
+    document.getElementById(tabName).classList.add('active');
+    
+    // Add active class to clicked button
+    event.target.classList.add('active');
+}
+
+function startPutaway(sku) {
+    // Redirect ke putaway scan dengan SKU
+    window.location.href = `{% url 'inventory:putaway_scan' %}?sku=${sku}`;
+}
+
+function showSlottingModal(sku, productName, quantity, currentRak) {
+    // Set current SKU for clear function
+    window.currentSku = sku;
+    
+    // Reset modal state
+    window.selectedMobileRak = null;
+    
+    // Show loading
+    document.getElementById('mobileSlottingContent').innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Mencari rak yang sesuai...</p>
+        </div>
+    `;
+    
+    // Show modal
+    document.getElementById('mobileSlottingModal').style.display = 'flex'; // Changed to flex for centering
+    
+    // Fetch slotting options dengan quantity parameter
+    fetch(`/inventory/slotting/options/?sku=${encodeURIComponent(sku)}&quantity=${quantity}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.rak_options && data.rak_options.length > 0) {
+                displayMobileSlottingOptions(data.rak_options, sku, productName, quantity, currentRak, data.product_has_dimensions);
+            } else {
+                document.getElementById('mobileSlottingContent').innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                        <h6 class="mt-2">Tidak ada rak yang sesuai</h6>
+                        <p class="text-muted">Pastikan dimensi produk sudah diisi dengan benar</p>
+                        <div class="mt-3">
+                            <button class="btn btn-outline-secondary" onclick="closeSlottingModal()">
+                                <i class="bi bi-x-circle"></i> Tutup
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching slotting options:', error);
+            document.getElementById('mobileSlottingContent').innerHTML = `
+                <div class="text-center py-4">
+                    <i class="bi bi-x-circle text-danger" style="font-size: 3rem;"></i>
+                    <h6 class="mt-2">Terjadi kesalahan</h6>
+                    <p class="text-muted">Gagal memuat data rak: ${error.message}</p>
+                    <div class="mt-3">
+                        <button class="btn btn-outline-secondary" onclick="closeSlottingModal()">
+                            <i class="bi bi-x-circle"></i> Tutup
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+}
+
+function displayMobileSlottingOptions(rakOptions, sku, productName, quantity, currentRak, hasDimensions) {
+    // Filter rak sesuai dengan logic desktop
+    const rakCukup = rakOptions.filter(rak => {
+        // Rak yang bisa dipilih: ada kapasitas dan fit score reasonable
+        return rak.available_front > 0 && rak.fit_score > 0.01; // 1% minimum fit score
+    });
+    
+    const rakTidakCukup = rakOptions.filter(rak => {
+        // Rak yang tidak bisa dipilih: tidak ada kapasitas atau fit score terlalu rendah
+        return rak.available_front <= 0 || rak.fit_score <= 0.01;
+    });
+    
+    const rakSameProduct = rakOptions.filter(rak => rak.has_same_product === true);
+    
+    // Debug: log jumlah rak untuk memastikan
+    console.log('Total rak options:', rakOptions.length);
+    console.log('Rak cukup:', rakCukup.length);
+    console.log('Rak tidak cukup:', rakTidakCukup.length);
+    console.log('Rak sama:', rakSameProduct.length);
+    
+    const dimensionWarningIcon = hasDimensions === false
+        ? `<i class="bi bi-exclamation-triangle-fill text-danger ms-2" title="Dimensi produk belum diisi lengkap!"></i>`
+        : '';
+
+    let html = `
+        <div class="mb-3">
+            <h6 class="text-primary">${productName}${dimensionWarningIcon}</h6>
+            <p class="text-muted mb-0">Quantity: ${quantity} pcs</p>
+            ${currentRak ? `<p class="text-warning mb-0"><i class="bi bi-pin-map"></i> Current Rak: ${currentRak}</p>` : ''}
+        </div>
+        
+        <!-- Filter Buttons -->
+        <div class="d-flex gap-2 mb-3">
+            <button class="btn btn-sm btn-success active" onclick="filterMobileRak('cukup')">
+                Cukup (${rakCukup.length})
+            </button>
+            <button class="btn btn-sm btn-warning" onclick="filterMobileRak('tidak_cukup')">
+                Tidak Cukup (${rakTidakCukup.length})
+            </button>
+            <button class="btn btn-sm btn-primary" onclick="filterMobileRak('same_product')">
+                Sama (${rakSameProduct.length})
+            </button>
+            <button class="btn btn-sm btn-secondary" onclick="filterMobileRak('semua')">
+                Semua (${rakOptions.length})
+            </button>
+        </div>
+    `;
+    
+    // Rak dengan kapasitas cukup
+    html += `<div id="mobileRakCukup">`;
+    if (rakCukup.length > 0) {
+        rakCukup.forEach(rak => {
+            html += createMobileRakCard(rak, true, sku);
+        });
+    } else {
+        html += `
+            <div class="text-center py-3">
+                <i class="bi bi-exclamation-triangle text-warning"></i>
+                <p class="text-muted">Tidak ada rak dengan kapasitas cukup</p>
+            </div>
+        `;
+    }
+    html += `</div>`;
+    
+    // Rak dengan kapasitas tidak cukup (hidden by default)
+    html += `<div id="mobileRakTidakCukup" style="display: none;">`;
+    if (rakTidakCukup.length > 0) {
+        rakTidakCukup.forEach(rak => {
+            html += createMobileRakCard(rak, false, sku);
+        });
+    } else {
+        html += `
+            <div class="text-center py-3">
+                <i class="bi bi-check-circle text-success"></i>
+                <p class="text-muted">Semua rak memiliki kapasitas cukup</p>
+            </div>
+        `;
+    }
+    html += `</div>`;
+    
+    // Rak yang sama (hidden by default)
+    html += `<div id="mobileRakSameProduct" style="display: none;">`;
+    if (rakSameProduct.length > 0) {
+        rakSameProduct.forEach(rak => {
+            html += createMobileRakCard(rak, true, sku);
+        });
+    } else {
+        html += `
+            <div class="text-center py-3">
+                <i class="bi bi-box-seam text-info"></i>
+                <p class="text-muted">Tidak ada rak yang sudah memiliki produk ini</p>
+            </div>
+        `;
+    }
+    html += `</div>`;
+    
+    // Semua rak (hidden by default)
+    html += `<div id="mobileRakSemua" style="display: none;">`;
+    if (rakOptions.length > 0) {
+        rakOptions.forEach(rak => {
+            const isSelectable = rak.available_front > 0 && rak.fit_score > 0.01;
+            html += createMobileRakCard(rak, isSelectable, sku);
+        });
+    } else {
+        html += `
+            <div class="text-center py-3">
+                <i class="bi bi-exclamation-triangle text-warning"></i>
+                <p class="text-muted">Tidak ada rak yang tersedia</p>
+            </div>
+        `;
+    }
+    html += `</div>`;
+    
+    document.getElementById('mobileSlottingContent').innerHTML = html;
+}
+
+function createMobileRakCard(rak, isSelectable, sku) {
+    // Handle data yang mungkin tidak ada
+    const sameProductBadge = rak.has_same_product ? 
+        '<span class="mobile-rak-badge badge-same-product">🔥 SAME</span>' : 
+        '<span class="mobile-rak-badge badge-new-rak">📦 NEW</span>';
+    
+    const stackableBadge = getStackableOptimizationBadge(rak.stackable_height || 1);
+    
+    // Safe access untuk data yang mungkin undefined
+    const availableFront = rak.available_front || 0;
+    const fitScore = rak.fit_score || 0;
+    const productsPerSlot = rak.products_per_slot || 1;
+    const stackableHeight = rak.stackable_height || 1;
+    
+    return `
+        <div class="mobile-rak-item ${isSelectable ? 'selectable' : 'disabled'}" 
+             onclick="${isSelectable ? `selectMobileRak('${rak.kode_rak}', ${rak.rak_id}, '${sku}')` : ''}">
+            
+            <!-- Header Row -->
+            <div class="rak-header-row">
+                <div class="rak-code">${rak.kode_rak}</div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    ${sameProductBadge}
+                    ${isSelectable ? `
+                        <button class="btn-select" onclick="event.stopPropagation(); selectMobileRak('${rak.kode_rak}', ${rak.rak_id}, '${sku}')" style="padding: 0.3rem 0.6rem; font-size: 0.7rem;">
+                            <i class="bi bi-check"></i> PILIH
+                        </button>
+                    ` : `
+                        <button class="btn-disabled" disabled style="padding: 0.3rem 0.6rem; font-size: 0.7rem;">
+                            <i class="bi bi-x"></i> TIDAK CUKUP
+                        </button>
+                    `}
+                </div>
+            </div>
+            
+            <!-- Existing Product Info (jika ada) -->
+            ${rak.has_same_product ? `
+                <div class="rak-existing-info">
+                    <i class="bi bi-box-seam"></i> 
+                    <span>Sudah ada: ${rak.existing_stock || 0} pcs</span>
+                    <i class="bi bi-plus-circle"></i> 
+                    <span>Bisa tambah: ${rak.additional_capacity || 0} pcs</span>
+                </div>
+            ` : ''}
+            
+            <!-- Info Grid - Single Row -->
+            <div class="rak-info-grid">
+                <div class="info-item">
+                    <div class="info-value">${rak.available_slots || 0}</div>
+                    <div class="info-label">Sisa Slot</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value">${productsPerSlot}</div>
+                    <div class="info-label">Produk/Slot</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value">${stackableHeight}</div>
+                    <div class="info-label">Level/Slot</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value">${stackableBadge}</div>
+                    <div class="info-label">Info Stacking</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function filterMobileRak(filterType) {
+    // Update button states
+    document.querySelectorAll('.mobile-slotting-body .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Hide all sections first
+    document.getElementById('mobileRakCukup').style.display = 'none';
+    document.getElementById('mobileRakTidakCukup').style.display = 'none';
+    document.getElementById('mobileRakSameProduct').style.display = 'none';
+    document.getElementById('mobileRakSemua').style.display = 'none';
+    
+    // Show selected section
+    if (filterType === 'cukup') {
+        document.getElementById('mobileRakCukup').style.display = 'block';
+    } else if (filterType === 'tidak_cukup') {
+        document.getElementById('mobileRakTidakCukup').style.display = 'block';
+    } else if (filterType === 'same_product') {
+        document.getElementById('mobileRakSameProduct').style.display = 'block';
+    } else if (filterType === 'semua') {
+        document.getElementById('mobileRakSemua').style.display = 'block';
+    }
+}
+
+function selectMobileRak(rakKode, rakId, sku) {
+    // Store selected rak
+    window.selectedMobileRak = { kode: rakKode, id: rakId };
+    
+    // Update database immediately
+    saveSlottingChoice(sku, rakId);
+    
+    // Close modal slotting
+    closeSlottingModal();
+    
+    // Show success toast
+    showMobileToast(`Rak ${rakKode} berhasil dipilih dan disimpan!`, 'success');
+    
+    // Refresh page to show updated suggested rak
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
+}
+
+function saveSlottingChoice(sku, rakId) {
+    fetch('/inventory/slotting/update/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            sku: sku,
+            rak_id: rakId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMobileToast('Rak berhasil disimpan!', 'success');
+        } else {
+            showMobileToast('Gagal menyimpan rak: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        showMobileToast('Gagal menyimpan rak: ' + error, 'error');
+    });
+}
+
+function clearMobileSlotting() {
+    // Show confirmation dialog
+    if (confirm('Apakah Anda yakin ingin menghapus suggested rak yang sudah dipilih?')) {
+        // Clear selected rak
+        window.selectedMobileRak = null;
+        
+        // Hide action buttons
+        document.getElementById('mobileActionButtons').style.display = 'none';
+        
+        // Clear from database
+        if (window.currentSku) {
+            clearSlottingFromDatabase(window.currentSku);
+        }
+        
+        // Show success message
+        showMobileToast('Suggested rak berhasil di-clear', 'success');
+    }
+}
+
+function clearSlottingFromDatabase(sku) {
+    fetch('/inventory/slotting/update/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            sku: sku,
+            rak_id: null
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMobileToast('Rak berhasil di-clear dari database!', 'success');
+            // Refresh page
+            location.reload();
+        } else {
+            showMobileToast('Gagal clear rak: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        showMobileToast('Gagal clear rak: ' + error, 'error');
+    });
+}
+
+function showMobileStackingInfo(rakKode, stackingDescription) {
+    // Extract stackable height
+    const match = stackingDescription.match(/Level 1-(\d+)/);
+    const stackableHeight = match ? parseInt(match[1]) : 1;
+    
+    let safetyMessage = '';
+    if (stackableHeight >= 8) {
+        safetyMessage = '⚠️ Stacking terlalu tinggi, maksimal 5-6 pcs untuk keamanan';
+    } else if (stackableHeight >= 5) {
+        safetyMessage = '⚠️ Stacking cukup tinggi, pastikan produk stabil';
+    } else if (stackableHeight >= 3) {
+        safetyMessage = '✅ Stacking optimal dan aman';
+    } else {
+        safetyMessage = 'ℹ️ Stacking sangat aman';
+    }
+    
+    showMobileToast(`${rakKode}: ${safetyMessage}`, 'info');
+}
+
+function closeSlottingModal() {
+    document.getElementById('mobileSlottingModal').style.display = 'none';
+}
+
+function showMobileToast(message, type = 'info') {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = `
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1060;
+        max-width: 90%;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    `;
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 3000);
+}
+
+function getStackableOptimizationBadge(stackableHeight) {
+    if (stackableHeight >= 8) {
+        return '<span class="badge bg-danger ms-1">⚠️</span>';
+    } else if (stackableHeight >= 5) {
+        return '<span class="badge bg-warning ms-1">⚠️</span>';
+    } else if (stackableHeight >= 3) {
+        return '<span class="badge bg-success ms-1">✅</span>';
+    } else if (stackableHeight >= 2) {
+        return '<span class="badge bg-info ms-1">ℹ️</span>';
+    } else {
+        return '<span class="badge bg-secondary ms-1">1️⃣</span>';
+    }
+}
+
+function startTransferPutaway(sessionId) {
+    // Redirect ke transfer putaway
+    window.location.href = `/inventory/transfer-rak/${sessionId}/putaway/`;
+}
+
+// Filter and Sort Functions
+let allProducts = [];
+
+function initializeProducts() {
+    const productCards = document.querySelectorAll('.product-card');
+    allProducts = Array.from(productCards).map(card => {
+        const sku = card.querySelector('.product-sku').textContent;
+        const name = card.querySelector('.product-name').textContent;
+        const brand = card.querySelector('.brand-variant-info span:first-child').textContent.replace('🏷️ ', '');
+        const qty = parseInt(card.querySelector('.qty-putaway-display').textContent);
+        return { card, sku, name, brand, qty };
+    });
+}
+
+function filterProducts() {
+    const brandFilter = document.getElementById('brandFilter').value;
+    const sortBy = document.getElementById('sortBy').value;
+    
+    let filteredProducts = allProducts;
+    
+    // Apply brand filter
+    if (brandFilter) {
+        filteredProducts = allProducts.filter(product => 
+            product.brand.toLowerCase().includes(brandFilter.toLowerCase())
+        );
+    }
+    
+    // Apply sorting
+    sortProductsList(filteredProducts, sortBy);
+    
+    // Show/hide products
+    allProducts.forEach(product => {
+        product.card.style.display = 'none';
+    });
+    
+    filteredProducts.forEach(product => {
+        product.card.style.display = 'flex';
+    });
+    
+    // Show empty state if no products
+    const visibleProducts = filteredProducts.length;
+    const emptyState = document.querySelector('.empty-state');
+    if (emptyState) {
+        emptyState.style.display = visibleProducts === 0 ? 'block' : 'none';
+    }
+}
+
+function sortProducts() {
+    filterProducts(); // This will apply both filter and sort
+}
+
+function sortProductsList(products, sortBy) {
+    products.sort((a, b) => {
+        switch (sortBy) {
+            case 'qty_desc':
+                return b.qty - a.qty;
+            case 'qty_asc':
+                return a.qty - b.qty;
+            case 'name_asc':
+                return a.name.localeCompare(b.name);
+            case 'name_desc':
+                return b.name.localeCompare(a.name);
+            case 'sku_asc':
+                return a.sku.localeCompare(b.sku);
+            case 'sku_desc':
+                return b.sku.localeCompare(a.sku);
+            default:
+                return 0;
+        }
+    });
+    
+    // Reorder DOM elements
+    const container = document.getElementById('item-putaway');
+    products.forEach(product => {
+        container.appendChild(product.card);
+    });
+}
+
+// Photo Modal Functions
+function openPhotoModal(photoUrl, productName) {
+    if (!photoUrl) {
+        alert('Tidak ada foto produk');
+        return;
+    }
+    
+    const modal = document.getElementById('photoModal');
+    const modalPhoto = document.getElementById('modalPhoto');
+    const modalTitle = document.getElementById('modalTitle');
+    
+    modalPhoto.src = photoUrl;
+    modalPhoto.alt = productName;
+    modalTitle.textContent = productName;
+    
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden'; // Prevent scrolling
+}
+
+function closePhotoModal() {
+    const modal = document.getElementById('photoModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto'; // Restore scrolling
+}
+
+// Close modal when clicking outside
+document.getElementById('photoModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closePhotoModal();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closePhotoModal();
+    }
+});
+
+// Edit Dimensions Modal Functions
+function showEditDimensionsModal(sku, productName) {
+    // Set SKU for form
+    document.getElementById('editDimensionsSku').value = sku;
+    document.getElementById('editDimensionsSkuDisplay').value = sku;
+
+    // Fetch current dimensions
+    fetch(`/inventory/product/${sku}/dimensions/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.dimensions) {
+                document.getElementById('lebarInput').value = data.dimensions.lebar_cm || '';
+                document.getElementById('panjangInput').value = data.dimensions.panjang_cm || '';
+                document.getElementById('tinggiInput').value = data.dimensions.tinggi_cm || '';
+                document.getElementById('posisiTidurInput').checked = data.dimensions.posisi_tidur || false;
+            } else {
+                // Clear fields if no dimensions found
+                document.getElementById('lebarInput').value = '';
+                document.getElementById('panjangInput').value = '';
+                document.getElementById('tinggiInput').value = '';
+                document.getElementById('posisiTidurInput').checked = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading dimensions:', error);
+            showMobileToast('Gagal memuat dimensi produk.', 'error');
+        });
+
+    // Show modal
+    document.getElementById('editDimensionsModal').style.display = 'block';
+}
+
+function closeEditDimensionsModal() {
+    document.getElementById('editDimensionsModal').style.display = 'none';
+}
+
+function saveDimensions(event) {
+    event.preventDefault(); // Prevent form from submitting traditionally
+
+    const sku = document.getElementById('editDimensionsSku').value;
+    const lebar = document.getElementById('lebarInput').value;
+    const panjang = document.getElementById('panjangInput').value;
+    const tinggi = document.getElementById('tinggiInput').value;
+    const posisiTidur = document.getElementById('posisiTidurInput').checked;
+
+    // Validate input
+    if (!lebar || !panjang || !tinggi) {
+        showMobileToast('Semua dimensi (lebar, panjang, tinggi) harus diisi!', 'error');
+        return;
+    }
+
+    // Disable button
+    const saveBtn = document.getElementById('saveDimensionsBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Menyimpan...';
+
+    // Send request
+    fetch('/inventory/product/update-dimensions/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            sku: sku,
+            lebar_cm: parseFloat(lebar),
+            panjang_cm: parseFloat(panjang),
+            tinggi_cm: parseFloat(tinggi),
+            posisi_tidur: posisiTidur
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeEditDimensionsModal();
+            showMobileToast('Dimensi berhasil diperbarui!', 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 1500); // Reload to reflect changes
+        } else {
+            showMobileToast('Error: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        showMobileToast('Terjadi kesalahan: ' + error.message, 'error');
+    })
+    .finally(() => {
+        // Re-enable button
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> Simpan Perubahan';
+    });
+}
+
+// Dropdown Functions
+function toggleFilterDropdown() {
+    const dropdown = document.getElementById('filterDropdown');
+    const sortDropdown = document.getElementById('sortDropdown');
+    
+    // Close sort dropdown if open
+    sortDropdown.style.display = 'none';
+    
+    // Toggle filter dropdown
+    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+}
+
+function toggleSortDropdown() {
+    const dropdown = document.getElementById('sortDropdown');
+    const filterDropdown = document.getElementById('filterDropdown');
+    
+    // Close filter dropdown if open
+    filterDropdown.style.display = 'none';
+    
+    // Toggle sort dropdown
+    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+}
+
+function selectFilter(brand) {
+    // Update hidden select
+    document.getElementById('brandFilter').value = brand;
+    
+    // Update active state
+    const filterItems = document.querySelectorAll('#filterDropdown .dropdown-item');
+    filterItems.forEach(item => item.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Close dropdown
+    document.getElementById('filterDropdown').style.display = 'none';
+    
+    // Apply filter
+    filterProducts();
+}
+
+function selectSort(sortValue) {
+    // Update hidden select
+    document.getElementById('sortBy').value = sortValue;
+    
+    // Update active state
+    const sortItems = document.querySelectorAll('#sortDropdown .dropdown-item');
+    sortItems.forEach(item => item.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Close dropdown
+    document.getElementById('sortDropdown').style.display = 'none';
+    
+    // Apply sort
+    sortProducts();
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.filter-btn') && !e.target.closest('#filterDropdown')) {
+        document.getElementById('filterDropdown').style.display = 'none';
+    }
+    if (!e.target.closest('.sort-btn') && !e.target.closest('#sortDropdown')) {
+        document.getElementById('sortDropdown').style.display = 'none';
+    }
+});
+
+// Initialize products when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeProducts();
+});
+</script>
+{% endblock %}

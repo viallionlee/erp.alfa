@@ -108,7 +108,7 @@ document.getElementById('barcodeInput').addEventListener('keypress', function(e)
 });
 
 function processScan(barcode) {
-    fetch("/fullfilment/orders_checking/{{ order_id }}/scan-barcode/", {
+    fetch("/fullfilment/scanpicking/{{ order_id }}/scan-barcode/", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

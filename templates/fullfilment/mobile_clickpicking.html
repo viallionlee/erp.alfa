@@ -1,0 +1,652 @@
+{% extends 'base_mobile.html' %}
+{% block content %}
+<style>
+/* Auto height untuk card produk */
+.clickable-item {
+    min-height: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+.clickable-item .d-flex {
+    align-items: flex-start !important;
+}
+
+.clickable-item img {
+    flex-shrink: 0;
+    max-height: 120px;
+    width: auto;
+}
+
+.clickable-item .flex-grow-1 {
+    min-width: 0;
+    overflow: visible;
+}
+</style>
+
+<!-- Header untuk menandai template CHECK BY CLICK -->
+<div class="container-fluid px-2 py-1" style="max-width:480px; margin:auto; background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border-radius: 0 0 12px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <div class="text-center py-2">
+        <h4 class="mb-0 fw-bold text-success" style="font-size: 1.1rem; letter-spacing: 0.5px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-hand-index me-2" viewBox="0 0 16 16">
+                <path d="M6.75 1a.75.75 0 0 1 .75.75V8a.5.5 0 0 0 1 0V5.467l.086-.004c.317-.012.637-.008.816.027.134.027.294.085.448.182.077.061.15.136.18.226.096.208.1.446 0 .654-.211.227-.46.400-.706.562h-.002l-.088.04A.64.64 0 0 1 9 7.39v-.013a4.963 4.963 0 0 0-1.002-.221A25.186 25.186 0 0 0 8 7.101c-.39 0-.74.021-1.084.044A48.14 48.14 0 0 0 6.75 7.39v.013a.64.64 0 0 1-.134-.013l-.088-.04h-.002c-.246-.162-.495-.335-.706-.562-.1-.208-.096-.446 0-.654.03-.09.103-.165.18-.226a1.163 1.163 0 0 1 .448-.182c.179-.035.499-.039.816-.027l.086.004V8a.5.5 0 0 0 1 0V1.75A.75.75 0 0 1 6.75 1zM8.5 4.466V1.75a1.75 1.75 0 1 0-3.5 0v5.34l-1.2.24a1.5 1.5 0 0 0-1.196 1.636l.345 3.106a2.5 2.5 0 0 0 .405 1.11l.05.07.2.25c.112.14.26.258.436.326l.715.32a.5.5 0 0 0 .65-.49v-.106a1.5 1.5 0 0 0-.09-.344L8.5 4.466Z"/>
+            </svg>
+            CHECK BY CLICK
+        </h4>
+    </div>
+</div>
+
+<div class="container-fluid px-2 py-2" style="max-width:480px; margin:auto;"> {# REMOVED padding-bottom #}
+
+    <!-- Step 1: Input Order ID -->
+    <div id="orderIdSection" {% if show_tables %}style="display:none;"{% endif %}>
+        <form method="get" id="orderIdForm">
+            <label for="orderidinput" class="form-label fw-bold" style="font-size:1em;">Input Order ID</label>
+            <div class="input-group mb-2 flex-nowrap">
+                <input type="text" id="orderidinput" name="order_id" class="form-control form-control-sm rounded-start" style="font-size:1em; min-width:0;" placeholder="Order ID..." value="{{ order_id|default:'' }}" autofocus autocomplete="off">
+                <button type="submit" class="btn btn-primary btn-sm">Cari</button>
+            </div>
+        </form>
+        {% if error %}
+        <div class="alert alert-danger py-2">{{ error }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Step 2: Product Cards & Click Logic, only if show_tables -->
+    {% if show_tables %}
+    <div id="clickFeedback" class="mt-2"></div> 
+
+    <!-- Order Information -->
+    {% if order_id %}
+    <div class="mb-3">
+        <div class="alert alert-info py-2" style="font-size:0.9rem;">
+            <strong>Order ID:</strong> {{ order_id }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Pending Items -->
+    <div class="mb-0"> {# REMOVED margin-bottom (was mb-4) #}
+        <h5 class="mb-2" style="font-size:1em;">Pending Items</h5>
+        <ul class="list-group" id="pendingList"
+            style="display:flex; flex-direction:column-reverse; max-height: calc(100vh - 200px); overflow-y:auto; -webkit-overflow-scrolling: touch; scroll-behavior: smooth;">
+            {% for item in pending_orders %}
+            <li class="list-group-item px-2 py-2 mb-3 clickable-item"
+                style="border-radius:14px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #f0f0f0; cursor:pointer; min-height:auto; height:auto;"
+                data-sku="{{ item.sku }}" data-barcode="{{ item.barcode }}" data-nama="{{ item.nama_produk }}"
+                data-variant="{{ item.variant_produk }}" data-brand="{{ item.brand }}" data-photo="{{ item.photo_url }}"
+                data-jumlah="{{ item.jumlah }}" data-jumlah-ambil="{{ item.jumlah_ambil }}"
+                data-order-item-id="{{ item.id }}"
+                data-update-url="{% url 'update_by_click' order_id=order_id %}"> {# ADDED data-update-url #}
+                <div class="d-flex align-items-center gap-2">
+                    <img src="{{ item.photo_url|default:'/static/icons/alfaicon.png' }}" alt="Photo"
+                         style="height:120px; width:auto; max-width:100%; object-fit:contain; border-radius:10px; border:1px solid #eee; background:#fafafa;">
+                    <div class="flex-grow-1 ms-2">
+                        <div class="fw-bold" style="font-size:0.8rem;">{{ item.nama_produk }}</div>
+                        <div class="mt-1 mb-1">
+                            <span class="badge bg-info" style="font-size:0.7rem;">{{ item.variant_produk }}</span>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between" style="font-size:0.8rem;">
+                            <span class="badge bg-success" style="font-size:0.7rem;">{{ item.brand }}</span>
+                            <span class="badge bg-primary jumlah-badge" style="font-size:0.7rem;">{{ item.jumlah_ambil }}/{{ item.jumlah }}</span>
+                        </div>
+                        <div class="mt-1" style="font-size:0.8rem;">
+                            <span class="text-muted">Barcode: {{ item.barcode }}</span>
+                        </div>
+                        <div class="mt-1" style="font-size:0.8rem;">
+                            <span class="text-muted">SKU: {{ item.sku }}</span>
+                        </div>
+                    </div>
+                </div>
+            </li>
+            {% empty %}
+            <li class="list-group-item text-center text-muted">Tidak ada data pending.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Completed Items (This section will be removed) -->
+    
+    {% endif %}
+</div>
+
+
+<!-- Button Ubah ke By SCAN - positioned above sticky bar -->
+<div style="position:fixed;bottom:70px;left:0;width:100vw;z-index:999;padding:0 1rem;">
+    <a href="{% if order_id %}{% url 'scanpicking_detail' order_id=order_id %}{% else %}{% url 'scanpicking_index' %}{% endif %}" 
+       class="btn btn-success w-100" 
+       style="padding:0.75rem;font-size:1rem;font-weight:600;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+        Ubah ke By SCAN
+    </a>
+</div>
+
+
+<style>
+.fab-v1 {
+  position: fixed;
+  bottom: 80px;
+  right: 24px;
+  z-index: 1050;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #1976d2;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  font-size: 1.3rem;
+  border: none;
+  outline: none;
+  transition: background 0.2s;
+  font-weight: bold;
+}
+.fab-v1:active {
+  background: #1565c0;
+}
+.fab-v1-top {
+  position: fixed;
+  top: 65px;
+  right: 100px;
+  z-index: 1050;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #1976d2;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  font-size: 1.1rem;
+  border: none;
+  outline: none;
+  transition: background 0.2s;
+  font-weight: bold;
+}
+.fab-v1-top:active {
+  background: #1565c0;
+}
+</style>
+
+<style>
+.fab-scanpick, .fab-scanorder {
+  position: fixed;
+  top: 68px;
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px 0 14px;
+  height: 44px;
+  border-radius: 22px;
+  font-weight: 600;
+  font-size: 1.05rem;
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.18);
+  border: none;
+  outline: none;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+}
+.fab-scanpick {
+  right: 24px;
+  background: linear-gradient(90deg, #1976d2 80%, #2196f3 100%);
+  color: #fff;
+}
+.fab-scanpick:hover, .fab-scanpick:focus {
+  background: linear-gradient(90deg, #1769aa 80%, #1976d2 100%);
+  box-shadow: 0 6px 20px rgba(25, 118, 210, 0.28);
+  transform: translateY(-2px) scale(1.04);
+}
+.fab-scanorder {
+  right: 140px; /* Geser ke kiri agar sejajar scanpick, atur sesuai kebutuhan */
+  background: linear-gradient(90deg, #ff9800 80%, #ffc107 100%);
+  color: #fff;
+}
+.fab-scanorder:hover, .fab-scanorder:focus {
+  background: linear-gradient(90deg, #f57c00 80%, #ff9800 100%);
+  box-shadow: 0 6px 20px rgba(255, 193, 7, 0.28);
+  transform: translateY(-2px) scale(1.04);
+}
+.fab-scanpick svg, .fab-scanorder svg {
+  width: 22px;
+  height: 22px;
+  margin-right: 2px;
+}
+@media (max-width: 600px) {
+  .fab-scanpick, .fab-scanorder {
+    top: 65px;
+    font-size: 0.98rem;
+    height: 38px;
+    padding: 0 12px 0 10px;
+  }
+  .fab-scanpick {
+    right: 12px;
+  }
+  .fab-scanorder {
+    right: 150px;
+  }
+  .fab-scanpick svg, .fab-scanorder svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+</style>
+
+
+
+<!-- Modal for Completed Items -->
+<div class="modal fade" id="completedItemsModal" tabindex="-1" aria-labelledby="completedItemsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="completedItemsModalLabel">Completed Items</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="list-group" id="completedListModal">
+                    <!-- Completed items will be injected here by JavaScript -->
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Modal for Product Detail Zoom -->
+<div class="modal fade" id="productDetailModal" tabindex="-1" aria-labelledby="productDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productDetailModalLabel">Detail Produk</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center d-flex flex-column align-items-center justify-content-center">
+                <img id="modalProductPhoto" src="" alt="Product Photo"
+                     style="max-width:90%; max-height:40vh; object-fit:contain; border-radius:10px; border:1px solid #eee; background:#fafafa; margin-bottom:1rem;">
+                <h4 id="modalProductName" class="fw-bold mb-1"></h4>
+                <p id="modalProductVariant" class="text-muted mb-1"></p>
+                <p id="modalProductBrand" class="text-secondary mb-2"></p>
+                <div class="d-flex align-items-center justify-content-center mb-3" style="font-size:1.1em;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                         class="bi bi-upc me-2" viewBox="0 0 16 16">
+                        <path d="M1.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5zm2 0A.5.5 0 0 1 4 1.5v13a.5.5 0 0 1-1 0v-13A.5.5 0 0 1 3.5 1zm2 0a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5zm2 0a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5zm2 0a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5zm2 0a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+                    </svg>
+                    <span id="modalProductBarcode" class="fw-bold"></span>
+                </div>
+                <h3 id="modalProductQuantity" class="fw-bold text-primary"></h3>
+            </div>
+            <div class="modal-footer d-flex justify-content-center gap-3"> {# Added gap-3 for spacing #}
+                <!-- New Decrement button -->
+                <button type="button" class="btn btn-danger btn-lg" id="modalDecrementButton" data-order-item-id="">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-dash-circle me-2" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8z"/>
+                    </svg>
+                    Kurangi 1 Item
+                </button>
+                <!-- Update button (now increment) -->
+                <button type="button" class="btn btn-primary btn-lg" id="modalIncrementButton" data-order-item-id="">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-plus-circle me-2" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                    </svg>
+                    Tambahkan 1 Item
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://unpkg.com/@zxing/library@latest"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<!-- 1. TAMBAHKAN SWEETALERT2 -->
+<script>
+    // Inisialisasi variabel global untuk digunakan
+    window.ORDER_ID = "{{ order_id|escapejs }}";
+    window.CSRF_TOKEN = "{{ csrf_token }}";
+
+    // Bootstrap Modal instances
+    const productDetailModal = new bootstrap.Modal(document.getElementById('productDetailModal'));
+
+    // Fungsi suara
+    function playSound(type) {
+        if (type === 'completed') {
+            new Audio('/static/sounds/completedsound.mp3').play();
+        } else if (type === 'success') {
+            new Audio('/static/sounds/ding.mp3').play();
+        } else if (type === 'error' || type === 'fail') {
+            new Audio('/static/sounds/wrong_barcode.mp3').play();
+        } else { // For over_scan or other specific cases
+            new Audio('/static/sounds/over_scan.mp3').play();
+        }
+    }
+
+    // Fungsi feedback
+    function showFeedback(type, message) {
+        const feedback = document.getElementById('clickFeedback');
+        if (!feedback) return;
+        feedback.innerHTML = `<div class=\"alert alert-${type} alert-dismissible fade show py-2\" role=\"alert\">\r\n        ${message}\r\n        <button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"alert\" aria-label=\"Close\"></button>\r\n    </div>`;
+        setTimeout(() => {
+            const alert = feedback.querySelector('.alert');
+            if (alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }
+        }, 3000);
+    }
+    
+    // Fungsi untuk memperbarui tampilan tabel (pending)
+    function updateTables(pendingOrders, completedOrders) {
+        const pendingList = document.getElementById('pendingList');
+
+        function renderList(ulElement, orders, isCompletedList) {
+            ulElement.innerHTML = '';
+            if (orders.length === 0) {
+                const li = document.createElement('li');
+                li.className = 'list-group-item text-center text-muted';
+                li.textContent = isCompletedList ? 'Tidak ada data completed.' : 'Tidak ada data pending.';
+                ulElement.appendChild(li);
+                return;
+            }
+
+            orders.forEach(function(item) {
+                const li = document.createElement('li');
+                li.className = 'list-group-item px-2 py-2 mb-3 clickable-item';
+                li.style = 'border-radius:14px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #f0f0f0; cursor:pointer; min-height:auto; height:auto;';
+                li.setAttribute('data-sku', item.sku);
+                li.setAttribute('data-barcode', item.barcode);
+                li.setAttribute('data-nama', item.nama_produk);
+                li.setAttribute('data-variant', item.variant_produk);
+                li.setAttribute('data-brand', item.brand);
+                li.setAttribute('data-photo', item.photo_url);
+                li.setAttribute('data-jumlah', item.jumlah);
+                li.setAttribute('data-jumlah-ambil', item.jumlah_ambil);
+                li.setAttribute('data-order-item-id', item.id);
+                // Ensure this data attribute is also added during dynamic rendering
+                li.setAttribute('data-update-url', "{% url 'update_by_click' order_id=order_id %}");
+
+
+                const badgeClass = item.status_ambil === 'completed' ? 'bg-success' :
+                           (item.status_ambil === 'partial' ? 'bg-info' : 'bg-primary');
+
+                li.innerHTML = `
+                    <div class="d-flex align-items-center gap-2">
+                        <img src="${item.photo_url || '/static/icons/alfaicon.png'}" alt="Photo"
+                             style="height:120px; width:auto; max-width:100%; object-fit:contain; border-radius:10px; border:1px solid #eee; background:#fafafa;">
+                        <div class="flex-grow-1 ms-2">
+                            <div class="fw-bold" style="font-size:0.8rem;">${item.nama_produk}</div>
+                            <div class="mt-1 mb-1">
+                                <span class="badge bg-info" style="font-size:0.7rem;">${item.variant_produk || ''}</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between" style="font-size:0.8rem;">
+                                <span class="badge bg-success" style="font-size:0.7rem;">${item.brand || ''}</span>
+                                <span class="badge ${badgeClass} jumlah-badge" style="font-size:0.7rem;">${item.jumlah_ambil}/${item.jumlah}</span>
+                            </div>
+                            <div class="mt-1" style="font-size:0.8rem;">
+                                <span class="text-muted">Barcode: ${item.barcode}</span>
+                            </div>
+                            <div class="mt-1" style="font-size:0.8rem;">
+                                <span class="text-muted">SKU: ${item.sku || ''}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                ulElement.appendChild(li);
+            });
+
+            // ⛔ Jangan auto-scroll jika pakai column-reverse
+            if (!ulElement.style.flexDirection.includes('column-reverse')) {
+                ulElement.scrollTop = ulElement.scrollHeight;
+            }
+        }
+        renderList(pendingList, pendingOrders, false);
+        
+        // 2. TAMBAHKAN INI UNTUK MENGUPDATE DATA MODAL COMPLETED SECARA REAL-TIME
+        populateAndShowCompletedModal(completedOrders);
+    }
+
+
+    // Submit order ID form
+    const orderIdForm = document.getElementById('orderIdForm');
+    const orderIdInput = document.getElementById('orderidinput');
+    if (orderIdForm && orderIdInput) {
+        orderIdForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const orderId = orderIdInput.value.trim();
+            if (orderId) {
+                window.location.href = `/fullfilment/clickpicking/${encodeURIComponent(orderId)}/`;
+            }
+        });
+    }
+
+    // Click picking logic (hanya aktif jika show_tables)
+    {% if show_tables %}
+    // Event listener untuk klik pada item list
+    const pendingList = document.getElementById('pendingList');
+
+    if (pendingList) {
+        pendingList.addEventListener('click', function(e) {
+            const clickedItem = e.target.closest('.clickable-item');
+            if (clickedItem) {
+                const targetElement = e.target;
+                // Cek apakah yang diklik adalah elemen IMG, atau ada di dalam img (misal jika ada padding/border)
+                const isImageClick = targetElement.tagName === 'IMG' || targetElement.closest('img'); 
+
+                if (isImageClick) {
+                    // Jika klik pada gambar, tampilkan modal detail produk
+                    const itemData = {
+                        id: clickedItem.dataset.orderItemId,
+                        sku: clickedItem.dataset.sku,
+                        barcode: clickedItem.dataset.barcode,
+                        nama_produk: clickedItem.dataset.nama,
+                        variant_produk: clickedItem.dataset.variant,
+                        brand: clickedItem.dataset.brand,
+                        photo_url: clickedItem.dataset.photo,
+                        jumlah: parseInt(clickedItem.dataset.jumlah),
+                        jumlah_ambil: parseInt(clickedItem.dataset.jumlahAmbil),
+                        update_url: clickedItem.dataset.updateUrl
+                    };
+                    showProductDetailModal(itemData);
+                } else {
+                    // Jika klik pada bagian lain dari item, langsung proses update (hanya increment)
+                    const orderItemId = clickedItem.dataset.orderItemId; // Use order item ID
+                    processClick(orderItemId, 'increment'); // Pass 'increment' action
+                }
+            }
+        });
+    }
+
+    // New function to populate and show the product detail modal
+    function showProductDetailModal(item) {
+        document.getElementById('modalProductPhoto').src = item.photo_url || '/static/icons/alfaicon.png';
+        document.getElementById('modalProductName').textContent = item.nama_produk;
+        document.getElementById('modalProductVariant').textContent = item.variant_produk || '';
+        document.getElementById('modalProductBrand').textContent = item.brand || '';
+        document.getElementById('modalProductBarcode').textContent = item.barcode;
+        document.getElementById('modalProductQuantity').textContent = `${item.jumlah_ambil}/${item.jumlah}`;
+        
+        // Store item ID for the update buttons inside the modal
+        const modalIncrementButton = document.getElementById('modalIncrementButton');
+        const modalDecrementButton = document.getElementById('modalDecrementButton');
+
+        modalIncrementButton.dataset.orderItemId = item.id;
+        modalIncrementButton.dataset.updateUrl = item.update_url; // Pass the URL to the button as well
+        modalIncrementButton.dataset.currentJumlahAmbil = item.jumlah_ambil; // Store current quantity
+        modalIncrementButton.dataset.totalJumlah = item.jumlah; // Store total quantity
+
+        modalDecrementButton.dataset.orderItemId = item.id;
+        modalDecrementButton.dataset.updateUrl = item.update_url; // Pass the URL to the button as well
+        modalDecrementButton.dataset.currentJumlahAmbil = item.jumlah_ambil; // Store current quantity
+        modalDecrementButton.dataset.totalJumlah = item.jumlah; // Store total quantity
+
+        productDetailModal.show(); // Show the modal
+    }
+
+    // Add event listeners for the update buttons INSIDE the modal
+    const modalIncrementButton = document.getElementById('modalIncrementButton');
+    const modalDecrementButton = document.getElementById('modalDecrementButton');
+
+    modalIncrementButton.addEventListener('click', function() {
+        const orderItemId = this.dataset.orderItemId;
+        processClick(orderItemId, 'increment'); // Pass 'increment' action
+    });
+
+    modalDecrementButton.addEventListener('click', function() {
+        const orderItemId = this.dataset.orderItemId;
+        processClick(orderItemId, 'decrement'); // Pass 'decrement' action
+    });
+
+
+    function processClick(orderItemId, action) { // Now accepts orderItemId and action
+        // Get the update URL from the relevant element (can be from any item with this orderItemId)
+        const clickedItem = document.querySelector(`[data-order-item-id="${orderItemId}"]`);
+        if (!clickedItem) {
+            showFeedback('danger', 'Item tidak ditemukan di DOM (HTML).');
+            playSound('error');
+            return;
+        }
+        const updateUrl = clickedItem.dataset.updateUrl;
+        
+        fetch(updateUrl, { // Use the dynamically generated URL
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.CSRF_TOKEN,
+            },
+            body: JSON.stringify({ order_item_id: orderItemId, order_id: window.ORDER_ID, action: action }) // Pass order_item_id and action
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateTables(data.pending_orders, data.completed_orders); // Update both tables
+                showFeedback('success', 'Item berhasil diupdate!');
+                playSound('success'); // Play ding sound
+                
+                // Update quantity display in the modal after successful update if modal is open
+                if (productDetailModal._isShown) { // Check if modal is currently shown
+                    const modalProductQuantity = document.getElementById('modalProductQuantity');
+                    const totalJumlah = document.getElementById('modalIncrementButton').dataset.totalJumlah; // Get total quantity from button
+                    modalProductQuantity.textContent = `${data.new_jumlah_ambil}/${totalJumlah}`;
+                }
+
+
+                if (data.status_ambil === 'completed' && data.all_order_completed) { // If item completed AND modal is open
+                    // Jika item yang baru diupdate selesai, tutup modal detail produk.
+                    productDetailModal.hide();
+                }
+
+                if (data.all_order_completed) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Order ini sudah completed',
+                        text: 'Semua item sudah selesai diproses.',
+                        showConfirmButton: false, // Hilangkan tombol "OK"
+                        timer: 1500, // Atur timer 1.5 detik
+                        allowOutsideClick: false
+                    }).then(() => {
+                        window.location.href = window.location.origin + "/fullfilment/clickpicking/";
+                    });
+                }
+            } else {
+                playSound('error'); // Play error sound
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Update Gagal',
+                    text: data.error || 'Terjadi kesalahan.',
+                    confirmButtonText: 'Tutup'
+                });
+            }
+        })
+        .catch(error => {
+            showFeedback('danger', 'Terjadi kesalahan koneksi.');
+            playSound('error');
+        });
+    }
+
+    // Initial check for already packed order
+    {% if is_already_packed %}
+    Swal.fire({
+        icon: 'warning',
+        title: 'Pesanan Sudah Diproses',
+        html: `ID Pesanan <strong>{{ order_id }}</strong> telah selesai di-scan pada:<br><strong>{{ packed_at }}</strong> oleh <strong>{{ packed_by }}</strong>.`,
+        confirmButtonText: 'Tutup',
+        allowOutsideClick: false,
+        allowEnterKey: true,
+    }).then(() => {
+        // No input to disable
+    });
+    playSound('error');
+    {% endif %}
+
+    {% endif %} {# End if show_tables #}
+
+    // 3. UBAH FUNGSI populateAndShowCompletedModal UNTUK MENERIMA DATA BARU
+    function populateAndShowCompletedModal(completedOrdersData) {
+        const completedList = document.getElementById('completedListModal');
+        completedList.innerHTML = ''; // Clear previous items
+
+        // Gunakan data argumen jika ada, jika tidak, gunakan data dari Django
+        const completedOrders = completedOrdersData || {{ completed_orders|safe }};
+
+        if (completedOrders.length === 0) {
+            completedList.innerHTML = '<li class="list-group-item">No completed items yet.</li>';
+        } else {
+            completedOrders.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item px-2 py-2 mb-3';
+                li.style = 'border-radius:14px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #f0f0f0; min-height:auto; height:auto;';
+                li.innerHTML = `
+                    <div class="d-flex align-items-center gap-2">
+                        <img src="${item.photo_url || '/static/icons/alfaicon.png'}" alt="Photo" style="height:120px; width:auto; max-width:100%; object-fit:contain; border-radius:10px; border:1px solid #eee; background:#fafafa;">
+                        <div class="flex-grow-1 ms-2">
+                            <div class="fw-bold" style="font-size:0.8rem;">${item.nama_produk}</div>
+                            <div class="mt-1 mb-1">
+                                <span class="badge bg-info" style="font-size:0.7rem;">${item.variant_produk}</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between" style="font-size:0.8rem;">
+                                <span class="badge bg-success" style="font-size:0.7rem;">${item.brand}</span>
+                                <span class="badge bg-success jumlah-badge" style="font-size:0.7rem;">${item.jumlah_ambil}/${item.jumlah}</span>
+                            </div>
+                            <div class="mt-1" style="font-size:0.8rem;">
+                                <span class="me-1" style="vertical-align:middle;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-upc" viewBox="0 0 16 16">
+                                      <path d="M1.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5zm2 0A.5.5 0 0 1 4 1.5v13a.5.5 0 0 1-1 0v-13A.5.5 0 0 1 3.5 1zm2 0a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5zm2 0a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5zm2 0a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5zm2 0a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-1 0v-13a.5.5 0 0 1 .5-.5z"/>
+                                    </svg>
+                                </span>
+                                <span class="text-muted">Barcode: ${item.barcode}</span>
+                            </div>
+                            <div class="mt-1" style="font-size:0.8rem;">
+                                <span class="text-muted">SKU: ${item.sku || ''}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                completedList.appendChild(li);
+            });
+        }
+    }
+    
+    const completedItemsModal = document.getElementById('completedItemsModal');
+    completedItemsModal.addEventListener('show.bs.modal', function (event) {
+        // Panggil tanpa argumen agar mengambil data awal saat halaman dimuat
+        populateAndShowCompletedModal();
+    });
+
+
+    // Hide "Ubah ke By SCAN" button when order ID form is scanned (show_tables is true)
+    {% if show_tables %}
+    document.addEventListener('DOMContentLoaded', function() {
+        const ubahButton = document.querySelector('a[href*="scanpicking"]');
+        if (ubahButton) {
+            ubahButton.style.display = 'none';
+        }
+    });
+    {% endif %}
+</script>
+{% endblock %} 

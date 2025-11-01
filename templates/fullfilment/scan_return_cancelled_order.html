@@ -1,0 +1,388 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .scan-input {
+        font-size: 1.2rem;
+        padding: 15px;
+        border: 2px solid #007bff;
+        border-radius: 8px;
+    }
+    .scan-input:focus {
+        border-color: #0056b3;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    .order-card {
+        transition: all 0.2s ease;
+        border-left: 4px solid #dc3545;
+    }
+    .order-card.returned {
+        border-left-color: #28a745;
+        background-color: #f8f9fa;
+    }
+    .status-badge {
+        font-size: 0.8rem;
+    }
+</style>
+
+<div class="container-fluid mt-3">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="fw-bold mb-1">Scan Return Cancelled Order</h2>
+                    <p class="text-muted mb-0">Batch: <span class="fw-bold text-primary">{{ nama_batch }}</span></p>
+                </div>
+                <a href="{% url 'ready_to_print_list' %}?nama_batch={{ nama_batch }}" class="btn btn-outline-secondary">
+                    ← Back to Ready to Print
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center">
+                    <h3 class="mb-1">{{ total_cancelled }}</h3>
+                    <p class="mb-0">Total Cancelled</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            {% if already_returned == total_cancelled and total_cancelled > 0 %}
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h3 class="mb-1">{{ already_returned }}/{{ total_cancelled }}</h3>
+                        <p class="mb-0">All Returned</p>
+                    </div>
+                </div>
+            {% elif already_returned > 0 and already_returned < total_cancelled %}
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <h3 class="mb-1">{{ already_returned }}/{{ total_cancelled }}</h3>
+                        <p class="mb-0">Partial Return</p>
+                    </div>
+                </div>
+            {% else %}
+                <div class="card bg-warning text-dark">
+                    <div class="card-body text-center">
+                        <h3 class="mb-1">{{ pending_return }}</h3>
+                        <p class="mb-0">Pending Return</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3 class="mb-1">{{ already_returned }}</h3>
+                    <p class="mb-0">Already Returned</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scan Form -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Scan Return Cancelled Order</h5>
+                </div>
+                <div class="card-body">
+                    <form id="scanForm">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control scan-input" 
+                                   id="orderIdInput" 
+                                   placeholder="Scan atau ketik Order ID..."
+                                   autocomplete="off">
+                            <button class="btn btn-primary btn-lg" type="submit" id="scanBtn">
+                                <i class="bi bi-upc-scan"></i> Scan
+                            </button>
+                        </div>
+                        <div class="form-text mt-2">
+                            <i class="bi bi-info-circle"></i> 
+                            Scan order ID yang sudah dibatalkan dan belum di-return
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scan Hapus Order Printed Form -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-trash me-2"></i>Scan Hapus Order Printed
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="scanHapusForm">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control scan-input border-warning" 
+                                   id="hapusOrderIdInput" 
+                                   placeholder="Scan atau ketik Order ID yang sudah printed..."
+                                   autocomplete="off">
+                            <button class="btn btn-warning btn-lg" type="submit" id="hapusScanBtn">
+                                <i class="bi bi-trash"></i> Hapus dari Batch
+                            </button>
+                        </div>
+                        <div class="form-text mt-2 text-warning">
+                            <i class="bi bi-exclamation-triangle"></i> 
+                            Menghapus orderan yang sudah di printed saja dari Batch
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Daftar Cancelled Orders</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Status</th>
+                                    <th>Status Return</th>
+                                    <th>SKU</th>
+                                    <th>Jumlah</th>
+                                    <th>Order Type</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTableBody">
+                                {% for order in cancelled_orders %}
+                                <tr class="order-row {% if order.status_retur == 'Y' %}table-success{% endif %}" 
+                                    data-order-id="{{ order.id_pesanan }}">
+                                    <td class="fw-bold">{{ order.id_pesanan }}</td>
+                                    <td>
+                                        <span class="badge bg-danger status-badge">{{ order.status }}</span>
+                                    </td>
+                                    <td>
+                                        {% if order.status_retur == 'Y' %}
+                                            <span class="badge bg-success status-badge">Returned</span>
+                                        {% else %}
+                                            <span class="badge bg-warning status-badge">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ order.sku }}</td>
+                                    <td>{{ order.jumlah }}</td>
+                                    <td>{{ order.order_type }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        Tidak ada cancelled orders untuk batch ini
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const orderIdInput = document.getElementById('orderIdInput');
+    const scanForm = document.getElementById('scanForm');
+    const scanBtn = document.getElementById('scanBtn');
+    const hapusOrderIdInput = document.getElementById('hapusOrderIdInput');
+    const scanHapusForm = document.getElementById('scanHapusForm');
+    const hapusScanBtn = document.getElementById('hapusScanBtn');
+    const namaBatch = "{{ nama_batch|escapejs }}";
+    
+    // Auto focus on input
+    orderIdInput.focus();
+    
+    // Handle form submission
+    scanForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const orderId = orderIdInput.value.trim();
+        if (!orderId) {
+            Swal.fire('Error', 'Order ID tidak boleh kosong', 'error');
+            return;
+        }
+        
+        // Disable button and show loading
+        scanBtn.disabled = true;
+        scanBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+        
+        // Debug: Check CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfToken) {
+            Swal.fire('Error', 'CSRF token tidak ditemukan', 'error');
+            return;
+        }
+        
+        // Send scan request
+        fetch(`/fullfilment/api/scan_return_cancelled_order/${namaBatch}/scan/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken.value
+            },
+            body: JSON.stringify({
+                order_id: orderId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Success - update UI
+                Swal.fire({
+                    title: 'Success!',
+                    text: data.message,
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                // Update table row
+                const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
+                if (row) {
+                    row.classList.add('table-success');
+                    const statusReturnCell = row.cells[2];
+                    statusReturnCell.innerHTML = '<span class="badge bg-success status-badge">Returned</span>';
+                }
+                
+                // Update summary cards
+                updateSummaryCards();
+                
+            } else {
+                Swal.fire('Error', data.error, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Scan error:', error);
+            Swal.fire('Error', 'Terjadi kesalahan saat memproses scan', 'error');
+        })
+        .finally(() => {
+            // Re-enable button
+            scanBtn.disabled = false;
+            scanBtn.innerHTML = '<i class="bi bi-upc-scan"></i> Scan';
+            
+            // Clear input and focus
+            orderIdInput.value = '';
+            orderIdInput.focus();
+        });
+    });
+    
+    // Handle Enter key in input
+    orderIdInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            scanForm.dispatchEvent(new Event('submit'));
+        }
+    });
+    
+    // === SCAN HAPUS ORDER PRINTED FORM ===
+    scanHapusForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const orderId = hapusOrderIdInput.value.trim();
+        if (!orderId) {
+            Swal.fire('Error', 'Order ID tidak boleh kosong', 'error');
+            return;
+        }
+        
+        // Disable button and show loading
+        hapusScanBtn.disabled = true;
+        hapusScanBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+        
+        // Send scan request
+        fetch(`/fullfilment/api/scan_hapus_order_printed/${namaBatch}/scan/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                order_id: orderId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Success - show confirmation
+                Swal.fire({
+                    title: 'Success!',
+                    text: data.message,
+                    icon: 'success',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+                
+                // Reload page to refresh data
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+                
+            } else {
+                Swal.fire('Error', data.error, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Scan hapus error:', error);
+            Swal.fire('Error', 'Terjadi kesalahan saat memproses scan', 'error');
+        })
+        .finally(() => {
+            // Re-enable button
+            hapusScanBtn.disabled = false;
+            hapusScanBtn.innerHTML = '<i class="bi bi-trash"></i> Hapus dari Batch';
+            
+            // Clear input and focus
+            hapusOrderIdInput.value = '';
+            hapusOrderIdInput.focus();
+        });
+    });
+    
+    // Handle Enter key in hapus input
+    hapusOrderIdInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            scanHapusForm.dispatchEvent(new Event('submit'));
+        }
+    });
+    
+    // Function to update summary cards (optional - for real-time updates)
+    function updateSummaryCards() {
+        // Count pending and returned
+        const pendingRows = document.querySelectorAll('tr.order-row:not(.table-success)');
+        const returnedRows = document.querySelectorAll('tr.order-row.table-success');
+        
+        // Update cards (you might want to make this more sophisticated)
+        // For now, just reload the page after a delay
+        setTimeout(() => {
+            window.location.reload();
+        }, 2000);
+    }
+});
+</script>
+{% endblock %}
+

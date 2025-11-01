@@ -1,0 +1,12 @@
+{% extends "base_mobile.html" %}
+{% block title %}Profil{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h3>Profil Pengguna</h3>
+    <ul class="list-group">
+        <li class="list-group-item"><b>Username:</b> {{ user.username }}</li>
+        <li class="list-group-item"><b>Email:</b> {{ user.email }}</li>
+        <!-- Tambah info lain sesuai kebutuhan -->
+    </ul>
+</div>
+{% endblock %}

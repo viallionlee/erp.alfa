@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {% load humanize %}
+    <title>Purchase Report</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 1cm;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 10px;
+            line-height: 1.4;
+            color: #333;
+            width: 29.7cm;
+            max-width: 29.7cm;
+            margin: 0 auto;
+            padding: 1cm;
+            background: #fff;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 4px solid #1e3a8a;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #1e40af;
+            color: white;
+            border-radius: 8px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        
+        .header h2 {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .report-info {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .report-info p {
+            margin: 2px 0;
+            font-size: 11px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        
+        thead {
+            background: #1e40af;
+            color: white;
+        }
+        
+        th {
+            padding: 8px 5px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 9px;
+            text-transform: uppercase;
+            border: 1px solid #1e3a8a;
+        }
+        
+        td {
+            padding: 6px 5px;
+            border: 1px solid #e5e7eb;
+            font-size: 9px;
+        }
+        
+        tbody tr:nth-child(even) {
+            background: #f9fafb;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .total-row {
+            background: #f3f4f6 !important;
+            font-weight: 700;
+        }
+        
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 9px;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Purchase Report</h1>
+        <h2>PT. ALFA ERP</h2>
+    </div>
+
+    <div class="report-info">
+        <p><strong>Periode:</strong> {{ date_from }} s/d {{ date_to }}</p>
+        <p><strong>Report Type:</strong> {{ report_type|upper }}</p>
+        <p><strong>Total Purchases:</strong> {{ total_purchases }}</p>
+        <p><strong>Total Amount:</strong> Rp {{ total_amount|floatformat:0|intcomma }}</p>
+    </div>
+
+    {% if report_type == 'detail' %}
+    <!-- Detail Report -->
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 8%;">Date</th>
+                <th style="width: 10%;">Purchase #</th>
+                <th style="width: 12%;">Supplier</th>
+                <th style="width: 25%;">Product</th>
+                <th style="width: 10%;">Barcode</th>
+                <th style="width: 5%;" class="text-center">Qty</th>
+                <th style="width: 10%;" class="text-right">Harga Beli</th>
+                <th style="width: 10%;" class="text-right">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for purchase in purchases %}
+                {% for item in purchase.items.all %}
+                <tr>
+                    <td>{{ purchase.tanggal_purchase|date:"d M Y" }}</td>
+                    <td>{{ purchase.nomor_purchase }}</td>
+                    <td>{{ purchase.supplier.nama_supplier }}</td>
+                    <td>{{ item.product.nama_produk }}</td>
+                    <td>{{ item.product.barcode|default:item.product.sku }}</td>
+                    <td class="text-center">{{ item.quantity }}</td>
+                    <td class="text-right">Rp {{ item.harga_beli|floatformat:0|intcomma }}</td>
+                    <td class="text-right">Rp {{ item.subtotal|floatformat:0|intcomma }}</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr class="total-row">
+                <td colspan="7" class="text-right"><strong>TOTAL:</strong></td>
+                <td class="text-right"><strong>Rp {{ total_amount|floatformat:0|intcomma }}</strong></td>
+            </tr>
+        </tfoot>
+    </table>
+    {% else %}
+    <!-- Summary Report -->
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 10%;">Date</th>
+                <th style="width: 15%;">Purchase #</th>
+                <th style="width: 25%;">Supplier</th>
+                <th style="width: 15%;" class="text-right">Total Amount</th>
+                <th style="width: 10%;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for purchase in purchases %}
+            <tr>
+                <td>{{ purchase.tanggal_purchase|date:"d M Y" }}</td>
+                <td>{{ purchase.nomor_purchase }}</td>
+                <td>{{ purchase.supplier.nama_supplier }}</td>
+                <td class="text-right">Rp {{ purchase.total_amount|floatformat:0|intcomma }}</td>
+                <td>{{ purchase.get_status_display }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr class="total-row">
+                <td colspan="3" class="text-right"><strong>TOTAL:</strong></td>
+                <td class="text-right"><strong>Rp {{ total_amount|floatformat:0|intcomma }}</strong></td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+    {% endif %}
+
+    <div class="footer">
+        <p>Report generated on: {% now "d M Y, H:i" %}</p>
+    </div>
+</body>
+</html>
+
+
+
+
+
+

@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Tambah Produk Baru{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h3><i class="bi bi-plus-circle-fill me-2"></i>Tambah Produk Baru</h3>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="sku" class="form-label fw-bold">SKU <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="sku" name="sku" value="{{ form_data.sku }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="barcode" class="form-label fw-bold">Barcode</label>
+                    <input type="text" class="form-control" id="barcode" name="barcode" value="{{ form_data.barcode }}">
+                </div>
+                <div class="mb-3">
+                    <label for="nama_produk" class="form-label fw-bold">Nama Produk <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="nama_produk" name="nama_produk" value="{{ form_data.nama_produk }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="variant_produk" class="form-label fw-bold">Variant Produk</label>
+                    <input type="text" class="form-control" id="variant_produk" name="variant_produk" value="{{ form_data.variant_produk }}">
+                </div>
+                <div class="mb-3">
+                    <label for="brand" class="form-label fw-bold">Brand</label>
+                    <input type="text" class="form-control" id="brand" name="brand" value="{{ form_data.brand }}">
+                </div>
+                
+                <!-- Dimensi Produk -->
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="panjang_cm" class="form-label fw-bold">Panjang (cm)</label>
+                        <input type="number" step="0.01" class="form-control" id="panjang_cm" name="panjang_cm" value="{{ form_data.panjang_cm }}" min="0">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="lebar_cm" class="form-label fw-bold">Lebar (cm)</label>
+                        <input type="number" step="0.01" class="form-control" id="lebar_cm" name="lebar_cm" value="{{ form_data.lebar_cm }}" min="0">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="tinggi_cm" class="form-label fw-bold">Tinggi (cm)</label>
+                        <input type="number" step="0.01" class="form-control" id="tinggi_cm" name="tinggi_cm" value="{{ form_data.tinggi_cm }}" min="0">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="berat_gram" class="form-label fw-bold">Berat (gram)</label>
+                        <input type="number" step="0.01" class="form-control" id="berat_gram" name="berat_gram" value="{{ form_data.berat_gram }}" min="0">
+                    </div>
+                </div>
+                
+                <!-- Posisi Tidur -->
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="posisi_tidur" id="posisi_tidur" {% if form_data.posisi_tidur %}checked{% endif %}>
+                        <label class="form-check-label fw-bold" for="posisi_tidur">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Posisi Tidur (Hybrid Stacking)
+                        </label>
+                        <small class="form-text text-muted d-block">
+                            Centang jika produk dapat diposisikan tidur untuk optimasi ruang rak
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="photo" class="form-label fw-bold">Photo</label>
+                    <input type="file" class="form-control" id="photo" name="photo">
+                </div>
+                
+                <div class="mt-3 text-center">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save-fill me-1"></i> Simpan Produk
+                    </button>
+                    <a href="{% url 'products:index' %}" class="btn btn-secondary ms-2">Batal</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

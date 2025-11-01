@@ -1,0 +1,354 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load purchasing_filters %}
+
+{% block title %}Purchase Verify List - Keuangan{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Modern gradient backgrounds */
+    .gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .gradient-success {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .gradient-danger {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+    .gradient-warning {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    }
+    .gradient-info {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    }
+    
+    /* Modern card shadows */
+    .card-modern {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+    
+    .card-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+    
+    /* Modern button styles */
+    .btn-modern {
+        border-radius: 12px;
+        padding: 12px 20px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .btn-modern:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Icon backgrounds */
+    .icon-bg {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+    
+    /* Form styling */
+    .form-control-modern {
+        border: 2px solid #f1f3f4;
+        border-radius: 12px;
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control-modern:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    /* Table modern */
+    .table-modern {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .table-modern thead th {
+        border: none;
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #6c757d;
+        padding: 16px;
+    }
+    
+    .table-modern tbody tr {
+        border: none;
+        transition: all 0.2s ease;
+    }
+    
+    .table-modern tbody tr:hover {
+        background: #f8f9ff;
+    }
+    
+    .table-modern tbody td {
+        border: none;
+        padding: 16px;
+        vertical-align: middle;
+    }
+    
+    /* Badge modern */
+    .badge-modern {
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-weight: 500;
+        font-size: 0.75rem;
+    }
+    
+    /* Status badges */
+    .badge-received {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+    
+    /* Priority badges */
+    .badge-urgent {
+        background: linear-gradient(135deg, #f8d7da 0%, #f1b0b7 100%);
+        color: #721c24;
+        border: 1px solid #f1b0b7;
+    }
+    
+    .badge-normal {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-vh-100" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+    <div class="container-fluid py-5">
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0"><i class="bi bi-clipboard-check"></i> Purchase Verify List</h2>
+            <div class="d-flex gap-2">
+                <a href="{% url 'purchasing:purchase_list' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Semua Purchase
+                </a>
+                <a href="{% url 'purchasing:po_list' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-house"></i> Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row g-2 mb-4">
+            <div class="col-6 col-md-3 col-lg">
+                <div class="card text-white bg-warning h-100">
+                    <div class="card-body p-2">
+                        <h6 class="card-title mb-1" style="font-size: 0.75rem;">{{ stats_title_1 }}</h6>
+                        <h4 class="mb-0" style="font-size: 1.5rem;">{{ total_count }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 col-lg">
+                <div class="card text-white h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card-body p-2">
+                        <h6 class="card-title mb-1" style="font-size: 0.75rem;">Total Amount</h6>
+                        <h4 class="mb-0" style="font-size: 1.3rem;">Rp {{ total_amount|floatformat:0|intcomma }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 col-lg">
+                <div class="card text-white bg-info h-100">
+                    <div class="card-body p-2">
+                        <h6 class="card-title mb-1" style="font-size: 0.75rem;">Avg Amount</h6>
+                        <h4 class="mb-0" style="font-size: 1.3rem;">Rp {% if total_received > 0 %}{{ total_amount|div:total_received|floatformat:0|intcomma }}{% else %}0{% endif %}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 col-lg">
+                <div class="card text-white bg-primary h-100">
+                    <div class="card-body p-2">
+                        <h6 class="card-title mb-1" style="font-size: 0.75rem;">{{ stats_title_4 }}</h6>
+                        <h4 class="mb-0" style="font-size: 1.5rem;">{{ purchases.count }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter -->
+        <form method="get" id="filterForm" class="row g-2 mb-3">
+            <div class="col-md-3 d-flex align-items-center gap-2">
+                <div class="btn-group" role="group" aria-label="Filter status">
+                    <button type="button" onclick="switchTab('pending')" class="btn btn-sm {% if filter_data.tab != 'verified' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        Belum Verified
+                    </button>
+                    <button type="button" onclick="switchTab('verified')" class="btn btn-sm {% if filter_data.tab == 'verified' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        Verified
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <input type="text" id="search" name="search" 
+                       placeholder="Cari Nomor Purchase" value="{{ filter_data.search }}"
+                       class="form-control form-control-sm">
+            </div>
+            <div class="col-md-2">
+                <input type="date" id="date_from" name="date_from" 
+                       value="{{ filter_data.date_from }}"
+                       class="form-control form-control-sm" placeholder="Dari Tanggal">
+            </div>
+            <div class="col-md-2">
+                <input type="date" id="date_to" name="date_to" 
+                       value="{{ filter_data.date_to }}"
+                       class="form-control form-control-sm" placeholder="Sampai Tanggal">
+            </div>
+            <div class="col-md-2">
+                <select id="supplier_filter" name="supplier" class="form-select form-select-sm">
+                    <option value="">Semua Supplier</option>
+                    {% for supplier in suppliers %}
+                    <option value="{{ supplier.id }}" {% if filter_data.supplier == supplier.id|stringformat:"s" %}selected{% endif %}>
+                        {{ supplier.nama_supplier }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <input type="hidden" name="tab" value="{{ filter_data.tab|default:'pending' }}">
+            <!-- Buttons removed as requested -->
+        </form>
+
+        <!-- Purchase List -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                {% if purchases %}
+                <div class="table-responsive">
+                    <table class="table table-modern mb-0">
+                        <thead>
+                            <tr>
+                                <th class="fw-semibold">No. Purchase</th>
+                                <th class="fw-semibold">Supplier</th>
+                                <th class="fw-semibold">Tanggal</th>
+                                <th class="fw-semibold">Total Amount</th>
+                                <th class="fw-semibold">Items</th>
+                                <th class="fw-semibold">Status</th>
+                                <th class="fw-semibold">Received By</th>
+                                <th class="fw-semibold text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for purchase in purchases %}
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold text-dark">{{ purchase.nomor_purchase }}</div>
+                                    {% if purchase.po %}
+                                    <div class="text-muted small">PO: {{ purchase.po.nomor_po }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="fw-medium text-dark">{{ purchase.supplier.nama_supplier }}</div>
+                                    {% if purchase.supplier.alamat %}
+                                    <div class="text-muted small">{{ purchase.supplier.alamat|truncatechars:30 }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="fw-medium text-dark">{{ purchase.tanggal_purchase|date:"d M Y" }}</div>
+                                    {% if purchase.tanggal_received %}
+                                    <div class="text-muted small">Received: {{ purchase.tanggal_received|date:"d M Y" }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-success">Rp {{ purchase.total_amount|floatformat:0|intcomma }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-modern badge-normal">{{ purchase.items.count }} items</span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-modern badge-received">Received</span>
+                                </td>
+                                <td>
+                                    <div class="fw-medium text-dark">{{ purchase.received_by.get_full_name|default:purchase.received_by.username }}</div>
+                                    <div class="text-muted small">{{ purchase.received_at|date:"d M Y H:i" }}</div>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'purchasing:purchase_detail' purchase.id %}" class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-eye me-1"></i>Lihat
+                                        </a>
+                                        <a href="{% url 'purchasing:purchase_verify' purchase.id %}" class="btn btn-success btn-sm">
+                                            <i class="bi bi-check-circle me-1"></i>Verify
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="icon-bg bg-light text-muted mx-auto mb-3">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <h4 class="text-muted">Tidak ada purchase yang perlu di-verify</h4>
+                    <p class="text-muted">Semua purchase sudah terverifikasi atau belum ada purchase dengan status "Received".</p>
+                    <a href="{% url 'purchasing:purchase_list' %}" class="btn btn-primary btn-modern mt-3">
+                        <i class="bi bi-arrow-left me-2"></i>Lihat Semua Purchase
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+// Function to switch tabs while preserving other filters
+function switchTab(tabValue) {
+    const form = document.getElementById('filterForm');
+    const tabInput = document.querySelector('input[name="tab"]');
+    tabInput.value = tabValue;
+    form.submit();
+}
+
+$(document).ready(function() {
+    // Auto-submit form on filter change
+    $('#supplier_filter').on('change', function() {
+        $(this).closest('form').submit();
+    });
+    
+    // Search with delay
+    let searchTimeout;
+    $('#search').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            $(this).closest('form').submit();
+        }, 500);
+    });
+    
+    // Date range validation
+    $('#date_from, #date_to').on('change', function() {
+        const dateFrom = $('#date_from').val();
+        const dateTo = $('#date_to').val();
+        
+        if (dateFrom && dateTo && dateFrom > dateTo) {
+            alert('Tanggal "Dari" tidak boleh lebih besar dari tanggal "Sampai"');
+            $(this).val('');
+            return;
+        }
+        
+        $(this).closest('form').submit();
+    });
+});
+</script>
+{% endblock %}

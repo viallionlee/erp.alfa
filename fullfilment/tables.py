@@ -3,6 +3,9 @@ from .models import BatchItem
 from products.models import Product
 from django.utils.html import format_html
 from orders.models import Order
+from django.http import JsonResponse
+from django.db.models import Subquery, OuterRef
+from .models import ReadyToPrint
 
 class BatchItemTable(tables.Table):
     sku = tables.Column(verbose_name='SKU', accessor='product.sku', orderable=True)
@@ -22,17 +25,23 @@ class BatchItemTable(tables.Table):
         attrs = {'class': 'table table-hover align-middle'}
 
 class ReadyToPrintTable(tables.Table):
-    select = tables.CheckBoxColumn(accessor='pk', attrs={"th__input": {"id": "selectAll"}}, orderable=False, verbose_name='')
-    id = tables.Column(verbose_name='ID')
-    batchlist_id = tables.Column(verbose_name='Batchlist ID')
-    id_pesanan = tables.Column(verbose_name='ID Pesanan')
-    status_print = tables.Column(verbose_name='Status Print')
-    printed_at = tables.Column(verbose_name='Printed At')
+    id_pesanan = tables.Column(verbose_name="ID Pesanan")
+    order_type = tables.Column(verbose_name="Order Type")
+    status = tables.Column(verbose_name="Status Bayar")
+    status_order = tables.Column(verbose_name="Status Order")
+    status_print = tables.Column(verbose_name="Status Print")
+    printed_at = tables.DateTimeColumn(verbose_name="Printed At", format="d M Y, H:i")
 
     class Meta:
-        template_name = 'django_tables2/bootstrap4.html'
-        fields = ('select', 'id', 'batchlist_id', 'id_pesanan', 'status_print', 'printed_at')
-        attrs = {'class': 'table table-hover align-middle'}
+        model = ReadyToPrint
+        template_name = "django_tables2/bootstrap5.html"
+        fields = ('id', 'batchlist', 'id_pesanan', 'order_type', 'status', 'status_order', 'status_print', 'printed_at')
+        attrs = {
+            "class": "table table-hover",
+            "thead": {
+                "class": "table-light"
+            }
+        }
 
 class GenerateBatchOrderTable(tables.Table):
     check_stock = tables.Column(empty_values=(), verbose_name='Check Stock', orderable=False)

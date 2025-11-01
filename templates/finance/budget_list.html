@@ -1,0 +1,516 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Anggaran - Keuangan{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Modern gradient backgrounds */
+    .gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .gradient-success {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .gradient-danger {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+    .gradient-warning {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    }
+    .gradient-info {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    }
+    
+    /* Modern card shadows */
+    .card-modern {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+    
+    .card-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+    
+    /* Modern button styles */
+    .btn-modern {
+        border-radius: 12px;
+        padding: 12px 20px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .btn-modern:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Icon backgrounds */
+    .icon-bg {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+    
+    /* Budget cards */
+    .budget-card {
+        border: 2px solid #f1f3f4;
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 20px;
+        background: white;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .budget-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .budget-card.status-draft::before {
+        background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%);
+    }
+    
+    .budget-card.status-approved::before {
+        background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    }
+    
+    .budget-card.status-active::before {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+    
+    .budget-card.status-closed::before {
+        background: linear-gradient(135deg, #343a40 0%, #6c757d 100%);
+    }
+    
+    .budget-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .budget-card:hover::before {
+        width: 6px;
+    }
+    
+    /* Status badges */
+    .status-badge {
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Progress bars */
+    .progress-modern {
+        height: 12px;
+        border-radius: 10px;
+        background-color: #f1f3f4;
+        overflow: hidden;
+    }
+    
+    .progress-bar-modern {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.6s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .progress-bar-modern::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent 35%, rgba(255,255,255,0.3) 50%, transparent 65%);
+        animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    /* Form styling */
+    .form-control-modern {
+        border: 2px solid #f1f3f4;
+        border-radius: 12px;
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control-modern:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    /* Amount styling */
+    .budget-amount {
+        font-size: 1.1em;
+        font-weight: bold;
+        color: #495057;
+    }
+    
+    .actual-amount {
+        font-size: 1em;
+        color: #6c757d;
+    }
+    
+    .variance-positive {
+        color: #28a745;
+        font-weight: bold;
+    }
+    
+    .variance-negative {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    /* Period info */
+    .period-info {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 12px;
+        margin: 16px 0;
+    }
+    
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+    
+    .empty-state .icon-bg {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-vh-100" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+    <div class="container-fluid py-5">
+        <!-- Header Section -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="display-6 fw-bold text-dark mb-2">Manajemen Anggaran</h1>
+                        <p class="text-muted fs-5 mb-0">Pantau dan kelola anggaran perusahaan</p>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <a href="{% url 'finance:budget_create' %}" class="btn btn-primary btn-modern">
+                            <i class="bi bi-plus-circle me-2"></i>Buat Anggaran
+                        </a>
+                        <a href="{% url 'finance:dashboard' %}" class="btn btn-outline-primary btn-modern">
+                            <i class="bi bi-house me-2"></i>Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row mb-5">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card card-modern h-100">
+                    <div class="card-body gradient-primary text-white p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-2 fw-medium">Total Anggaran</h6>
+                                <h2 class="fw-bold mb-0">{{ page_obj.paginator.count }}</h2>
+                            </div>
+                            <div class="icon-bg bg-white bg-opacity-20 text-white">
+                                <i class="bi bi-list-ul"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card card-modern h-100">
+                    <div class="card-body gradient-success text-white p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-2 fw-medium">Anggaran Aktif</h6>
+                                <h2 class="fw-bold mb-0">{{ active_budgets_count|default:0 }}</h2>
+                            </div>
+                            <div class="icon-bg bg-white bg-opacity-20 text-white">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card card-modern h-100">
+                    <div class="card-body gradient-warning text-white p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-2 fw-medium">Total Anggaran</h6>
+                                <h2 class="fw-bold mb-0">Rp {{ total_budget_amount|floatformat:0|default:0|intcomma }}</h2>
+                            </div>
+                            <div class="icon-bg bg-white bg-opacity-20 text-white">
+                                <i class="bi bi-wallet2"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card card-modern h-100">
+                    <div class="card-body gradient-info text-white p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title text-white-50 mb-2 fw-medium">Total Aktual</h6>
+                                <h2 class="fw-bold mb-0">Rp {{ total_actual_amount|floatformat:0|default:0|intcomma }}</h2>
+                            </div>
+                            <div class="icon-bg bg-white bg-opacity-20 text-white">
+                                <i class="bi bi-graph-up"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="card card-modern mb-5">
+            <div class="card-header bg-white border-0 py-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title mb-0 fw-bold">Filter & Pencarian</h5>
+                        <p class="text-muted mb-0 mt-2">Saring data anggaran berdasarkan kriteria</p>
+                    </div>
+                    <div class="icon-bg bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-funnel"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="status_filter" class="form-label fw-medium">Status</label>
+                        <select class="form-control form-control-modern" id="status_filter" name="status">
+                            <option value="">Semua Status</option>
+                            <option value="draft" {% if status_filter == "draft" %}selected{% endif %}>Draft</option>
+                            <option value="approved" {% if status_filter == "approved" %}selected{% endif %}>Disetujui</option>
+                            <option value="active" {% if status_filter == "active" %}selected{% endif %}>Aktif</option>
+                            <option value="closed" {% if status_filter == "closed" %}selected{% endif %}>Ditutup</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="period_type_filter" class="form-label fw-medium">Tipe Periode</label>
+                        <select class="form-control form-control-modern" id="period_type_filter" name="period_type">
+                            <option value="">Semua Periode</option>
+                            <option value="MONTHLY" {% if period_type_filter == "MONTHLY" %}selected{% endif %}>Bulanan</option>
+                            <option value="QUARTERLY" {% if period_type_filter == "QUARTERLY" %}selected{% endif %}>Triwulanan</option>
+                            <option value="YEARLY" {% if period_type_filter == "YEARLY" %}selected{% endif %}>Tahunan</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-modern">
+                                <i class="bi bi-search me-2"></i>Filter
+                            </button>
+                            <a href="{% url 'finance:budget_list' %}" class="btn btn-outline-secondary btn-modern">
+                                <i class="bi bi-x-circle me-2"></i>Reset
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Budget List -->
+        <div class="row">
+            {% for budget in page_obj %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="budget-card status-{{ budget.status }}">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="flex-grow-1">
+                            <h5 class="fw-bold text-dark mb-1">{{ budget.name }}</h5>
+                            {% if budget.description %}
+                            <p class="text-muted mb-2 small">{{ budget.description|truncatewords:15 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {% if budget.status == 'draft' %}
+                                <span class="status-badge bg-secondary text-white">Draft</span>
+                            {% elif budget.status == 'approved' %}
+                                <span class="status-badge bg-info text-white">Disetujui</span>
+                            {% elif budget.status == 'active' %}
+                                <span class="status-badge bg-success text-white">Aktif</span>
+                            {% elif budget.status == 'closed' %}
+                                <span class="status-badge bg-dark text-white">Ditutup</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="period-info">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-calendar3 me-2 text-primary"></i>
+                            <small class="text-muted">
+                                {{ budget.period_start|date:"d M Y" }} - {{ budget.period_end|date:"d M Y" }}
+                            </small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-clock me-2 text-primary"></i>
+                            <small class="text-muted">{{ budget.get_period_type_display }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="fw-medium">Anggaran:</span>
+                            <span class="budget-amount">Rp {{ budget.budget_amount|floatformat:0|intcomma }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="fw-medium">Aktual:</span>
+                            <span class="actual-amount">Rp {{ budget.actual_amount|floatformat:0|intcomma }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span class="fw-medium">Selisih:</span>
+                            <span class="{% if budget.variance >= 0 %}variance-positive{% else %}variance-negative{% endif %}">
+                                Rp {{ budget.variance|floatformat:0|intcomma }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <small class="fw-medium">Pemanfaatan</small>
+                            <small class="fw-bold">{{ budget.utilization_percentage|floatformat:1 }}%</small>
+                        </div>
+                        <div class="progress-modern">
+                            <div class="progress-bar-modern {% if budget.utilization_percentage <= 80 %}bg-success{% elif budget.utilization_percentage <= 100 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                 style="width: {{ budget.utilization_percentage }}%">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted d-flex align-items-center">
+                            <i class="bi bi-bank me-2"></i>
+                            {{ budget.account.code }} - {{ budget.account.name }}
+                        </small>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'finance:budget_detail' budget.id %}" class="btn btn-outline-primary btn-sm flex-grow-1">
+                            <i class="bi bi-eye me-1"></i>Lihat
+                        </a>
+                        {% if budget.status == 'draft' %}
+                        <form method="post" action="{% url 'finance:budget_approve' budget.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-success btn-sm" 
+                                    onclick="return confirm('Apakah Anda yakin ingin menyetujui anggaran ini?')">
+                                <i class="bi bi-check me-1"></i>Setujui
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="card card-modern">
+                    <div class="card-body empty-state">
+                        <div class="icon-bg" style="width: 80px; height: 80px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); color: #6c757d;">
+                            <i class="bi bi-pie-chart" style="font-size: 2rem;"></i>
+                        </div>
+                        <h4 class="text-muted mb-3">Tidak Ada Anggaran Ditemukan</h4>
+                        <p class="text-muted mb-4">Mulai dengan membuat anggaran pertama Anda.</p>
+                        <a href="{% url 'finance:budget_create' %}" class="btn btn-primary btn-modern">
+                            <i class="bi bi-plus-circle me-2"></i>Buat Anggaran
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card card-modern">
+                    <div class="card-body">
+                        <nav aria-label="Budget pagination">
+                            <ul class="pagination justify-content-center mb-0">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if status_filter %}&status={{ status_filter }}{% endif %}{% if period_type_filter %}&period_type={{ period_type_filter }}{% endif %}">
+                                            <i class="bi bi-chevron-double-left"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if period_type_filter %}&period_type={{ period_type_filter }}{% endif %}">
+                                            <i class="bi bi-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                
+                                <li class="page-item active">
+                                    <span class="page-link">
+                                        Halaman {{ page_obj.number }} dari {{ page_obj.paginator.num_pages }}
+                                    </span>
+                                </li>
+                                
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if period_type_filter %}&period_type={{ period_type_filter }}{% endif %}">
+                                            <i class="bi bi-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if period_type_filter %}&period_type={{ period_type_filter }}{% endif %}">
+                                            <i class="bi bi-chevron-double-right"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+$(document).ready(function() {
+    // Auto-submit form on filter change
+    $('#status_filter, #period_type_filter').on('change', function() {
+        $(this).closest('form').submit();
+    });
+});
+</script>
+{% endblock %}

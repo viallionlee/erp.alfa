@@ -1,42 +1,136 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Daftar Produk{% endblock %}
 
 {% block content %}
-  <div class="container-fluid mt-4">
-    <div class="card mb-3" style="max-width: 128vw; margin: 0 auto;">
-      <div class="card-body">
-        <h2 class="fw-bold mb-3 text-center">Daftar Produk</h2>
-        <div class="d-flex justify-content-center mb-2 gap-2">
-          <button id="importBtn" class="btn btn-secondary shadow-sm icon-btn"><i class="bi bi-upload"></i> Import</button>
-          <button id="exportBtn" class="btn btn-info shadow-sm icon-btn"><i class="bi bi-download"></i> Export</button>
-          <button id="historyBtn" class="btn btn-primary shadow-sm icon-btn"><i class="bi bi-clock-history"></i> History</button>
-          <a href="{% url 'products:products_viewall' %}" class="btn btn-success shadow-sm icon-btn"><i class="bi bi-list"></i> View All</a>
-          <a href="/products/sku_bundling/" class="btn btn-warning shadow-sm icon-btn"><i class="bi bi-boxes"></i> SKU BUNDLING</a>
-        </div>
-        <div class="d-flex justify-content-start mb-3 gap-2 position-relative" style="max-width: 1200px; margin-left:0;">
-          <div style="width: 600px; position:relative;">
-            <input id="product-search" type="text" class="form-control" style="width: 100%; min-width: 400px; max-width: 600px;" placeholder="Cari produk (SKU / Barcode / Nama / Variant / Brand)...">
-            <div id="autocomplete-list" class="list-group position-absolute" style="z-index:1000; width:100%; left:0; top:100%;"></div>
+  <div class="container-fluid">
+    <div class="row g-3 mb-4 flex-nowrap overflow-auto">
+      <div class="col-auto flex-fill">
+        <a href="{% url 'products:add_product' %}" class="card h-100 text-decoration-none text-reset modern-card">
+          <div class="card-body d-flex flex-column align-items-center text-center p-3">
+            <div class="icon-wrapper mb-2"><i class="bi bi-plus-circle"></i></div>
+            <div class="text-center">
+              <h6 class="card-title mb-1 fw-bold">Tambah Produk</h6>
+              <small class="text-muted">Input produk baru</small>
+            </div>
           </div>
-          <button id="reset-filter" class="btn btn-outline-secondary ms-2" style="display:none;">Reset Filter</button>
-        </div>
+        </a>
+      </div>
+      <div class="col-auto flex-fill">
+        <a href="#" id="importBtn" class="card h-100 text-decoration-none text-reset modern-card">
+          <div class="card-body d-flex flex-column align-items-center text-center p-3">
+            <div class="icon-wrapper mb-2"><i class="bi bi-upload"></i></div>
+            <div class="text-center">
+              <h6 class="card-title mb-1 fw-bold">Import</h6>
+              <small class="text-muted">Upload file produk</small>
+            </div>
+          </div>
+        </a>
+      </div>
+      <div class="col-auto flex-fill">
+        <a href="#" id="exportBtn" class="card h-100 text-decoration-none text-reset modern-card">
+          <div class="card-body d-flex flex-column align-items-center text-center p-3">
+            <div class="icon-wrapper mb-2"><i class="bi bi-download"></i></div>
+            <div class="text-center">
+              <h6 class="card-title mb-1 fw-bold">Export</h6>
+              <small class="text-muted">Download semua produk</small>
+            </div>
+          </div>
+        </a>
+      </div>
+      <div class="col-auto flex-fill">
+        <a href="/products/sku_bundling/" class="card h-100 text-decoration-none text-reset modern-card">
+          <div class="card-body d-flex flex-column align-items-center text-center p-3">
+            <div class="icon-wrapper mb-2"><i class="bi bi-boxes"></i></div>
+            <div class="text-center">
+              <h6 class="card-title mb-1 fw-bold">SKU Bundling</h6>
+              <small class="text-muted">Kelola bundling</small>
+            </div>
+          </div>
+        </a>
+      </div>
+      <div class="col-auto flex-fill">
+        <a href="{% url 'products:extrabarcode_view' %}" class="card h-100 text-decoration-none text-reset modern-card">
+          <div class="card-body d-flex flex-column align-items-center text-center p-3">
+            <div class="icon-wrapper mb-2" style="background-color: #e0f7fa;"><i class="bi bi-upc" style="color: #00bcd4;"></i></div>
+            <div class="text-center">
+              <h6 class="card-title mb-1 fw-bold">Extra Barcode</h6>
+              <small class="text-muted">Kelola barcode tambahan</small>
+            </div>
+          </div>
+        </a>
+      </div>
+      <div class="col-auto flex-fill">
+        <a href="{% url 'products:product_dimension' %}" class="card h-100 text-decoration-none text-reset modern-card">
+          <div class="card-body d-flex flex-column align-items-center text-center p-3">
+            <div class="icon-wrapper mb-2" style="background-color: #f3e5f5;"><i class="bi bi-rulers" style="color: #9c27b0;"></i></div>
+            <div class="text-center">
+              <h6 class="card-title mb-1 fw-bold">Product Dimension</h6>
+              <small class="text-muted">Dimensi produk</small>
+            </div>
+          </div>
+        </a>
+      </div>
+      <div class="col-auto flex-fill">
+        <a href="{% url 'products:product_edit_logs' %}" class="card h-100 text-decoration-none text-reset modern-card">
+          <div class="card-body d-flex flex-column align-items-center text-center p-3">
+            <div class="icon-wrapper mb-2" style="background-color: #fff3e0;"><i class="bi bi-clock-history" style="color: #ff9800;"></i></div>
+            <div class="text-center">
+              <h6 class="card-title mb-1 fw-bold">Log Perubahan</h6>
+              <small class="text-muted">Riwayat edit produk</small>
+            </div>
+          </div>
+        </a>
+      </div>
+      <div class="col-auto flex-fill">
+        <a href="{% url 'products:price_history_all' %}" class="card h-100 text-decoration-none text-reset modern-card">
+          <div class="card-body d-flex flex-column align-items-center text-center p-3">
+            <div class="icon-wrapper mb-2" style="background-color: #e8f5e9;"><i class="bi bi-graph-up" style="color: #4caf50;"></i></div>
+            <div class="text-center">
+              <h6 class="card-title mb-1 fw-bold">History Harga</h6>
+              <small class="text-muted">Riwayat harga beli</small>
+            </div>
+          </div>
+        </a>
       </div>
     </div>
-    <div class="card" style="max-width: 98vw; margin: 0 auto;">
-      <div class="card-body table-responsive" style="overflow-x: auto;">
-        <table id="products-table" class="table table-striped table-bordered" style="width:120%; min-width:1200px;">
+    
+    <div class="card table-container mb-4">
+      <div class="card-body">
+        <table id="products-table" class="table table-hover w-100">
           <thead>
             <tr>
               <th>ID</th>
+              <th>Photo</th>
               <th>Sku</th>
               <th>Barcode</th>
               <th>Nama produk</th>
               <th>Variant produk</th>
               <th>Brand</th>
+              <th>Harga Beli</th>
+              <th>HPP</th>
               <th>Rak</th>
-              <th>Photo</th>
+              <th>Extra Barcode</th>
               <th>Aksi</th>
+            </tr>
+            <tr id="filter-row">
+              <th><input type="text" class="form-control form-control-sm" placeholder="ID" /></th>
+              <th></th>
+              <th><input type="text" class="form-control form-control-sm" placeholder="SKU" /></th>
+              <th><input type="text" class="form-control form-control-sm" placeholder="Barcode" /></th>
+              <th><input type="text" class="form-control form-control-sm" placeholder="Nama" /></th>
+              <th><input type="text" class="form-control form-control-sm" placeholder="Variant" /></th>
+              <th>
+                <select id="brand-filter" class="form-select form-select-sm">
+                  <option value="">Semua Brand</option>
+                </select>
+              </th>
+              <th></th>
+              <th></th>
+              <th></th>
+              <th></th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -48,230 +142,781 @@
       Download Template
     </a>
   </div>
+
+<!-- Modal Daftar Extra Barcode -->
+<div class="modal fade" id="extraBarcodeModal" tabindex="-1" aria-labelledby="extraBarcodeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="extraBarcodeModalLabel">Extra Barcode untuk <span class="text-primary" id="modalProductSku"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul id="extraBarcodeList" class="list-group">
+          <!-- Daftar barcode akan dimuat di sini oleh JavaScript -->
+        </ul>
+        <p id="noExtraBarcodeMessage" class="text-muted text-center mt-3" style="display: none;">Tidak ada barcode tambahan untuk produk ini.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detail Rak -->
+<div class="modal fade" id="rakDetailsModal" tabindex="-1" aria-labelledby="rakDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="rakDetailsModalLabel">
+          Detail Lokasi Rak: <span class="text-primary" id="modalProductName"></span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Kode Rak</th>
+                <th>Nama Rak</th>
+                <th>Lokasi</th>
+                <th>Stok</th>
+                <th>Opname</th>
+                <th>Dimensi</th>
+              </tr>
+            </thead>
+            <tbody id="rakDetailsTableBody">
+              <!-- Data rak akan dimuat di sini -->
+            </tbody>
+          </table>
+        </div>
+        <div id="noRakDetailsMessage" class="text-muted text-center mt-3" style="display: none;">
+          Tidak ada data lokasi rak untuk produk ini.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_script %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bootstrap-4@5.0.15/bootstrap-4.min.css">
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<style>
+/* Modern Card Styling - Auto Width dalam 1 Row */
+.modern-card {
+  border: 1px solid #e2e8f0;
+  border-left-width: 4px;
+  border-radius: 12px;
+  background-color: #fff;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  flex: 1;
+}
+
+.modern-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.07);
+}
+
+/* Card Theme Colors - Updated for flex-fill layout */
+.col-auto:nth-child(1) .modern-card { border-left-color: #6c757d; }
+.col-auto:nth-child(2) .modern-card { border-left-color: #0dcaf0; }
+.col-auto:nth-child(3) .modern-card { border-left-color: #0d6efd; }
+.col-auto:nth-child(4) .modern-card { border-left-color: #198754; }
+.col-auto:nth-child(5) .modern-card { border-left-color: #00bcd4; }
+.col-auto:nth-child(6) .modern-card { border-left-color: #9c27b0; }
+.col-auto:nth-child(7) .modern-card { border-left-color: #ff9800; }
+
+.col-auto:nth-child(1) .icon-wrapper { background-color: #f8f9fa; }
+.col-auto:nth-child(2) .icon-wrapper { background-color: #e1f5fe; }
+.col-auto:nth-child(3) .icon-wrapper { background-color: #e7f1ff; }
+.col-auto:nth-child(4) .icon-wrapper { background-color: #e8f5e9; }
+.col-auto:nth-child(5) .icon-wrapper { background-color: #e0f7fa; }
+.col-auto:nth-child(6) .icon-wrapper { background-color: #f3e5f5; }
+.col-auto:nth-child(7) .icon-wrapper { background-color: #fff3e0; }
+
+.col-auto:nth-child(1) .icon-wrapper i { color: #6c757d; }
+.col-auto:nth-child(2) .icon-wrapper i { color: #0dcaf0; }
+.col-auto:nth-child(3) .icon-wrapper i { color: #0d6efd; }
+.col-auto:nth-child(4) .icon-wrapper i { color: #198754; }
+.col-auto:nth-child(5) .icon-wrapper i { color: #00bcd4; }
+.col-auto:nth-child(6) .icon-wrapper i { color: #9c27b0; }
+.col-auto:nth-child(7) .icon-wrapper i { color: #ff9800; }
+
+.icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.icon-wrapper i {
+  font-size: 1.8rem;
+}
+
+.modern-card .card-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #343a40;
+  line-height: 1.2;
+}
+
+.modern-card small {
+  font-size: 0.7rem;
+  opacity: 0.8;
+  font-weight: 400;
+  color: #6c757d !important;
+  line-height: 1.2;
+}
+
+/* Horizontal Scrollbar Styling */
+.overflow-auto::-webkit-scrollbar {
+  height: 8px;
+}
+
+.overflow-auto::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 4px;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Responsive Card Layout */
+@media (max-width: 1400px) {
+  .modern-card {
+    height: 110px;
+    min-width: 140px;
+  }
+  .icon-wrapper {
+    width: 44px;
+    height: 44px;
+  }
+  .icon-wrapper i {
+    font-size: 1.6rem;
+  }
+  .modern-card .card-title {
+    font-size: 0.8rem;
+  }
+  .modern-card small {
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 1200px) {
+  .modern-card {
+    height: 100px;
+    min-width: 130px;
+  }
+  .icon-wrapper {
+    width: 40px;
+    height: 40px;
+  }
+  .icon-wrapper i {
+    font-size: 1.4rem;
+  }
+  .modern-card .card-title {
+    font-size: 0.75rem;
+  }
+  .modern-card small {
+    font-size: 0.6rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .modern-card {
+    height: 90px;
+    min-width: 120px;
+  }
+  .icon-wrapper {
+    width: 36px;
+    height: 36px;
+  }
+  .icon-wrapper i {
+    font-size: 1.2rem;
+  }
+  .modern-card .card-title {
+    font-size: 0.7rem;
+  }
+  .modern-card small {
+    font-size: 0.55rem;
+  }
+}
+
+.modern-card .card-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 1rem 0.75rem;
+  height: 100%;
+}
+
+/* Row container styling */
+.row.flex-nowrap {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.row.flex-nowrap .col-auto {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.row.flex-nowrap .col-auto:first-child {
+  padding-left: 0;
+}
+
+.row.flex-nowrap .col-auto:last-child {
+  padding-right: 0;
+}
+
+/* Product Photo Styling */
+#products-table img[alt="Photo"] {
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease-in-out;
+}
+
+#products-table img[alt="Photo"]:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Rak Info Button Styling */
+.btn-outline-info {
+  border-width: 1px;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.btn-outline-info:hover {
+  transform: scale(1.1);
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Rak Location Badge Styling */
+.badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Modal Table Styling */
+#rakDetailsModal .table th {
+  font-size: 0.875rem;
+  font-weight: 600;
+  background-color: #f8f9fa;
+}
+
+#rakDetailsModal .table td {
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+/* Modern Table Styling */
+.table-container {
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.07);
+    border: none;
+    background-color: #fff;
+    padding: 1rem;
+}
+
+#products-table {
+    font-size: 0.88rem;
+}
+
+#products-table thead {
+    color: #334155;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+#products-table thead th {
+    padding: 1rem 1.5rem;
+    border: none;
+    background-color: #f8fafc;
+}
+
+#products-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+}
+
+#products-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+#products-table tbody td {
+    padding: 1rem 1.5rem;
+    vertical-align: middle;
+    color: #475569;
+}
+
+#products-table.table-hover>tbody>tr:hover {
+    background-color: #f1f5f9;
+    --bs-table-accent-bg: #f1f5f9; /* Override Bootstrap hover color */
+}
+
+#filter-row input.form-control, #filter-row .form-select {
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    transition: box-shadow 0.2s;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+    height: auto;
+}
+
+#filter-row input.form-control:focus, #filter-row .form-select:focus {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    border-color: #a5b4fc;
+}
+
+
+
+
+
+/* Perlebar kolom nama produk */
+#products-table th:nth-child(4),
+#products-table td:nth-child(4) {
+    min-width: 300px !important;
+    max-width: 400px !important;
+    width: 300px !important;
+}
+
+/* Atau jika ingin lebih fleksibel */
+#products-table th:nth-child(4),
+#products-table td:nth-child(4) {
+    min-width: 250px !important;
+    max-width: 500px !important;
+}
+</style>
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
 <script>
+// Fungsi untuk mengambil CSRF token dari cookie (cara paling andal)
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
 document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('importBtn').addEventListener('click', function() {
+    // --- START: REWRITTEN NOTIFICATION LOGIC ---
+
+    // 1. Kumpulkan semua pesan dari Django ke dalam sebuah array JavaScript.
+    const djangoMessages = [];
+    {% for message in messages %}
+        djangoMessages.push({
+            // Gunakan filter 'escapejs' untuk keamanan dan mencegah error syntax.
+            text: `{{ message|escapejs }}`,
+            tags: `{{ message.tags }}`
+        });
+    {% endfor %}
+
+    // 2. Proses array pesan tersebut jika tidak kosong.
+    if (djangoMessages.length > 0) {
+        // Definisikan konfigurasi Toast sekali saja.
+        const Toast = Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3500,
+          timerProgressBar: true,
+          didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer);
+            toast.addEventListener('mouseleave', Swal.resumeTimer);
+          }
+        });
+
+        // Fungsi helper untuk memutar suara.
+        const playSound = (soundFile) => {
+            new Audio(soundFile).play().catch(e => console.error("Error playing sound:", e));
+        };
+
+        const soundProtectedError = "{% static 'sounds/completedsound.mp3' %}";
+        const soundDeleteSuccess = "{% static 'sounds/ding.mp3' %}";
+
+        // 3. Iterasi array pesan dengan logika JavaScript murni.
+        djangoMessages.forEach(message => {
+            const tags = message.tags.split(' ');
+
+            if (tags.includes('delete_protected_error')) {
+                playSound(soundProtectedError);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Menghapus',
+                    html: message.text,
+                    confirmButtonText: 'Mengerti'
+                });
+            } else if (tags.includes('delete_success')) {
+                playSound(soundDeleteSuccess);
+                Toast.fire({
+                  icon: 'success',
+                  title: message.text
+                });
+            } else {
+                // Fallback untuk semua jenis pesan lainnya (info, warning, dll.)
+                const icon = tags.includes('error') ? 'error' :
+                             tags.includes('warning') ? 'warning' :
+                             tags.includes('success') ? 'success' : 'info';
+                Toast.fire({
+                  icon: icon,
+                  title: message.text
+                });
+            }
+        });
+    }
+
+    // --- END: REWRITTEN NOTIFICATION LOGIC ---
+
+  document.getElementById('importBtn').addEventListener('click', function(e) {
+    e.preventDefault();
     var modalEl = document.getElementById('importModal');
     if (modalEl) {
       new bootstrap.Modal(modalEl).show();
     }
   });
-  document.getElementById('exportBtn').addEventListener('click', function() {
+  document.getElementById('exportBtn').addEventListener('click', function(e) {
+    e.preventDefault();
     window.location.href = '{% url "products:products_export" %}';
   });
-  document.getElementById('historyBtn').addEventListener('click', function() {
-    window.location.href = '{% url "products:import_history" %}';
-  });
-  // Autocomplete hanya untuk search bar utama, bukan filter
-  const searchInput = document.getElementById('product-search');
-  const searchList = document.getElementById('autocomplete-list');
-  let debounceTimeout = null;
-  let autocompletePage = 1;
-  let autocompleteQuery = '';
-  let autocompleteHasMore = false;
-  let autocompleteLoading = false;
+  // Remove the history button event listener since it's now in the modal
 
-  // Set vertical scroll and max height for dropdown
-  searchList.style.maxHeight = '320px';
-  searchList.style.overflowY = 'auto';
+  // Global variable untuk menyimpan data rak
+  let rakDataCache = {};
 
-  function fetchAutocomplete(q, page = 1, append = false) {
-    autocompleteLoading = true;
-    fetch(`/products/autocomplete/?q=${encodeURIComponent(q)}&page=${page}`)
-      .then(r => r.json())
-      .then(resp => {
-        let data = resp.results || resp;
-        autocompleteHasMore = resp.has_more !== undefined ? resp.has_more : (Array.isArray(data) && data.length === 20);
-        if (!append) searchList.innerHTML = '';
-        if (!data.length && !append) {
-          searchList.innerHTML = '<div class="list-group-item">Tidak ada hasil</div>';
-          searchList.style.display = 'block';
-          autocompleteLoading = false;
-          return;
-        }
-        data.forEach(item => {
-          const el = document.createElement('a');
-          el.className = 'list-group-item list-group-item-action';
-          el.innerHTML = `<b>${item.sku}</b> | <span class='text-muted'>${item.barcode || ''}</span> - ${item.nama_produk || ''} <small class='text-secondary'>${item.variant_produk || ''} ${item.brand || ''}</small>`;
-          el.href = '#';
-          el.onclick = function(e) {
-            e.preventDefault();
-            searchInput.value = item.sku + ' - ' + item.nama_produk;
-            searchList.innerHTML = '';
-            searchList.style.display = 'none';
-            // Filter DataTable by SKU
-            if (window.dt) {
-              window.dt.column(1).search('^' + item.sku + '$', true, false).draw();
-              document.getElementById('reset-filter').style.display = '';
-            }
-          };
-          searchList.appendChild(el);
-        });
-        searchList.style.display = 'block';
-        autocompleteLoading = false;
-      });
-  }
-  if (searchInput) {
-    searchInput.addEventListener('input', function() {
-      const q = this.value.trim();
-      autocompleteQuery = q;
-      autocompletePage = 1;
-      if (debounceTimeout) clearTimeout(debounceTimeout);
-      if (!q) { searchList.innerHTML = ''; searchList.style.display = 'none'; return; }
-      debounceTimeout = setTimeout(() => {
-        fetchAutocomplete(q, 1, false);
-      }, 200);
-    });
-    // Infinite scroll on dropdown
-    searchList.addEventListener('scroll', function() {
-      if (autocompleteLoading || !autocompleteHasMore) return;
-      if (searchList.scrollTop + searchList.clientHeight >= searchList.scrollHeight - 10) {
-        autocompletePage += 1;
-        fetchAutocomplete(autocompleteQuery, autocompletePage, true);
-      }
-    });
-    document.addEventListener('click', function(e) {
-      if (!searchInput.contains(e.target) && !searchList.contains(e.target)) {
-        searchList.innerHTML = '';
-        searchList.style.display = 'none';
-      }
-    });
-  }
-  // Inisialisasi DataTables pada tabel produk
-  const tableEl = document.querySelector('table');
-  if (tableEl) {
-    const dt = $(tableEl).DataTable({
-      language: {
-        url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json'
-      },
+  const table = $('#products-table').DataTable({
       pageLength: 25,
       lengthMenu: [10, 25, 50, 100, 500],
       order: [],
-      dom: 'lfrtip',
+      orderCellsTop: true,
       scrollX: true,  
-      scrollCollapse: true,
       fixedHeader: true,
-      autoWidth: false,
       serverSide: true,
       processing: true,
+      language: {
+        processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div> Memuat data produk...',
+        error: 'Terjadi kesalahan saat memuat data. Silakan coba lagi.',
+        emptyTable: 'Tidak ada data produk yang tersedia.',
+        info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ produk',
+        infoEmpty: 'Menampilkan 0 sampai 0 dari 0 produk',
+        infoFiltered: '(difilter dari _MAX_ total produk)',
+        lengthMenu: 'Tampilkan _MENU_ produk per halaman',
+        search: 'Cari:',
+        zeroRecords: 'Tidak ada produk yang cocok dengan pencarian'
+      },
+      error: function (xhr, error, thrown) {
+        console.error('DataTables error:', error, thrown);
+        if (xhr.status === 500) {
+          Swal.fire({
+            title: 'Error Server',
+            text: 'Terjadi kesalahan pada server. Silakan coba lagi.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
+        }
+      },
       ajax: {
-        url: '/products/data/',
-        type: 'GET'
+        url: "{% url 'products:products_data' %}",
+        type: 'GET',
+        dataSrc: function(json) {
+          // Cache data rak untuk setiap produk
+          json.data.forEach(function(row) {
+            if (row.rak_details) {
+              rakDataCache[row.id] = row.rak_details;
+            }
+          });
+          return json.data;
+        }
       },
       columns: [
-        { data: 'id' },
-        { data: 'sku' },
-        { data: 'barcode' },
-        { data: 'nama_produk' },
-        { data: 'variant_produk' },
-        { data: 'brand' },
-        { data: 'rak' },
-        { data: 'photo', orderable: false, searchable: false, render: function(data, type, row) {
-            if (row.photo) {
-              return `<img src="${row.photo.startsWith('/media/') ? row.photo : '/media/' + row.photo}" alt="photo" style="max-width:40px;max-height:40px;">`;
+        { data: 'id', width: '60px' },
+        { data: 'photo', width: '120px', orderable: false, searchable: false, render: function(data, type, row) {
+            if (data) {
+              return `<img src="${data}" alt="Photo" style="width:100px; height:100px; object-fit:contain; border-radius:4px;">`;
             } else {
-              return '—';
+              return '';
             }
           }
         },
-        { data: null, orderable: false, searchable: false, render: function(data, type, row) {
+        { data: 'sku', width: '120px' },
+        { data: 'barcode', width: '140px' },
+        { data: 'nama_produk', width: '300px' }, // Perlebar kolom nama produk
+        { data: 'variant_produk', width: '150px' },
+        { data: 'brand', width: '120px' },
+        { 
+          data: 'harga_beli', 
+          width: '150px',
+          orderable: true,
+          searchable: false,
+          render: function(data, type, row) {
+            if (data) {
+              const harga = parseFloat(data).toLocaleString('id-ID');
+              const historyUrl = `/purchaseorder/price-history/?sku=${row.sku}`;
+              return `
+                <div class="d-flex align-items-center gap-2">
+                  <span class="fw-bold text-success">Rp ${harga}</span>
+                  <a href="${historyUrl}" class="text-primary" title="Lihat history harga" style="font-size: 1.1em;">
+                    <i class="bi bi-graph-up-arrow"></i>
+                  </a>
+                </div>
+              `;
+            } else {
+              return '<span class="text-muted">-</span>';
+            }
+          }
+        },
+        { 
+          data: 'hpp', 
+          width: '130px',
+          orderable: true,
+          searchable: false,
+          render: function(data, type, row) {
+            if (data && parseFloat(data) > 0) {
+              const hpp = parseFloat(data).toLocaleString('id-ID');
+              return `<span class="fw-bold text-info">Rp ${hpp}</span>`;
+            } else {
+              return '<span class="text-muted">-</span>';
+            }
+          }
+        },
+        { 
+          data: 'rak_display', 
+          width: '150px',
+          orderable: true, 
+          searchable: true, 
+          render: function(data, type, row) {
+            if (row.rak_count > 0) {
+              // Jika ada multiple rak, tampilkan dengan tombol info
+              const rakText = data || '-';
+              const infoBtn = row.rak_count > 1 ? 
+                `<button class="btn btn-sm btn-outline-info ms-1" onclick="showRakDetails(${row.id})" title="Lihat detail lokasi">
+                  <i class="bi bi-info-circle"></i>
+                </button>` : '';
+              
+              return `<div class="d-flex align-items-center">
+                <span class="text-primary fw-bold">${rakText}</span>
+                ${infoBtn}
+              </div>`;
+            } else {
+              // Jika tidak ada rak, tampilkan default
+              return `<span class="text-muted">${data || '-'}</span>`;
+            }
+          }
+        },
+        // Kolom Extra Barcode BARU
+        { 
+          data: 'extra_barcode_count', 
+          width: '100px',
+          orderable: true, 
+          searchable: false, 
+          render: function(data, type, row) {
+            const count = parseInt(data) || 0;
+            const badgeClass = count > 0 ? 'bg-primary' : 'bg-light text-dark';
+            const styles = 'font-size: 0.8rem; font-weight: 600; padding: 0.4em 0.7em; border-radius: 6px;';
+            return `<span class="badge ${badgeClass}" style="${styles}">${count}</span>`;
+          }
+        },
+        { data: null, width: '200px', orderable: false, searchable: false, render: function(data, type, row) {
             return `<div class="d-flex gap-1 flex-nowrap">
               <a href="/products/edit/${row.id}/" class="btn btn-sm btn-primary">Edit</a>
-              <button class="btn btn-sm btn-danger btn-delete-product" data-id="${row.id}" data-nama="${row.nama_produk}">Delete</button>
+              <form method="post" action="/products/delete/${row.id}/" class="d-inline form-delete-product">
+                <input type="hidden" name="csrfmiddlewaretoken" value="${csrftoken}">
+                <button type="submit" class="btn btn-sm btn-danger" data-product-name="${row.nama_produk}">Delete</button>
+              </form>
             </div>`;
           }
         }
       ],
       initComplete: function() {
-        // Ambil unique brand dari backend, lalu populate dropdown brand
-        var api = this.api();
-        $.getJSON('/products/unique_brands/', function(data) {
-          var brandList = data.brands || [];
-          $.getJSON('/products/unique_raks/', function(data2) {
-            var rakList = data2.raks || [];
-            api.columns().every(function() {
-              var column = this;
-              var header = $(column.header());
-              var headerText = header.text().toLowerCase();
-              if (headerText.includes('brand')) {
-                if (header.find('.brand-filter').length === 0) {
-                  var filterDiv = $('<div class="brand-filter mt-1"></div>');
-                  var select = $('<select class="form-select form-select-sm"><option value="">Semua Brand</option></select>')
-                    .on('change', function() {
-                      var val = $.fn.dataTable.util.escapeRegex($(this).val().trim());
-                      column.search(val ? '^' + val + '$' : '', true, false).draw();
-                      document.getElementById('reset-filter').style.display = (val ? '' : 'none');
-                    });
-                  brandList.forEach(function(d) {
-                    if (d && select.find('option[value="'+d+'"]' ).length === 0) {
-                      select.append('<option value="'+d+'">'+d+'</option>');
+        // Apply the per-column search filters
+        this.api().columns().every(function(colIdx) {
+            var that = this;
+            // Skip kolom yang tidak memiliki filter (photo, harga beli, hpp, rak, extra barcode, aksi)
+            if (colIdx === 1 || colIdx === 7 || colIdx === 8 || colIdx === 9 || colIdx === 10 || colIdx === 11) return; 
+
+            var input = $('#filter-row th').eq(colIdx).find('input, select');
+            if (input.length > 0) {
+                input.on('keyup change', function() {
+                  if (that.search() !== this.value) {
+                    // For select-filter, we need exact match. We can use regex for that.
+                    if (this.tagName.toLowerCase() === 'select' && this.value !== '') {
+                      that.search('^' + this.value + '$', true, false).draw();
+                    } else {
+                      that.search(this.value).draw();
                     }
-                  });
-                  filterDiv.append(select);
-                  header.append(filterDiv);
-                }
-              } else if (headerText.includes('rak')) {
-                if (header.find('.rak-filter').length === 0) {
-                  var filterDiv = $('<div class="rak-filter mt-1"></div>');
-                  var select = $('<select class="form-select form-select-sm"><option value="">Semua Rak</option></select>')
-                    .on('change', function() {
-                      var val = $.fn.dataTable.util.escapeRegex($(this).val().trim());
-                      column.search(val ? '^' + val + '$' : '', true, false).draw();
-                      document.getElementById('reset-filter').style.display = (val ? '' : 'none');
-                    });
-                  rakList.forEach(function(d) {
-                    if (d && select.find('option[value="'+d+'"]' ).length === 0) {
-                      select.append('<option value="'+d+'">'+d+'</option>');
-                    }
-                  });
-                  filterDiv.append(select);
-                  header.append(filterDiv);
-                }
-              }
-            });
-          });
+                  }
+                });
+            }
         });
       }
     });
-    window.dt = dt;
+
+
+
+
+
+  // Event delegation untuk FORM hapus
+  $('#products-table tbody').on('submit', '.form-delete-product', function(e) {
+      e.preventDefault(); // Mencegah form dikirim secara langsung
+      const form = this;
+      const productName = $(form).find('button').data('product-name');
+
+      Swal.fire({
+          title: 'Anda Yakin?',
+          text: `Anda akan menghapus produk "${productName}". Aksi ini tidak dapat dibatalkan.`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#3085d6',
+          confirmButtonText: 'Ya, hapus!',
+          cancelButtonText: 'Batal'
+      }).then((result) => {
+          if (result.isConfirmed) {
+              form.submit(); // Jika dikonfirmasi, kirim form aslinya
+          }
+      });
+  });
+
+  // Function untuk menampilkan detail rak
+  window.showRakDetails = function(productId) {
+    const rakDetails = rakDataCache[productId] || [];
+    const modalProductName = document.getElementById('modalProductName');
+    const rakDetailsTableBody = document.getElementById('rakDetailsTableBody');
+    const noRakDetailsMessage = document.getElementById('noRakDetailsMessage');
+    
+    // Reset modal content
+    rakDetailsTableBody.innerHTML = '';
+    noRakDetailsMessage.style.display = 'none';
+    
+    if (rakDetails.length > 0) {
+      // Tampilkan data rak
+      rakDetails.forEach(function(rak) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><span class="badge bg-primary">${rak.kode_rak}</span></td>
+          <td>${rak.nama_rak}</td>
+          <td>
+            <span class="badge ${getLokasiBadgeClass(rak.lokasi)}">${rak.lokasi || '-'}</span>
+          </td>
+          <td><span class="fw-bold text-success">${rak.quantity}</span></td>
+          <td><span class="text-warning">${rak.quantity_opname}</span></td>
+          <td><small class="text-muted">${rak.dimensions}</small></td>
+        `;
+        rakDetailsTableBody.appendChild(row);
+      });
+      
+      // Set nama produk di modal - cari dari cache atau table
+      let productName = 'Produk';
+      const productRow = table.rows().data().toArray().find(row => row.id == productId);
+      if (productRow) {
+        productName = productRow.nama_produk;
+      }
+      modalProductName.textContent = productName;
+    } else {
+      // Tampilkan pesan jika tidak ada data
+      noRakDetailsMessage.style.display = 'block';
+    }
+    
+    // Tampilkan modal
+    new bootstrap.Modal(document.getElementById('rakDetailsModal')).show();
+  };
+  
+  // Function untuk mendapatkan class badge berdasarkan lokasi
+  function getLokasiBadgeClass(lokasi) {
+    switch(lokasi) {
+      case 'DEKAT': return 'bg-success';
+      case 'SEDANG': return 'bg-warning';
+      case 'JAUH': return 'bg-info';
+      case 'BEDA_GUDANG': return 'bg-secondary';
+      default: return 'bg-light text-dark';
+    }
   }
+
+  // Logic untuk Modal Extra Barcode
+  $('#products-table tbody').on('click', '.view-extra-barcode-btn', function() {
+    const productId = $(this).data('product-id');
+    const productSku = $(this).data('product-sku');
+    const modalProductSkuSpan = document.getElementById('modalProductSku');
+    const extraBarcodeList = document.getElementById('extraBarcodeList');
+    const noExtraBarcodeMessage = document.getElementById('noExtraBarcodeMessage');
+
+    // Reset modal content
+    extraBarcodeList.innerHTML = '';
+    noExtraBarcodeMessage.style.display = 'none';
+    modalProductSkuSpan.textContent = productSku;
+
+    fetch(`/products/get_product_extra_barcodes/${productId}/`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.extra_barcodes.length > 0) {
+          data.extra_barcodes.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.textContent = item.barcode;
+            extraBarcodeList.appendChild(li);
+          });
+        } else {
+          noExtraBarcodeMessage.style.display = 'block';
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching extra barcodes:', error);
+        extraBarcodeList.innerHTML = '<li class="list-group-item text-danger">Gagal memuat barcode.</li>';
+      });
+  });
+
+
+  $.getJSON("{% url 'products:unique_brands' %}", function(data) {
+    var brandList = data.brands || [];
+    var $brandFilter = $('#brand-filter');
+    brandList.forEach(function(d) {
+      if (d && $brandFilter.find('option[value="'+d+'"]' ).length === 0) {
+        $brandFilter.append('<option value="'+d+'">'+d+'</option>');
+      }
+    });
+  });
+
   document.querySelectorAll('td').forEach(function(td) {
     if (td.textContent.trim() === 'nan' || td.textContent.trim() === '') {
       td.textContent = '—';
     }
   });
-  // Modal konfirmasi hapus produk (Bootstrap 5, tanpa jQuery)
-  let deleteProductId = null;
-  let deleteProductNama = '';
-  document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('btn-delete-product')) {
-      e.preventDefault();
-      deleteProductId = e.target.getAttribute('data-id');
-      deleteProductNama = e.target.getAttribute('data-nama');
-      document.getElementById('deleteProductModalLabel').textContent = 'Hapus Produk';
-      document.getElementById('deleteProductModalBody').innerHTML = `Yakin ingin menghapus produk <b>${deleteProductNama}</b>?`;
-      var modal = new bootstrap.Modal(document.getElementById('deleteProductModal'));
-      modal.show();
-      // Simpan modal instance agar bisa ditutup setelah hapus
-      window._deleteProductModal = modal;
-    }
-  });
-  document.getElementById('confirmDeleteProductBtn').addEventListener('click', function() {
-    if (deleteProductId) {
-      window.location.href = `/products/delete/${deleteProductId}/`;
-      if (window._deleteProductModal) window._deleteProductModal.hide();
-    }
-  });
+
 });
 </script>
 <!-- Modal Import Produk -->
@@ -289,6 +934,12 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         <div class="modal-footer">
           <button type="submit" class="btn btn-primary">Import</button>
+          <a href="{% url 'products:download_template' %}" class="btn btn-link" target="_blank">
+              Download Template
+          </a>
+          <a href="{% url 'products:import_history' %}" class="btn btn-outline-secondary">
+              <i class="bi bi-clock-history"></i> Import History
+          </a>
         </div>
       </form>
     </div>

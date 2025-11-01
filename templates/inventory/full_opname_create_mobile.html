@@ -1,0 +1,386 @@
+{% extends 'base_mobile.html' %}
+{% load static %}
+
+{% block title %}Buat Full Opname Session{% endblock %}
+
+{% block extra_head %}
+<style>
+    .content-wrapper {
+        padding-bottom: 80px;
+    }
+    
+    .create-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem;
+        border-radius: 8px;
+        margin-bottom: 0.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .header-content h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+    
+    .header-content p {
+        margin: 0.1rem 0 0 0;
+        opacity: 0.9;
+        font-size: 0.7rem;
+    }
+    
+    .header-btn {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        border-radius: 6px;
+        padding: 0.4rem 0.6rem;
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+        overflow: hidden;
+    }
+    
+    .form-header {
+        background: #f8f9fa;
+        padding: 0.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .form-title {
+        font-weight: 700;
+        font-size: 0.8rem;
+        color: #212529;
+        margin: 0;
+    }
+    
+    .form-content {
+        padding: 0.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        font-size: 0.7rem;
+        color: #212529;
+        margin-bottom: 0.2rem;
+        display: block;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.4rem;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        background: white;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .form-text {
+        font-size: 0.6rem;
+        color: #6c757d;
+        margin-top: 0.1rem;
+    }
+    
+    .rak-selection {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 0.4rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .rak-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.25rem;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .rak-item {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 0.3rem;
+        font-size: 0.6rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .rak-item:hover {
+        border-color: #0d6efd;
+        background-color: #f8f9fa;
+    }
+    
+    .rak-item.selected {
+        border-color: #0d6efd;
+        background-color: #e7f3ff;
+    }
+    
+    .rak-checkbox {
+        margin-right: 0.2rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.25rem;
+        margin-top: 0.5rem;
+    }
+    
+    .btn {
+        padding: 0.4rem 0.8rem;
+        border: none;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-decoration: none;
+        text-align: center;
+        cursor: pointer;
+        flex: 1;
+    }
+    
+    .btn-primary {
+        background: #0d6efd;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-outline-primary {
+        background: white;
+        color: #0d6efd;
+        border: 1px solid #0d6efd;
+    }
+    
+    .sticky-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #dee2e6;
+        padding: 0.5rem;
+        z-index: 1000;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .sticky-actions {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+    }
+    
+    .action-icon-btn {
+        background: none;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 8px;
+        color: #6c757d;
+        font-size: 1.2rem;
+        min-width: 44px;
+        min-height: 44px;
+    }
+    
+    .btn-back {
+        color: #6c757d;
+    }
+    
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: white;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 3000;
+        max-width: 300px;
+        display: none;
+    }
+    
+    .notification.success {
+        border-left: 4px solid #28a745;
+    }
+    
+    .notification.error {
+        border-left: 4px solid #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="create-header">
+            <div class="header-content">
+                <h4><i class="bi bi-clipboard-data"></i> Buat Full Opname</h4>
+                <p>Buat sesi opname rak terstruktur</p>
+            </div>
+            <div class="header-action">
+                <a href="{% url 'inventory:full_opname_list' %}" class="header-btn">
+                    <i class="bi bi-arrow-left"></i> Kembali
+                </a>
+            </div>
+        </div>
+
+        <!-- Form Card -->
+        <div class="form-card">
+            <div class="form-header">
+                <h5 class="form-title">Form Full Opname Session</h5>
+            </div>
+            <div class="form-content">
+                <form method="POST" id="opnameForm">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <label for="nama_opname" class="form-label">
+                            Nama Opname *
+                        </label>
+                        <input type="text" class="form-control" id="nama_opname" name="nama_opname" 
+                               placeholder="Contoh: Opname Bulan Juli 2024" required>
+                        <div class="form-text">Berikan nama yang jelas untuk identifikasi opname ini</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="supervisor" class="form-label">
+                            Supervisor
+                        </label>
+                        <select class="form-control" id="supervisor" name="supervisor">
+                            <option value="">Pilih Supervisor (Opsional)</option>
+                            {% for supervisor in supervisors %}
+                            <option value="{{ supervisor.id }}">{{ supervisor.username }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Supervisor akan bertanggung jawab mengawasi opname ini</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            Target Rak (Opsional)
+                        </label>
+                        <div class="form-text">Pilih rak yang akan diopname. Jika kosong, semua rak akan diopname.</div>
+                        
+                        <div class="rak-selection">
+                            <div class="rak-grid" id="rakGrid">
+                                {% for rak in all_raks %}
+                                <div class="rak-item" onclick="toggleRakSelection(this, '{{ rak.id }}')">
+                                    <input type="checkbox" class="rak-checkbox" name="target_raks" value="{{ rak.id }}" style="display: none;">
+                                    <strong>{{ rak.kode_rak }}</strong><br>
+                                    <small>{{ rak.lokasi|default:"-" }}</small>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div id="selected_raks_display" class="form-text" style="display: none;">
+                            <strong>Rak yang dipilih:</strong> <span id="selected_count">0</span> rak
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Buat Session
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sticky Action Bar -->
+<div class="sticky-action-bar">
+    <div class="sticky-actions">
+        <a href="{% url 'inventory:full_opname_list' %}" class="action-icon-btn btn-back">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+    </div>
+</div>
+
+<!-- Notification -->
+<div id="notification" class="notification"></div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+    let selectedRaks = new Set();
+
+    function toggleRakSelection(element, rakId) {
+        const checkbox = element.querySelector('input[type="checkbox"]');
+        
+        if (element.classList.contains('selected')) {
+            element.classList.remove('selected');
+            checkbox.checked = false;
+            selectedRaks.delete(rakId);
+        } else {
+            element.classList.add('selected');
+            checkbox.checked = true;
+            selectedRaks.add(rakId);
+        }
+        
+        updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+        const count = selectedRaks.size;
+        const display = document.getElementById('selected_raks_display');
+        const countSpan = document.getElementById('selected_count');
+        
+        countSpan.textContent = count;
+        
+        if (count > 0) {
+            display.style.display = 'block';
+        } else {
+            display.style.display = 'none';
+        }
+    }
+
+    document.getElementById('opnameForm').addEventListener('submit', function(e) {
+        const namaOpname = document.getElementById('nama_opname').value.trim();
+        
+        if (!namaOpname) {
+            e.preventDefault();
+            showNotification('❌ Nama opname wajib diisi', 'error');
+            return;
+        }
+        
+        showNotification('🔄 Membuat session...', 'success');
+    });
+
+    function showNotification(message, type) {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.className = `notification ${type}`;
+        notification.style.display = 'block';
+        
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 3000);
+    }
+</script>
+{% endblock %}
+

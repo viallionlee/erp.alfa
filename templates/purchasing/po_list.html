@@ -1,0 +1,394 @@
+{% extends 'base.html' %}
+{% block title %}Daftar Purchase Order{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="bi bi-file-earmark-text"></i> Daftar Purchase Order</h2>
+    <div class="d-flex gap-2">
+        <a href="{% url 'purchasing:po_dashboard' %}" class="btn btn-info"><i class="bi bi-graph-up"></i> Dashboard</a>
+        <a href="{% url 'purchasing:po_create' %}" class="btn btn-success"><i class="bi bi-plus-circle"></i> Buat PO</a>
+        <a href="{% url 'purchasing:purchase_list' %}" class="btn btn-primary"><i class="bi bi-cart-check"></i> Purchase List</a>
+    </div>
+</div>
+
+<!-- Filter Box -->
+<div class="card shadow-sm mb-3 border-0">
+    <div class="card-body">
+        <div class="row g-2">
+            <div class="col-md-2">
+                <input type="date" id="filter-date-from" class="form-control form-control-sm" placeholder="Dari Tanggal">
+            </div>
+            <div class="col-md-2">
+                <input type="date" id="filter-date-to" class="form-control form-control-sm" placeholder="Sampai Tanggal">
+            </div>
+            <div class="col-md-2">
+                <select id="filter-status" class="form-select form-select-sm">
+                    <option value="">Semua Status</option>
+                    <option value="draft">Draft</option>
+                    <option value="pending">Pending</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select id="filter-supplier" class="form-select form-select-sm">
+                    <option value="">Semua Supplier</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-sm btn-primary w-100" id="btn-filter">
+                    <i class="bi bi-search"></i> Filter
+                </button>
+                <button class="btn btn-sm btn-secondary w-100" id="btn-reset">
+                    <i class="bi bi-x-circle"></i> Reset
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-lg mb-4 border-0">
+    <div class="card-body">
+        <div class="table-responsive">
+        <table id="po-table" class="table table-hover table-bordered align-middle w-100">
+            <thead class="table-primary">
+                <tr>
+                    <th>ID</th>
+                    <th>Nomor PO</th>
+                    <th>Tanggal</th>
+                    <th>Supplier</th>
+                    <th>Status</th>
+                    <th>Total Amount</th>
+                    <th>Created By</th>
+                    <th>Update</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                <span id="total-count">Total: 0 records</span>
+            </div>
+            <nav>
+                <ul class="pagination mb-0" id="pagination"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirm Delete PO -->
+<div class="modal fade" id="deletePoModal" tabindex="-1" aria-labelledby="deletePoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deletePoModalLabel">
+                    <i class="bi bi-exclamation-triangle"></i> Konfirmasi Hapus PO
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <h6><i class="bi bi-info-circle"></i> Apakah Anda yakin ingin menghapus PO ini?</h6>
+                    <p class="mb-0">PO yang dihapus tidak dapat dikembalikan lagi.</p>
+                </div>
+                <table class="table table-sm">
+                    <tr>
+                        <th width="40%">Nomor PO:</th>
+                        <td id="delete-po-nomor"></td>
+                    </tr>
+                    <tr>
+                        <th>Supplier:</th>
+                        <td id="delete-po-supplier"></td>
+                    </tr>
+                    <tr>
+                        <th>Total Amount:</th>
+                        <td id="delete-po-total"></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i> Batal
+                </button>
+                <form id="delete-po-form" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Ya, Hapus PO
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<style>
+    .aksi-btn-group { 
+        display: flex; 
+        gap: 0.25rem; 
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .aksi-btn-group .btn {
+        white-space: nowrap;
+    }
+    #po-table th, #po-table td {
+        font-size: 0.95rem;
+        vertical-align: middle;
+    }
+    .dropdown-toggle::after {
+        display: none;
+    }
+    .dropdown-menu {
+        min-width: 150px;
+    }
+    
+    /* Make date input clickable */
+    input[type="date"] {
+        cursor: pointer;
+        position: relative;
+    }
+    
+    /* Remove default date picker icon on some browsers */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        opacity: 1;
+    }
+    
+    /* Ensure the entire input area is clickable */
+    input[type="date"]::-webkit-inner-spin-button,
+    input[type="date"]::-webkit-clear-button {
+        cursor: pointer;
+    }
+    
+    @media (max-width: 900px) {
+        .aksi-btn-group { 
+            flex-direction: column; 
+            gap: 0.25rem; 
+        }
+        .aksi-btn-group .btn {
+            width: 100%;
+        }
+    }
+</style>
+<script>
+let currentPage = 1;
+let totalPages = 1;
+let totalCount = 0;
+
+$(document).ready(function() {
+    console.log('[PO List] Document ready, initializing...');
+    loadSuppliers();
+    loadData();
+    
+    // Auto-filter on date/select change (immediate)
+    $('#filter-date-from, #filter-date-to, #filter-status, #filter-supplier').on('change', function() {
+        currentPage = 1;
+        loadData();
+    });
+    
+    // Filter button (kept for manual trigger if needed)
+    $('#btn-filter').on('click', function() {
+        currentPage = 1;
+        loadData();
+    });
+    
+    // Reset button
+    $('#btn-reset').on('click', function() {
+        $('#filter-date-from').val('');
+        $('#filter-date-to').val('');
+        $('#filter-status').val('');
+        $('#filter-supplier').val('');
+        currentPage = 1;
+        loadData();
+    });
+});
+
+function loadSuppliers() {
+    // Load suppliers from PO list API
+    $.ajax({
+        url: '{% url "purchasing:po_list_api" %}?page=1&page_size=1000',
+        type: 'GET',
+        success: function(response) {
+            if (response.success) {
+                const select = $('#filter-supplier');
+                const suppliers = new Set(); // Use Set to avoid duplicates
+                
+                // Extract unique suppliers from PO data
+                response.data.forEach(function(po) {
+                    if (po.supplier && po.supplier !== '-') {
+                        suppliers.add(po.supplier);
+                    }
+                });
+                
+                // Sort and add to dropdown
+                Array.from(suppliers).sort().forEach(function(supplier) {
+                    select.append('<option value="' + supplier + '">' + supplier + '</option>');
+                });
+            }
+        },
+        error: function(xhr) {
+            console.error('Error loading suppliers:', xhr);
+        }
+    });
+}
+
+function loadData() {
+    const status = $('#filter-status').val();
+    const supplier = $('#filter-supplier').val();
+    const dateFrom = $('#filter-date-from').val();
+    const dateTo = $('#filter-date-to').val();
+    
+    let url = '{% url "purchasing:po_list_api" %}?page=' + currentPage + '&page_size=25';
+    
+    if (status) url += '&status=' + status;
+    if (supplier) url += '&supplier=' + supplier;
+    if (dateFrom) url += '&date_from=' + dateFrom;
+    if (dateTo) url += '&date_to=' + dateTo;
+    
+    console.log('[PO List] Loading data from:', url);
+    
+    $.ajax({
+        url: url,
+        type: 'GET',
+        success: function(response) {
+            console.log('[PO List] Response:', response);
+            if (response.success) {
+                console.log('[PO List] Data count:', response.data.length);
+                if (response.data.length > 0) {
+                    renderTable(response.data);
+                    renderPagination(response.pagination);
+                    totalCount = response.pagination.total_count;
+                    $('#total-count').text('Total: ' + totalCount + ' records');
+                } else {
+                    console.warn('[PO List] No data returned');
+                    $('#po-table tbody').html('<tr><td colspan="8" class="text-center">No data available</td></tr>');
+                }
+            } else {
+                console.error('[PO List] API returned success=false:', response);
+                alert('Error: ' + (response.error || 'Unknown error'));
+            }
+        },
+        error: function(xhr) {
+            console.error('[PO List] Error loading data:', xhr);
+            alert('Error loading data: ' + xhr.responseText);
+        }
+    });
+}
+
+function renderTable(data) {
+    console.log('[PO List] Rendering table with', data.length, 'items');
+    let html = '';
+    
+    if (data.length === 0) {
+        html = '<tr><td colspan="9" class="text-center">No data available</td></tr>';
+        $('#po-table tbody').html(html);
+        return;
+    }
+    
+    data.forEach(function(po) {
+        // Status badge
+        let badgeClass = 'secondary';
+        if (po.status_value === 'draft') badgeClass = 'dark';
+        if (po.status_value === 'pending') badgeClass = 'warning';
+        if (po.status_value === 'received') badgeClass = 'success';
+        
+        // Update buttons (Buat Purchase)
+        let updateBtn = '';
+        if (po.status_value !== 'received') {
+            updateBtn = '<a href="/purchaseorder/purchase/create/?po_id=' + po.id + '" class="btn btn-sm btn-success"><i class="bi bi-cart-plus"></i> Buat Purchase</a>';
+        } else {
+            updateBtn = '<span class="text-muted">-</span>';
+        }
+        
+        // Action buttons (Detail, Edit, Hapus)
+        let actions = '';
+        actions += '<div class="dropdown">';
+        actions += '<button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">';
+        actions += '<i class="bi bi-three-dots-vertical"></i>';
+        actions += '</button>';
+        actions += '<ul class="dropdown-menu">';
+        actions += '<li><a class="dropdown-item" href="/purchaseorder/' + po.id + '/"><i class="bi bi-eye"></i> Detail</a></li>';
+        if (po.status_value === 'draft' || po.status_value === 'pending') {
+            actions += '<li><a class="dropdown-item" href="/purchaseorder/' + po.id + '/edit/"><i class="bi bi-pencil"></i> Edit</a></li>';
+            actions += '<li><hr class="dropdown-divider"></li>';
+            actions += '<li><a class="dropdown-item text-danger btn-delete-po" href="#" data-po-id="' + po.id + '" data-po-nomor="' + po.nomor_po + '" data-po-supplier="' + po.supplier + '" data-po-total="' + po.total_amount_formatted + '"><i class="bi bi-trash"></i> Hapus</a></li>';
+        }
+        actions += '</ul>';
+        actions += '</div>';
+        
+        html += '<tr>';
+        html += '<td>' + po.id + '</td>';
+        html += '<td>' + (po.nomor_po || '<span class="text-muted fst-italic">DRAFT</span>') + '</td>';
+        html += '<td>' + po.tanggal_po + '</td>';
+        html += '<td>' + po.supplier + '</td>';
+        html += '<td><span class="badge bg-' + badgeClass + '">' + po.status + '</span></td>';
+        html += '<td>Rp ' + po.total_amount_formatted + '</td>';
+        html += '<td>' + po.created_by + '</td>';
+        html += '<td>' + updateBtn + '</td>';
+        html += '<td>' + actions + '</td>';
+        html += '</tr>';
+    });
+    
+    $('#po-table tbody').html(html);
+}
+
+function renderPagination(pagination) {
+    totalPages = pagination.total_pages;
+    currentPage = pagination.page;
+    
+    let html = '';
+    
+    // Previous button
+    html += '<li class="page-item ' + (currentPage === 1 ? 'disabled' : '') + '">';
+    html += '<a class="page-link" href="#" onclick="changePage(' + (currentPage - 1) + '); return false;">Previous</a>';
+    html += '</li>';
+    
+    // Page numbers
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        html += '<li class="page-item ' + (i === currentPage ? 'active' : '') + '">';
+        html += '<a class="page-link" href="#" onclick="changePage(' + i + '); return false;">' + i + '</a>';
+        html += '</li>';
+    }
+    
+    // Next button
+    html += '<li class="page-item ' + (currentPage === totalPages ? 'disabled' : '') + '">';
+    html += '<a class="page-link" href="#" onclick="changePage(' + (currentPage + 1) + '); return false;">Next</a>';
+    html += '</li>';
+    
+    $('#pagination').html(html);
+}
+
+function changePage(page) {
+    currentPage = page;
+    loadData();
+    $('html, body').animate({ scrollTop: 0 }, 300);
+}
+    
+    // Handle Delete PO button click
+    $(document).on('click', '.btn-delete-po', function(e) {
+        e.preventDefault();
+        var poId = $(this).data('po-id');
+        var poNomor = $(this).data('po-nomor');
+        var poSupplier = $(this).data('po-supplier');
+        var poTotal = $(this).data('po-total');
+        
+        // Update modal content
+        $('#delete-po-nomor').text(poNomor);
+        $('#delete-po-supplier').text(poSupplier);
+        $('#delete-po-total').text(poTotal);
+        $('#delete-po-form').attr('action', '/purchaseorder/' + poId + '/delete/');
+        
+        // Show modal
+        var modal = new bootstrap.Modal(document.getElementById('deletePoModal'));
+        modal.show();
+    });
+</script>
+{% endblock %}
+

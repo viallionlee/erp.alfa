@@ -1,0 +1,992 @@
+{% extends 'base_mobile.html' %}
+{% block title %}Edit Inbound{% endblock %}
+
+{% block content %}
+<style>
+/* Minimalist Mobile Design */
+.compact-header {
+    background: #fff;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #e9ecef;
+    margin-bottom: 0.5rem;
+}
+
+.compact-form-section {
+    background: #fff;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+.compact-section-header {
+    background: #f8f9fa;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #495057;
+}
+
+.compact-section-body {
+    padding: 0.75rem;
+}
+
+.compact-input-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.compact-input {
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 0.5rem;
+    font-size: 0.85rem;
+    background: #fff;
+}
+
+.compact-input:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1);
+}
+
+.compact-btn {
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.compact-btn-primary {
+    background: #0d6efd;
+    color: white;
+}
+
+.compact-btn-primary:hover {
+    background: #0b5ed7;
+}
+
+.compact-btn-outline {
+    background: transparent;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.compact-btn-outline:hover {
+    background: #f8f9fa;
+    color: #495057;
+}
+
+.compact-search-box {
+    position: relative;
+    margin-bottom: 0.5rem;
+}
+
+.compact-search-input {
+    width: 100%;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 0.5rem;
+    font-size: 0.85rem;
+    background: #fff;
+}
+
+.compact-search-results {
+    position: fixed;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    z-index: 9999;
+    max-height: 60vh;
+    overflow-y: auto;
+    display: none;
+}
+
+.compact-search-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.1);
+    z-index: 9998;
+    display: none;
+}
+
+.compact-product-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-bottom: 1px solid #f8f9fa;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    position: relative;
+}
+
+.compact-product-item:nth-child(odd) {
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    border-left-color: #0d6efd;
+}
+
+.compact-product-item:nth-child(even) {
+    background: linear-gradient(135deg, #fff 0%, #f0f8ff 100%);
+    border-left-color: #198754;
+}
+
+.compact-product-item:nth-child(3n) {
+    background: linear-gradient(135deg, #fff 0%, #fff5f5 100%);
+    border-left-color: #dc3545;
+}
+
+.compact-product-item:nth-child(4n) {
+    background: linear-gradient(135deg, #fff 0%, #f0fff0 100%);
+    border-left-color: #20c997;
+}
+
+.compact-product-item:nth-child(5n) {
+    background: linear-gradient(135deg, #fff 0%, #fff8e1 100%);
+    border-left-color: #fd7e14;
+}
+
+.compact-product-item:hover {
+    transform: translateX(2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.compact-product-item:last-child {
+    border-bottom: none;
+}
+
+.compact-product-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.compact-product-photo {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #f8f9fa;
+    flex-shrink: 0;
+}
+
+.compact-product-placeholder {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    flex-shrink: 0;
+}
+
+.compact-product-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.compact-product-sku {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.25rem;
+}
+
+.compact-product-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #212529;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.compact-product-badges {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.7rem;
+    color: #6c757d;
+}
+
+.compact-product-brand {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    color: #1565c0;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.65rem;
+    border: 1px solid #90caf9;
+}
+
+.compact-product-variant {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    color: #7b1fa2;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 0.65rem;
+    border: 1px solid #ce93d8;
+}
+
+.compact-product-list {
+    margin-top: 0.5rem;
+}
+
+.compact-added-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.compact-added-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.compact-added-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.compact-added-photo {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #f8f9fa;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.compact-added-photo img {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.compact-added-placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.compact-added-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.compact-added-sku {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.25rem;
+}
+
+.compact-added-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #212529;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.compact-added-badges {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.7rem;
+    color: #6c757d;
+}
+
+.compact-added-brand {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    color: #1565c0;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.65rem;
+    border: 1px solid #90caf9;
+}
+
+.compact-added-variant {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    color: #7b1fa2;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 0.65rem;
+    border: 1px solid #ce93d8;
+}
+
+.compact-qty-controls {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.compact-qty-btn {
+    width: 25px;
+    height: 25px;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #495057;
+    transition: all 0.2s ease;
+}
+
+.compact-qty-btn:hover {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    transform: scale(1.05);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.compact-qty-input {
+    width: 25px;
+    height: 25px;
+    text-align: center;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    transition: all 0.2s ease;
+}
+
+.compact-qty-input:focus {
+    border-color: #0d6efd;
+    background: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1);
+}
+
+.compact-remove-btn {
+    position: absolute;
+    bottom: 0.5rem;
+    left: 0.5rem;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.compact-remove-btn:hover {
+    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+    transform: scale(1.05);
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+.compact-floating-btn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #0d6efd;
+    color: white;
+    border: none;
+    box-shadow: 0 4px 16px rgba(13, 110, 253, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.compact-floating-btn:hover {
+    background: #0b5ed7;
+    transform: scale(1.05);
+}
+
+.compact-floating-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.compact-back-btn {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #495057;
+    text-decoration: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+    z-index: 100;
+}
+
+.compact-back-btn:hover {
+    background: #f8f9fa;
+    color: #212529;
+    transform: scale(1.05);
+}
+
+.compact-empty-state {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #6c757d;
+}
+
+.compact-empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.compact-supplier-summary {
+    background: #e8f5e8;
+    border: 1px solid #c3e6c3;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.compact-supplier-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.compact-supplier-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #0d6efd;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+}
+
+.compact-supplier-details h6 {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.compact-supplier-details small {
+    color: #6c757d;
+    font-size: 0.75rem;
+}
+
+.compact-change-supplier-btn {
+    background: transparent;
+    border: 1px solid #0d6efd;
+    color: #0d6efd;
+    border-radius: 4px;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.compact-change-supplier-btn:hover {
+    background: #0d6efd;
+    color: white;
+}
+</style>
+
+<div class="container-fluid px-3 py-1">
+    <!-- Back Button -->
+    <a href="{% url 'inventory:inbound_detail' inbound.id %}" class="compact-back-btn" title="Kembali">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+
+    <!-- Minimal Header -->
+    <div class="compact-header">
+        <div class="d-flex align-items-center justify-content-between">
+            <h4 class="mb-0">Edit Inbound</h4>
+            <div class="text-end">
+                <small class="text-muted">{{ inbound.tanggal|date:"d/m/Y H:i" }}</small>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" action="{% url 'inventory:inbound_edit' inbound.id %}" id="edit-inbound-form">
+        {% csrf_token %}
+        <input type="hidden" name="tanggal" value="{{ inbound.tanggal|date:'Y-m-d H:i:s' }}">
+
+        <!-- Minimal Transfer Section -->
+        <div class="card mb-2 shadow-sm" id="transfer-section">
+            <div class="card-body p-2">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-arrow-left-right text-primary"></i>
+                    <small class="text-muted">Transfer Antar Gudang</small>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small mb-1">Dari Gudang</label>
+                    <input type="text" name="from_warehouse" id="from_warehouse" class="form-control form-control-sm" required 
+                           placeholder="Contoh: Gudang Pusat" value="{{ inbound.from_warehouse|default:'' }}">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small mb-1">Ke Gudang</label>
+                    <input type="text" name="to_warehouse" id="to_warehouse" class="form-control form-control-sm" required 
+                           placeholder="Contoh: Gudang Cabang" value="{{ inbound.to_warehouse|default:'' }}">
+                </div>
+                <div>
+                    <label class="form-label small mb-1">Keterangan (opsional)</label>
+                    <input type="text" name="keterangan" id="keterangan" class="form-control form-control-sm" 
+                           placeholder="Keterangan tambahan" value="{{ inbound.keterangan }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Minimal Product Search Section -->
+        <div class="card mb-2 shadow-sm">
+            <div class="card-body p-2">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="bi bi-search text-primary"></i>
+                    <small class="text-muted">Cari Produk</small>
+                    </div>
+                <div class="position-relative">
+                    <input type="text" id="produk_search" class="form-control form-control-sm" placeholder="SKU, Barcode, Nama..." autocomplete="off">
+                    <div id="search-result-box" class="compact-search-results">
+                        <!-- Search results will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product List Section -->
+        <div class="compact-form-section">
+            <div class="compact-section-header">
+                <i class="bi bi-box-seam me-2"></i>Daftar Produk
+                <span id="product-count" class="badge bg-primary ms-2" style="font-size: 0.7rem;">{{ items|length }}</span>
+            </div>
+            <div class="compact-section-body">
+                <div id="produk-list" class="compact-product-list">
+                {% for item in items %}
+                    <div class="compact-added-item" data-sku="{{ item.product.sku }}">
+                        <div class="compact-added-top">
+                            <div class="compact-added-photo">
+                    {% if item.product.photo and item.product.photo.url %}
+                                <img src="{{ item.product.photo.url }}" alt="{{ item.product.nama_produk }}" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    {% endif %}
+                                <div class="compact-added-placeholder" style="display: {% if not item.product.photo or not item.product.photo.url %}flex{% else %}none{% endif %};">
+                                    <i class="bi bi-box fs-4"></i>
+                                </div>
+                            </div>
+                            <div class="compact-added-info">
+                                <div class="compact-added-sku">{{ item.product.sku }} - {{ item.product.barcode|default:'' }}</div>
+                                <div class="compact-added-name">{{ item.product.nama_produk }}</div>
+                                <div class="compact-added-badges">
+                                    <span class="compact-added-brand">{{ item.product.brand_produk|default:'No Brand' }}</span>
+                                    <span class="compact-added-variant">{{ item.product.variant_produk|default:'Standard' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="compact-qty-controls">
+                            <button type="button" class="compact-qty-btn compact-minus">-</button>
+                            <input type="number" name="produk_qty[]" class="compact-qty-input" value="{{ item.quantity }}" min="1">
+                            <button type="button" class="compact-qty-btn compact-plus">+</button>
+                    </div>
+                        <button type="button" class="compact-remove-btn">
+                            <i class="bi bi-x"></i>
+                        </button>
+                        <input type="hidden" name="produk_sku[]" value="{{ item.product.sku }}">
+                    </div>
+                    {% endfor %}
+                </div>
+                <div id="no-product-msg" class="compact-empty-state" style="display: {% if not items %}block{% else %}none{% endif %};">
+                    <i class="bi bi-box"></i>
+                    <div>Belum ada produk</div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Floating Save Button -->
+    <button type="submit" form="edit-inbound-form" class="compact-floating-btn" id="save-btn">
+        <i class="bi bi-check-lg"></i>
+    </button>
+
+    <!-- Search Backdrop -->
+    <div class="compact-search-backdrop" id="search-backdrop"></div>
+</div>
+
+<!-- Modal Pilih Supplier -->
+<div class="modal fade" id="supplierModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-fullscreen-sm-down">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Pilih Supplier</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+                <input type="text" id="search_supplier" class="form-control mb-3" placeholder="Cari nama supplier...">
+                <div id="supplier-list-loading" class="text-center" style="display:none;">
+                    <div class="spinner-border spinner-border-sm"></div>
+                </div>
+        <div id="supplier-list" class="list-group" style="max-height: calc(100vh - 150px); overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+$(document).ready(function() {
+    const supplierModal = new bootstrap.Modal(document.getElementById('supplierModal'));
+    const $supplierList = $('#supplier-list');
+    const $loading = $('#supplier-list-loading');
+
+    // Supplier selection
+    $('#pilih_supplier_btn').on('click', function() {
+        supplierModal.show();
+        loadSuppliers();
+    });
+
+    // Search suppliers
+    $('#search_supplier').on('input', function() {
+        const query = $(this).val().toLowerCase();
+        $supplierList.find('.list-group-item').each(function() {
+            const supplierName = $(this).find('.supplier-name').text().toLowerCase();
+            if (supplierName.includes(query)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+
+    function loadSuppliers() {
+        $loading.show();
+            $supplierList.empty();
+        
+        $.get('{% url "inventory:supplier_data" %}', function(data) {
+            $loading.hide();
+            if (data && data.data) {
+                data.data.forEach(function(supplier) {
+                    const supplierItem = `
+                        <button type="button" class="list-group-item list-group-item-action supplier-item" data-id="${supplier.id}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1 supplier-name">${supplier.nama_supplier}</h6>
+                            </div>
+                            <p class="mb-1 text-muted">${supplier.alamat || 'Tidak ada alamat'}</p>
+                        </button>
+                    `;
+                    $supplierList.append(supplierItem);
+                });
+            }
+        }).fail(function() {
+            $loading.hide();
+            $supplierList.append('<div class="text-center text-muted py-3">Gagal memuat data supplier</div>');
+        });
+    }
+
+    // Handle supplier selection
+    $(document).on('click', '.supplier-item', function() {
+        const supplierId = $(this).data('id');
+        const supplierName = $(this).find('.supplier-name').text();
+        
+        $('#supplier_id').val(supplierId);
+        $('#nama_supplier').val(supplierName);
+        
+        // Show supplier summary and hide supplier section
+        $('#supplier-name-display').text(supplierName);
+        $('#supplier-details-display').text('Supplier terpilih');
+        $('#supplier-summary').show();
+        $('#supplier-section').hide();
+        
+        supplierModal.hide();
+    });
+
+    // Handle change supplier button
+    $('#change-supplier-btn').on('click', function() {
+        $('#supplier-summary').hide();
+        $('#supplier-section').show();
+        $('#pilih_supplier_btn').click();
+    });
+
+    // Product search
+    let searchTimeout;
+    $('#produk_search').on('keyup', function() {
+        const query = $(this).val().trim();
+        
+        clearTimeout(searchTimeout);
+        
+        if (query.length >= 2) {
+            searchTimeout = setTimeout(function() {
+                searchProducts(query);
+            }, 300);
+        } else {
+            hideSearchResults();
+        }
+    });
+
+    function searchProducts(query) {
+        $.get('{% url "inventory:produk_lookup" %}', { q: query, mode: 'manual' }, function(data) {
+            if (data && data.length > 0) {
+                showSearchResults(data);
+            } else {
+                hideSearchResults();
+            }
+        }).fail(function() {
+            hideSearchResults();
+        });
+    }
+
+    function showSearchResults(products) {
+        const $results = $('#search-result-box');
+        $results.empty();
+        
+        // Smart positioning
+        const input = $('#produk_search')[0];
+        const rect = input.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const spaceBelow = viewportHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        
+        let top, left, width;
+        
+        if (spaceBelow >= 300 || spaceBelow > spaceAbove) {
+            // Show below
+            top = rect.bottom + window.scrollY + 5;
+            left = rect.left + window.scrollX;
+            width = rect.width;
+        } else {
+            // Show above
+            top = rect.top + window.scrollY - 305;
+            left = rect.left + window.scrollX;
+            width = rect.width;
+        }
+        
+        // Ensure it doesn't go off-screen horizontally
+        if (left < 10) left = 10;
+        if (left + width > window.innerWidth - 10) {
+            width = window.innerWidth - left - 10;
+        }
+        
+        $results.css({
+            position: 'fixed',
+            top: top + 'px',
+            left: left + 'px',
+            width: width + 'px',
+            maxHeight: '300px'
+        });
+        
+        products.forEach(function(product, index) {
+            const photoUrl = product.photo_url ? product.photo_url : null;
+            const brandColor = index % 5;
+            const brandClass = ['border-primary', 'border-success', 'border-danger', 'border-info', 'border-warning'][brandColor];
+            
+            const productItem = `
+                <div class="compact-product-item ${brandClass}" onclick="addProduct('${product.sku}')">
+                    <div class="compact-product-top">
+                        ${photoUrl ? `
+                            <img src="${photoUrl}" alt="${product.sku}" class="compact-product-photo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="compact-product-placeholder" style="display: none;">
+                                <i class="bi bi-box"></i>
+                            </div>
+                        ` : `
+                            <div class="compact-product-placeholder">
+                                <i class="bi bi-box"></i>
+                            </div>
+                        `}
+                        <div class="compact-product-info">
+                            <div class="compact-product-sku">${product.sku} - ${product.barcode || ''}</div>
+                            <div class="compact-product-name">${product.nama}</div>
+                            <div class="compact-product-badges">
+                                ${product.brand ? `<span class="compact-product-brand">${product.brand}</span>` : ''}
+                                ${product.variant ? `<span class="compact-product-variant">${product.variant}</span>` : ''}
+                            </div>
+                        </div>
+                </div>
+                </div>
+            `;
+            $results.append(productItem);
+        });
+        
+        $results.show();
+        $('#search-backdrop').show();
+    }
+
+    function hideSearchResults() {
+        $('#search-result-box').hide();
+        $('#search-backdrop').hide();
+    }
+
+    // Hide search results when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#produk_search, #search-result-box').length) {
+            hideSearchResults();
+        }
+    });
+
+    // Click backdrop to hide dropdown
+    $('#search-backdrop').on('click', function() {
+        hideSearchResults();
+    });
+
+    // Quantity controls
+    $(document).on('click', '.compact-plus', function() {
+        const input = $(this).siblings('.compact-qty-input');
+        const currentVal = parseInt(input.val()) || 0;
+        input.val(currentVal + 1);
+    });
+
+    $(document).on('click', '.compact-minus', function() {
+        const input = $(this).siblings('.compact-qty-input');
+        const currentVal = parseInt(input.val()) || 1;
+        if (currentVal > 1) {
+            input.val(currentVal - 1);
+        }
+    });
+
+    // Remove product
+    $(document).on('click', '.compact-remove-btn', function() {
+        $(this).closest('.compact-added-item').fadeOut(300, function() {
+            $(this).remove();
+            updateProductCount();
+        });
+    });
+
+    function updateProductCount() {
+        const count = $('.compact-added-item').length;
+        $('#product-count').text(count);
+        
+        if (count === 0) {
+            $('#no-product-msg').show();
+        } else {
+            $('#no-product-msg').hide();
+        }
+    }
+
+    // Add product function (global)
+    window.addProduct = function(sku) {
+        hideSearchResults();
+        
+        // Check if product already exists
+        if ($(`.compact-added-item[data-sku="${sku}"]`).length > 0) {
+            return;
+        }
+        
+        // Get product data
+        $.get('{% url "inventory:produk_lookup" %}', { q: sku, mode: 'manual' }, function(data) {
+            if (data && data.length > 0) {
+                const product = data[0];
+                const photoUrl = product.photo_url ? product.photo_url : null;
+                
+                const itemHtml = `
+                    <div class="compact-added-item" data-sku="${product.sku}">
+                        <div class="compact-added-top">
+                            ${photoUrl ? `
+                                <img src="${photoUrl}" alt="${product.sku}" class="compact-added-photo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="compact-added-placeholder" style="display: none;">
+                                    <i class="bi bi-box"></i>
+                                </div>
+                            ` : `
+                                <div class="compact-added-placeholder">
+                                    <i class="bi bi-box"></i>
+                                </div>
+                            `}
+                            <div class="compact-added-info">
+                                <div class="compact-added-sku">${product.sku} - ${product.barcode || ''}</div>
+                                <div class="compact-added-name">${product.nama}</div>
+                                <div class="compact-added-badges">
+                                    <span class="compact-added-brand">${product.brand || 'No Brand'}</span>
+                                    <span class="compact-added-variant">${product.variant || 'Standard'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="compact-qty-controls">
+                            <button type="button" class="compact-qty-btn compact-minus">-</button>
+                            <input type="number" name="produk_qty[]" class="compact-qty-input" value="1" min="1">
+                            <button type="button" class="compact-qty-btn compact-plus">+</button>
+                        </div>
+                        <button type="button" class="compact-remove-btn">
+                            <i class="bi bi-x"></i>
+                        </button>
+                        <input type="hidden" name="produk_sku[]" value="${product.sku}">
+                    </div>
+                `;
+                
+                $('#produk-list').append(itemHtml);
+                updateProductCount();
+            }
+        });
+    };
+
+    // Initial product count
+    updateProductCount();
+    
+    // Show supplier summary on page load since supplier is already selected
+    const supplierName = $('#nama_supplier').val();
+    if (supplierName) {
+        $('#supplier-name-display').text(supplierName);
+        $('#supplier-details-display').text('Supplier terpilih');
+        $('#supplier-summary').show();
+        $('#supplier-section').hide();
+    }
+});
+</script>
+{% endblock %} 

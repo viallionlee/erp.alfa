@@ -80,8 +80,8 @@
   <div style="position:fixed; left:0; right:0; bottom:0; width:100vw; z-index:1000; background:#fff; box-shadow:0 -2px 8px rgba(0,0,0,0.04); padding:10px 0 0 0;">
     <div class="container-fluid" style="max-width:600px; margin:auto;">
       <div class="mb-2 px-2 d-flex align-items-center gap-2">
-        <button class="btn btn-outline-secondary btn-lg w-50 mb-1" id="backBtnBottom">💾 Save &amp; Back</button>
-        <button type="button" id="reloadPageBtn" class="btn btn-outline-secondary btn-lg w-50 mb-1"><i class="bi bi-arrow-clockwise"></i> Reload</button>
+        <button class="btn btn-outline-secondary btn-lg w-50 mb-1" id="reloadPageBtn"><i class="bi bi-arrow-clockwise"></i> Reload</button>
+        <button class="btn btn-danger btn-lg w-50 mb-1" id="closeTabBtn">Tutup Tab</button>
       </div>
     </div>
   </div>
@@ -103,7 +103,8 @@
   // Ambil batchitemId dari URL (pk)
   const pathParts = window.location.pathname.split('/');
   const batchitemId = pathParts[pathParts.indexOf('batchitem') + 1];
-  const urlUpdate = `/fullfilment/batchitem/${batchitemId}/update_jumlah_ambil/`;
+  const namaBatch = '{{ nama_batch|urlencode }}';
+  const urlUpdate = `/fullfilment/batchpicking/${namaBatch}/batchitem/${batchitemId}/update_jumlah_ambil/`;
   // Fungsi update jumlah ambil ke backend
   function autoSaveJumlahAmbil(val) {
     fetch(urlUpdate, {
@@ -222,38 +223,15 @@
   });
 
   // Tombol reload: reload page dan autofocus ke scan barcode
-  document.getElementById('reloadBtn').onclick = function() {
-    window.location.reload();
-    setTimeout(() => scanBarcodeInput.focus(), 200);
-  };
   // Alt+R keyboard shortcut
   document.addEventListener('keydown', function(e) {
     if (e.altKey && (e.key === 'r' || e.key === 'R')) {
-      document.getElementById('reloadBtn').click();
+      reloadPageBtn.click();
     }
   });
-  // Tombol Save & Back
-  document.getElementById('saveBackBtn').onclick = function() {
-    window.location.href = '/fullfilment/batchpicking/{{ batchitem.batchlist.nama_batch|urlencode }}/';
-  };
-  // Tombol kembali ke daftar batchpicking
-  document.getElementById('backBtnBottom').onclick = function() {
-    // Coba ambil nama_batch dari referrer jika ada
-    const ref = document.referrer;
-    let batchUrl = null;
-    if (ref && ref.includes('/fullfilment/batchpicking/')) {
-      // Ambil path batchpicking/nama_batch
-      const match = ref.match(/\/fullfilment\/batchpicking\/([^\/]+)/);
-      if (match && match[1]) {
-        batchUrl = `/fullfilment/batchpicking/${match[1]}/`;
-      }
-    }
-    if (batchUrl) {
-      window.location.href = batchUrl;
-    } else {
-      // Fallback: redirect ke index batchpicking jika tidak ketemu
-      window.location.href = '/fullfilment/';
-    }
-  }
+  // Tombol Tutup Tab
+  document.getElementById('closeTabBtn').addEventListener('click', function() {
+    window.close();
+  });
 </script>
 {% endblock %}

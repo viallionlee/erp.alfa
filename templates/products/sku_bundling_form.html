@@ -54,7 +54,7 @@
     </table>
     <input type="hidden" name="sku_items_json" id="sku_items_json">
     <div class="d-flex justify-content-between">
-      <a href="/products/sku_bundling/" class="btn btn-secondary">Batal</a>
+      <a href="{% url 'products:sku_bundling_list' %}" class="btn btn-secondary">Batal</a> {# Menggunakan URL name #}
       <button type="submit" class="btn btn-primary">Simpan</button>
     </div>
   </form>
@@ -248,7 +248,14 @@
         document.getElementById('search-result-box').style.display = 'none';
       }
     });
-    document.querySelector('form').addEventListener('submit', function () {
+    document.querySelector('form').addEventListener('submit', function (event) {
+      // Update bundlingItems with current quantities from the table
+      document.querySelectorAll('#bundling-table tbody tr').forEach((row, idx) => {
+        const quantityInput = row.querySelector('input[type="number"]');
+        if (quantityInput && bundlingItems[idx]) {
+          bundlingItems[idx].jumlah = parseInt(quantityInput.value) || 1;
+        }
+      });
       document.getElementById('sku_items_json').value = JSON.stringify(bundlingItems);
     });
     function updateSearchResultHighlight() {

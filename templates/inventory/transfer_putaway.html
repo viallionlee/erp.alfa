@@ -1,0 +1,459 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Transfer Putaway{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Highlight untuk kolom Qty Transfer */
+    .qty-transfer-cell {
+        background-color: #fff3cd !important;
+        border-color: #ffeaa7 !important;
+        font-weight: bold;
+        color: #856404;
+        text-align: center;
+        font-size: 1.1em;
+    }
+    
+    /* Status konfirmasi */
+    .status-pending {
+        background-color: #f8d7da !important;
+        color: #721c24;
+    }
+    
+    .status-confirmed {
+        background-color: #d4edda !important;
+        color: #155724;
+    }
+    
+    /* Disabled button style */
+    .btn-disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<input type="hidden" id="csrf_token_input" value="{{ csrf_token }}">
+<input type="hidden" id="transfer_session_id" value="{{ transfer_session.id }}">
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="bi bi-arrow-left-right"></i> Transfer Putaway
+        </h2>
+        <div class="d-flex gap-2">
+            <a href="{% url 'inventory:putaway' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Kembali
+            </a>
+        </div>
+    </div>
+
+    <!-- Session Info -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="bi bi-info-circle"></i> Informasi Sesi Transfer</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>Kode Sesi:</strong><br>
+                    <span class="text-primary">{{ transfer_session.session_code }}</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Rak Asal:</strong><br>
+                    <span class="text-danger">{{ transfer_session.rak_asal.kode_rak }} - {{ transfer_session.rak_asal.nama_rak }}</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Rak Tujuan:</strong><br>
+                    <span class="text-success">{{ transfer_session.rak_tujuan.kode_rak }} - {{ transfer_session.rak_tujuan.nama_rak }}</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Tanggal Transfer:</strong><br>
+                    <span>{{ transfer_session.tanggal_transfer|date:"d/m/Y H:i" }}</span>
+                </div>
+            </div>
+            {% if transfer_session.catatan %}
+            <div class="mt-3">
+                <strong>Catatan:</strong><br>
+                <span class="text-muted">{{ transfer_session.catatan }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Step 1: Scan Rak Tujuan -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-box"></i> 1. Scan Rak Tujuan</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" id="kode-rak-input" class="form-control" placeholder="Scan atau ketik kode rak tujuan..." autofocus>
+                        <button class="btn btn-primary" type="button" onclick="scanRak()">Cari</button>
+                    </div>
+                    <div id="rak-result" class="mt-2"></div>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Rak yang diharapkan:</strong> {{ transfer_session.rak_tujuan.kode_rak }} - {{ transfer_session.rak_tujuan.nama_rak }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: Daftar Item Transfer -->
+    <div class="card mb-4" id="step-items">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-list-ul"></i> 2. Daftar Item Transfer</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Barcode</th>
+                            <th>Nama Produk</th>
+                            <th>Variant</th>
+                            <th>Brand</th>
+                            <th>Qty Transfer</th>
+                            <th>Status Konfirmasi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transfer-items-body">
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">
+                                <i class="bi bi-hourglass-split"></i> Memuat data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3: Scan Barcode Item -->
+    <div class="card mb-4" id="step-scan-items" style="display: none;">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0"><i class="bi bi-upc-scan"></i> 3. Scan Barcode Item</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" id="barcode-item-input" class="form-control" placeholder="Scan barcode item untuk konfirmasi..." autofocus>
+                        <button class="btn btn-warning" type="button" onclick="scanBarcodeItem()">Konfirmasi</button>
+                    </div>
+                    <div id="barcode-result" class="mt-2"></div>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Instruksi:</strong> Scan barcode setiap item untuk mengkonfirmasi barang yang akan diputaway.
+                    </div>
+                    <div class="progress mb-2">
+                        <div id="confirmation-progress" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <small class="text-muted">
+                        <span id="confirmed-count">0</span> dari <span id="total-count">0</span> item sudah dikonfirmasi
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 4: Konfirmasi dan Simpan -->
+    <div class="card mb-4" id="step-confirm" style="display: none;">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-check-circle"></i> 4. Konfirmasi Putaway</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle"></i>
+                <strong>Semua item sudah dikonfirmasi!</strong> Siap untuk menyimpan putaway.
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Rak Tujuan:</strong> <span id="confirmed-rak" class="text-primary"></span><br>
+                    <strong>Total Item:</strong> <span id="total-items" class="text-success"></span><br>
+                    <strong>Status:</strong> <span class="badge bg-success">Semua Dikonfirmasi</span>
+                </div>
+                <button class="btn btn-success btn-lg" onclick="saveTransferPutaway()">
+                    <i class="bi bi-check-circle"></i> Simpan Putaway
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="transferPutawaySuccessModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-check-circle"></i> Putaway Berhasil!
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Transfer putaway telah berhasil disimpan ke rak <strong id="modalRakKode"></strong>.</p>
+                <p>Sesi transfer telah selesai.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <a href="{% url 'inventory:putaway' %}" class="btn btn-primary">Kembali ke Daftar Putaway</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentRak = null;
+let transferItems = [];
+let confirmedItems = new Set();
+
+// Load transfer items on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadTransferItems();
+    
+    // Add event listener for barcode input
+    document.getElementById('barcode-item-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            scanBarcodeItem();
+        }
+    });
+});
+
+function loadTransferItems() {
+    const sessionId = document.getElementById('transfer_session_id').value;
+    
+    fetch(`/inventory/transfer-rak/${sessionId}/items-data/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                transferItems = data.items;
+                renderTransferItems();
+                updateConfirmationProgress();
+            } else {
+                showMessage('Gagal memuat data transfer: ' + data.message, 'danger');
+                document.getElementById('transfer-items-body').innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center text-danger">
+                            <i class="bi bi-exclamation-triangle"></i> Gagal memuat data: ${data.message}
+                        </td>
+                    </tr>
+                `;
+            }
+        })
+        .catch(error => {
+            showMessage('Terjadi kesalahan saat memuat data: ' + error, 'danger');
+            document.getElementById('transfer-items-body').innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center text-danger">
+                        <i class="bi bi-exclamation-triangle"></i> Terjadi kesalahan: ${error}
+                    </td>
+                </tr>
+            `;
+        });
+}
+
+function renderTransferItems() {
+    const tbody = document.getElementById('transfer-items-body');
+    tbody.innerHTML = '';
+
+    transferItems.forEach((item, index) => {
+        const row = tbody.insertRow();
+        const isConfirmed = confirmedItems.has(item.id);
+        const statusClass = isConfirmed ? 'status-confirmed' : 'status-pending';
+        const statusText = isConfirmed ? 'Sudah Dikonfirmasi' : 'Menunggu Konfirmasi';
+        const statusIcon = isConfirmed ? 'bi-check-circle' : 'bi-clock';
+        
+        row.innerHTML = `
+            <td>${item.sku}</td>
+            <td>${item.barcode}</td>
+            <td class="text-truncate" style="max-width: 200px;">${item.nama_produk}</td>
+            <td class="text-truncate" style="max-width: 150px;">${item.variant_produk || '-'}</td>
+            <td>${item.brand || '-'}</td>
+            <td class="qty-transfer-cell">${item.qty_transfer}</td>
+            <td class="${statusClass}">
+                <i class="bi ${statusIcon}"></i> ${statusText}
+            </td>
+        `;
+    });
+}
+
+function scanRak() {
+    const kodeRak = document.getElementById('kode-rak-input').value.trim();
+    if (!kodeRak) {
+        showMessage('Masukkan kode rak terlebih dahulu', 'warning');
+        return;
+    }
+
+    fetch(`/inventory/putaway/scan-rak/?kode_rak=${encodeURIComponent(kodeRak)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentRak = data.rak;
+                
+                // Check if scanned rak matches expected rak
+                const expectedRak = '{{ transfer_session.rak_tujuan.kode_rak }}';
+                if (currentRak.kode_rak !== expectedRak) {
+                    showMessage(`Rak yang discan (${currentRak.kode_rak}) tidak sesuai dengan rak tujuan (${expectedRak})`, 'danger');
+                    return;
+                }
+
+                document.getElementById('rak-result').innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle"></i>
+                        <strong>Rak ditemukan:</strong> ${currentRak.kode_rak} - ${currentRak.nama_rak}
+                    </div>
+                `;
+                
+                // Show scan items step
+                document.getElementById('step-scan-items').style.display = 'block';
+                document.getElementById('barcode-item-input').focus();
+                
+            } else {
+                document.getElementById('rak-result').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-x-circle"></i>
+                        ${data.error}
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            showMessage('Terjadi kesalahan saat scan rak: ' + error, 'danger');
+        });
+}
+
+function scanBarcodeItem() {
+    const barcode = document.getElementById('barcode-item-input').value.trim();
+    if (!barcode) {
+        showMessage('Masukkan barcode item terlebih dahulu', 'warning');
+        return;
+    }
+
+    // Find item by barcode
+    const item = transferItems.find(item => item.barcode === barcode);
+    
+    if (!item) {
+        document.getElementById('barcode-result').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="bi bi-x-circle"></i>
+                <strong>Barcode tidak ditemukan:</strong> ${barcode}
+            </div>
+        `;
+        document.getElementById('barcode-item-input').value = '';
+        document.getElementById('barcode-item-input').focus();
+        return;
+    }
+
+    // Check if already confirmed
+    if (confirmedItems.has(item.id)) {
+        document.getElementById('barcode-result').innerHTML = `
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>Item sudah dikonfirmasi:</strong> ${item.nama_produk}
+            </div>
+        `;
+        document.getElementById('barcode-item-input').value = '';
+        document.getElementById('barcode-item-input').focus();
+        return;
+    }
+
+    // Confirm item
+    confirmedItems.add(item.id);
+    
+    document.getElementById('barcode-result').innerHTML = `
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle"></i>
+            <strong>Item dikonfirmasi:</strong> ${item.nama_produk} (${item.qty_transfer} pcs)
+        </div>
+    `;
+    
+    // Update UI
+    renderTransferItems();
+    updateConfirmationProgress();
+    
+    // Clear input and focus
+    document.getElementById('barcode-item-input').value = '';
+    document.getElementById('barcode-item-input').focus();
+    
+    // Check if all items confirmed
+    if (confirmedItems.size === transferItems.length) {
+        setTimeout(() => {
+            document.getElementById('step-confirm').style.display = 'block';
+            document.getElementById('confirmed-rak').textContent = `${currentRak.kode_rak} - ${currentRak.nama_rak}`;
+            document.getElementById('total-items').textContent = transferItems.length;
+        }, 1000);
+    }
+}
+
+function updateConfirmationProgress() {
+    const confirmedCount = confirmedItems.size;
+    const totalCount = transferItems.length;
+    const progressPercent = totalCount > 0 ? (confirmedCount / totalCount) * 100 : 0;
+    
+    document.getElementById('confirmed-count').textContent = confirmedCount;
+    document.getElementById('total-count').textContent = totalCount;
+    document.getElementById('confirmation-progress').style.width = progressPercent + '%';
+    document.getElementById('confirmation-progress').textContent = Math.round(progressPercent) + '%';
+}
+
+function saveTransferPutaway() {
+    if (confirmedItems.size !== transferItems.length) {
+        showMessage('Semua item harus dikonfirmasi terlebih dahulu', 'warning');
+        return;
+    }
+
+    if (!currentRak) {
+        showMessage('Rak tujuan belum dipilih', 'warning');
+        return;
+    }
+
+            const putawayData = {
+            rak_id: currentRak.id,
+            items: transferItems.map(item => ({
+                product_id: item.product_id,
+                quantity: item.qty_transfer
+            })),
+        is_transfer_putaway: true,
+        transfer_session_id: document.getElementById('transfer_session_id').value
+    };
+
+    fetch('/inventory/putaway/save/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.getElementById('csrf_token_input').value
+        },
+        body: JSON.stringify(putawayData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('modalRakKode').textContent = currentRak.kode_rak;
+            new bootstrap.Modal(document.getElementById('transferPutawaySuccessModal')).show();
+        } else {
+            showMessage('Gagal menyimpan putaway: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        showMessage('Terjadi kesalahan saat menyimpan putaway: ' + error, 'danger');
+    });
+}
+
+function showMessage(message, type) {
+    // Implement your message display function
+    console.log(message);
+}
+</script>
+{% endblock %}

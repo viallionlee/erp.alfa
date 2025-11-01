@@ -1,4 +1,4 @@
-#!C:\Users\m3vil\OneDrive\Desktop\ERP.ALFA\venv\Scripts\python.exe
+#!C:\ERP_ALFA\venv\Scripts\python.exe
 
 ##############################################################################
 #

@@ -31,41 +31,179 @@
     }
     #search-result-box {
         min-width: 320px;
-        font-size: 0.95em;
+        max-width: 1065px;
+        font-size: 0.8rem;
+    }
+    #search-result-box table {
+        width: 100%;
+        table-layout: fixed;
+    }
+    #search-result-box tbody tr {
+        height: 90px;
+        min-height: 90px;
+    }
+    #search-result-box .product-photo-zoom img {
+        width: 90px !important;
+        height: 90px !important;
+    }
+    #search-result-box th {
+        text-align: center;
+    }
+    /* Kode Produk - 2 rows */
+    #search-result-box td:nth-child(2) {
+        vertical-align: middle;
+        padding: 8px;
+        text-align: left;
+    }
+    #search-result-box td:nth-child(2) .sku-row {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #0d6efd;
+        text-align: left;
+    }
+    #search-result-box td:nth-child(2) .barcode-row {
+        font-size: 0.75rem;
+        color: #6c757d;
+        text-align: left;
+    }
+    /* Detail Produk - 2 rows */
+    #search-result-box td:nth-child(3) {
+        vertical-align: middle;
+        padding: 8px;
+        text-align: left;
+    }
+    #search-result-box td:nth-child(3) .nama-row {
+        font-weight: 500;
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+        word-wrap: break-word;
+        text-align: left;
+    }
+    #search-result-box td:nth-child(3) .variant-brand-row {
+        font-size: 0.75rem;
+        color: #6c757d;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    #search-result-box td:nth-child(3) .variant-text {
+        text-align: left;
+    }
+    #search-result-box td:nth-child(3) .brand-text {
+        font-weight: 500;
+        color: #198754;
+        margin-left: 8px;
+        text-align: right;
+    }
+    /* Main table styling */
+    #produk-table tbody tr {
+        height: 90px;
+        min-height: 90px;
+    }
+    #produk-table .product-photo-zoom img {
+        width: 90px !important;
+        height: 90px !important;
+    }
+    #produk-table .sku-row {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #0d6efd;
+        text-align: left;
+    }
+    #produk-table .barcode-row {
+        font-size: 0.8rem;
+        color: #6c757d;
+        text-align: left;
+    }
+    #produk-table .nama-row {
+        font-weight: 500;
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+        text-align: left;
+    }
+    #produk-table .variant-brand-row {
+        font-size: 0.8rem;
+        color: #6c757d;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    #produk-table .variant-text {
+        text-align: left;
+    }
+    #produk-table .brand-text {
+        font-weight: 500;
+        color: #198754;
+        margin-left: 8px;
+        text-align: right;
     }
     @media (max-width: 600px) {
         .modern-card { padding: 1rem; }
         .modern-form-row { flex-direction: column; gap: 0.5rem; }
     }
+    .customer-warning {
+        box-shadow: 0 0 8px rgba(25, 135, 84, 0.8) !important;
+        border-color: #198754 !important;
+    }
+    /* Keyboard navigation highlight */
+    .table-active {
+        background-color: #e7f3ff !important;
+    }
+    /* Photo zoom */
+    .product-photo-zoom {
+        position: relative;
+        cursor: pointer;
+        display: inline-block;
+    }
+    .product-photo-zoom .magnifier-icon {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    .product-photo-zoom:hover .magnifier-icon {
+        opacity: 1;
+    }
 </style>
 <div class="container mt-4">
-    <h2 class="mb-4 text-center">Tambah Order Baru</h2>
+    <h2 class="mb-4 text-center">{% if edit_mode %}Edit Order{% else %}Tambah Order Baru{% endif %}</h2>
     <div class="modern-card">
+    <div id="form-error-message" class="alert alert-danger" style="display:none;"></div>
     <form method="post" id="add-order-form">
         {% csrf_token %}
         <!-- Row 1: Tanggal, Customer, ID Pesanan (inline) -->
         <div class="modern-form-row">
             <div class="form-group">
                 <label class="modern-form-label" for="tanggal_pembuatan">Tanggal Pembuatan</label>
-                <input type="text" name="tanggal_pembuatan" id="tanggal_pembuatan" class="form-control" readonly required>
+                <input type="text" name="tanggal_pembuatan" id="tanggal_pembuatan" class="form-control" readonly required value="{% if order %}{{ order.tanggal_pembuatan|date:'d-m-Y H:i' }}{% endif %}">
             </div>
             <div class="form-group">
                 <label class="modern-form-label" for="nama_customer">Nama Customer <span style="color:red">*</span></label>
                 <div class="input-group">
-                    <input type="text" name="nama_customer" id="nama_customer" class="form-control" required readonly aria-label="Nama Customer">
+                    <input type="text" name="nama_customer" id="nama_customer" class="form-control" required readonly aria-label="Nama Customer" value="{% if order %}{{ order.customer.nama_customer|default:'' }}{% endif %}">
                     <button class="btn btn-outline-primary" type="button" id="pilih_customer_btn" aria-label="Pilih Customer" aria-haspopup="dialog">Pilih</button>
                 </div>
             </div>
             <div class="form-group">
                 <label class="modern-form-label" for="id_pesanan">ID Pesanan</label>
-                <input type="text" name="id_pesanan" id="id_pesanan" class="form-control" readonly required>
+                <input type="text" name="id_pesanan" id="id_pesanan" class="form-control" readonly required value="{% if order %}{{ order.id_pesanan }}{% endif %}">
             </div>
         </div>
         <!-- Row 2: Keterangan -->
         <div class="modern-form-row">
             <div class="form-group" style="flex:2;">
                 <label class="modern-form-label" for="keterangan">Keterangan</label>
-                <textarea name="keterangan" id="keterangan" class="form-control" rows="1" placeholder="Keterangan tambahan (opsional)"></textarea>
+                <textarea name="keterangan" id="keterangan" class="form-control" rows="1" placeholder="Keterangan tambahan (opsional)">{% if order %}{{ order.keterangan|default:'' }}{% endif %}</textarea>
             </div>
         </div>
         <!-- Row 3: Cari Produk -->
@@ -76,10 +214,19 @@
                     <input type="text" id="produk_search" class="form-control" placeholder="Cari SKU / Barcode / Nama / Brand / Variant" autocomplete="off" aria-label="Cari Produk">
                     <button class="btn btn-outline-secondary" type="button" id="produk_search_btn" aria-label="Cari Produk">Cari</button>
                 </div>
-                <div id="search-result-box" class="border rounded mt-1 bg-white shadow-sm" style="display:none; position:absolute; z-index:10; min-width:100%; max-width:100vw; overflow-x:auto; max-height:180px; overflow-y:auto;">
-                  <!-- Kolom judul agar lebih jelas -->
-                  <table class="table table-sm mb-0"><thead><tr style="background:#f8f9fa;"><th>SKU</th><th>Barcode</th><th>Nama</th><th>Variant</th><th>Brand</th></tr></thead><tbody></tbody></table>
-                </div>
+                 <div id="search-result-box" class="border rounded mt-1 bg-white shadow-sm" style="display:none; position:absolute; z-index:10; min-width:100%; max-width:1065px; overflow-x:auto; max-height:600px; overflow-y:auto;">
+                   <table class="table table-sm mb-0" style="font-size:0.8rem; width:100%; table-layout:fixed;">
+                     <thead>
+                       <tr style="background:#f8f9fa;">
+                         <th style="width:120px; text-align:center;">Photo</th>
+                         <th style="width:180px; text-align:center;">Kode Produk</th>
+                         <th style="width:auto; text-align:center;">Detail Produk</th>
+                         <th style="width:120px; text-align:center;">Stock</th>
+                       </tr>
+                     </thead>
+                     <tbody></tbody>
+                   </table>
+                 </div>
             </div>
         </div>
         <!-- Produk Table -->
@@ -87,25 +234,49 @@
             <table class="table table-bordered align-middle" id="produk-table">
                 <thead class="table-light">
                     <tr>
-                        <th>SKU</th>
-                        <th>Barcode</th>
-                        <th>Nama Produk</th>
-                        <th>Variant</th>
-                        <th>Brand</th>
-                        <th>Stok</th>
-                        <th>Jumlah</th>
-                        <th>Harga</th>
-                        <th>Aksi</th>
+                        <th style="width:120px; text-align:center;">Photo</th>
+                        <th style="width:180px; text-align:center;">Kode Produk</th>
+                        <th style="width:auto; text-align:center;">Detail Produk</th>
+                        <th style="width:80px; text-align:center;">Stok</th>
+                        <th style="width:80px; text-align:center;">Jumlah</th>
+                        <th style="width:100px; text-align:center;">Harga</th>
+                        <th style="width:80px; text-align:center;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- Baris produk akan muncul di sini -->
+                    {% if edit_mode %}
+                        {% for item in detail_items %}
+                        <tr data-sku="{{ item.sku }}">
+                            <td style="vertical-align:middle; text-align:center;">
+                                <div class="bg-light d-flex align-items-center justify-content-center" style="width:90px;height:90px;border-radius:4px;">
+                                    <i class="bi bi-file-image text-secondary" style="font-size:32px;"></i>
+                                </div>
+                            </td>
+                            <td style="vertical-align:middle;">
+                                <input type="hidden" name="produk_sku[]" value="{{ item.sku }}">
+                                <div class="sku-row">{{ item.sku }}</div>
+                                <div class="barcode-row">{{ item.barcode }}</div>
+                            </td>
+                            <td style="vertical-align:middle;">
+                                <div class="nama-row">{{ item.nama_produk }}</div>
+                                <div class="variant-brand-row">
+                                    <span class="variant-text">{{ item.variant }}</span>
+                                    <span class="brand-text">{{ item.brand }}</span>
+                                </div>
+                            </td>
+                            <td style="vertical-align:middle; text-align:center;">{{ item.stok }}</td>
+                            <td style="vertical-align:middle; text-align:center;"><input type="number" name="produk_qty[]" class="form-control qty-input" value="{{ item.jumlah }}" min="1" style="width:70px;"></td>
+                            <td style="vertical-align:middle; text-align:center;"><input type="number" name="produk_harga[]" class="form-control harga-input" value="{{ item.harga|floatformat:0 }}" min="0" style="width:100px;"></td>
+                            <td style="vertical-align:middle; text-align:center;"><button type="button" class="btn btn-danger btn-sm hapus-row">Hapus</button></td>
+                        </tr>
+                        {% endfor %}
+                    {% endif %}
                 </tbody>
             </table>
         </div>
         <div class="mt-3 text-center">
-            <button type="submit" class="btn btn-primary px-4">Simpan Order</button>
-            <a href="{% url 'orders_index' %}" class="btn btn-secondary ms-2">Batal</a>
+            <button type="submit" class="btn btn-primary px-4">{% if edit_mode %}Update Order{% else %}Simpan Order{% endif %}</button>
+            <a href="{% url 'orders_list' %}" class="btn btn-secondary ms-2">Batal</a>
         </div>
     </form>
     </div>
@@ -168,11 +339,38 @@
     </div>
   </div>
 </div>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Modal Zoom Photo -->
+<div class="modal fade" id="zoomImageModal" tabindex="-1" aria-labelledby="zoomImageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="zoomImageModalLabel">Photo Produk</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="zoomImage" src="" alt="Product Photo" class="img-fluid" style="max-height: 70vh; border-radius: 8px;">
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
 <script>
 // ----- global state untuk navigasi -----
 let selectedIdx = -1;
 let currentRows = [];
+
+// Error handling
+window.addEventListener('error', function(e) {
+    console.error('JavaScript Error:', e.error);
+});
+
+// Check jQuery
+if (typeof $ === 'undefined') {
+    console.error('jQuery is not loaded!');
+}
 
 function updateSearchResultHighlight() {
   // hapus highlight di semua baris
@@ -197,145 +395,287 @@ $(function() {
     });
 });
 
-// --- SEARCH PRODUK DENGAN SEARCH-RESULT-BOX (SAMA DENGAN INBOUND) ---
-function searchProdukManual(keyword, callback) {
-  $.getJSON('/inventory/produk-lookup', {q: keyword, mode: 'manual', page_size: 1000}, function(data) {
-    callback(data);
-  }).fail(function() {
-    callback([]);
-  });
+// --- SEARCH PRODUK DENGAN VANILLA JS (SESUAI PRODUKLOOKUP.MD) ---
+let searchTimeout = null;
+let produkSearchPage = 1;
+let produkSearchHasMore = false;
+let produkSearchLoading = false;
+let produkSearchQuery = '';
+
+function fetchProdukSearch(q, page = 1, append = false) {
+    produkSearchLoading = true;
+    
+    // Show loading indicator only for additional pages (not first page)
+    if (page > 1) {
+        const loadingRow = document.createElement('tr');
+        loadingRow.innerHTML = `
+            <td colspan="6" class="text-center py-3">
+                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                Loading more products...
+            </td>
+        `;
+        document.querySelector('#search-result-box tbody').appendChild(loadingRow);
+    }
+    
+    fetch(`/inventory/produk-lookup?q=${encodeURIComponent(q)}&mode=manual&page=${page}`)
+        .then(response => response.json())
+        .then(resp => {
+            // Remove loading indicator if exists
+            const loadingRow = document.querySelector('#search-result-box tbody tr:last-child');
+            if (loadingRow && loadingRow.textContent.includes('Loading more products')) {
+                loadingRow.remove();
+            }
+            
+            let data = resp.results || resp;
+            produkSearchHasMore = resp.has_more !== undefined ? resp.has_more : (Array.isArray(data) && data.length === 20);
+            
+            // Progressive loading: Show dropdown immediately with first 20 items
+            if (page === 1) {
+                document.getElementById('search-result-box').style.display = 'block';
+            }
+            
+            renderSearchResultBox(data, append);
+            produkSearchLoading = false;
+        })
+        .catch(error => {
+            // Remove loading indicator if exists
+            const loadingRow = document.querySelector('#search-result-box tbody tr:last-child');
+            if (loadingRow && loadingRow.textContent.includes('Loading more products')) {
+                loadingRow.remove();
+            }
+            
+            console.error('Search error:', error);
+            if (page === 1) {
+                renderSearchResultBox([], append);
+            }
+            produkSearchLoading = false;
+        });
 }
 
 function tambahAtauUpdateProduk(produk, stok) {
-  let $row = $('#produk-table tbody tr[data-sku="' + produk.sku + '"]');
-  if ($row.length) {
-    let $qty = $row.find('.qty-input');
-    $qty.val(parseInt($qty.val()) + 1);
+  const existingRow = document.querySelector(`#produk-table tbody tr[data-sku="${produk.sku}"]`);
+  
+  if (existingRow) {
+    const qtyInput = existingRow.querySelector('.qty-input');
+    qtyInput.value = parseInt(qtyInput.value) + 1;
   } else {
-    $('#produk-table tbody').append(`
+    let photoHtml = '';
+    if (produk.photo_url && produk.photo_url !== '') {
+      photoHtml = `
+        <div class="product-photo-zoom" data-photo-url="${produk.photo_url}">
+          <img src="${produk.photo_url}" alt="${produk.nama || produk.sku}" class="img-thumbnail" style="width:90px;height:90px;object-fit:cover;">
+          <div class="magnifier-icon">
+            <i class="bi bi-zoom-in"></i>
+          </div>
+        </div>
+      `;
+    } else {
+      photoHtml = `<div class="bg-light d-flex align-items-center justify-content-center" style="width:90px;height:90px;border-radius:4px;"><i class="bi bi-file-image text-secondary" style="font-size:32px;"></i></div>`;
+    }
+    
+    const newRow = `
       <tr data-sku="${produk.sku}">
-        <td><input type="hidden" name="produk_sku[]" value="${produk.sku}">${produk.sku}</td>
-        <td>${produk.barcode}</td>
-        <td>${produk.nama}</td>
-        <td>${produk.variant}</td>
-        <td>${produk.brand}</td>
-        <td>${stok || 0}</td>
-        <td><input type="number" name="produk_qty[]" class="form-control qty-input" value="1" min="1" style="width:70px;"></td>
-        <td><input type="number" name="produk_harga[]" class="form-control harga-input" value="0" min="0" style="width:100px;"></td>
-        <td><button type="button" class="btn btn-danger btn-sm hapus-row">Hapus</button></td>
+        <td style="vertical-align:middle; text-align:center;">${photoHtml}</td>
+        <td style="vertical-align:middle;">
+          <input type="hidden" name="produk_sku[]" value="${produk.sku}">
+          <div class="sku-row">${produk.sku}</div>
+          <div class="barcode-row">${produk.barcode || '-'}</div>
+        </td>
+        <td style="vertical-align:middle;">
+          <div class="nama-row">${produk.nama || ''}</div>
+          <div class="variant-brand-row">
+            <span class="variant-text">${produk.variant || ''}</span>
+            <span class="brand-text">${produk.brand || ''}</span>
+          </div>
+        </td>
+        <td style="vertical-align:middle; text-align:center;">${stok || 0}</td>
+        <td style="vertical-align:middle; text-align:center;"><input type="number" name="produk_qty[]" class="form-control qty-input" value="1" min="1" style="width:70px;"></td>
+        <td style="vertical-align:middle; text-align:center;"><input type="number" name="produk_harga[]" class="form-control harga-input" value="0" min="0" style="width:100px;"></td>
+        <td style="vertical-align:middle; text-align:center;"><button type="button" class="btn btn-danger btn-sm hapus-row">Hapus</button></td>
       </tr>
-    `);
+    `;
+    document.querySelector('#produk-table tbody').insertAdjacentHTML('beforeend', newRow);
   }
 }
 
-function renderSearchResultBox(list) {
-  selectedIdx = -1;
-  let html = '';
-  if (Array.isArray(list) && list.length > 0) {
-    html = '<table class="table table-sm mb-0"><tbody>';
+function renderSearchResultBox(list, append = false) {
+    const searchBox = document.getElementById('search-result-box');
+    const tbody = searchBox.querySelector('tbody');
+    
+    if (!append) {
+        tbody.innerHTML = '';
+        selectedIdx = -1;
+    }
+    
+    if (!list.length && !append) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-danger">Produk tidak ditemukan!</td></tr>';
+        searchBox.style.display = 'block';
+        return;
+    }
+    
     list.forEach(function(produk) {
-      html += `<tr class="pilih-produk" style="cursor:pointer;"
-        data-sku="${produk.sku}"
-        data-barcode="${produk.barcode}"
-        data-nama="${produk.nama}"
-        data-variant="${produk.variant}"
-        data-brand="${produk.brand}">
-        <td>${produk.sku}</td>
-        <td>${produk.barcode}</td>
-        <td>${produk.nama}</td>
-        <td>${produk.variant}</td>
-        <td>${produk.brand}</td>
-      </tr>`;
+        let photoHtml = '';
+        if (produk.photo_url && produk.photo_url !== '') {
+            photoHtml = `
+                <div class="product-photo-zoom" data-photo-url="${produk.photo_url}">
+                    <img src="${produk.photo_url}" alt="${produk.nama || produk.sku}" class="img-thumbnail" style="width:90px;height:90px;object-fit:cover;">
+                    <div class="magnifier-icon">
+                        <i class="bi bi-zoom-in"></i>
+                    </div>
+                </div>
+            `;
+        } else {
+            photoHtml = `<div class="bg-light d-flex align-items-center justify-content-center" style="width:90px;height:90px;border-radius:4px;"><i class="bi bi-file-image text-secondary" style="font-size:32px;"></i></div>`;
+        }
+        
+        const row = document.createElement('tr');
+        row.className = 'pilih-produk';
+        row.style.cursor = 'pointer';
+        row.dataset.produk = JSON.stringify(produk);
+        
+        row.innerHTML = `
+            <td style="vertical-align:middle; text-align:center;">${photoHtml}</td>
+            <td>
+                <div class="sku-row">${produk.sku}</div>
+                <div class="barcode-row">${produk.barcode || '-'}</div>
+            </td>
+            <td>
+                <div class="nama-row">${produk.nama || ''}</div>
+                <div class="variant-brand-row">
+                    <span class="variant-text">${produk.variant || ''}</span>
+                    <span class="brand-text">${produk.brand || ''}</span>
+                </div>
+            </td>
+            <td style="vertical-align:middle; text-align:center;">${produk.qty_fisik || 0}</td>
+        `;
+        
+        tbody.appendChild(row);
     });
-    html += '</tbody></table>';
-  } else {
-    html = '<div class="p-2 text-danger">Produk tidak ditemukan!</div>';
-  }
-  $('#search-result-box').html(html).show();
-  // ambil kembali semua baris untuk navigasi
-  currentRows = Array.from(document.querySelectorAll('#search-result-box tr.pilih-produk'));
-  updateSearchResultHighlight();
+    
+    // Progressive loading: Show dropdown immediately for first page, or keep it visible for additional pages
+    if (!append) {
+        searchBox.style.display = 'block';
+    }
+    
+    // Update current rows untuk keyboard navigation
+    currentRows = Array.from(document.querySelectorAll('#search-result-box tr.pilih-produk'));
+    updateSearchResultHighlight();
 }
 
 $('#search-result-box').on('mousedown', function(e) {
     e.stopPropagation();
 });
 
-$('#produk_search_btn').off('click').on('click', function() {
-    let keyword = $('#produk_search').val().trim();
-    if (!keyword) return;
-    searchProdukManual(keyword, renderSearchResultBox);
-});
-$('#produk_search').off('input').on('input', function() {
-    let keyword = $(this).val().trim();
-    if (!keyword) {
-        $('#search-result-box').hide();
+// Event handler untuk produk search dengan debouncing (sesuai produklookup.md)
+document.getElementById('produk_search').addEventListener('input', function(e) {
+    clearTimeout(searchTimeout);
+    const keyword = e.target.value.trim();
+    
+    if (keyword.length < 2) {
+        document.getElementById('search-result-box').style.display = 'none';
         return;
     }
-    searchProdukManual(keyword, renderSearchResultBox);
+    
+    // Debounce 300ms untuk mengurangi API calls
+    searchTimeout = setTimeout(() => {
+        produkSearchQuery = keyword;
+        produkSearchPage = 1;
+        fetchProdukSearch(keyword, 1, false);
+    }, 300);
 });
-// Keyboard navigation and Enter for produk_search
-$('#produk_search').off('keydown').on('keydown', function(e) {
-  if (!$('#search-result-box').is(':visible')) return;
-  if (currentRows.length === 0) return;
-  if (e.key === 'ArrowDown') {
-    e.preventDefault();
-    selectedIdx = (selectedIdx + 1) % currentRows.length;
-    updateSearchResultHighlight();
-    currentRows[selectedIdx].scrollIntoView({block:'nearest'});
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    selectedIdx = (selectedIdx - 1 + currentRows.length) % currentRows.length;
-    updateSearchResultHighlight();
-    currentRows[selectedIdx].scrollIntoView({block:'nearest'});
-  } else if (e.key === 'Enter') {
-    e.preventDefault();
-    if (selectedIdx >= 0) {
-      $(currentRows[selectedIdx]).trigger('click');
-      $('#search-result-box').hide();
+
+document.getElementById('produk_search_btn').addEventListener('click', function() {
+    const keyword = document.getElementById('produk_search').value.trim();
+    if (keyword) {
+        produkSearchQuery = keyword;
+        produkSearchPage = 1;
+        fetchProdukSearch(keyword, 1, false);
     }
-  }
+});
+// Keyboard navigation dengan vanilla JS (sesuai produklookup.md)
+document.getElementById('produk_search').addEventListener('keydown', function(e) {
+    const searchBox = document.getElementById('search-result-box');
+    if (searchBox.style.display === 'none') return;
+    if (currentRows.length === 0) return;
+    
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIdx = (selectedIdx + 1) % currentRows.length;
+        updateSearchResultHighlight();
+        currentRows[selectedIdx].scrollIntoView({ block: 'nearest' });
+    } 
+    else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIdx = (selectedIdx - 1 + currentRows.length) % currentRows.length;
+        updateSearchResultHighlight();
+        currentRows[selectedIdx].scrollIntoView({ block: 'nearest' });
+    } 
+    else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (selectedIdx >= 0) {
+            currentRows[selectedIdx].click();
+            searchBox.style.display = 'none';
+        }
+    } 
+    else if (e.key === 'Escape') {
+        searchBox.style.display = 'none';
+    }
 });
 // Reset highlight on new search result
 function resetSearchResultHighlight() {
   selectedIdx = -1;
-  currentRows = $('#search-result-box tr.pilih-produk');
+  currentRows = Array.from(document.querySelectorAll('#search-result-box tr.pilih-produk'));
   updateSearchResultHighlight();
 }
-// Call reset after search result is shown
-let oldShow = $.fn.show;
-$.fn.show = function() {
-  let result = oldShow.apply(this, arguments);
-  if (this.attr('id') === 'search-result-box') {
-    setTimeout(resetSearchResultHighlight, 10);
-  }
-  return result;
-};
-$('#search-result-box').on('click', '.pilih-produk', function() {
-    let produk = {
-        sku: $(this).data('sku'),
-        barcode: $(this).data('barcode'),
-        nama: $(this).data('nama'),
-        variant: $(this).data('variant'),
-        brand: $(this).data('brand')
-    };
-    // Fetch stok
-    $.getJSON('/inventory/data/', {columns: JSON.stringify([{search:{value:produk.sku}}])}, function(resp) {
-        let stok = 0;
-        if (resp.data && resp.data.length > 0) {
-            stok = resp.data[0][5] || 0;
+// Click handler untuk pilih produk dengan vanilla JS (sama dengan inbound_tambah)
+document.getElementById('search-result-box').addEventListener('click', function(e) {
+    // Jangan trigger jika klik pada photo zoom
+    if (e.target.closest('.product-photo-zoom')) {
+        return;
+    }
+    
+    const row = e.target.closest('tr.pilih-produk');
+    if (!row) return;
+    
+    const produk = JSON.parse(row.dataset.produk);
+    
+    // Langsung gunakan qty_fisik dari API (sama dengan inbound_tambah)
+    tambahAtauUpdateProduk(produk, produk.qty_fisik || 0);
+    document.getElementById('produk_search').value = '';
+    document.getElementById('search-result-box').style.display = 'none';
+    document.getElementById('produk_search').focus();
+});
+
+// Infinite scroll pada search-result-box
+document.getElementById('search-result-box').addEventListener('scroll', function() {
+    if (produkSearchLoading || !produkSearchHasMore) return;
+    
+    const box = this;
+    // Load more ketika scroll hampir sampai bawah (10px dari bottom)
+    if (box.scrollTop + box.clientHeight >= box.scrollHeight - 10) {
+        produkSearchPage += 1;
+        fetchProdukSearch(produkSearchQuery, produkSearchPage, true);
+    }
+});
+
+// Photo zoom functionality
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.product-photo-zoom')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const photoUrl = e.target.closest('.product-photo-zoom').dataset.photoUrl;
+        if (photoUrl) {
+            document.getElementById('zoomImage').src = photoUrl;
+            const modal = new bootstrap.Modal(document.getElementById('zoomImageModal'));
+            modal.show();
         }
-        tambahAtauUpdateProduk(produk, stok);
-        $('#produk_search').val('');
-        $('#search-result-box').hide();
-        $('#produk_search').focus();
-    });
+    }
 });
 
 // Hide search result box when clicking outside
-$(document).on('click', function(e) {
-    if (!$(e.target).closest('#search-result-box, #produk_search, #produk_search_btn').length) {
-        $('#search-result-box').hide();
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#search-result-box, #produk_search, #produk_search_btn')) {
+        document.getElementById('search-result-box').style.display = 'none';
     }
 });
 
@@ -389,6 +729,41 @@ $('#customer-list').on('click', '.pilih-cust', function() {
     $('#customerModal').modal('hide');
 });
 
+// --- VALIDASI FORM ---
+$('#add-order-form').on('submit', function(e) {
+    const customerName = $('#nama_customer').val().trim();
+    const productRows = $('#produk-table tbody tr').length;
+    let errors = [];
+
+    if (!customerName) {
+        errors.push('Nama customer wajib diisi!');
+        $('#nama_customer').addClass('customer-warning');
+    } else {
+        $('#nama_customer').removeClass('customer-warning');
+    }
+
+    if (productRows === 0) {
+        errors.push('Minimal 1 produk wajib diisi!');
+    }
+
+    if (errors.length > 0) {
+        e.preventDefault(); // Batalkan submit
+        const errorHtml = errors.join('<br>');
+        $('#form-error-message').html(errorHtml).show();
+        // Scroll ke atas agar user lihat pesan error
+        $('html, body').animate({ scrollTop: $('.modern-card').offset().top - 20 }, 500);
+    } else {
+        $('#form-error-message').hide();
+    }
+});
+
+// Hilangkan highlight jika customer sudah dipilih dari modal
+$('#nama_customer').on('change', function() {
+    if ($(this).val().trim()) {
+        $(this).removeClass('customer-warning');
+    }
+});
 
 </script>
 {% endblock %}
+

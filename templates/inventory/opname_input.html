@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4" style="max-width:500px;">
+    <h2 class="mb-4">Input Hasil Opname</h2>
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">SKU</label>
+                    <input type="text" class="form-control" value="{{ queue.product.sku }}" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Nama Produk</label>
+                    <input type="text" class="form-control" value="{{ queue.product.nama_produk }}" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Lokasi</label>
+                    <input type="text" class="form-control" value="{{ queue.lokasi }}" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Qty Sistem</label>
+                    <input type="text" class="form-control" value="{{ stock.quantity }}" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Qty Fisik</label>
+                    <input type="number" name="qty_fisik" class="form-control" required autofocus>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Catatan (opsional)</label>
+                    <textarea name="catatan" class="form-control" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">Submit Opname</button>
+                <a href="{% url 'inventory:opnamequeue_list' %}" class="btn btn-secondary ms-2">Batal</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

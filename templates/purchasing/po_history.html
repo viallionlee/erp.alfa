@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}{% if is_global %}PO History Global{% else %}PO History - {{ po.nomor_po }}{% endif %}{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-clock-history"></i> {% if is_global %}PO History Global - Semua Perubahan{% else %}History PO: {{ po.nomor_po }}{% endif %}</h5>
+            {% if is_global %}
+            <a href="{% url 'purchasing:po_list' %}" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Kembali ke PO List
+            </a>
+            {% else %}
+            <a href="{% url 'purchasing:po_detail' po.id %}" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Kembali ke Detail
+            </a>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {% if not is_global %}
+            <!-- PO Info (only for per PO view) -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <strong>Nomor PO:</strong><br>
+                    <span class="text-primary">{{ po.nomor_po }}</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Supplier:</strong><br>
+                    {{ po.supplier.nama_supplier }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Status:</strong><br>
+                    {% if po.status == 'draft' %}
+                        <span class="badge bg-warning">Draft</span>
+                    {% elif po.status == 'received' %}
+                        <span class="badge bg-success">Received</span>
+                    {% elif po.status == 'cancelled' %}
+                        <span class="badge bg-danger">Cancelled</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <strong>Total:</strong><br>
+                    <span class="text-success"><strong>Rp {{ po.total_amount|floatformat:0 }}</strong></span>
+                </div>
+            </div>
+            
+            <hr>
+            {% endif %}
+            
+            <!-- History Timeline -->
+            <h6 class="mb-3"><i class="bi bi-list-ul"></i> History Perubahan</h6>
+            {% if history %}
+                <div class="timeline">
+                    {% for h in history %}
+                    <div class="timeline-item mb-3">
+                        <div class="card border-start border-4 
+                            {% if h.action == 'create' %}border-success
+                            {% elif h.action == 'update' %}border-warning
+                            {% elif h.action == 'receive' %}border-info
+                            {% elif h.action == 'cancel' %}border-danger
+                            {% else %}border-secondary{% endif %}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center mb-2">
+                                            {% if h.action == 'create' %}
+                                                <span class="badge bg-success me-2"><i class="bi bi-plus-circle"></i> Created</span>
+                                            {% elif h.action == 'update' %}
+                                                <span class="badge bg-warning me-2"><i class="bi bi-pencil"></i> Updated</span>
+                                            {% elif h.action == 'receive' %}
+                                                <span class="badge bg-info me-2"><i class="bi bi-check-circle"></i> Received</span>
+                                            {% elif h.action == 'cancel' %}
+                                                <span class="badge bg-danger me-2"><i class="bi bi-x-circle"></i> Cancelled</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary me-2">{{ h.get_action_display }}</span>
+                                            {% endif %}
+                                            {% if is_global %}
+                                            <a href="{% url 'purchasing:po_detail' h.po.id %}" class="badge bg-primary me-2 text-decoration-none">
+                                                <i class="bi bi-file-earmark-text"></i> {{ h.po.nomor_po }}
+                                            </a>
+                                            {% endif %}
+                                            <small class="text-muted">
+                                                <i class="bi bi-clock"></i> {{ h.timestamp|date:"d-m-Y H:i:s" }}
+                                            </small>
+                                        </div>
+                                        {% if h.notes %}
+                                            <p class="mb-1"><strong>Catatan:</strong> {{ h.notes }}</p>
+                                        {% endif %}
+                                        {% if h.user %}
+                                            <small class="text-muted">
+                                                <i class="bi bi-person"></i> Oleh: {{ h.user.username }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> {% if is_global %}Belum ada history PO di sistem.{% else %}Belum ada history untuk PO ini.{% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .timeline-item {
+        position: relative;
+    }
+    
+    .timeline-item:not(:last-child)::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50px;
+        width: 2px;
+        height: calc(100% + 1rem);
+        background: #dee2e6;
+    }
+    
+    .card.border-start {
+        margin-left: 15px;
+    }
+</style>
+{% endblock %}
+

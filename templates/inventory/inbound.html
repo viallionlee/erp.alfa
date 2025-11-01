@@ -1,33 +1,39 @@
 {% extends 'base.html' %}
-{% block title %}Inbound List{% endblock %}
+{% block title %}Transfer Antar Gudang{% endblock %}
 {% block content %}
-<h2 class="text-center mb-4">Daftar Inbound</h2>
-<div class="d-flex justify-content-center mb-4 gap-2">
-    <button class="btn btn-secondary" id="importBtn" type="button">Impor Massal</button>
-    <a href="{% url 'inventory:inbound_tambah' %}" class="btn btn-success">Tambah</a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="bi bi-arrow-left-right"></i> Transfer Antar Gudang</h2>
+    <div class="d-flex gap-2 align-items-center">
+        <div class="input-group" style="max-width: 300px;">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" id="searchInput" class="form-control" placeholder="Cari...">
+        </div>
+        <button class="btn btn-outline-primary" id="importBtn" type="button"><i class="bi bi-upload"></i> Impor Massal</button>
+        <a href="{% url 'inventory:inbound_tambah' %}" class="btn btn-success"><i class="bi bi-plus-circle"></i> Tambah Transfer</a>
+    </div>
 </div>
-<div class="card shadow-sm mb-4">
+
+<div class="card shadow-lg mb-4 border-0">
     <div class="card-body">
-        <table id="inbound-table" class="table table-bordered table-striped w-100">
+        <div class="table-responsive">
+        <table id="inbound-table" class="table table-hover table-bordered align-middle w-100">
             <thead class="table-primary">
                 <tr>
                     <th>ID</th>
                     <th>Nomor Inbound</th>
                     <th>Tanggal</th>
-                    <th>Keterangan</th>
+                    <th>Dari Gudang</th>
+                    <th>Ke Gudang</th>
+                    <th>Jumlah SKU</th>
+                    <th>Received By</th>
+                    <th>Received At</th>
                     <th>Aksi</th>
-                </tr>
-                <tr id="filter-row">
-                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari ID" /></th>
-                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari Nomor" /></th>
-                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari Tanggal" /></th>
-                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari Keterangan" /></th>
-                    <th></th>
                 </tr>
             </thead>
             <tbody>
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 <!-- Modal Import Inbound -->
@@ -35,16 +41,24 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Import Inbound (Excel/CSV)</h5>
+        <h5 class="modal-title"><i class="bi bi-upload"></i> Import Inbound (Excel/CSV)</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <form id="importForm" method="post" enctype="multipart/form-data" action="{% url 'inventory:inbound_import_massal' %}">
           {% csrf_token %}
           <div class="mb-3">
+            <label class="form-label" for="import_nama_supplier">Nama Supplier <span style="color:red">*</span></label>
+            <div class="input-group">
+              <input type="text" name="import_nama_supplier" id="import_nama_supplier" class="form-control" required readonly aria-label="Nama Supplier">
+              <input type="hidden" name="import_supplier_id" id="import_supplier_id">
+              <button class="btn btn-outline-primary" type="button" id="import_pilih_supplier_btn" aria-label="Pilih Supplier" aria-haspopup="dialog">Pilih</button>
+            </div>
+          </div>
+          <div class="mb-3">
             <label for="file" class="form-label">Upload File</label>
             <input type="file" name="file" class="form-control" accept=".csv,.xls,.xlsx" required>
-            <div class="form-text">Hanya kolom <b>SKU</b> dan <b>Quantity</b> yang diperlukan.<br>Download template: <a href="/static/template_import_inbound.xlsx">template_import_inbound.xlsx</a></div>
+            <div class="form-text">Unduh template terupdate yang berisi semua produk.<br>Download template: <a href="{% url 'inventory:download_template_inbound' %}">template_import_inbound.xlsx</a></div>
           </div>
           <button type="submit" class="btn btn-primary">Upload</button>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
@@ -58,11 +72,97 @@
     </div>
   </div>
 </div>
+<!-- Modal Pilih Supplier (reuse from inbound_tambah) -->
+<div class="modal fade" id="importSupplierModal" tabindex="-1" aria-labelledby="importSupplierModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="importSupplierModalLabel">Pilih Supplier</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="import_search_supplier" class="form-control mb-2" placeholder="Cari nama/alamat supplier...">
+        <div id="import_supplier-list" class="list-group" style="max-height:300px;overflow-y:auto;"></div>
+        <div class="mt-2 text-end">
+          <a href="#" id="import_addSupplierLink">+ Tambah Supplier Baru</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Modal Tambah Supplier Baru (reuse from inbound_tambah) -->
+<div class="modal fade" id="importAddSupplierModal" tabindex="-1" aria-labelledby="importAddSupplierModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="importAddSupplierModalLabel">Tambah Supplier Baru</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2">
+          <label>Nama Supplier</label>
+          <input type="text" id="import_new_nama_supplier" class="form-control" required>
+        </div>
+        <div class="mb-2">
+          <label>Alamat</label>
+          <textarea id="import_new_alamat_supplier" class="form-control"></textarea>
+        </div>
+        <div class="mb-2">
+          <label>Kota</label>
+          <input type="text" id="import_new_kota_supplier" class="form-control">
+        </div>
+        <div class="mb-2">
+          <label>Kode Pos</label>
+          <input type="text" id="import_new_kode_pos_supplier" class="form-control">
+        </div>
+        <div class="text-end">
+          <button type="button" class="btn btn-primary" id="import_saveSupplierBtn">Simpan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 {% block extra_script %}
-<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+<style>
+    .aksi-btn-group { 
+        display: flex; 
+        gap: 0.25rem; 
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .aksi-btn-group .btn {
+        white-space: nowrap;
+    }
+    #inbound-table th, #inbound-table td {
+        font-size: 0.95rem;
+        vertical-align: middle;
+    }
+    @media (max-width: 900px) {
+        .aksi-btn-group { 
+            flex-direction: column; 
+            gap: 0.25rem; 
+        }
+        #inbound-table th, #inbound-table td {
+            font-size: 0.90rem;
+        }
+    }
+</style>
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
 <script>
+function formatDateLocal(isoStr) {
+    if (!isoStr) return '';
+    // parse as UTC, lalu konversi ke lokal
+    let d = new Date(isoStr.replace(' ', 'T'));
+    if (isNaN(d)) return isoStr;
+    // Format: 18 Jun 2025 14:30
+    return d.toLocaleString('id-ID', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
+}
 $(document).ready(function() {
     var table = $('#inbound-table').DataTable({
         serverSide: true,
@@ -82,10 +182,46 @@ $(document).ready(function() {
         columns: [
             { data: 'id' },
             { data: 'nomor_inbound' },
-            { data: 'tanggal' },
-            { data: 'keterangan' },
-            { data: 'aksi', orderable: false, searchable: false }
+            { 
+                data: 'tanggal',
+                render: function(data, type, row) {
+                    if (type === 'display' || type === 'filter') {
+                        return '<span class="text-primary fw-bold">' + formatDateLocal(data) + '</span>';
+                    }
+                    return data;
+                }
+            },
+            { data: 'from_warehouse', defaultContent: '-' },
+            { data: 'to_warehouse', defaultContent: '-' },
+            { 
+                data: 'jumlah_sku',
+                render: function(data, type, row) {
+                    if (type === 'display' || type === 'filter') {
+                        return '<span class="badge bg-info">' + data + '</span>';
+                    }
+                    return data;
+                }
+            },
+            { data: 'received_by', defaultContent: '-' },
+            { 
+                data: 'received_at',
+                render: function(data, type, row) {
+                    if (type === 'display' || type === 'filter') {
+                        return data === '-' ? '-' : '<span class="text-muted">' + formatDateLocal(data) + '</span>';
+                    }
+                    return data;
+                }
+            },
+            { 
+                data: 'aksi', 
+                orderable: false, 
+                searchable: false,
+                render: function(data, type, row) {
+                    return '<div class="aksi-btn-group">' + data + '</div>';
+                }
+            }
         ],
+        order: [[2, 'desc']], // sort by tanggal terbaru
         orderCellsTop: true,
         fixedHeader: true,
         pageLength: 100,
@@ -93,6 +229,12 @@ $(document).ready(function() {
         dom: 'lfrtip',
         scrollX: true
     });
+    
+    // Global search
+    $('#searchInput').on('keyup', function() {
+        table.search(this.value).draw();
+    });
+    
     // Per-column filter
     $('#filter-row th, #filter-row td').each(function(i) {
         var input = $(this).find('input');
@@ -107,7 +249,55 @@ $(document).ready(function() {
         var modal = new bootstrap.Modal(document.getElementById('importModal'));
         modal.show();
     });
+    $('#import_pilih_supplier_btn').on('click', function() {
+        $('#importSupplierModal').modal('show');
+        loadImportSupplierList('');
+    });
+    $('#import_search_supplier').on('input', function() {
+        loadImportSupplierList($(this).val());
+    });
+    $('#import_addSupplierLink').on('click', function(e) {
+        e.preventDefault();
+        $('#importSupplierModal').modal('hide');
+        $('#importAddSupplierModal').modal('show');
+    });
+    $('#import_saveSupplierBtn').on('click', function() {
+        let nama = $('#import_new_nama_supplier').val().trim();
+        if (!nama) { alert('Nama supplier wajib diisi!'); return; }
+        $.post('/inventory/add_supplier/', {
+            nama_supplier: nama,
+            alamat_supplier: $('#import_new_alamat_supplier').val(),
+            kota_supplier: $('#import_new_kota_supplier').val(),
+            kode_pos_supplier: $('#import_new_kode_pos_supplier').val(),
+            csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val()
+        }, function(resp) {
+            $('#importAddSupplierModal').modal('hide');
+            $('#import_nama_supplier').val(resp.nama_supplier);
+            $('#import_supplier_id').val(resp.id);
+        });
+    });
+    function loadImportSupplierList(keyword) {
+        $.getJSON('/inventory/search_supplier/', {q: keyword}, function(list) {
+            let html = '';
+            if (list.length === 0) html = '<div class="text-danger">Tidak ada supplier ditemukan</div>';
+            list.forEach(function(sup) {
+                html += `<div class='list-group-item list-group-item-action pilih-sup-import' style='cursor:pointer;' data-nama='${sup.nama_supplier}' data-id='${sup.id}'>
+                    <b>${sup.nama_supplier}</b><br><small>${sup.alamat_supplier||''} ${sup.kota_supplier||''} ${sup.kode_pos_supplier||''}</small>
+                </div>`;
+            });
+            $('#import_supplier-list').html(html);
+        });
+    }
+    $('#import_supplier-list').on('click', '.pilih-sup-import', function() {
+        $('#import_nama_supplier').val($(this).data('nama'));
+        $('#import_supplier_id').val($(this).data('id'));
+        $('#importSupplierModal').modal('hide');
+    });
     $('#importForm').on('submit', function() {
+        if (!$('#import_supplier_id').val()) {
+            alert('Pilih supplier terlebih dahulu!');
+            return false;
+        }
         $('#importLoading').show();
     });
 });

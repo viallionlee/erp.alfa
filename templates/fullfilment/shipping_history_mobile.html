@@ -1,0 +1,421 @@
+{% extends 'base_mobile.html' %}
+{% load static %}
+
+{% block title %}Shipping History - Mobile{% endblock %}
+
+{% block extra_head %}
+<style>
+    .content-wrapper {
+        padding-bottom: 80px; /* Space for sticky bar */
+    }
+    
+    .history-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem;
+        border-radius: 8px;
+        margin-bottom: 0.25rem;
+        text-align: center;
+    }
+    
+    .history-header h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+    
+    .history-header p {
+        margin: 0.1rem 0 0 0;
+        opacity: 0.9;
+        font-size: 0.7rem;
+    }
+    
+    .filter-card {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+    }
+    
+    .filter-buttons {
+        display: flex;
+        gap: 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .filter-btn {
+        flex: 1;
+        padding: 0.4rem;
+        border: 1px solid #e9ecef;
+        background: #f8f9fa;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: #6c757d;
+        transition: all 0.2s;
+    }
+    
+    .filter-btn.active {
+        background: #0d6efd;
+        color: white;
+        border-color: #0d6efd;
+    }
+    
+    .summary-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.25rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 0.3rem 0.2rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+        font-size: 0.6rem;
+    }
+    
+    .stat-value {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #0d6efd;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.55rem;
+        line-height: 1;
+        margin-top: 0.1rem;
+    }
+    
+    .history-list {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+    }
+    
+    .history-item {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 0.5rem;
+        margin-bottom: 0.25rem;
+        border-left: 4px solid #0d6efd;
+    }
+    
+    .history-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .history-time {
+        color: #6c757d;
+        font-size: 0.65rem;
+        margin-bottom: 0.2rem;
+    }
+    
+    .history-order {
+        font-weight: 700;
+        font-size: 0.8rem;
+        color: #0d6efd;
+        margin-bottom: 0.2rem;
+    }
+    
+    .history-courier {
+        color: #28a745;
+        font-weight: 600;
+        font-size: 0.7rem;
+        margin-bottom: 0.2rem;
+    }
+    
+    .history-user {
+        color: #6c757d;
+        font-size: 0.65rem;
+        font-style: italic;
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: #6c757d;
+        font-size: 0.8rem;
+    }
+    
+    .no-data i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.5;
+    }
+    
+    /* Sticky Action Bar */
+    .sticky-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #e9ecef;
+        padding: 0.5rem;
+        z-index: 100;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .action-btn {
+        flex: 1;
+        padding: 0.5rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: white;
+        transition: all 0.2s;
+    }
+    
+    .btn-back {
+        background: #6c757d;
+    }
+    
+    .btn-refresh {
+        background: #17a2b8;
+    }
+    
+    .btn-export {
+        background: #28a745;
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 2rem;
+        color: #6c757d;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #e9ecef;
+        border-top: 2px solid #0d6efd;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 0.5rem;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="content-wrapper">
+        <!-- Header -->
+        <div class="history-header">
+            <h4><i class="bi bi-clock-history"></i> Shipping History</h4>
+            <p>Riwayat pengiriman order</p>
+        </div>
+
+        <!-- Filter Card -->
+        <div class="filter-card">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">Semua</button>
+                <button class="filter-btn" data-filter="today">Hari Ini</button>
+                <button class="filter-btn" data-filter="week">Minggu Ini</button>
+                <button class="filter-btn" data-filter="month">Bulan Ini</button>
+            </div>
+            
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalCount">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="todayCount">0</div>
+                    <div class="stat-label">Hari Ini</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="weekCount">0</div>
+                    <div class="stat-label">Minggu Ini</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History List -->
+        <div class="history-list">
+            <div id="historyContainer">
+                <div class="loading">
+                    <span class="loading-spinner"></span>
+                    Loading history...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sticky Action Bar -->
+<div class="sticky-action-bar">
+    <div class="action-buttons">
+        <button class="action-btn btn-back" onclick="goBack()">
+            <i class="bi bi-arrow-left"></i> Back
+        </button>
+        <button class="action-btn btn-refresh" onclick="refreshData()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+        <button class="action-btn btn-export" onclick="exportData()">
+            <i class="bi bi-download"></i> Export
+        </button>
+    </div>
+</div>
+
+<script>
+let currentFilter = 'all';
+let historyData = [];
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadHistoryData();
+    
+    // Add filter button event listeners
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentFilter = this.getAttribute('data-filter');
+            filterHistory();
+        });
+    });
+});
+
+function loadHistoryData() {
+    const container = document.getElementById('historyContainer');
+    container.innerHTML = '<div class="loading"><span class="loading-spinner"></span>Loading history...</div>';
+    
+    fetch('/fullfilment/shipping-history/data/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                historyData = data.data;
+                updateSummaryStats(data.summary);
+                filterHistory();
+            } else {
+                showError('Failed to load history data');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('Network error occurred');
+        });
+}
+
+function filterHistory() {
+    const container = document.getElementById('historyContainer');
+    
+    if (historyData.length === 0) {
+        container.innerHTML = `
+            <div class="no-data">
+                <i class="bi bi-inbox"></i>
+                <div>No shipping history found</div>
+            </div>
+        `;
+        return;
+    }
+    
+    let filteredData = historyData;
+    
+    // Apply filter
+    if (currentFilter === 'today') {
+        const today = new Date().toDateString();
+        filteredData = historyData.filter(item => {
+            const itemDate = new Date(item.waktu_ship).toDateString();
+            return itemDate === today;
+        });
+    } else if (currentFilter === 'week') {
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        filteredData = historyData.filter(item => {
+            const itemDate = new Date(item.waktu_ship);
+            return itemDate >= weekAgo;
+        });
+    } else if (currentFilter === 'month') {
+        const monthAgo = new Date();
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        filteredData = historyData.filter(item => {
+            const itemDate = new Date(item.waktu_ship);
+            return itemDate >= monthAgo;
+        });
+    }
+    
+    if (filteredData.length === 0) {
+        container.innerHTML = `
+            <div class="no-data">
+                <i class="bi bi-inbox"></i>
+                <div>No data for selected filter</div>
+            </div>
+        `;
+        return;
+    }
+    
+    // Render filtered data
+    const historyHTML = filteredData.map(item => `
+        <div class="history-item">
+            <div class="history-time">${formatDateTime(item.waktu_ship)}</div>
+            <div class="history-order">${item.order_id || 'N/A'}</div>
+            <div class="history-courier">${item.courier || 'N/A'}</div>
+            <div class="history-user">${item.user || 'N/A'}</div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = historyHTML;
+}
+
+function updateSummaryStats(summary) {
+    document.getElementById('totalCount').textContent = summary.total || 0;
+    document.getElementById('todayCount').textContent = summary.today || 0;
+    document.getElementById('weekCount').textContent = summary.week || 0;
+}
+
+function formatDateTime(dateString) {
+    if (!dateString) return 'N/A';
+    
+    const date = new Date(dateString);
+    return date.toLocaleString('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function showError(message) {
+    const container = document.getElementById('historyContainer');
+    container.innerHTML = `
+        <div class="no-data">
+            <i class="bi bi-exclamation-triangle"></i>
+            <div>${message}</div>
+        </div>
+    `;
+}
+
+function goBack() {
+    window.location.href = '/fullfilment/scanshipping/';
+}
+
+function refreshData() {
+    loadHistoryData();
+}
+
+function exportData() {
+    // Implement export functionality
+    alert('Export feature will be implemented soon');
+}
+</script>
+{% endblock %}

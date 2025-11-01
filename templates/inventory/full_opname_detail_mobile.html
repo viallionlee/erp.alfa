@@ -1,0 +1,510 @@
+{% extends 'base_mobile.html' %}
+{% load static %}
+
+{% block title %}{{ full_session.nama_opname }} - Detail{% endblock %}
+
+{% block extra_head %}
+<style>
+    .content-wrapper {
+        padding-bottom: 80px;
+    }
+    
+    .session-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem;
+        border-radius: 8px;
+        margin-bottom: 0.25rem;
+    }
+    
+    .header-content h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+    
+    .header-content p {
+        margin: 0.1rem 0 0 0;
+        opacity: 0.9;
+        font-size: 0.7rem;
+    }
+    
+    .session-status {
+        background: rgba(255,255,255,0.2);
+        border-radius: 12px;
+        padding: 0.1rem 0.4rem;
+        font-size: 0.6rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-top: 0.25rem;
+    }
+    
+    .status-draft {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .status-in_progress {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    .status-completed {
+        background: #28a745;
+        color: white;
+    }
+    
+    .status-cancelled {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 8px;
+        padding: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.25rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 0.3rem 0.2rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+        font-size: 0.6rem;
+    }
+    
+    .stat-value {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #0d6efd;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.55rem;
+        line-height: 1;
+        margin-top: 0.1rem;
+    }
+    
+    .progress-section {
+        background: rgba(255,255,255,0.1);
+        padding: 0.5rem;
+        border-radius: 6px;
+        margin: 0.25rem 0;
+    }
+    
+    .progress-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.65rem;
+        color: white;
+        margin-bottom: 0.1rem;
+    }
+    
+    .progress-bar {
+        height: 4px;
+        background: rgba(255,255,255,0.3);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 0.25rem;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #28a745, #20c997);
+        transition: width 0.3s ease;
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 0.25rem;
+        overflow: hidden;
+    }
+    
+    .section-header {
+        background: #f8f9fa;
+        padding: 0.5rem;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .section-title {
+        font-weight: 700;
+        font-size: 0.8rem;
+        color: #212529;
+        margin: 0;
+    }
+    
+    .section-count {
+        background: #0d6efd;
+        color: white;
+        border-radius: 12px;
+        padding: 0.1rem 0.4rem;
+        font-size: 0.6rem;
+        font-weight: 600;
+    }
+    
+    .section-content {
+        padding: 0.5rem;
+    }
+    
+    .rak-item {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-bottom: 0.25rem;
+        border-left: 4px solid #0d6efd;
+    }
+    
+    .rak-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.25rem;
+    }
+    
+    .rak-name {
+        font-weight: 700;
+        font-size: 0.75rem;
+        color: #212529;
+    }
+    
+    .rak-status {
+        font-size: 0.6rem;
+        padding: 0.1rem 0.3rem;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+    
+    .status-draft {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-in_progress {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .status-completed {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-cancelled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .rak-details {
+        font-size: 0.65rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    
+    .rak-detail-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.1rem;
+    }
+    
+    .rak-actions {
+        display: flex;
+        gap: 0.25rem;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        background: #0d6efd;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 0.2rem 0.4rem;
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    
+    .action-btn-success {
+        background: #28a745;
+    }
+    
+    .action-btn-info {
+        background: #17a2b8;
+    }
+    
+    .action-btn-warning {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .action-btn-danger {
+        background: #dc3545;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 1rem;
+        color: #6c757d;
+    }
+    
+    .sticky-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #dee2e6;
+        padding: 0.5rem;
+        z-index: 1000;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .sticky-actions {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+    }
+    
+    .action-icon-btn {
+        background: none;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 8px;
+        color: #6c757d;
+        font-size: 1.2rem;
+        min-width: 44px;
+        min-height: 44px;
+    }
+    
+    .btn-refresh {
+        color: #0d6efd;
+    }
+    
+    .btn-back {
+        color: #6c757d;
+    }
+    
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: white;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 3000;
+        max-width: 300px;
+        display: none;
+    }
+    
+    .notification.success {
+        border-left: 4px solid #28a745;
+    }
+    
+    .notification.error {
+        border-left: 4px solid #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="session-header">
+            <div class="header-content">
+                <h4><i class="bi bi-clipboard-data"></i> {{ full_session.nama_opname }}</h4>
+                <p>{{ full_session.session_code }}</p>
+                <span class="session-status status-{{ full_session.status }}">{{ full_session.get_status_display }}</span>
+            </div>
+        </div>
+
+        <!-- Progress Section -->
+        {% if full_session.status == 'in_progress' %}
+        <div class="progress-section">
+            <div class="progress-row">
+                <span>Progress Verifikasi</span>
+                <span>{{ full_session.progress_percentage|floatformat:1 }}%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ full_session.stats.progress_verifikasi }}%"></div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Stats Cards -->
+        <div class="stats-card">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value">{{ full_session.stats.total_rak }}</div>
+                    <div class="stat-label">Total Rak</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ full_session.stats.rak_selesai }}</div>
+                    <div class="stat-label">Selesai</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">{{ full_session.stats.progress_verifikasi|floatformat:0 }}%</div>
+                    <div class="stat-label">Progress</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value {% if full_session.stats.total_selisih > 0 %}text-danger{% elif full_session.stats.total_selisih < 0 %}text-warning{% else %}text-success{% endif %}">
+                        {{ full_session.stats.total_selisih|floatformat:0 }}
+                    </div>
+                    <div class="stat-label">Total Selisih</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session Info -->
+        <div class="section-card">
+            <div class="section-header">
+                <h5 class="section-title">Info Sesi</h5>
+            </div>
+            <div class="section-content">
+                <div class="rak-details">
+                    <div class="rak-detail-row">
+                        <span>Dibuat oleh:</span>
+                        <span>{{ full_session.created_by.username|default:"N/A" }}</span>
+                    </div>
+                    <div class="rak-detail-row">
+                        <span>Tanggal Mulai:</span>
+                        <span>{{ full_session.tanggal_mulai|date:"Y-m-d H:i" }}</span>
+                    </div>
+                    {% if full_session.tanggal_selesai %}
+                    <div class="rak-detail-row">
+                        <span>Tanggal Selesai:</span>
+                        <span>{{ full_session.tanggal_selesai|date:"Y-m-d H:i" }}</span>
+                    </div>
+                    {% endif %}
+                    {% if full_session.supervisor %}
+                    <div class="rak-detail-row">
+                        <span>Supervisor:</span>
+                        <span>{{ full_session.supervisor.username }}</span>
+                    </div>
+                    {% endif %}
+                    {% if full_session.catatan %}
+                    <div class="rak-detail-row">
+                        <span>Catatan:</span>
+                        <span>{{ full_session.catatan }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Rak Sessions -->
+        <div class="section-card">
+            <div class="section-header">
+                <h5 class="section-title">Sesi Opname Rak</h5>
+                <span class="section-count">{{ rak_sessions.count }}</span>
+            </div>
+            <div class="section-content">
+                {% for rak_session in rak_sessions %}
+                <div class="rak-item">
+                    <div class="rak-header">
+                        <div class="rak-name">{{ rak_session.rak.kode_rak }}</div>
+                        <span class="rak-status status-{{ rak_session.status }}">{{ rak_session.get_status_display }}</span>
+                    </div>
+                    <div class="rak-details">
+                        <div class="rak-detail-row">
+                            <span>Lokasi:</span>
+                            <span>{{ rak_session.rak.lokasi }}</span>
+                        </div>
+                        <div class="rak-detail-row">
+                            <span>Kode Sesi:</span>
+                            <span>{{ rak_session.session_code }}</span>
+                        </div>
+                        <div class="rak-detail-row">
+                            <span>Total Items:</span>
+                            <span>{{ rak_session.total_items }}</span>
+                        </div>
+                        <div class="rak-detail-row">
+                            <span>Total Selisih:</span>
+                            <span>{{ rak_session.total_selisih }}</span>
+                        </div>
+                        {% if rak_session.tanggal_selesai %}
+                        <div class="rak-detail-row">
+                            <span>Selesai:</span>
+                            <span>{{ rak_session.tanggal_selesai|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="rak-actions">
+                        {% if rak_session.status == 'draft' %}
+                        <a href="{% url 'inventory:opname_rak_work' rak_session.id %}" class="action-btn action-btn-success">
+                            Mulai
+                        </a>
+                        {% elif rak_session.status == 'in_progress' %}
+                        <a href="{% url 'inventory:opname_rak_work' rak_session.id %}" class="action-btn action-btn-info">
+                            Lanjutkan
+                        </a>
+                        {% elif rak_session.status == 'completed' %}
+                        <a href="{% url 'inventory:opname_rak_detail' rak_session.id %}" class="action-btn action-btn-info">
+                            Detail
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <p>Tidak ada sesi opname rak</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sticky Action Bar -->
+<div class="sticky-action-bar">
+    <div class="sticky-actions">
+        <button class="action-icon-btn btn-refresh" onclick="refreshData()">
+            <i class="bi bi-arrow-clockwise"></i>
+        </button>
+        <a href="{% url 'inventory:full_opname_list' %}" class="action-icon-btn btn-back">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+    </div>
+</div>
+
+<!-- Notification -->
+<div id="notification" class="notification"></div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+    function refreshData() {
+        location.reload();
+        showNotification('🔄 Data diperbarui', 'success');
+    }
+
+    function showNotification(message, type) {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.className = `notification ${type}`;
+        notification.style.display = 'block';
+        
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 3000);
+    }
+</script>
+{% endblock %}
+

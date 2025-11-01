@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <h2>Scan Batch: {{ nama_batch }}</h2>
+    <div id="scanbatch-app"></div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script src="{% static 'js/scanbatch.js' %}"></script>
+<script>
+    window.SCANBATCH_NAMA_BATCH = "{{ nama_batch }}";
+</script>
+{% endblock %}

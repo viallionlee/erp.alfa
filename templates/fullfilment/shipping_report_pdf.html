@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Shipping Report - {{ selected_date|date:"d M Y" }}</title>
+</head>
+<body>
+    <div class="header">
+        <h1>Laporan Shipping per Kurir</h1>
+        <p>Tanggal: {{ selected_date|date:"d M Y" }}</p>
+        {% if courier_filter %}
+        <p>Kurir: {{ courier_filter }}</p>
+        {% endif %}
+    </div>
+
+    <div class="summary">
+        <div class="summary-item">
+            <strong>Total Dikirim:</strong> {{ total_shipped }}
+        </div>
+        <div class="summary-item">
+            <strong>Jumlah Kurir:</strong> {{ courier_stats|length }}
+        </div>
+        <div class="summary-item">
+            <strong>Tanggal:</strong> {{ selected_date|date:"d M Y" }}
+        </div>
+    </div>
+
+    {% if courier_filter %}
+        <!-- Single courier report -->
+        <div class="courier-section">
+            <div class="courier-header">
+                {{ courier_filter }} - {{ courier_stats.0.count }} order
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Order ID</th>
+                        <th>Nama Toko</th>
+                        <th>User</th>
+                        <th>Waktu Ship</th>
+                        <th>AWB/Tracking</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in courier_stats.0.orders %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ order.id_pesanan }}</td>
+                        <td>{{ order.nama_toko }}</td>
+                        <td>{{ order.user }}</td>
+                        <td>{{ order.waktu_ship|date:"d-m-Y H:i" }}</td>
+                        <td>{{ order.awb_no_tracking }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <!-- All couriers report -->
+        {% for courier in courier_stats %}
+        <div class="courier-section">
+            <div class="courier-header">
+                {{ courier.name }} - {{ courier.count }} order
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Order ID</th>
+                        <th>Nama Toko</th>
+                        <th>User</th>
+                        <th>Waktu Ship</th>
+                        <th>AWB/Tracking</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in courier.orders %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ order.id_pesanan }}</td>
+                        <td>{{ order.nama_toko }}</td>
+                        <td>{{ order.user }}</td>
+                        <td>{{ order.waktu_ship|date:"d-m-Y H:i" }}</td>
+                        <td>{{ order.awb_no_tracking }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #666;">
+        <p>Dibuat pada: {% now "d M Y H:i" %}</p>
+    </div>
+</body>
+</html>
+

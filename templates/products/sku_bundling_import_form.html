@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 600px;">
+    <h3 class="mb-3">Impor SKU Bundling</h3>
+
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message|safe }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card">
+        <div class="card-body">
+            <p>Unduh template Excel untuk impor SKU Bundling:</p>
+            <p><a href="{% url 'products:download_sku_bundling_template' %}" class="btn btn-secondary mb-3">Unduh Template</a></p>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="file" class="form-label">Pilih file Excel (.xls atau .xlsx)</label>
+                    <input type="file" class="form-control" id="file" name="file" accept=".xls,.xlsx" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Impor</button>
+                <a href="{% url 'products:sku_bundling_list' %}" class="btn btn-secondary">Batal</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

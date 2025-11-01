@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Ready to Pack{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Main Content Area -->
+        <div class="col-12">
+            <!-- User Stats Card with Ranking -->
+            {% if user_rank_today == 1 %}
+            <div class="card shadow-sm mb-4 border-warning">
+                <div class="card-body">
+                    <h5 class="card-title text-warning"><i class="bi bi-trophy-fill me-2"></i>Statistik Pengepakan Hari Ini</h5>
+                    <p class="card-text mb-3">{{ motivational_message|safe }}</p>
+                    <div class="d-flex justify-content-around text-center">
+                        <div><h4 class="mb-0">{{ user_packs_today }}</h4><small class="text-muted">Total Pack</small></div>
+                        <div><h4 class="mb-0">{{ packs_per_hour|floatformat:1 }}</h4><small class="text-muted">Pack/Jam</small></div>
+                        <div><h4 class="mb-0">#{{ user_rank_today }}</h4><small class="text-muted">Peringkat</small></div>
+                        <div><h4 class="mb-0">{{ total_packers_today }}</h4><small class="text-muted">Total Packer</small></div>
+                    </div>
+                </div>
+            </div>
+            {% elif user_rank_today == 2 %}
+            <div class="card shadow-sm mb-4 border-secondary">
+                <div class="card-body">
+                    <h5 class="card-title text-secondary"><i class="bi bi-award-fill me-2"></i>Statistik Pengepakan Hari Ini</h5>
+                    <p class="card-text mb-3">{{ motivational_message|safe }}</p>
+                     <div class="d-flex justify-content-around text-center">
+                        <div><h4 class="mb-0">{{ user_packs_today }}</h4><small class="text-muted">Total Pack</small></div>
+                        <div><h4 class="mb-0">{{ packs_per_hour|floatformat:1 }}</h4><small class="text-muted">Pack/Jam</small></div>
+                        <div><h4 class="mb-0">#{{ user_rank_today }}</h4><small class="text-muted">Peringkat</small></div>
+                        <div><h4 class="mb-0">{{ total_packers_today }}</h4><small class="text-muted">Total Packer</small></div>
+                    </div>
+                </div>
+            </div>
+            {% elif user_rank_today == 3 %}
+            <div class="card shadow-sm mb-4" style="border-color: #cd7f32;">
+                <div class="card-body">
+                    <h5 class="card-title" style="color: #cd7f32;"><i class="bi bi-patch-check-fill me-2"></i>Statistik Pengepakan Hari Ini</h5>
+                    <p class="card-text mb-3">{{ motivational_message|safe }}</p>
+                     <div class="d-flex justify-content-around text-center">
+                        <div><h4 class="mb-0">{{ user_packs_today }}</h4><small class="text-muted">Total Pack</small></div>
+                        <div><h4 class="mb-0">{{ packs_per_hour|floatformat:1 }}</h4><small class="text-muted">Pack/Jam</small></div>
+                        <div><h4 class="mb-0">#{{ user_rank_today }}</h4><small class="text-muted">Peringkat</small></div>
+                        <div><h4 class="mb-0">{{ total_packers_today }}</h4><small class="text-muted">Total Packer</small></div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Statistik Pengepakan Hari Ini</h5>
+                    <p class="card-text mb-3">{{ motivational_message|safe }}</p>
+                     <div class="d-flex justify-content-around text-center">
+                        <div><h4 class="mb-0">{{ user_packs_today }}</h4><small class="text-muted">Total Pack</small></div>
+                        <div><h4 class="mb-0">{{ packs_per_hour|floatformat:1 }}</h4><small class="text-muted">Pack/Jam</small></div>
+                        <div><h4 class="mb-0">#{{ user_rank_today }}</h4><small class="text-muted">Peringkat</small></div>
+                        <div><h4 class="mb-0">{{ total_packers_today }}</h4><small class="text-muted">Total Packer</small></div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h4 class="card-title">Ready to Pack</h4>
+                    
+                    <!-- Last 10 Packing History -->
+                    {% if last_10_packing %}
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">10 Packing Terakhir</h5>
+                            <span class="fw-bold text-warning">{{ total_packed }}/{{ total_batched }}</span>
+                            <span class="small text-muted">Order Packed</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Waktu</th>
+                                        <th>ID Pesanan</th>
+                                        <th>User</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in last_10_packing %}
+                                    <tr>
+                                        <td>{{ p.waktu_pack|date:"d M Y, H:i:s" }}</td>
+                                        <td>{{ p.order.id_pesanan }}</td>
+                                        <td>{{ p.user.username }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Scan Form -->
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Scan ID Pesanan atau Resi</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="scanForm" method="POST">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="scanInput" class="form-label">ID Pesanan / No. Resi:</label>
+                                    <input type="text" id="scanInput" class="form-control form-control-lg" placeholder="Scan atau ketik di sini..." autofocus>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg">Konfirmasi Packing</button>
+                                </div>
+                            </form>
+                            <div id="notificationArea" class="mt-3"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+function playSound(type) {
+    if (type === 'success') {
+        new Audio('/static/sounds/ding.mp3').play();
+    } else if (type === 'error') {
+        new Audio('/static/sounds/wrong_barcode.mp3').play();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('scanForm');
+    const scanInput = document.getElementById('scanInput');
+    const notificationArea = document.getElementById('notificationArea');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const orderId = scanInput.value.trim();
+        if (!orderId) {
+            playSound('error');
+            return;
+        }
+
+        notificationArea.innerHTML = `<div class="alert alert-info">Memproses...</div>`;
+
+        fetch("{% url 'scanpacking' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ 'order_id': orderId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const alertType = data.success ? 'success' : 'danger';
+            notificationArea.innerHTML = `<div class="alert alert-${alertType}">${data.message}</div>`;
+
+            if (data.success) {
+                playSound('success');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: data.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.reload(); 
+                });
+            } else {
+                 playSound('error');
+                 Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: data.message,
+                });
+            }
+        })
+        .catch(error => {
+            notificationArea.innerHTML = `<div class="alert alert-danger">Terjadi kesalahan. Silakan coba lagi.</div>`;
+            playSound('error');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Terjadi kesalahan koneksi.',
+            });
+        });
+        
+        scanInput.value = '';
+        scanInput.focus();
+    });
+});
+</script>
+{% endblock %} 

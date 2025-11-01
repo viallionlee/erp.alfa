@@ -1,0 +1,443 @@
+{% extends 'base_mobile.html' %}
+{% load static %}
+
+{% block title %}Putaway History - Mobile{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Mobile Modern Design */
+    .mobile-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #ffffff;
+        border-radius: 0 0 16px 16px;
+        padding: 1.5rem 1rem;
+        margin: -1rem -1rem 1rem -1rem;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .mobile-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+    
+    .mobile-card .card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: none;
+        padding: 1rem;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .mobile-card .card-body {
+        padding: 1rem;
+    }
+    
+    .form-control {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+        color: #495057;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn-mobile {
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .btn-mobile-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #ffffff;
+    }
+    
+    .btn-mobile-primary:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        transform: translateY(-1px);
+    }
+    
+    .btn-mobile-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: #ffffff;
+    }
+    
+    .btn-mobile-outline {
+        background: transparent;
+        border: 2px solid #6c757d;
+        color: #6c757d;
+    }
+    
+    .btn-mobile-outline:hover {
+        background: #6c757d;
+        color: #ffffff;
+    }
+    
+    .history-item {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        background: #ffffff;
+        transition: all 0.3s ease;
+    }
+    
+    .history-item:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .history-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+    
+    .history-item-title {
+        font-weight: 600;
+        color: #495057;
+        font-size: 1rem;
+    }
+    
+    .history-item-date {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .history-item-badge {
+        border-radius: 6px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .badge-regular {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: #ffffff;
+    }
+    
+    .badge-transfer {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        color: #ffffff;
+    }
+    
+    .badge-source {
+        background: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%);
+        color: #ffffff;
+    }
+    
+    .badge-quantity {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: #ffffff;
+    }
+    
+    .badge-rak {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: #ffffff;
+    }
+    
+    .history-item-detail {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .history-item-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .history-item-value {
+        font-size: 0.9rem;
+        color: #495057;
+        font-weight: 600;
+    }
+    
+    .history-item-notes {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 0.75rem;
+        margin-top: 0.75rem;
+        font-size: 0.85rem;
+        color: #495057;
+        border-left: 3px solid #667eea;
+    }
+    
+    .loading-spinner {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+        color: #667eea;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .btn-action {
+        flex: 1;
+        border-radius: 6px;
+        padding: 0.5rem;
+        font-weight: 600;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .btn-export {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: #ffffff;
+    }
+    
+    .btn-print {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: #ffffff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Modern Mobile Header -->
+    <div class="mobile-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-1">
+                    <i class="bi bi-clock-history"></i> Putaway History
+                </h5>
+                <p class="mb-0 opacity-75">Riwayat aktivitas putaway</p>
+            </div>
+            <a href="{% url 'inventory:putaway' %}" class="btn btn-mobile btn-mobile-outline btn-sm">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Modern Filter Card -->
+    <div class="mobile-card">
+        <div class="card-header">
+            <h6 class="mb-0">
+                <i class="bi bi-funnel-fill text-primary"></i> Filter & Pencarian
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-2">
+                <div class="col-6">
+                    <label for="dateFrom" class="form-label small fw-bold">
+                        <i class="bi bi-calendar3"></i> Dari
+                    </label>
+                    <input type="date" class="form-control" id="dateFrom">
+                </div>
+                <div class="col-6">
+                    <label for="dateTo" class="form-label small fw-bold">
+                        <i class="bi bi-calendar3"></i> Sampai
+                    </label>
+                    <input type="date" class="form-control" id="dateTo">
+                </div>
+                <div class="col-12">
+                    <label for="tipeFilter" class="form-label small fw-bold">
+                        <i class="bi bi-tags"></i> Tipe Putaway
+                    </label>
+                    <select class="form-control" id="tipeFilter">
+                        <option value="all">Semua Tipe</option>
+                        <option value="regular">Regular Putaway</option>
+                        <option value="transfer">Transfer Putaway</option>
+                    </select>
+                </div>
+                <div class="col-8">
+                    <button type="button" class="btn btn-mobile btn-mobile-primary w-100" onclick="applyFilters()">
+                        <i class="bi bi-search"></i> Filter
+                    </button>
+                </div>
+                <div class="col-4">
+                    <button type="button" class="btn btn-mobile btn-mobile-secondary w-100" onclick="resetFilters()" title="Reset">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modern Data List -->
+    <div class="mobile-card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="bi bi-list-ul text-primary"></i> Data History
+                </h6>
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-action btn-export" onclick="exportToExcel()">
+                        <i class="bi bi-file-earmark-excel"></i>
+                    </button>
+                    <button type="button" class="btn btn-action btn-print" onclick="printTable()">
+                        <i class="bi bi-printer"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="putawayHistoryList">
+                <div class="loading-spinner">
+                    <i class="bi bi-hourglass-split"></i> Loading...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function loadPutawayHistory() {
+    const dateFrom = $('#dateFrom').val();
+    const dateTo = $('#dateTo').val();
+    const tipe = $('#tipeFilter').val();
+    
+    $('#putawayHistoryList').html('<div class="loading-spinner"><i class="bi bi-hourglass-split"></i> Loading...</div>');
+    
+    fetch(`/inventory/putaway/history/data/?date_from=${dateFrom}&date_to=${dateTo}&tipe=${tipe}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.data && data.data.length > 0) {
+                displayPutawayHistory(data.data);
+            } else {
+                $('#putawayHistoryList').html(`
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <p>Tidak ada data history</p>
+                    </div>
+                `);
+            }
+        })
+        .catch(error => {
+            $('#putawayHistoryList').html(`
+                <div class="empty-state text-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <p>Error loading data</p>
+                </div>
+            `);
+        });
+}
+
+function displayPutawayHistory(data) {
+    let html = '';
+    
+    data.forEach(item => {
+        const date = item.waktu ? new Date(item.waktu) : null;
+        const dateStr = date ? date.toLocaleDateString('id-ID') : '-';
+        const timeStr = date ? date.toLocaleTimeString('id-ID') : '-';
+        
+        const tipeBadgeClass = item.tipe === 'Transfer Putaway' ? 'badge-transfer' : 'badge-regular';
+        const tipeIcon = item.tipe === 'Transfer Putaway' ? 'bi-arrow-left-right' : 'bi-box';
+        const tipeText = item.tipe === 'Transfer Putaway' ? 'Transfer' : 'Regular';
+        
+        html += `
+            <div class="history-item">
+                <div class="history-item-header">
+                    <div>
+                        <div class="history-item-title">${item.sku || '-'}</div>
+                        <div class="history-item-date">${dateStr} ${timeStr}</div>
+                    </div>
+                    <span class="history-item-badge ${tipeBadgeClass}">
+                        <i class="bi ${tipeIcon}"></i> ${tipeText}
+                    </span>
+                </div>
+                
+                <div class="history-item-detail">
+                    <span class="history-item-label">Sumber:</span>
+                    <span class="history-item-badge badge-source">${item.sumber || '-'}</span>
+                </div>
+                
+                <div class="history-item-detail">
+                    <span class="history-item-label">Produk:</span>
+                    <span class="history-item-value">${item.nama_produk || '-'}</span>
+                </div>
+                
+                <div class="history-item-detail">
+                    <span class="history-item-label">Barcode:</span>
+                    <span class="history-item-value"><code>${item.barcode || '-'}</code></span>
+                </div>
+                
+                <div class="history-item-detail">
+                    <span class="history-item-label">Quantity:</span>
+                    <span class="history-item-badge badge-quantity">${item.quantity || 0} pcs</span>
+                </div>
+                
+                <div class="history-item-detail">
+                    <span class="history-item-label">Rak:</span>
+                    ${item.rak ? `<span class="history-item-badge badge-rak">${item.rak}</span>` : '<span class="text-muted">-</span>'}
+                </div>
+                
+                <div class="history-item-detail">
+                    <span class="history-item-label">User:</span>
+                    <span class="history-item-value">${item.user || '-'}</span>
+                </div>
+                
+                ${item.catatan && item.catatan.trim() ? `
+                    <div class="history-item-notes">
+                        <i class="bi bi-chat-quote"></i> ${item.catatan}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    });
+    
+    $('#putawayHistoryList').html(html);
+}
+
+function applyFilters() {
+    loadPutawayHistory();
+}
+
+function resetFilters() {
+    $('#dateFrom').val('');
+    $('#dateTo').val('');
+    $('#tipeFilter').val('all');
+    loadPutawayHistory();
+}
+
+function exportToExcel() {
+    alert('Export to Excel functionality will be implemented here');
+}
+
+function printTable() {
+    window.print();
+}
+
+// Set default date range (last 30 days) and load data
+$(document).ready(function() {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+    
+    $('#dateFrom').val(thirtyDaysAgo.toISOString().split('T')[0]);
+    $('#dateTo').val(today.toISOString().split('T')[0]);
+    
+    loadPutawayHistory();
+});
+</script>
+{% endblock %}

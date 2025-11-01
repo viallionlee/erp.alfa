@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Daftar Extra Barcode{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="container-fluid">
+    <div class="card table-container">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Daftar Extra Barcode</h4>
+            <a href="{% url 'products:extrabarcode_add' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Tambah Extra Barcode
+            </a>
+        </div>
+        <div class="card-body">
+            <table id="extra-barcodes-table" class="table table-hover w-100">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>SKU Produk</th>
+                        <th>Nama Produk</th>
+                        <th>Extra Barcode</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data akan diisi oleh DataTables -->
+                </tbody>
+                <tfoot>
+                    <tr id="filter-row">
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filter ID" /></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filter SKU" /></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filter Nama" /></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Filter Barcode" /></th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css">
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<style>
+    .table-container {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    #filter-row input {
+        width: 100%;
+    }
+</style>
+
+<script>
+$(document).ready(function() {
+    try {
+        // Setup - add a text input to each footer cell
+        $('#extra-barcodes-table tfoot th').each(function() {
+            var title = $(this).text();
+            if ($(this).find('input').length === 0 && title) {
+                 $(this).html('<input type="text" class="form-control form-control-sm" placeholder="Filter ' + title + '" />');
+            }
+        });
+
+        var table = $('#extra-barcodes-table').DataTable({
+        "processing": true,
+        "serverSide": true,
+        "ajax": {
+            "url": "{% url 'products:extrabarcode_data' %}",
+            "type": "GET",
+            "error": function(xhr, error, thrown) {
+                console.error('DataTables AJAX error:', xhr.responseText);
+                var errorMsg = 'Error memuat data. ';
+                if (xhr.status === 403) {
+                    errorMsg += 'Akses ditolak.';
+                } else if (xhr.status === 500) {
+                    errorMsg += 'Kesalahan server.';
+                }
+                
+                // Hindari duplikasi pesan error
+                if ($('.dataTables_wrapper + .alert-danger').length === 0) {
+                    $('#extra-barcodes-table_wrapper').after('<div class="alert alert-danger mt-3">' + errorMsg + ' (Status: ' + xhr.status + ')</div>');
+                }
+            }
+        },
+        "columns": [
+            { "data": "id", "name": "id" },
+            { "data": "product_sku", "name": "product__sku" },
+            { "data": "product_name", "name": "product__nama_produk" },
+            { "data": "barcode", "name": "barcode" },
+            { 
+                "data": null,
+                "orderable": false,
+                "searchable": false,
+                "render": function(data, type, row) {
+                    var deleteUrl = `/products/extrabarcode/delete/${row.id}/`;
+                    var csrfToken = $('[name=csrfmiddlewaretoken]').val();
+                    return `
+                        <form action="${deleteUrl}" method="post" class="d-inline form-delete">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Hapus"><i class="bi bi-trash"></i></button>
+                        </form>
+                    `;
+                }
+            }
+        ],
+        "order": [[0, "desc"]],
+        "pageLength": 10,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/2.0.8/i18n/id.json"
+        },
+        initComplete: function () {
+            // Apply the search
+            this.api().columns().every(function () {
+                var that = this;
+                $('input', this.footer()).on('keyup change clear', function () {
+                    if (that.search() !== this.value) {
+                        that.search(this.value).draw();
+                    }
+                });
+            });
+        }
+    });
+
+    // Delete confirmation
+    $(document).on('submit', '.form-delete', function(e) {
+        e.preventDefault();
+        var form = this;
+        
+        // Check if SweetAlert2 is available
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Anda yakin?',
+                text: "Extra barcode ini akan dihapus secara permanen!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        } else {
+            // Fallback to native confirm if SweetAlert2 is not available
+            if (confirm('Anda yakin ingin menghapus extra barcode ini?')) {
+                form.submit();
+            }
+        }
+    });
+    
+    } catch (error) {
+        console.error('DataTables initialization error:', error);
+        $('#extra-barcodes-table').after('<div class="alert alert-danger">Gagal menginisialisasi tabel: ' + error.message + '</div>');
+    }
+});
+</script>
+{% endblock %}

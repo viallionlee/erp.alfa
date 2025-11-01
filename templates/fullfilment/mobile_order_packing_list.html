@@ -1,0 +1,737 @@
+{% extends 'base_mobile.html' %}
+{% load static %}
+
+{% block title %}Order Packing List (Mobile){% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css" />
+<style>
+body {
+    background: #f5f7fa;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+.header-container {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border-radius: 0 0 20px 20px;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-soft);
+}
+
+.modern-card {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 1rem;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.modern-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.btn-modern-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+    border-radius: 0.8rem;
+    padding: 0.8rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-modern-primary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    color: white;
+}
+
+.btn-scan-packing {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+    border-radius: 0.8rem;
+    padding: 0.8rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-scan-packing:hover {
+    background: linear-gradient(135deg, #ff5252 0%, #e74c3c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    color: white;
+}
+
+
+.order-item {
+    background: #ffffff;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    border-left: 3px solid #ff6b6b;
+    max-height: 75px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 75px;
+}
+
+.order-item .text-muted {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.order-id {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: #495057;
+    background: #f8f9fa;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    border: 1px solid #dee2e6;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+
+.status-badge {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.status-packed {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.packer-name {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+    padding: 0.15rem 0.3rem;
+    border-radius: 3px;
+    font-size: 0.65rem;
+    font-weight: 500;
+}
+
+
+.status-order-badge {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+
+.sticky-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    display: none;
+}
+
+.refresh-btn {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #1976d2;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    font-size: 1.5rem;
+    border: none;
+    transition: background 0.2s;
+    z-index: 1000;
+}
+
+.refresh-btn:hover {
+    background: #1565c0;
+}
+
+.data-table-mobile {
+    display: none;
+    padding-bottom: 100px; /* Space for sticky bar */
+}
+
+@media (max-width: 768px) {
+    .data-table-mobile {
+        display: block;
+    }
+    .sticky-bar {
+        display: block;
+    }
+    
+    .data-table-desktop {
+        display: none;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header dengan tombol back dan scan packing -->
+<div class="header-container">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-1 fw-bold text-dark">Order Packing List</h5>
+            <small class="text-muted">Daftar order yang sudah di-packing</small>
+        </div>
+        <a href="/fullfilment/scanpacking/" class="btn btn-scan-packing btn-sm">
+            <i class="bi bi-box-seam me-1"></i>Scan Packing
+        </a>
+    </div>
+</div>
+
+<div class="container-fluid px-3" style="padding-bottom: 100px;">
+
+    <!-- Sticky Bar -->
+    <div class="sticky-bar">
+        <div class="d-flex gap-2 align-items-center">
+            <button class="btn btn-outline-primary btn-sm" id="searchBtn">
+                <i class="bi bi-search me-1"></i>Search
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" id="filterBtn">
+                <i class="bi bi-funnel me-1"></i>Filter
+            </button>
+            <div id="filterStatus" class="ms-auto text-muted small" style="display: none;">
+                <i class="bi bi-funnel-fill me-1"></i>Filtered
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Modal -->
+    <div class="modal fade" id="searchModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Search Order</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Search Term</label>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Cari Order ID, Kurir, Packer, atau Status...">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="searchSubmitBtn">Search</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Filter Order</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Filter by Date</label>
+                        <input type="date" id="dateFilter" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Filter by Packer</label>
+                        <select id="packerFilter" class="form-select">
+                            <option value="">All Packers</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Filter by Status</label>
+                        <select id="statusFilter" class="form-select">
+                            <option value="">All Status</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-warning" id="clearFilterBtn">Clear</button>
+                    <button type="button" class="btn btn-primary" id="applyFilterBtn">Apply Filter</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Data Display -->
+    <div class="data-table-mobile" id="mobileDataContainer">
+        <div class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Desktop DataTable (hidden on mobile) -->
+    <div class="data-table-desktop">
+        <div class="modern-card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="orderPackingTable" class="table table-hover w-100">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Waktu Pack</th>
+                                <th>Order ID</th>
+                                <th>Nama Toko</th>
+                                <th>User</th>
+                                <th>Status Order</th>
+                                <th>Nama Batch</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be loaded via AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Refresh Button -->
+<button class="refresh-btn" id="refreshBtn" title="Refresh Data">
+    <i class="bi bi-arrow-clockwise"></i>
+</button>
+{% endblock %}
+
+{% block extra_script %}
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+$(document).ready(function() {
+    let table;
+    let currentPage = 1;
+    let pageSize = 25; // Maksimal 25 item per load
+    let allData = [];
+    let filteredData = [];
+    let isLoading = false;
+    let hasMoreData = true;
+    let currentSearchTerm = '';
+    let currentFilters = {
+        date: '',
+        packer: '',
+        status: ''
+    };
+
+    // Initialize DataTable for desktop
+    if (window.innerWidth > 768) {
+        table = $('#orderPackingTable').DataTable({
+            processing: true,
+            serverSide: true,
+            pageLength: 25,
+            ajax: {
+                url: '/fullfilment/api/order-packing-list/',
+                type: 'GET',
+                data: function(d) {
+                    return d;
+                }
+            },
+            columns: [
+                { data: 'id', visible: false },
+                { data: 'waktu_pack', title: 'Waktu Pack', className: 'text-nowrap' },
+                { 
+                    data: 'order_id_pesanan', 
+                    title: 'Order ID',
+                    render: function(data) {
+                        return '<span class="order-id">' + data + '</span>';
+                    }
+                },
+                { data: 'nama_toko', title: 'Nama Toko' },
+                { 
+                    data: 'user', 
+                    title: 'User',
+                    render: function(data) {
+                        return '<div class="d-flex align-items-center gap-2">' +
+                               '<div class="user-avatar">' + data.charAt(0).toUpperCase() + '</div>' +
+                               '<span>' + data + '</span>' +
+                               '</div>';
+                    }
+                },
+                { 
+                    data: 'status_order', 
+                    title: 'Status Order',
+                    render: function(data) {
+                        return '<span class="status-order-badge">' + data + '</span>';
+                    }
+                },
+                { 
+                    data: 'nama_batch', 
+                    title: 'Nama Batch',
+                    render: function(data) {
+                        return data !== 'N/A' ? '<span class="batch-badge">' + data + '</span>' : '<span class="text-muted">-</span>';
+                    }
+                },
+                { 
+                    data: null, 
+                    title: 'Status',
+                    render: function(data, type, row) {
+                        return '<span class="status-badge status-packed">Packed</span>';
+                    }
+                }
+            ],
+            order: [[1, 'desc']],
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                 '<"row"<"col-sm-12"tr>>' +
+                 '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            language: {
+                processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
+                search: "Cari:",
+                lengthMenu: "Tampilkan _MENU_ data per halaman",
+                zeroRecords: "Tidak ada data yang ditemukan",
+                info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+                infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
+                infoFiltered: "(difilter dari _MAX_ total data)",
+                paginate: {
+                    first: "Pertama",
+                    last: "Terakhir",
+                    next: "Selanjutnya",
+                    previous: "Sebelumnya"
+                }
+            },
+            drawCallback: function(settings) {
+                // Statistics removed
+            }
+        });
+    }
+
+    // Load data for mobile view with lazy loading
+    function loadMobileData(reset = false) {
+        if (window.innerWidth <= 768 && !isLoading) {
+            isLoading = true;
+            
+            if (reset) {
+                currentPage = 1;
+                allData = [];
+                filteredData = [];
+                hasMoreData = true;
+            }
+            
+            const start = (currentPage - 1) * pageSize;
+            const length = pageSize;
+            
+            fetch(`/fullfilment/api/order-packing-list/?start=${start}&length=${length}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Data loaded:', data); // Debug log
+                    const newData = data.data || [];
+                    
+                    if (reset) {
+                        allData = newData;
+                    } else {
+                        allData = [...allData, ...newData];
+                    }
+                    
+                    filteredData = [...allData];
+                    
+                    // Check if there's more data
+                    hasMoreData = newData.length === pageSize && newData.length > 0;
+                    
+                    // Populate filter options and apply current filters
+                    populateFilterOptions();
+                    applyFilters();
+                    isLoading = false;
+                })
+                .catch(error => {
+                    console.error('Error loading data:', error);
+                    isLoading = false;
+                    hasMoreData = false;
+                    // Show error in the container instead of using Swal
+                    const container = document.getElementById('mobileDataContainer');
+                    container.innerHTML = `
+                        <div class="modern-card">
+                            <div class="card-body text-center p-4">
+                                <i class="bi bi-exclamation-triangle display-4 text-warning mb-3"></i>
+                                <p class="text-muted">Gagal memuat data. Silakan refresh halaman.</p>
+                                <button class="btn btn-primary" onclick="location.reload()">Refresh</button>
+                            </div>
+                        </div>
+                    `;
+                });
+        }
+    }
+
+    // Render mobile data
+    function renderMobileData() {
+        const container = document.getElementById('mobileDataContainer');
+        if (!filteredData || filteredData.length === 0) {
+            if (isLoading) {
+                // Don't show anything while loading
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = `
+                <div class="modern-card">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-inbox display-4 text-muted mb-3"></i>
+                        <p class="text-muted">Tidak ada data yang ditemukan</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const pageData = filteredData.slice(startIndex, endIndex);
+
+        let html = '';
+        pageData.forEach(item => {
+            html += `
+                <div class="order-item">
+                    <!-- Row 1: ID Pesanan - Kurir -->
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="order-id" style="font-size: 0.8rem;">${item.order_id_pesanan}</span>
+                            <span class="text-muted" style="font-size: 0.7rem;">- ${item.kurir || 'N/A'}</span>
+                        </div>
+                    </div>
+                    <!-- Row 2: Nama Packer - Status Fulfillment - Date Time -->
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="packer-name">${item.user || 'N/A'}</span>
+                            <span class="status-badge status-packed">${item.status_order || 'N/A'}</span>
+                        </div>
+                        <small class="text-muted" style="font-size: 0.7rem;">${item.waktu_pack || 'N/A'}</small>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Add Load More button or status message
+        
+        if (hasMoreData && allData.length > 0) {
+            html += `
+                <div class="d-flex justify-content-center mt-3">
+                    <button class="btn btn-outline-primary" onclick="loadMoreData()">
+                        <i class="bi bi-arrow-down-circle me-1"></i>Load More (${allData.length} loaded)
+                    </button>
+                </div>
+            `;
+        } else if (allData.length > 0) {
+            html += `
+                <div class="d-flex justify-content-center mt-3">
+                    <span class="text-muted">All data loaded (${allData.length} items)</span>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+    }
+
+    // Load more data for mobile
+    window.loadMoreData = function() {
+        if (!isLoading && hasMoreData) {
+            currentPage++;
+            loadMobileData(false);
+        }
+    };
+
+    // Populate filter options
+    function populateFilterOptions() {
+        if (allData && allData.length > 0) {
+            // Get unique packers
+            const packers = [...new Set(allData.map(item => item.user).filter(user => user && user !== 'N/A'))];
+            const packerSelect = document.getElementById('packerFilter');
+            packerSelect.innerHTML = '<option value="">All Packers</option>';
+            packers.forEach(packer => {
+                packerSelect.innerHTML += `<option value="${packer}">${packer}</option>`;
+            });
+
+            // Get unique statuses
+            const statuses = [...new Set(allData.map(item => item.status_order).filter(status => status && status !== 'N/A'))];
+            const statusSelect = document.getElementById('statusFilter');
+            statusSelect.innerHTML = '<option value="">All Status</option>';
+            statuses.forEach(status => {
+                statusSelect.innerHTML += `<option value="${status}">${status}</option>`;
+            });
+        }
+    }
+
+    // Apply filters
+    function applyFilters() {
+        if (!allData || allData.length === 0) {
+            filteredData = [];
+            return;
+        }
+
+        let filtered = [...allData];
+
+        // Apply search filter
+        if (currentSearchTerm) {
+            filtered = filtered.filter(item => 
+                item.order_id_pesanan.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
+                item.kurir.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
+                item.user.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
+                item.status_order.toLowerCase().includes(currentSearchTerm.toLowerCase())
+            );
+        }
+
+        // Apply date filter
+        if (currentFilters.date) {
+            filtered = filtered.filter(item => {
+                if (!item.waktu_pack || item.waktu_pack === 'N/A') return false;
+                const itemDate = item.waktu_pack.split(' ')[0]; // Get date part
+                const filterDate = currentFilters.date.split('-').reverse().join('-'); // Convert to DD-MM-YYYY
+                return itemDate === filterDate;
+            });
+        }
+
+        // Apply packer filter
+        if (currentFilters.packer) {
+            filtered = filtered.filter(item => item.user === currentFilters.packer);
+        }
+
+        // Apply status filter
+        if (currentFilters.status) {
+            filtered = filtered.filter(item => item.status_order === currentFilters.status);
+        }
+
+        filteredData = filtered;
+        
+        // Show/hide filter status
+        const filterStatus = document.getElementById('filterStatus');
+        const hasActiveFilters = currentSearchTerm || currentFilters.date || currentFilters.packer || currentFilters.status;
+        if (hasActiveFilters) {
+            filterStatus.style.display = 'block';
+        } else {
+            filterStatus.style.display = 'none';
+        }
+        
+        renderMobileData();
+    }
+
+    // Event handlers for modals and buttons
+    document.getElementById('searchBtn').addEventListener('click', function() {
+        const searchModal = new bootstrap.Modal(document.getElementById('searchModal'));
+        searchModal.show();
+    });
+
+    document.getElementById('filterBtn').addEventListener('click', function() {
+        populateFilterOptions();
+        const filterModal = new bootstrap.Modal(document.getElementById('filterModal'));
+        filterModal.show();
+    });
+
+    document.getElementById('searchSubmitBtn').addEventListener('click', function() {
+        currentSearchTerm = document.getElementById('searchInput').value;
+        applyFilters();
+        const searchModal = bootstrap.Modal.getInstance(document.getElementById('searchModal'));
+        searchModal.hide();
+    });
+
+    // Enter key support for search
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            currentSearchTerm = this.value;
+            applyFilters();
+            const searchModal = bootstrap.Modal.getInstance(document.getElementById('searchModal'));
+            searchModal.hide();
+        }
+    });
+
+    document.getElementById('applyFilterBtn').addEventListener('click', function() {
+        currentFilters.date = document.getElementById('dateFilter').value;
+        currentFilters.packer = document.getElementById('packerFilter').value;
+        currentFilters.status = document.getElementById('statusFilter').value;
+        applyFilters();
+        const filterModal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
+        filterModal.hide();
+    });
+
+    document.getElementById('clearFilterBtn').addEventListener('click', function() {
+        document.getElementById('dateFilter').value = '';
+        document.getElementById('packerFilter').value = '';
+        document.getElementById('statusFilter').value = '';
+        currentFilters = { date: '', packer: '', status: '' };
+        currentSearchTerm = '';
+        document.getElementById('searchInput').value = '';
+        applyFilters();
+    });
+
+    // Refresh button
+    document.getElementById('refreshBtn').addEventListener('click', function() {
+        if (window.innerWidth > 768 && table) {
+            table.ajax.reload();
+        } else {
+            loadMobileData(true); // Reset data
+        }
+    });
+
+
+    // Adjust padding for sticky bar
+    function adjustPaddingForStickyBar() {
+        if (window.innerWidth <= 768) {
+            const stickyBar = document.querySelector('.sticky-bar');
+            if (stickyBar) {
+                const stickyBarHeight = stickyBar.offsetHeight;
+                document.querySelector('.container-fluid').style.paddingBottom = (stickyBarHeight + 20) + 'px';
+            }
+        }
+    }
+
+    // Initial load
+    // Load data immediately
+    loadMobileData(true);
+    
+    // Adjust padding on load and resize
+    adjustPaddingForStickyBar();
+    window.addEventListener('resize', adjustPaddingForStickyBar);
+
+    // Refresh data every 30 seconds
+    setInterval(function() {
+        if (window.innerWidth > 768 && table) {
+            table.ajax.reload(null, false);
+        } else {
+            loadMobileData(true); // Reset data
+        }
+    }, 30000);
+
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768 && !table) {
+            location.reload(); // Reload to initialize DataTable
+        } else if (window.innerWidth <= 768) {
+            loadMobileData(true); // Reset data
+        }
+    });
+});
+</script>
+{% endblock %}
+

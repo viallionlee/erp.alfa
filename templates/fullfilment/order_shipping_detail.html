@@ -1,0 +1,569 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    :root {
+        --primary-color: #667eea;
+        --secondary-color: #764ba2;
+        --success-color: #10b981;
+        --info-color: #3b82f6;
+        --warning-color: #f59e0b;
+        --danger-color: #ef4444;
+        --light-bg: #f8fafc;
+        --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --card-shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        padding: 1rem 0;
+        margin-bottom: 1rem;
+        border-radius: 6px;
+        box-shadow: var(--card-shadow);
+    }
+
+    .page-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .page-subtitle {
+        font-size: 0.8rem;
+        opacity: 0.9;
+        margin-top: 0.2rem;
+    }
+
+    .stats-summary {
+        background: white;
+        border-radius: 6px;
+        padding: 0.75rem;
+        box-shadow: var(--card-shadow);
+        margin-bottom: 1rem;
+    }
+
+    .stats-summary .stat-item {
+        text-align: center;
+    }
+
+    .stats-summary .stat-value {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 0.2rem;
+    }
+
+    .stats-summary .stat-label {
+        font-size: 0.7rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.2px;
+    }
+
+    .filter-section {
+        background: white;
+        border-radius: 6px;
+        padding: 0.75rem;
+        box-shadow: var(--card-shadow);
+        margin-bottom: 1rem;
+    }
+
+    .filter-section .form-label {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.2rem;
+        font-size: 0.8rem;
+    }
+
+    .filter-section .form-control {
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+    }
+
+    .filter-section .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+    }
+    
+    .filter-section select.form-control {
+        cursor: pointer;
+        background-color: white;
+    }
+    
+    .filter-section select.form-control option {
+        padding: 0.5rem;
+    }
+
+    .filter-section .btn {
+        padding: 0.4rem 1rem;
+        border-radius: 4px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        font-size: 0.8rem;
+    }
+
+    .filter-section .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        border: none;
+    }
+
+    .filter-section .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .data-table-container {
+        background: white;
+        border-radius: 6px;
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+    }
+
+    .data-table {
+        width: 100%;
+        margin: 0;
+    }
+
+    .data-table thead {
+        background: #f8fafc;
+    }
+
+    .data-table th {
+        padding: 0.6rem;
+        font-weight: 600;
+        color: #475569;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.2px;
+        text-align: left;
+    }
+
+    .data-table td {
+        padding: 0.6rem;
+        border-bottom: 1px solid #f1f5f9;
+        color: #1e293b;
+        font-size: 0.85rem;
+    }
+
+    .data-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .badge-user {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 8px;
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+
+    .pagination-container {
+        background: white;
+        border-radius: 6px;
+        padding: 1rem;
+        box-shadow: var(--card-shadow);
+        margin-top: 1rem;
+    }
+
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: #64748b;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: #cbd5e1;
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .data-table th,
+        .data-table td {
+            padding: 0.4rem;
+            font-size: 0.75rem;
+        }
+    }
+</style>
+
+<div class="container-fluid px-4">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h1 class="page-title">
+                <i class="bi bi-list-ul me-1"></i>Detail Shipping - {{ courier_name }}
+            </h1>
+            <p class="page-subtitle">{{ selected_date|date:"d M Y" }} • {{ total_count }} order</p>
+        </div>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="stats-summary">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalOrdersCount">{{ total_count }}</div>
+                    <div class="stat-label">Total Order</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <div class="stat-value">{{ courier_name }}</div>
+                    <div class="stat-label">Kurir</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <div class="stat-value">{{ selected_date|date:"d M Y" }}</div>
+                    <div class="stat-label">Tanggal</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="filter-section">
+        <div class="row g-3">
+            <div class="col-md-12">
+                <h6 class="mb-3">
+                    <i class="bi bi-funnel me-1"></i>Search & Filter
+                </h6>
+            </div>
+            
+            <!-- Search Fields -->
+            <div class="col-md-3">
+                <label class="form-label">Order ID</label>
+                <input type="text" class="form-control" id="searchOrderId" placeholder="Cari Order ID...">
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">Nama Toko</label>
+                <select class="form-control" id="searchToko">
+                    <option value="">Semua Toko</option>
+                    {% for toko in unique_toko %}
+                        <option value="{{ toko }}">{{ toko }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">User</label>
+                <select class="form-control" id="searchUser">
+                    <option value="">Semua User</option>
+                    {% for user in unique_users %}
+                        <option value="{{ user }}">{{ user }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">AWB/Tracking</label>
+                <input type="text" class="form-control" id="searchAwb" placeholder="Cari AWB...">
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="col-md-12">
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-primary" onclick="applyFilters()">
+                        <i class="bi bi-search me-1"></i>Search
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                        <i class="bi bi-x-circle me-1"></i>Clear
+                    </button>
+                    <button type="button" class="btn btn-outline-info" onclick="exportToExcel()">
+                        <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="data-table-container">
+        <table class="data-table" id="shippingDetailTable">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Order ID</th>
+                    <th>Toko</th>
+                    <th>User</th>
+                    <th>Waktu Ship</th>
+                    <th>AWB/Tracking</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Data will be loaded via AJAX -->
+            </tbody>
+        </table>
+        
+        <!-- Loading Spinner -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <i class="bi bi-arrow-clockwise spin"></i>
+            <p>Memuat data...</p>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="pagination-info">
+                <span id="paginationInfo">Memuat...</span>
+            </div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0" id="pagination">
+                    <!-- Pagination will be generated here -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+const itemsPerPage = 100;
+let totalPages = 1;
+let totalItems = 0;
+let currentFilters = {};
+
+// Load data function
+function loadData(page = 1, filters = {}) {
+    currentPage = page;
+    currentFilters = filters;
+    const tbody = document.getElementById('tableBody');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const paginationInfo = document.getElementById('paginationInfo');
+    const totalOrdersCount = document.getElementById('totalOrdersCount');
+    
+    // Show loading
+    tbody.innerHTML = '';
+    loadingSpinner.style.display = 'block';
+    
+    // Build URL
+    const url = new URL('{% url "order_shipping_detail_api" %}', window.location.origin);
+    url.searchParams.set('courier', '{{ courier_name }}');
+    url.searchParams.set('date', '{{ selected_date_str }}');
+    url.searchParams.set('page', page);
+    url.searchParams.set('per_page', itemsPerPage);
+    
+    // Add search and filter parameters
+    if (filters.search_order_id) {
+        url.searchParams.set('search_order_id', filters.search_order_id);
+    }
+    if (filters.search_toko) {
+        url.searchParams.set('search_toko', filters.search_toko);
+    }
+    if (filters.search_user) {
+        url.searchParams.set('search_user', filters.search_user);
+    }
+    if (filters.search_awb) {
+        url.searchParams.set('search_awb', filters.search_awb);
+    }
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            loadingSpinner.style.display = 'none';
+            
+            if (data.success) {
+                totalItems = data.total_count;
+                totalPages = Math.ceil(totalItems / itemsPerPage);
+                
+                // Update total orders count
+                totalOrdersCount.textContent = totalItems;
+                
+                // Update pagination info
+                const startItem = (page - 1) * itemsPerPage + 1;
+                const endItem = Math.min(page * itemsPerPage, totalItems);
+                paginationInfo.textContent = `Menampilkan ${startItem}-${endItem} dari ${totalItems} data`;
+                
+                // Populate table
+                tbody.innerHTML = '';
+                data.data.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${startItem + index}</td>
+                        <td><strong>${item.order_id_pesanan}</strong></td>
+                        <td>${item.nama_toko}</td>
+                        <td><span class="badge-user">${item.user}</span></td>
+                        <td>${item.waktu_ship}</td>
+                        <td>${item.awb_no_tracking}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+                // Update pagination
+                updatePagination();
+            } else {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <p>Terjadi kesalahan: ${data.error || 'Tidak dapat memuat data'}</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        })
+        .catch(error => {
+            loadingSpinner.style.display = 'none';
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="empty-state">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <p>Terjadi kesalahan: ${error.message}</p>
+                    </td>
+                </tr>
+            `;
+        });
+}
+
+// Update pagination
+function updatePagination() {
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+    
+    if (totalPages <= 1) return;
+    
+    // Previous button
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    prevLi.innerHTML = `<a class="page-link" href="#" onclick="loadData(${currentPage - 1}, currentFilters); return false;">Previous</a>`;
+    pagination.appendChild(prevLi);
+    
+    // Page numbers
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+    
+    if (startPage > 1) {
+        const firstLi = document.createElement('li');
+        firstLi.className = 'page-item';
+        firstLi.innerHTML = `<a class="page-link" href="#" onclick="loadData(1, currentFilters); return false;">1</a>`;
+        pagination.appendChild(firstLi);
+        
+        if (startPage > 2) {
+            const ellipsisLi = document.createElement('li');
+            ellipsisLi.className = 'page-item disabled';
+            ellipsisLi.innerHTML = `<span class="page-link">...</span>`;
+            pagination.appendChild(ellipsisLi);
+        }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#" onclick="loadData(${i}, currentFilters); return false;">${i}</a>`;
+        pagination.appendChild(li);
+    }
+    
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            const ellipsisLi = document.createElement('li');
+            ellipsisLi.className = 'page-item disabled';
+            ellipsisLi.innerHTML = `<span class="page-link">...</span>`;
+            pagination.appendChild(ellipsisLi);
+        }
+        
+        const lastLi = document.createElement('li');
+        lastLi.className = 'page-item';
+        lastLi.innerHTML = `<a class="page-link" href="#" onclick="loadData(${totalPages}, currentFilters); return false;">${totalPages}</a>`;
+        pagination.appendChild(lastLi);
+    }
+    
+    // Next button
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+    nextLi.innerHTML = `<a class="page-link" href="#" onclick="loadData(${currentPage + 1}); return false;">Next</a>`;
+    pagination.appendChild(nextLi);
+}
+
+// Apply filters function
+function applyFilters() {
+    const filters = {
+        search_order_id: document.getElementById('searchOrderId').value.trim(),
+        search_toko: document.getElementById('searchToko').value,
+        search_user: document.getElementById('searchUser').value,
+        search_awb: document.getElementById('searchAwb').value.trim()
+    };
+    
+    // Remove empty filters
+    Object.keys(filters).forEach(key => {
+        if (!filters[key]) {
+            delete filters[key];
+        }
+    });
+    
+    loadData(1, filters);
+}
+
+// Clear filters function
+function clearFilters() {
+    document.getElementById('searchOrderId').value = '';
+    document.getElementById('searchToko').value = '';
+    document.getElementById('searchUser').value = '';
+    document.getElementById('searchAwb').value = '';
+    
+    loadData(1, {});
+}
+
+// Export to Excel function
+function exportToExcel() {
+    const url = new URL('{% url "order_shipping_report_download_excel" %}', window.location.origin);
+    url.searchParams.set('courier', '{{ courier_name }}');
+    url.searchParams.set('date', '{{ selected_date_str }}');
+    
+    // Add current filters to export
+    if (currentFilters.search_order_id) {
+        url.searchParams.set('search_order_id', currentFilters.search_order_id);
+    }
+    if (currentFilters.search_toko) {
+        url.searchParams.set('search_toko', currentFilters.search_toko);
+    }
+    if (currentFilters.search_user) {
+        url.searchParams.set('search_user', currentFilters.search_user);
+    }
+    if (currentFilters.search_awb) {
+        url.searchParams.set('search_awb', currentFilters.search_awb);
+    }
+    
+    window.open(url.toString(), '_blank');
+}
+
+// Enter key support for search fields (only text inputs, not dropdowns)
+document.addEventListener('DOMContentLoaded', function() {
+    const searchFields = ['searchOrderId', 'searchAwb']; // Only text inputs
+    
+    searchFields.forEach(fieldId => {
+        document.getElementById(fieldId).addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                applyFilters();
+            }
+        });
+    });
+    
+    // Auto-apply filters when dropdowns change
+    document.getElementById('searchToko').addEventListener('change', function() {
+        applyFilters();
+    });
+    
+    document.getElementById('searchUser').addEventListener('change', function() {
+        applyFilters();
+    });
+    
+    // Load initial data
+    loadData(1);
+});
+</script>
+{% endblock %}

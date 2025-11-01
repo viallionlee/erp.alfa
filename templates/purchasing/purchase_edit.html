@@ -1,0 +1,1454 @@
+{% extends 'base.html' %}
+{% load l10n %}
+{% block title %}Edit Purchase{% endblock %}
+{% block content %}
+<style>
+    .modern-form-label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 4px;
+    }
+    .modern-form-row {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-end;
+        margin-bottom: 1.2rem;
+        flex-wrap: wrap;
+    }
+    .modern-form-row > .form-group {
+        flex: 1 1 0;
+        min-width: 180px;
+    }
+    .modern-form-row .input-group {
+        width: 100%;
+    }
+    .modern-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+        padding: 2rem 2.5rem 1.5rem 2.5rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    #search-result-box {
+        min-width: 320px;
+        font-size: 0.8rem;
+        min-height: 600px;
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    #search-result-box tbody tr {
+        height: 62px;
+    }
+    #search-result-box tbody tr td {
+        vertical-align: middle;
+        padding: 8px;
+    }
+    #search-result-box .product-photo-zoom img {
+        width: 60px !important;
+        height: 60px !important;
+        max-width: 60px !important;
+        max-height: 60px !important;
+        object-fit: cover;
+    }
+    .product-photo-zoom {
+        position: relative;
+        cursor: pointer;
+        display: inline-block;
+    }
+    .product-photo-zoom .magnifier-icon {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    .product-photo-zoom:hover .magnifier-icon {
+        opacity: 1;
+    }
+    .product-photo-zoom img {
+        border: none !important;
+        padding: 0 !important;
+        background: none !important;
+    }
+    .table-active { background-color: #e3f2fd !important; }
+    #search-result-box tbody tr {
+        height: 90px;
+        min-height: 90px;
+    }
+    #search-result-box .product-photo-zoom img {
+        width: 90px !important;
+        height: 90px !important;
+    }
+    /* Kode Produk - 2 rows */
+    #search-result-box td:nth-child(2) {
+        vertical-align: middle;
+        padding: 8px;
+        text-align: left;
+    }
+    #search-result-box td:nth-child(2) .sku-row {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #0d6efd;
+        text-align: left;
+    }
+    #search-result-box td:nth-child(2) .barcode-row {
+        font-size: 0.75rem;
+        color: #6c757d;
+        text-align: left;
+    }
+    /* Detail Produk - 2 rows */
+    #search-result-box td:nth-child(3) {
+        vertical-align: middle;
+        padding: 8px;
+        text-align: left;
+    }
+    #search-result-box td:nth-child(3) .nama-row {
+        font-weight: 500;
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+        word-wrap: break-word;
+        text-align: left;
+    }
+    #search-result-box td:nth-child(3) .variant-brand-row {
+        font-size: 0.75rem;
+        color: #6c757d;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    #search-result-box td:nth-child(3) .variant-text {
+        text-align: left;
+    }
+    #search-result-box td:nth-child(3) .brand-text {
+        font-weight: 500;
+        color: #198754;
+        margin-left: 8px;
+        text-align: right;
+    }
+    /* Stock & Harga Beli - Center aligned */
+    #search-result-box td:nth-child(4),
+    #search-result-box td:nth-child(5) {
+        vertical-align: middle;
+        text-align: center;
+    }
+    /* Main table styling */
+    #produk-table tbody tr {
+        height: 90px;
+        min-height: 90px;
+    }
+    #produk-table .product-photo-zoom img {
+        width: 90px !important;
+        height: 90px !important;
+    }
+    #produk-table .sku-row {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #0d6efd;
+        text-align: left;
+    }
+    #produk-table .barcode-row {
+        font-size: 0.8rem;
+        color: #6c757d;
+        text-align: left;
+    }
+    #produk-table .nama-row {
+        font-weight: 500;
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+        text-align: left;
+    }
+    #produk-table .variant-brand-row {
+        font-size: 0.8rem;
+        color: #6c757d;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    #produk-table .variant-text {
+        text-align: left;
+    }
+    #produk-table .brand-text {
+        font-weight: 500;
+        color: #198754;
+        margin-left: 8px;
+        text-align: right;
+    }
+    @media (max-width: 600px) {
+        .modern-card { padding: 1rem; }
+        .modern-form-row { flex-direction: column; gap: 0.5rem; }
+    }
+</style>
+<div class="container mt-4">
+    {% if is_verification_mode %}
+    <div class="alert alert-primary text-center mb-4" role="alert" style="max-width: 1200px; margin: auto; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <h2 class="mb-2"><i class="bi bi-check2-circle"></i> PURCHASE VERIFICATION</h2>
+        <p class="mb-0">Verifikasi harga beli dengan invoice fisik sebelum melanjutkan ke payment</p>
+    </div>
+    {% endif %}
+    
+    <div class="card shadow-sm" style="max-width: 1200px; margin: auto;">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                {% if is_verification_mode %}
+                <i class="bi bi-check2-circle"></i> Verification Purchase: {{ purchase.nomor_purchase }}
+                {% else %}
+                Edit Purchase: {{ purchase.nomor_purchase }}
+                {% endif %}
+            </h5>
+        </div>
+        <div class="card-body" style="padding: 2rem 2.5rem 1.5rem 2.5rem;">
+            <form method="post" id="add-purchase-form">
+                {% csrf_token %}
+                <input type="hidden" name="purchase_id" value="{{ purchase.id }}">
+                <input type="hidden" name="supplier_id" id="supplier_id">
+                <input type="hidden" name="po_id" id="po_id" value="{% if purchase.po %}{{ purchase.po.id }}{% endif %}">
+                
+                <!-- Row 1: Tanggal, Supplier -->
+                <div class="modern-form-row">
+                    <div class="form-group">
+                        <label class="modern-form-label" for="tanggal_purchase">Tanggal Purchase <span style="color:red">*</span></label>
+                        {% if is_verification_mode %}
+                        <input type="date" name="tanggal_purchase" id="tanggal_purchase" class="form-control" required readonly>
+                        {% else %}
+                        <input type="date" name="tanggal_purchase" id="tanggal_purchase" class="form-control" required>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label class="modern-form-label" for="nama_supplier">Supplier <span style="color:red">*</span></label>
+                        <div class="input-group">
+                            <input type="text" id="nama_supplier" class="form-control" required readonly aria-label="Nama Supplier" value="{{ purchase.supplier.nama_supplier|default:'' }}">
+                            {% if not is_verification_mode %}
+                            <button class="btn btn-outline-primary" type="button" id="pilih_supplier_btn" aria-label="Pilih Supplier">Pilih</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Row 2: Nomor PO (Optional) -->
+                <div class="modern-form-row">
+                    <div class="form-group">
+                        <label class="modern-form-label" for="nomor_po">Nomor PO (Opsional)</label>
+                        <div class="input-group">
+                            <input type="text" id="nomor_po" class="form-control" placeholder="Kosongkan jika tidak ada PO" value="{{ purchase.po.nomor_po|default:'' }}" readonly>
+                            {% if not is_verification_mode %}
+                            <button class="btn btn-primary" type="button" id="cari_po_btn" aria-label="Cari PO">
+                                <i class="bi bi-search"></i> Cari PO
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <input type="hidden" name="po_id" id="po_id" value="{% if po %}{{ po.id }}{% endif %}">
+                <input type="hidden" name="supplier_id" id="supplier_id" value="{% if po %}{{ po.supplier.id }}{% endif %}">
+                
+                <!-- Row 2: Keterangan -->
+                <div class="modern-form-row">
+                    <div class="form-group" style="flex:2;">
+                        <label class="modern-form-label" for="notes">Catatan</label>
+                        <textarea name="notes" id="notes" class="form-control" rows="1" placeholder="Catatan tambahan (opsional)">{{ notes }}</textarea>
+                    </div>
+                </div>
+                
+                <!-- Row 3: Cari Produk (Hidden in verification mode) -->
+                {% if not is_verification_mode %}
+                <div class="modern-form-row">
+                    <div class="form-group" style="flex:2; position:relative;">
+                        <label class="modern-form-label" for="produk_search">Cari Produk</label>
+                        <div class="input-group mb-1">
+                            <input type="text" id="produk_search" class="form-control" placeholder="Cari SKU / Barcode / Nama / Brand (↑↓ Enter untuk navigasi)" autocomplete="off" aria-label="Cari Produk">
+                            <button class="btn btn-outline-primary" type="button" id="produk_search_btn" aria-label="Cari Produk">Cari</button>
+                        </div>
+                        <div id="search-result-box" class="border rounded mt-1 bg-white shadow-sm" style="display:none; position:absolute; z-index:10; min-width:100%; max-width:1065px; overflow-x:auto; max-height:600px; overflow-y:auto;">
+                          <table class="table table-sm mb-0" style="font-size:0.8rem; width:100%; table-layout:fixed;">
+                            <thead><tr style="background:#f8f9fa;"><th style="width:120px; text-align:center;">Photo</th><th style="width:180px; text-align:center;">Kode Produk</th><th style="width:auto; text-align:center;">Detail Produk</th><th style="width:120px; text-align:center;">Stock</th><th style="width:120px; text-align:center;">Harga Beli</th></tr></thead>
+                            <tbody></tbody>
+                          </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Produk Table -->
+                <div class="table-responsive mt-3">
+                    {% if is_verification_mode %}
+                    <div class="alert alert-warning mb-2 py-2" role="alert" style="font-size: 0.875rem;">
+                        <i class="bi bi-info-circle"></i> <strong>Catatan:</strong> Qty tidak bisa diubah (ranah warehouse). Hanya <strong>Harga Beli</strong> dan <strong>Notes</strong> yang dapat disesuaikan di verification mode.
+                    </div>
+                    {% elif purchase.status == 'received' %}
+                    <div class="alert alert-info mb-2 py-2" role="alert" style="font-size: 0.875rem;">
+                        <i class="bi bi-info-circle"></i> <strong>Catatan:</strong> Purchase sudah received. Klik tombol "Verification" untuk verifikasi harga beli.
+                    </div>
+                    {% endif %}
+                    <table class="table table-bordered align-middle" id="produk-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:120px; text-align:center;">Photo</th>
+                                <th style="width:180px; text-align:center;">Kode Produk</th>
+                                <th style="width:auto; text-align:center;">Detail Produk</th>
+                                <th style="width:80px; text-align:center;">Stok</th>
+                                <th style="width:80px; text-align:center; {% if is_verification_mode %}background: #dc3545; color: white; font-weight: bold;{% endif %}">Qty</th>
+                                <th style="width:120px; text-align:center; {% if is_verification_mode %}background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: bold;{% elif purchase.status == 'received' %}background: #ffc107; color: #000; font-weight: bold;{% endif %}">Harga Beli</th>
+                                <th style="width:120px; text-align:center;">Subtotal</th>
+                                <th style="width:80px; text-align:center;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr data-sku="{{ item.product.sku }}">
+                                <td style="vertical-align:middle; text-align:center;">
+                                    {% if item.product.photo and item.product.photo.name %}
+                                        <div class="product-photo-zoom" data-photo-url="{{ item.product.photo.url }}">
+                                            <img src="{{ item.product.photo.url }}" alt="{{ item.product.nama_produk }}" style="width:90px;height:90px;object-fit:cover;border-radius:4px;">
+                                            <div class="magnifier-icon">
+                                                <i class="bi bi-zoom-in"></i>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                    <div class="bg-light d-flex align-items-center justify-content-center" style="width:90px;height:90px;border-radius:4px;"><i class="bi bi-file-image text-secondary" style="font-size:32px;"></i></div>
+                                    {% endif %}
+                                </td>
+                                <td style="vertical-align:middle;">
+                                    <input type="hidden" name="produk_sku[]" value="{{ item.product.sku }}">
+                                    <div class="sku-row">{{ item.product.sku }}</div>
+                                    <div class="barcode-row">{{ item.product.barcode|default:"-" }}</div>
+                                </td>
+                                <td style="vertical-align:middle;">
+                                    <div class="nama-row">{{ item.product.nama_produk }}</div>
+                                    <div class="variant-brand-row">
+                                        <span class="variant-text">{{ item.product.variant_produk|default:"" }}</span>
+                                        <span class="brand-text">{{ item.product.brand|default:"" }}</span>
+                                    </div>
+                                </td>
+                                <td style="vertical-align:middle; text-align:center;">{% if item.product.stock %}{{ item.product.stock.quantity_ready_virtual|default:0 }}{% else %}0{% endif %}</td>
+                                <td style="vertical-align:middle; text-align:center;">
+                                    {% if is_verification_mode %}
+                                    <span style="font-weight:bold; font-size:1.1rem;">{{ item.quantity }}</span>
+                                    <input type="hidden" name="produk_qty[]" value="{% localize off %}{{ item.quantity }}{% endlocalize %}">
+                                    {% else %}
+                                    <input type="number" name="produk_qty[]" class="form-control qty-input" value="{% localize off %}{{ item.quantity }}{% endlocalize %}" min="1" style="width:70px;">
+                                    {% endif %}
+                                </td>
+                                <td style="vertical-align:middle; text-align:center;">
+                                    {% if is_verification_mode %}
+                                    <input type="text" name="produk_harga_beli[]" class="form-control harga-input" data-harga="{% localize off %}{{ item.harga_beli }}{% endlocalize %}" value="" style="width:110px; text-align:right;">
+                                    {% else %}
+                                    <span class="harga-display" data-harga="{% localize off %}{{ item.harga_beli }}{% endlocalize %}" style="display:inline-block;width:110px;text-align:right;font-weight:bold;">Rp 0</span>
+                                    <input type="hidden" name="produk_harga_beli[]" class="harga-input" data-harga="{% localize off %}{{ item.harga_beli }}{% endlocalize %}" value="{% localize off %}{{ item.harga_beli }}{% endlocalize %}">
+                                    {% endif %}
+                                </td>
+                                <td class="subtotal-display" style="vertical-align:middle; text-align:right;" data-subtotal="{{ item.subtotal }}">Rp 0</td>
+                                <td style="vertical-align:middle; text-align:center;">
+                                    {% if not is_verification_mode %}
+                                    <button type="button" class="btn btn-danger btn-sm hapus-row">Hapus</button>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <th colspan="7" class="text-end">TOTAL:</th>
+                                <th id="grand-total-display" class="text-end">0</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <div class="mt-3 text-center">
+                    {% if is_verification_mode %}
+                    <button type="button" class="btn btn-primary px-4" id="btn-verify-purchase"><i class="bi bi-check2-circle"></i> VERIFIED</button>
+                    <a href="{% url 'purchasing:purchase_list' %}" class="btn btn-secondary ms-2">Batal</a>
+                    {% else %}
+                    <button type="submit" class="btn btn-primary px-4"><i class="bi bi-save"></i> Simpan Purchase</button>
+                    <a href="{% url 'purchasing:purchase_list' %}" class="btn btn-secondary ms-2">Batal</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if is_verification_mode %}
+<!-- Verification Confirmation Modal -->
+<div class="modal fade" id="verificationModal" tabindex="-1" aria-labelledby="verificationModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="verificationModalLabel">
+          <i class="bi bi-check2-circle"></i> Konfirmasi Verifikasi Purchase
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i> <strong>Perhatian!</strong>
+          <p class="mb-0 mt-2">Apakah invoice fisik sudah diverifikasi dan sesuai dengan data di sistem?</p>
+        </div>
+        <div class="mb-3">
+          <strong>Purchase Number:</strong> {{ purchase.nomor_purchase }}<br>
+          <strong>Supplier:</strong> {{ purchase.supplier.nama_supplier }}<br>
+          <strong>Total Amount:</strong> Rp {{ purchase.total_amount|floatformat:0 }}
+        </div>
+        <div class="alert alert-warning">
+          <i class="bi bi-exclamation-triangle"></i> Setelah di-verify, purchase akan otomatis masuk ke <strong>Purchase Payment</strong> dan <strong>Tax Invoice</strong>.
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="confirmVerification" required>
+          <label class="form-check-label" for="confirmVerification">
+            Saya sudah memverifikasi invoice fisik dan data sudah sesuai
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary" id="confirmVerifyBtn" disabled>
+          <i class="bi bi-check2-circle"></i> Ya, VERIFIED
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Modal Pilih Supplier -->
+<div class="modal fade" id="supplierModal" tabindex="-1" aria-labelledby="supplierModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="supplierModalLabel">Pilih Supplier</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="search_supplier" class="form-control mb-2" placeholder="Cari nama/alamat supplier...">
+        <div id="supplier-list" class="list-group" style="max-height:300px;overflow-y:auto;"></div>
+        <div class="mt-2 text-end">
+          <a href="#" id="addSupplierLink">+ Tambah Supplier Baru</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Zoom Photo -->
+<div class="modal fade" id="zoomImageModal" tabindex="-1" aria-labelledby="zoomImageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="zoomImageModalLabel">Photo Produk</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="zoomImage" src="" alt="Product Photo" class="img-fluid" style="max-height: 70vh; border-radius: 8px;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Cari PO -->
+<div class="modal fade" id="cariPoModal" tabindex="-1" aria-labelledby="cariPoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cariPoModalLabel">Cari Purchase Order</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <div class="row g-2">
+            <div class="col-md-3">
+              <label class="form-label small text-muted">Pilih Cara Pencarian</label>
+              <select id="search_type" class="form-select">
+                <option value="supplier">By Supplier</option>
+                <option value="nomor_po">By Nomor PO</option>
+              </select>
+            </div>
+            <div class="col-md-4" id="search-by-supplier">
+              <label class="form-label small text-muted">Cari Supplier</label>
+              <input type="text" id="search_po_supplier" class="form-control" placeholder="Cari nama supplier...">
+            </div>
+            <div class="col-md-4" id="search-by-nomor" style="display:none;">
+              <label class="form-label small text-muted">Cari Nomor PO</label>
+              <input type="text" id="search_po_nomor" class="form-control" placeholder="Masukkan nomor PO...">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small text-muted">&nbsp;</label>
+              <button class="btn btn-primary w-100" id="search_po_btn">
+                <i class="bi bi-search"></i> Cari
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+          <table class="table table-hover table-sm">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th>Nomor PO</th>
+                <th>Tanggal</th>
+                <th>Supplier</th>
+                <th>Status</th>
+                <th>Total Amount</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="po_list_tbody">
+              <tr>
+                <td colspan="6" class="text-center text-muted">Pilih supplier terlebih dahulu</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Tambah Supplier Baru -->
+<div class="modal fade" id="addSupplierModal" tabindex="-1" aria-labelledby="addSupplierModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addSupplierModalLabel">Tambah Supplier Baru</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2">
+          <label>Nama Supplier</label>
+          <input type="text" id="new_nama_supplier" class="form-control" required>
+        </div>
+        <div class="mb-2">
+          <label>Alamat</label>
+          <textarea id="new_alamat_supplier" class="form-control"></textarea>
+        </div>
+        <div class="mb-2">
+          <label>Kota</label>
+          <input type="text" id="new_kota_supplier" class="form-control">
+        </div>
+        <div class="text-end">
+          <button type="button" class="btn btn-primary" id="saveSupplierBtn">Simpan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+(function() {
+    'use strict';
+    
+    // ==========================================
+    // ANCHOR: Purchase Edit Module
+    // ==========================================
+    
+    // Namespace untuk event
+    const EVENT_NS = '.purchaseEdit';
+    
+    // Mode flags
+    const IS_VER = {{ is_verification_mode|yesno:"true,false" }};
+    const IS_RECEIVED = {% if purchase.status == 'received' %}true{% else %}false{% endif %};
+    
+    console.log('[PurchaseEdit] Mode:', {
+        is_verification: IS_VER,
+        is_received: IS_RECEIVED,
+        status: '{{ purchase.status }}'
+    });
+    
+    // ==========================================
+    // APP OBJECT
+    // ==========================================
+    window.App = window.App || {};
+    window.App.PurchaseEdit = {
+        // Selectors (scoped to form)
+        $form: $('#add-purchase-form'),
+        $table: $('#produk-table'),
+        
+        // Formatter: 1.000.000 (tanpa desimal)
+        formatHarga: function(n) {
+            return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(Number(n) || 0);
+        },
+        
+        // Parse harga dari formatted string
+        parseHarga: function(str) {
+            return parseFloat(String(str).replace(/[^\d]/g, '')) || 0;
+        },
+        
+        // Update subtotal untuk 1 row
+        updateSubtotal: function($row) {
+            // Get qty: check if it's input or text (verification mode)
+            let qty = 0;
+            const $qtyInput = $row.find('.qty-input');
+            if ($qtyInput.length > 0 && $qtyInput.is('input')) {
+                // Normal mode: get from input
+                qty = parseFloat($qtyInput.val()) || 0;
+            } else {
+                // Verification mode: get from hidden input
+                qty = parseFloat($row.find('input[name="produk_qty[]"]').val()) || 0;
+            }
+            
+            const hargaInput = $row.find('.harga-input').val();
+            const harga = this.parseHarga(hargaInput);
+            const subtotal = qty * harga;
+            
+            $row.find('.subtotal-display').html('Rp ' + this.formatHarga(subtotal));
+            this.calculateGrandTotal();
+        },
+        
+        // Calculate grand total
+        calculateGrandTotal: function() {
+            const self = this;
+            let total = 0;
+            
+            this.$table.find('tbody tr').each(function() {
+                // Get qty: check if it's input or text (verification mode)
+                let qty = 0;
+                const $qtyInput = $(this).find('.qty-input');
+                if ($qtyInput.length > 0 && $qtyInput.is('input')) {
+                    // Normal mode: get from input
+                    qty = parseFloat($qtyInput.val()) || 0;
+                } else {
+                    // Verification mode: get from hidden input
+                    qty = parseFloat($(this).find('input[name="produk_qty[]"]').val()) || 0;
+                }
+                
+                const hargaInput = $(this).find('.harga-input').val();
+                const harga = self.parseHarga(hargaInput);
+                total += qty * harga;
+            });
+            
+            $('#grand-total-display').html('Rp ' + this.formatHarga(total));
+        },
+        
+        // Prefill purchase data
+        prefillData: function() {
+            // Supplier
+            $('#supplier_id').val('{{ purchase.supplier.id }}');
+            $('#nama_supplier').val('{{ purchase.supplier.nama_supplier }}');
+            $('input[name="supplier_id"]').val('{{ purchase.supplier.id }}');
+            
+            // Tanggal purchase - Leave blank for new purchases, only fill if editing existing
+            {% if purchase.tanggal_purchase %}
+            let tglStr = '{{ purchase.tanggal_purchase|date:"Y-m-d" }}';
+            $('#tanggal_purchase').val(tglStr);
+            {% else %}
+            // Leave blank - user must fill manually
+            $('#tanggal_purchase').val('');
+            console.log('[PurchaseEdit] Tanggal purchase left blank - user must fill manually');
+            {% endif %}
+    
+            // Notes
+            $('#notes').val('{{ purchase.notes|default:"" }}');
+            
+            // PO reference
+            {% if purchase.po %}
+            $('#po_id').val('{{ purchase.po.id }}');
+            $('#nomor_po').val('{{ purchase.po.nomor_po }}');
+            {% endif %}
+        },
+        
+        // Prefill harga_beli dari data-harga
+        prefillHarga: function() {
+            const self = this;
+            $('.harga-input').each(function(index) {
+                const raw = $(this).attr('data-harga');
+                console.log(`[Prefill ${index}] data-harga="${raw}"`);
+                if (raw != null && raw !== '') {
+                    const parsed = parseFloat(raw) || 0;
+                    const formatted = self.formatHarga(parsed);
+                    $(this).val(formatted);
+                    console.log(`  → parsed=${parsed}, formatted="${formatted}"`);
+                    
+                    // Update harga-display jika ada (untuk non-verification mode)
+                    const $display = $(this).siblings('.harga-display');
+                    if ($display.length) {
+                        $display.text('Rp ' + formatted);
+                    }
+                }
+            });
+        },
+        
+        // Initialize subtotals
+        initializeSubtotals: function() {
+            const self = this;
+            this.$table.find('tbody tr').each(function() {
+                self.updateSubtotal($(this));
+            });
+        },
+        
+        // Setup event listeners
+        setupEvents: function() {
+            const self = this;
+            
+            // Harga input change - hanya aktif di verification mode
+            if (IS_VER) {
+                $(document).off('input' + EVENT_NS, '.harga-input');
+                $(document).on('input' + EVENT_NS, '.harga-input', function() {
+                    let value = $(this).val();
+                    let numericValue = value.replace(/[^\d]/g, '');
+                    if (numericValue) {
+                        $(this).val(self.formatHarga(numericValue));
+                    }
+                    self.updateSubtotal($(this).closest('tr'));
+                    autoSave(); // Trigger autosave
+                });
+            }
+            
+            // Qty input change
+            $(document).off('input change' + EVENT_NS, '.qty-input');
+            $(document).on('input change' + EVENT_NS, '.qty-input', function() {
+                self.updateSubtotal($(this).closest('tr'));
+                autoSave(); // Trigger autosave
+            });
+        }
+    };
+    
+    // ==========================================
+    // INITIALIZATION
+    // ==========================================
+    $(document).ready(function() {
+        console.log('[PurchaseEdit] Initializing...');
+        
+        // Prefill data
+        window.App.PurchaseEdit.prefillData();
+        
+        // Prefill harga
+        window.App.PurchaseEdit.prefillHarga();
+        
+        // Initialize subtotals
+        window.App.PurchaseEdit.initializeSubtotals();
+        
+        // Setup events
+        window.App.PurchaseEdit.setupEvents();
+        
+        console.log('[PurchaseEdit] Initialized successfully');
+    });
+    
+    // ==========================================
+    // GLOBAL FUNCTIONS (untuk kompatibilitas)
+    // ==========================================
+    
+    // Add product to table
+    window.tambahProdukKeTable = function(produk) {
+        const $existing = window.App.PurchaseEdit.$table.find(`tbody tr[data-sku="${produk.sku}"]`);
+        if ($existing.length > 0) {
+            const $qtyInput = $existing.find('.qty-input');
+            const currentQty = parseInt($qtyInput.val()) || 0;
+            const addQty = produk.quantity || 1;
+            $qtyInput.val(currentQty + addQty);
+            window.App.PurchaseEdit.updateSubtotal($existing);
+            return;
+        }
+        
+        let photoHtml = '';
+        if (produk.photo_url && produk.photo_url !== '') {
+            photoHtml = `
+                <div class="product-photo-zoom" data-photo-url="${produk.photo_url}">
+                    <img src="${produk.photo_url}" alt="${produk.nama_produk || produk.sku}" style="width:90px;height:90px;object-fit:cover;border-radius:4px;">
+                    <div class="magnifier-icon">
+                        <i class="bi bi-zoom-in"></i>
+                    </div>
+                </div>
+            `;
+        } else {
+            photoHtml = `<div class="bg-light d-flex align-items-center justify-content-center" style="width:90px;height:90px;border-radius:4px;"><i class="bi bi-file-image text-secondary" style="font-size:32px;"></i></div>`;
+        }
+        
+        let rowHtml = `
+            <tr data-sku="${produk.sku}">
+                <td style="vertical-align:middle; text-align:center;">${photoHtml}</td>
+                <td style="vertical-align:middle;">
+                    <input type="hidden" name="produk_sku[]" value="${produk.sku}">
+                    <div class="sku-row">${produk.sku}</div>
+                    <div class="barcode-row">${produk.barcode || '-'}</div>
+                            </td>
+                <td style="vertical-align:middle;">
+                    <div class="nama-row">${produk.nama_produk || ''}</div>
+                    <div class="variant-brand-row">
+                        <span class="variant-text">${produk.variant_produk || ''}</span>
+                        <span class="brand-text">${produk.brand || ''}</span>
+                    </div>
+                </td>
+                 <td style="vertical-align:middle; text-align:center;">${produk.stock_qty || 0}</td>
+                 <td style="vertical-align:middle; text-align:center;"><input type="number" name="produk_qty[]" class="form-control qty-input" value="${produk.quantity || 1}" min="1" style="width:70px;"></td>
+                 <td style="vertical-align:middle; text-align:center;"><span class="harga-display" data-harga="${produk.harga_beli || 0}" style="display:inline-block;width:110px;text-align:right;font-weight:bold;">Rp ${window.App.PurchaseEdit.formatHarga(produk.harga_beli || 0)}</span><input type="hidden" name="produk_harga_beli[]" class="harga-input" data-harga="${produk.harga_beli || 0}" value="${produk.harga_beli || 0}"></td>
+                 <td class="subtotal-display" style="vertical-align:middle; text-align:right;">0</td>
+                <td style="vertical-align:middle; text-align:center;"><button type="button" class="btn btn-danger btn-sm hapus-row">Hapus</button></td>
+                        </tr>
+                    `;
+        window.App.PurchaseEdit.$table.find('tbody').append(rowHtml);
+        window.App.PurchaseEdit.updateSubtotal(window.App.PurchaseEdit.$table.find('tbody tr:last'));
+    }
+
+    // Alias untuk kompatibilitas
+    window.updateSubtotal = function($row) {
+        window.App.PurchaseEdit.updateSubtotal($row);
+    };
+    
+    window.calculateGrandTotal = function() {
+        window.App.PurchaseEdit.calculateGrandTotal();
+    };
+    
+    // ==========================================
+    // PRODUCT TABLE EVENTS
+    // ==========================================
+    
+    // Remove product
+    $(document).off('click' + EVENT_NS, '.hapus-row');
+    $(document).on('click' + EVENT_NS, '.hapus-row', function() {
+        $(this).closest('tr').remove();
+        window.App.PurchaseEdit.calculateGrandTotal();
+        autoSave();
+    });
+
+    // Photo zoom
+    $(document).on('click', '.product-photo-zoom', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const photoUrl = $(this).data('photo-url');
+        if (photoUrl) {
+            $('#zoomImage').attr('src', photoUrl);
+            $('#zoomImageModal').modal('show');
+        }
+    });
+    
+    // ==========================================
+    // 5. SUPPLIER MODAL
+    // ==========================================
+    
+    let isCariPO = false;
+    
+    $('#pilih_supplier_btn').on('click', function() {
+        $('#supplierModal').modal('show');
+        loadSupplierList('');
+    });
+
+    $('#search_supplier').on('input', function() {
+        loadSupplierList($(this).val());
+    });
+
+    function loadSupplierList(keyword) {
+        fetch(`/purchaseorder/search-supplier/?q=${encodeURIComponent(keyword)}`)
+            .then(response => response.json())
+            .then(data => {
+                let html = '';
+                if (data.length === 0) html = '<div class="text-danger text-center py-3">Tidak ada supplier ditemukan</div>';
+                data.forEach(function(sup) {
+                    html += `<a href="#" class="list-group-item list-group-item-action pilih-sup" data-nama='${sup.nama_supplier}' data-id='${sup.id}'>
+                        <b>${sup.nama_supplier}</b><br><small>${sup.alamat||''} ${sup.kota||''}</small>
+                    </a>`;
+                });
+                $('#supplier-list').html(html);
+            });
+    }
+
+    $('#supplier-list').on('click', '.pilih-sup', function() {
+        $('#nama_supplier').val($(this).data('nama'));
+        $('#supplier_id').val($(this).data('id'));
+        $('input[name="supplier_id"]').val($(this).data('id'));
+        $('#supplierModal').modal('hide');
+        autoSave();
+        
+        // Jika sedang Cari PO, langsung buka modal PO
+        if (isCariPO) {
+            isCariPO = false;
+            setTimeout(function() {
+                $('#cariPoModal').modal('show');
+                const supplierId = $('#supplier_id').val();
+                loadPOList(supplierId, '', '');
+            }, 300);
+        }
+    });
+
+    // Add supplier
+    $('#addSupplierLink').on('click', function(e) {
+        e.preventDefault();
+        $('#supplierModal').modal('hide');
+        $('#addSupplierModal').modal('show');
+    });
+
+    $('#saveSupplierBtn').on('click', function() {
+        let nama = $('#new_nama_supplier').val().trim();
+        if (!nama) { alert('Nama supplier wajib diisi!'); return; }
+        
+        let formData = new FormData();
+        formData.append('nama_supplier', nama);
+        formData.append('alamat_supplier', $('#new_alamat_supplier').val());
+        formData.append('kota_supplier', $('#new_kota_supplier').val());
+        formData.append('csrfmiddlewaretoken', $('[name=csrfmiddlewaretoken]').val());
+        
+        fetch('/purchaseorder/add-supplier/', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            $('#addSupplierModal').modal('hide');
+            $('#nama_supplier').val(data.nama_supplier);
+            $('#supplier_id').val(data.id);
+            autoSave();
+        });
+    });
+
+    // ==========================================
+    // 6. PO MODAL
+    // ==========================================
+    
+    $('#cari_po_btn').on('click', function() {
+        const supplierId = $('#supplier_id').val();
+        if (!supplierId) {
+            isCariPO = true;
+            $('#supplierModal').modal('show');
+            loadSupplierList('');
+            return;
+        }
+        $('#cariPoModal').modal('show');
+        loadPOList(supplierId, '', '');
+    });
+    
+    // Toggle search type
+    $('#search_type').on('change', function() {
+        const searchType = $(this).val();
+        if (searchType === 'supplier') {
+            $('#search-by-supplier').show();
+            $('#search-by-nomor').hide();
+        } else {
+            $('#search-by-supplier').hide();
+            $('#search-by-nomor').show();
+        }
+    });
+    
+    $('#search_po_btn').on('click', function() {
+        const searchType = $('#search_type').val();
+        let keyword = '';
+        
+        if (searchType === 'supplier') {
+            keyword = $('#search_po_supplier').val();
+        } else {
+            keyword = $('#search_po_nomor').val();
+        }
+        
+        loadPOList(keyword, searchType);
+    });
+    
+    function loadPOList(keyword, searchType = 'supplier') {
+        const supplierId = $('#supplier_id').val();
+        
+        $.getJSON('/purchaseorder/data/', {
+            search: keyword,
+            search_type: searchType,
+            supplier_id: supplierId,  // Filter by selected supplier
+            length: 100  // Get more results
+        }, function(response) {
+            let html = '';
+            let filteredData = [];
+            
+            // Filter only draft and pending PO (same as mobile)
+            if (response.data && response.data.length > 0) {
+                filteredData = response.data.filter(function(po) {
+                    const status = po.status ? po.status.toLowerCase() : '';
+                    return status === 'draft' || status === 'pending';
+                });
+            }
+            
+            console.log('[Desktop Purchase Edit] Total PO:', response.data ? response.data.length : 0);
+            console.log('[Desktop Purchase Edit] Filtered PO (draft/pending):', filteredData.length);
+            
+            if (filteredData.length > 0) {
+                filteredData.forEach(function(po) {
+                    let statusBadge = '';
+                    const status = po.status ? po.status.toLowerCase() : '';
+                    
+                    if (status === 'draft') statusBadge = '<span class="badge bg-warning">Draft</span>';
+                    else if (status === 'pending') statusBadge = '<span class="badge bg-info">Pending</span>';
+                    
+                    html += `
+                        <tr>
+                            <td>${po.nomor_po}</td>
+                            <td>${po.tanggal_po}</td>
+                            <td>${po.supplier}</td>
+                            <td>${statusBadge}</td>
+                            <td>${po.total_amount}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary pilih-po-btn" data-po-id="${po.id}" data-po-nomor="${po.nomor_po}">
+                                    <i class="bi bi-check-circle"></i> Pilih
+                                </button>
+                </td>
+            </tr>
+        `;
+                });
+            } else {
+                html = '<tr><td colspan="6" class="text-center text-muted">Tidak ada PO (Draft/Pending) ditemukan</td></tr>';
+            }
+            $('#po_list_tbody').html(html);
+        }).fail(function() {
+            $('#po_list_tbody').html('<tr><td colspan="6" class="text-center text-danger">Gagal memuat data</td></tr>');
+        });
+    }
+    
+    $(document).on('click', '.pilih-po-btn', function() {
+        const poId = $(this).data('po-id');
+        const poNomor = $(this).data('po-nomor');
+
+        $('#nomor_po').val(poNomor);
+        $('#po_id').val(poId);
+        $('#cariPoModal').modal('hide');
+
+        $.getJSON('/purchaseorder/' + poId + '/json/', function(poData) {
+            // Auto-fill supplier jika belum ada
+            if (poData.supplier && !$('#nama_supplier').val()) {
+                $('#nama_supplier').val(poData.supplier.nama_supplier);
+                $('#supplier_id').val(poData.supplier.id);
+            }
+            
+            // Tanggal purchase - Leave blank, user must fill manually
+            // if (poData.tanggal_po) {
+            //     const dt = poData.tanggal_po.slice(0,16);
+            //     $('#tanggal_purchase').val(dt);
+            // }
+
+            $('#produk-table tbody').empty();
+            if (poData.items && poData.items.length) {
+                poData.items.forEach(function(item) {
+                    window.tambahProdukKeTable({
+                        sku: item.product.sku,
+                        barcode: item.product.barcode,
+                        nama_produk: item.product.nama_produk,
+                        variant_produk: item.product.variant_produk,
+                        brand: item.product.brand,
+                        stock_qty: (item.product.stock && item.product.stock.quantity_ready) ? item.product.stock.quantity_ready : 0,
+                        quantity: item.quantity || 1,
+                        harga_beli: item.harga_beli || 0,
+                        photo_url: item.product.photo_url || ''
+                    });
+                });
+            }
+            autoSave();
+        }).fail(function() {
+            alert('Gagal memuat data PO!');
+        });
+    });
+
+    // ==========================================
+    // 7. PRODUCT LOOKUP (VANILLA JS)
+    // ==========================================
+    
+    let searchTimeout;
+    let selectedIdx = -1;
+    let currentRows = [];
+    let searchQuery = '';
+
+    const produkSearch = document.getElementById('produk_search');
+    const produkSearchBtn = document.getElementById('produk_search_btn');
+    const searchResultBox = document.getElementById('search-result-box');
+    const searchResultTbody = searchResultBox.querySelector('tbody');
+
+    console.log('🔧 Produk search initialized');
+
+    function renderSearchResults(products, append = false) {
+        if (!append) {
+            searchResultTbody.innerHTML = '';
+        }
+
+        if (products.length === 0 && !append) {
+            searchResultTbody.innerHTML = '<tr><td colspan="5" class="text-center py-3 text-muted">Produk tidak ditemukan</td></tr>';
+            searchResultBox.style.display = 'block';
+            return;
+        }
+
+        products.forEach(p => {
+            let photoHtml = '';
+            if (p.photo_url && p.photo_url !== '') {
+                    photoHtml = `
+                        <div class="product-photo-zoom" data-photo-url="${p.photo_url}">
+                            <img src="${p.photo_url}" alt="${p.nama_produk || p.sku}" style="width:90px;height:90px;object-fit:cover;border-radius:4px;">
+                            <div class="magnifier-icon">
+                                <i class="bi bi-zoom-in"></i>
+                            </div>
+                        </div>
+                    `;
+            } else {
+                photoHtml = `<div class="bg-light d-flex align-items-center justify-content-center" style="width:90px;height:90px;border-radius:4px;"><i class="bi bi-file-image text-secondary" style="font-size:32px;"></i></div>`;
+            }
+
+            const tr = document.createElement('tr');
+            tr.className = 'pilih-produk';
+            tr.style.cursor = 'pointer';
+            tr.dataset.produk = JSON.stringify(p);
+            tr.innerHTML = `
+                <td style="vertical-align:middle; text-align:center;">${photoHtml}</td>
+                <td>
+                    <div class="sku-row">${p.sku}</div>
+                    <div class="barcode-row">${p.barcode || '-'}</div>
+                </td>
+                <td>
+                    <div class="nama-row">${p.nama_produk || ''}</div>
+                    <div class="variant-brand-row">
+                        <span class="variant-text">${p.variant_produk || ''}</span>
+                        <span class="brand-text">${p.brand || ''}</span>
+                    </div>
+                </td>
+                <td style="vertical-align:middle;">${p.stock_qty || 0}</td>
+                <td style="vertical-align:middle;">Rp ${(p.harga_beli || 0).toLocaleString('id-ID')}</td>
+            `;
+            searchResultTbody.appendChild(tr);
+        });
+
+        searchResultBox.style.display = 'block';
+        currentRows = Array.from(searchResultTbody.querySelectorAll('tr.pilih-produk'));
+        selectedIdx = -1;
+        updateHighlight();
+    }
+
+    function fetchProducts(keyword, page = 1, append = false) {
+        const url = "/purchaseorder/search-product/";
+        
+        fetch(`${url}?q=${encodeURIComponent(keyword)}`)
+            .then(response => response.json())
+            .then(data => {
+                renderSearchResults(data, append);
+            })
+            .catch(error => {
+                searchResultTbody.innerHTML = '<tr><td colspan="5" class="text-center py-3 text-danger">Gagal memuat data</td></tr>';
+                searchResultBox.style.display = 'block';
+            });
+    }
+
+    produkSearch.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const keyword = this.value.trim();
+        
+        if (keyword.length < 2) {
+            searchResultBox.style.display = 'none';
+            return;
+        }
+
+        searchQuery = keyword;
+        searchTimeout = setTimeout(() => {
+            fetchProducts(keyword, 1, false);
+        }, 300);
+    });
+
+    produkSearchBtn.addEventListener('click', function() {
+        const keyword = produkSearch.value.trim();
+        if (!keyword) return;
+        
+        searchQuery = keyword;
+        fetchProducts(keyword, 1, false);
+    });
+
+    produkSearch.addEventListener('keydown', function(e) {
+        if (searchResultBox.style.display === 'none') return;
+        if (currentRows.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIdx = (selectedIdx + 1) % currentRows.length;
+            updateHighlight();
+            currentRows[selectedIdx].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIdx = (selectedIdx - 1 + currentRows.length) % currentRows.length;
+            updateHighlight();
+            currentRows[selectedIdx].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (selectedIdx >= 0) {
+                currentRows[selectedIdx].click();
+            }
+        } else if (e.key === 'Escape') {
+            searchResultBox.style.display = 'none';
+        }
+    });
+
+    function updateHighlight() {
+        currentRows.forEach(r => r.classList.remove('table-active'));
+        if (selectedIdx >= 0 && selectedIdx < currentRows.length) {
+            currentRows[selectedIdx].classList.add('table-active');
+        }
+    }
+
+    searchResultBox.addEventListener('click', function(e) {
+        const tr = e.target.closest('tr.pilih-produk');
+        if (!tr) return;
+
+        e.preventDefault();
+        const produk = JSON.parse(tr.dataset.produk);
+        window.tambahProdukKeTable(produk);
+        produkSearch.value = '';
+        searchResultBox.style.display = 'none';
+        produkSearch.focus();
+        autoSave();
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#produk_search') && 
+            !e.target.closest('#search-result-box') && 
+            !e.target.closest('#produk_search_btn')) {
+            searchResultBox.style.display = 'none';
+        }
+    });
+
+    searchResultBox.addEventListener('mousedown', function(e) {
+        e.stopPropagation();
+    });
+
+    // ==========================================
+    // 8. AUTO-SAVE FUNCTIONALITY
+    // ==========================================
+    
+    let autoSaveTimeout;
+    let isAutoSaving = false;
+    
+    function autoSave() {
+        if (isAutoSaving) return;
+        
+        // Skip autosave if purchase doesn't exist yet (create mode)
+        const purchaseId = $('input[name="purchase_id"]').val();
+        if (!purchaseId) {
+            console.log('⏭️  Auto-save skipped: purchase not created yet');
+            return;
+        }
+        
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(function() {
+            isAutoSaving = true;
+            
+            const formData = $('#add-purchase-form').serialize();
+            console.log('💾 Auto-save triggered');
+            
+            // Show "Saving..." indicator
+            showAutoSaveIndicator('Menyimpan...', 'saving');
+            
+            $.ajax({
+                url: '/purchaseorder/purchase/' + purchaseId + '/auto-save/',
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    if (response.success) {
+                        console.log('✅ Auto-saved');
+                        showAutoSaveIndicator('Tersimpan', 'success');
+                    } else {
+                        console.error('❌ Auto-save failed:', response.error);
+                        showAutoSaveIndicator('Gagal menyimpan', 'error');
+                    }
+                    isAutoSaving = false;
+                },
+                error: function(xhr, status, error) {
+                    console.error('❌ Auto-save error:', error);
+                    showAutoSaveIndicator('Error: ' + error, 'error');
+                    isAutoSaving = false;
+                },
+                complete: function() {
+                    isAutoSaving = false;
+                }
+            });
+        }, 800);
+    }
+    
+    function showAutoSaveIndicator(message, type = 'success') {
+        // Remove existing indicator
+        $('#auto-save-indicator').remove();
+        
+        // Determine icon and color based on type
+        let icon, bgColor, textColor;
+        if (type === 'success') {
+            icon = '<i class="bi bi-check-circle-fill"></i>';
+            bgColor = '#28a745';
+            textColor = 'white';
+        } else if (type === 'saving') {
+            icon = '<i class="bi bi-arrow-clockwise spinner-border spinner-border-sm"></i>';
+            bgColor = '#007bff';
+            textColor = 'white';
+        } else {
+            icon = '<i class="bi bi-exclamation-circle-fill"></i>';
+            bgColor = '#dc3545';
+            textColor = 'white';
+        }
+        
+        // Create indicator with icon
+        const indicator = $(`
+            <div id="auto-save-indicator" style="
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${bgColor};
+                color: ${textColor};
+                padding: 12px 20px;
+                border-radius: 8px;
+                z-index: 9999;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-weight: 500;
+                animation: slideInRight 0.3s ease-out;
+            ">
+                ${icon}
+                <span>${message}</span>
+            </div>
+        `);
+        
+        $('body').append(indicator);
+        
+        // Add animation CSS
+        if ($('#auto-save-indicator-style').length === 0) {
+            $('head').append(`
+                <style id="auto-save-indicator-style">
+                    @keyframes slideInRight {
+                        from {
+                            transform: translateX(100%);
+                            opacity: 0;
+                        }
+                        to {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                    }
+                    @keyframes slideOutRight {
+                        from {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                        to {
+                            transform: translateX(100%);
+                            opacity: 0;
+                        }
+                    }
+                </style>
+            `);
+        }
+        
+        // Auto remove after 2 seconds
+        setTimeout(function() {
+            indicator.css('animation', 'slideOutRight 0.3s ease-out');
+            setTimeout(function() {
+                indicator.remove();
+            }, 300);
+        }, 2000);
+    }
+    
+    // Trigger auto-save on form changes
+    $('#add-purchase-form input, #add-purchase-form textarea, #add-purchase-form select').on('input change', function() {
+        autoSave();
+    });
+    
+    // ==========================================
+    // 9. FORM SUBMISSION
+    // ==========================================
+    
+    $('#add-purchase-form').on('submit', function(e) {
+        const supplierId = $('#supplier_id').val();
+        if (!supplierId) {
+            alert('Supplier wajib diisi. Silakan pilih supplier terlebih dahulu.');
+            e.preventDefault();
+            return;
+        }
+
+        const $submitButton = $(this).find('button[type="submit"]');
+        if ($submitButton.prop('disabled')) {
+            e.preventDefault();
+            return false;
+        }
+
+        $submitButton.prop('disabled', true);
+        $submitButton.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Menyimpan...');
+        
+        // If this is a create (no purchase_id), we'll handle the response
+        const purchaseId = $('input[name="purchase_id"]').val();
+        if (!purchaseId) {
+            e.preventDefault();
+            
+            // Submit via AJAX to get the purchase_id
+            const formData = $(this).serialize();
+            $.ajax({
+                url: $(this).attr('action'),
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    if (response.success) {
+                        // Update purchase_id in form
+                        $('input[name="purchase_id"]').val(response.purchase_id);
+                        // Now autosave will work
+                        console.log('✅ Purchase created, ID:', response.purchase_id);
+                        // Redirect to edit page
+                        window.location.href = '/purchaseorder/purchase/' + response.purchase_id + '/edit/';
+                    } else {
+                        alert('Error: ' + (response.error || 'Failed to save'));
+                        $submitButton.prop('disabled', false);
+                        $submitButton.html('Simpan Purchase');
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Error:', xhr);
+                    alert('Error saving purchase');
+                    $submitButton.prop('disabled', false);
+                    $submitButton.html('Simpan Purchase');
+                }
+            });
+            return false;
+        }
+    });
+    
+})(); // End IIFE
+
+// ==========================================
+// VERIFICATION MODE HANDLERS (Outside IIFE)
+// ==========================================
+{% if is_verification_mode %}
+$(document).ready(function() {
+    // Show verification modal when VERIFIED button is clicked
+    $('#btn-verify-purchase').on('click', function() {
+        $('#verificationModal').modal('show');
+    });
+    
+    // Enable/disable confirm button based on checkbox
+    $('#confirmVerification').on('change', function() {
+        $('#confirmVerifyBtn').prop('disabled', !$(this).is(':checked'));
+    });
+    
+    // Handle confirm verification
+    $('#confirmVerifyBtn').on('click', function() {
+        const $btn = $(this);
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Saving...');
+        
+        // Save purchase first (update harga beli)
+        const formData = $('#add-purchase-form').serialize();
+        
+        $.ajax({
+            url: '/purchaseorder/purchase/{{ purchase.id }}/auto-save/',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    console.log('✅ Purchase saved, redirecting to verify...');
+                    // Redirect to verify after save
+                    window.location.href = '{% url "purchasing:purchase_verify" purchase.id %}';
+                } else {
+                    alert('Error: ' + (response.error || 'Failed to save purchase'));
+                    $btn.prop('disabled', false).html('Ya, Verified');
+                }
+            },
+            error: function(xhr) {
+                console.error('Error:', xhr);
+                alert('Error saving purchase');
+                $btn.prop('disabled', false).html('Ya, Verified');
+            }
+        });
+    });
+});
+{% endif %}
+</script>
+{% endblock %}

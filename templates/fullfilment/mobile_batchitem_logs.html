@@ -1,0 +1,256 @@
+{% extends 'base_mobile.html' %}
+{% load humanize %}
+
+{% block title %}Riwayat Log Batch Item - Mobile{% endblock %}
+
+{% block content %}
+<style>
+  /* Base Container and Title */
+  .container-fluid {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+  h4 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+  .alert {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Minimalist Log Card Styles */
+  .log-card {
+    background: #fff;
+    border-radius: 8px; /* Slightly smaller radius */
+    box-shadow: 0 1px 5px rgba(0,0,0,0.06); /* Even lighter shadow */
+    margin-bottom: 0.6rem; /* Reduced space between cards */
+    padding: 0.7rem 0.8rem; /* Reduced padding */
+    display: flex;
+    flex-direction: column;
+    font-size: 0.85rem; /* Overall smaller text */
+  }
+
+  .log-card .meta-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem; /* Very small font for meta */
+    color: #6c757d;
+    padding-bottom: 0.2rem;
+    margin-bottom: 0.2rem;
+    border-bottom: 1px dashed #e9ecef;
+  }
+
+  .log-card .product-main-info {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem; /* Tighten gap */
+    margin-bottom: 0.2rem; /* Reduced margin */
+  }
+  .log-card .product-main-info img {
+    width: 40px; /* Even smaller image */
+    height: 40px;
+    object-fit: contain;
+    border-radius: 4px; /* Tighter border-radius */
+    background: #f8f9fa;
+  }
+  .log-card .product-main-info .product-name-sku {
+    flex-grow: 1;
+    font-weight: 600;
+    font-size: 0.9rem; /* Main product name remains readable */
+    color: #343a40;
+    line-height: 1.2;
+  }
+  .log-card .product-main-info .product-name-sku .sku {
+    font-size: 0.75rem; /* Smaller SKU below name */
+    font-weight: 500;
+    color: #6c757d;
+  }
+
+  .log-card .transaction-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem; /* Smallest font for summary */
+    color: #495057;
+    margin-top: 0.2rem; /* Reduced top margin */
+    padding-top: 0.2rem;
+    border-top: 1px dashed #e9ecef;
+  }
+  .log-card .transaction-summary .quantity-info {
+    font-weight: 700;
+  }
+  .log-card .transaction-summary .type-info {
+    font-weight: 500;
+    text-align: right;
+  }
+  .log-card .transaction-summary .detail-value.success { color: #28a745; }
+  .log-card .transaction-summary .detail-value.info { color: #17a2b8; }
+</style>
+
+<div class="container-fluid px-2 py-3" style="max-width:480px; margin:auto;">
+    <h4 class="text-center fw-bold mb-4">Riwayat Log Batch Item</h4>
+
+    {% if nama_batch %}
+    <div class="alert alert-info text-center" role="alert">
+        Logs untuk Batch: <strong class="text-primary">{{ nama_batch }}</strong>
+    </div>
+    {% endif %}
+
+    <div id="logs-list-container">
+        {% if logs %}
+            {% for log in logs %}
+            <div class="log-card">
+                <div class="meta-info">
+                    <span class="timestamp">{{ log.waktu|date:"d M Y, H:i:s" }}</span>
+                    <span>User: <strong class="text-dark">{{ log.user.username|default:"N/A" }}</strong></span>
+                </div>
+                
+                {% if log.product %}
+                <div class="product-main-info">
+                    {% if log.product.photo %}
+                        <img src="{{ log.product.photo.url }}" alt="Product Photo">
+                    {% else %}
+                        <div style="width:40px; height:40px; background:#f0f0f0; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:1.2em; color:#bbb;">📦</div>
+                    {% endif %}
+                    <div class="product-name-sku">
+                        {{ log.product.nama_produk }} <span class="text-muted">{{ log.product.variant_produk }}</span><br>
+                        <span class="sku">SKU: {{ log.product.sku }} | Barcode: {{ log.product.barcode }}</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="transaction-summary">
+                    <span>
+                        Input: <span class="quantity-info info">{{ log.jumlah_input|intcomma|default:"0" }}</span> / 
+                        Ambil: <span class="quantity-info success">{{ log.jumlah_ambil|intcomma|default:"0" }}</span>
+                    </span>
+                    <span class="type-info text-capitalize">{{ log.tipe_pergerakan_formatted|default:"N/A" }}</span>
+                </div>
+                
+                {% if log.notes %}
+                <div class="notes-info" style="font-size:0.75rem; color:#6c757d; margin-top:0.2rem; padding-top:0.2rem; border-top:1px dashed #e9ecef;">
+                    Notes: {{ log.notes }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-warning text-center" role="alert">
+                Tidak ada log yang tersedia.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Placeholder for loading more items and loading spinner -->
+    <div id="loading-indicator" class="text-center my-3" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    <div id="end-of-results" class="text-center text-muted my-3" style="display: none;">
+        -- Akhir Riwayat --
+    </div>
+
+</div>
+
+{% block extra_script %}
+<script>
+window.NAMA_BATCH = "{{ nama_batch|default:'' }}";
+window.CSRF_TOKEN = "{{ csrf_token }}";
+window.CURRENT_PAGE = {{ logs.number|default:1 }};
+window.HAS_NEXT_PAGE = {{ logs.has_next|lower }};
+window.IS_LOADING = false;
+
+// Function to append new log cards
+function appendLogCards(logsData) {
+    const container = document.getElementById('logs-list-container');
+    logsData.forEach(log => {
+        const logCard = document.createElement('div');
+        logCard.className = 'log-card';
+        // Construct card HTML (adjust to match your minimalist design)
+        logCard.innerHTML = `
+            <div class="meta-info">
+                <span class="timestamp">${log.waktu}</span>
+                <span>User: <strong class="text-dark">${log.user_username}</strong></span>
+            </div>
+            <div class="product-main-info">
+                ${log.product_photo_url ? `<img src="${log.product_photo_url}" alt="Product Photo">` : `<div style="width:40px; height:40px; background:#f0f0f0; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:1.2em; color:#bbb;">📦</div>`}
+                <div class="product-name-sku">
+                    ${log.product_nama_produk} <span class="text-muted">${log.product_variant_produk || ''}</span><br>
+                    <span class="sku">SKU: ${log.product_sku || ''} | Barcode: ${log.product_barcode || ''}</span>
+                </div>
+            </div>
+            <div class="transaction-summary">
+                <span>
+                    Input: <span class="quantity-info info">${log.jumlah_input_formatted}</span> / 
+                    Ambil: <span class="quantity-info success">${log.jumlah_ambil_formatted}</span>
+                </span>
+                <span class="type-info text-capitalize">${log.tipe_pergerakan_formatted}</span>
+            </div>
+            ${log.notes ? `<div class="notes-info" style="font-size:0.75rem; color:#6c757d; margin-top:0.2rem; padding-top:0.2rem; border-top:1px dashed #e9ecef;">Notes: ${log.notes}</div>` : ''}
+        `;
+        container.appendChild(logCard);
+    });
+}
+
+// Infinite scroll logic
+document.addEventListener('DOMContentLoaded', function() {
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const endOfResults = document.getElementById('end-of-results');
+
+    function loadMoreLogs() {
+        if (window.IS_LOADING || !window.HAS_NEXT_PAGE) {
+            return;
+        }
+
+        window.IS_LOADING = true;
+        loadingIndicator.style.display = 'block';
+
+        const nextPage = window.CURRENT_PAGE + 1;
+        let url = `/fullfilment/batchitemlogs_api/?page=${nextPage}`;
+        if (window.NAMA_BATCH) {
+            url += `&nama_batch=${encodeURIComponent(window.NAMA_BATCH)}`;
+        }
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                appendLogCards(data.logs);
+                window.CURRENT_PAGE = data.page;
+                window.HAS_NEXT_PAGE = data.has_next;
+
+                if (!window.HAS_NEXT_PAGE) {
+                    endOfResults.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading more logs:', error);
+                // Optionally show an error message to the user
+            })
+            .finally(() => {
+                window.IS_LOADING = false;
+                loadingIndicator.style.display = 'none';
+            });
+    }
+
+    // Scroll event listener
+    window.addEventListener('scroll', () => {
+        const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+        if (scrollTop + clientHeight >= scrollHeight - 200 && !window.IS_LOADING && window.HAS_NEXT_PAGE) {
+            loadMoreLogs();
+        }
+    });
+
+    // Initial load check (if fewer than 10 items fill the screen, load more immediately)
+    // This part might need fine-tuning depending on actual content height
+    if (window.HAS_NEXT_PAGE && document.documentElement.clientHeight >= document.documentElement.scrollHeight) {
+        loadMoreLogs();
+    }
+});
+</script>
+{% endblock %}
+
+{% endblock %} 

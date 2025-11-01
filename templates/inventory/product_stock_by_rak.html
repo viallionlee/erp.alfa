@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cek Stok Produk per Rak{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.2/dist/sweetalert2.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css"/>
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+    <h2 class="mb-4"><i class="bi bi-box-seam-fill"></i> Cek Stok Produk per Rak</h2>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <strong>Cari Produk</strong>
+        </div>
+        <div class="card-body">
+            <div class="input-group mb-3">
+                <input type="text" id="product-query-input" class="form-control" placeholder="Scan atau ketik SKU / Barcode produk..." autofocus>
+                <button class="btn btn-primary" type="button" id="search-product-button">Cari</button>
+            </div>
+            <p class="text-muted small">Tekan Enter atau klik Cari.</p>
+        </div>
+    </div>
+
+    <div id="product-info-card" class="card shadow-sm mb-4" style="display: none;">
+        <div class="card-header bg-success text-white">
+            <strong>Informasi Produk</strong>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>SKU:</strong> <span id="product-sku"></span></p>
+                    <p class="mb-1"><strong>Nama Produk:</strong> <span id="product-name"></span></p>
+                    <p class="mb-1"><strong>Barcode Utama:</strong> <span id="product-barcode"></span></p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Qty Putaway:</strong> <span id="product-qty-putaway"></span></p>
+                    <p class="mb-1"><strong>Qty Ready (Total):</strong> <span id="product-qty-ready"></span></p>
+                    <p class="mb-1"><strong>Total Qty di Rak:</strong> <span id="product-total-qty-di-rak"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="rak-stock-table-card" class="card shadow-sm mb-4" style="display: none;">
+        <div class="card-header bg-info text-white">
+            <strong>Lokasi Stok di Rak</strong>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="rakStockTable" class="table table-striped table-hover" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Kode Rak</th>
+                            <th>Nama Rak</th>
+                            <th>Lokasi</th>
+                            <th>Qty di Rak</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data akan dimuat oleh DataTables dari AJAX -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="no-product-found" class="alert alert-warning text-center" style="display: none;">
+        Produk tidak ditemukan atau tidak ada stok di rak.
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+    <script type="text/javascript" src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+
+    <script>
+        let rakStockDataTable;
+
+        $(document).ready(function() {
+            // Inisialisasi DataTables (kosong di awal)
+            rakStockDataTable = $('#rakStockTable').DataTable({
+                "paging": false,
+                "searching": false,
+                "ordering": false,
+                "info": false,
+                "columns": [
+                    { "data": "kode_rak" },
+                    { "data": "nama_rak" },
+                    { "data": "lokasi_rak" },
+                    { "data": "quantity" }
+                ],
+                "language": {
+                    "url": "https://cdn.datatables.net/plug-ins/2.0.8/i18n/id.json"
+                }
+            });
+
+            // Event listener untuk tombol Cari
+            $('#search-product-button').on('click', function() {
+                searchProductStock();
+            });
+
+            // Event listener untuk Enter di input
+            $('#product-query-input').on('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchProductStock();
+                }
+            });
+
+            function searchProductStock() {
+                const query = $('#product-query-input').val().trim();
+                if (!query) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Perhatian',
+                        text: 'Silakan masukkan SKU atau Barcode produk.',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                    return;
+                }
+
+                // Sembunyikan semua hasil sebelumnya
+                $('#product-info-card').hide();
+                $('#rak-stock-table-card').hide();
+                $('#no-product-found').hide();
+                rakStockDataTable.clear().draw(); // Kosongkan tabel DataTables
+
+                $.ajax({
+                    url: "{% url 'products:api_get_product_rak_stock' %}",
+                    type: "GET",
+                    data: { query: query },
+                    success: function(response) {
+                        if (response.success) {
+                            // Tampilkan informasi produk
+                            $('#product-sku').text(response.product_info.sku);
+                            $('#product-name').text(response.product_info.nama_produk);
+                            $('#product-barcode').text(response.product_info.barcode || '-');
+                            $('#product-qty-putaway').text(response.product_info.quantity_putaway);
+                            $('#product-qty-ready').text(response.product_info.quantity_ready);
+                            $('#product-total-qty-di-rak').text(response.product_info.total_qty_di_rak);
+                            $('#product-info-card').show();
+
+                            // Muat data rak ke DataTables
+                            if (response.rak_locations && response.rak_locations.length > 0) {
+                                rakStockDataTable.rows.add(response.rak_locations).draw();
+                                $('#rak-stock-table-card').show();
+                            } else {
+                                $('#no-product-found').text('Produk ditemukan, tetapi tidak ada stok di rak manapun.').show();
+                            }
+                            
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: response.message,
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+
+                        } else {
+                            $('#no-product-found').text(response.error).show();
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal!',
+                                text: response.error,
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        var errorMsg = "Terjadi kesalahan saat mencari stok produk.";
+                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errorMsg = xhr.responseJSON.error;
+                        }
+                        $('#no-product-found').text(errorMsg).show();
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: errorMsg,
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock %} 

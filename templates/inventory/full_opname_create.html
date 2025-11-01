@@ -1,0 +1,352 @@
+image.png{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Buat Full Opname Session{% endblock %}
+
+{% block extra_head %}
+<style>
+    .col-md-2-4 {
+        flex: 0 0 20%;
+        max-width: 20%;
+    }
+    .rak-item {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 10px;
+        transition: all 0.2s;
+    }
+    .rak-item:hover {
+        border-color: #007bff;
+        background-color: #f8f9fa;
+    }
+    .rak-item .form-check-label {
+        font-size: 0.9rem;
+        line-height: 1.2;
+    }
+    .btn-close-custom {
+        background-color: #dc3545 !important;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        padding: 0.5rem;
+        border-radius: 0.375rem;
+    }
+    .btn-close-custom:hover {
+        background-color: #c82333 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="bi bi-clipboard-data"></i> Buat Full Opname Session
+        </h2>
+        <a href="{% url 'inventory:full_opname_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Kembali ke Full Opname
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Form Full Opname Session</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="nama_opname" class="form-label">
+                                <strong>Nama Opname *</strong>
+                            </label>
+                            <input type="text" class="form-control" id="nama_opname" name="nama_opname" 
+                                   placeholder="Contoh: Opname Bulan Juli 2024" required>
+                            <div class="form-text">Berikan nama yang jelas untuk identifikasi opname ini</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="supervisor" class="form-label">
+                                <strong>Supervisor</strong>
+                            </label>
+                            <select class="form-select" id="supervisor" name="supervisor">
+                                <option value="">Pilih Supervisor (Opsional)</option>
+                                {% for supervisor in supervisors %}
+                                <option value="{{ supervisor.id }}">{{ supervisor.username }} - {{ supervisor.get_full_name|default:supervisor.email }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Supervisor akan bertanggung jawab mengawasi opname ini</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <strong>Target Rak (Opsional)</strong>
+                            </label>
+                            <div class="form-text mb-2">Pilih rak yang akan diopname. Jika kosong, semua rak akan diopname.</div>
+                            
+                            <!-- Pilihan Target Rak -->
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#selectRaksModal">
+                                    <i class="bi bi-list-check"></i> Pilih Rak
+                                </button>
+                                
+                                <div id="selected_raks_display" class="mt-2" style="display: none;">
+                                    <small class="text-muted">
+                                        <strong>Rak yang dipilih:</strong> <span id="selected_count">0</span> rak
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <!-- Hidden inputs untuk menyimpan rak yang dipilih -->
+                            <div id="selected_raks_inputs"></div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="catatan" class="form-label">
+                                <strong>Catatan</strong>
+                            </label>
+                            <textarea class="form-control" id="catatan" name="catatan" rows="3" 
+                                      placeholder="Catatan tambahan untuk opname ini..."></textarea>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Buat Full Opname Session
+                            </button>
+                            <a href="{% url 'inventory:full_opname_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Batal
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Informasi</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Full Opname Session</h6>
+                    <p class="text-muted">
+                        Full Opname Session adalah sesi master yang menaungi multiple sesi opname rak. 
+                        Ini memungkinkan Anda untuk:
+                    </p>
+                    <ul class="text-muted">
+                        <li>Mengelola opname secara terstruktur</li>
+                        <li>Memantau progress per rak</li>
+                        <li>Melihat total selisih dari semua rak</li>
+                        <li>Mengawasi kinerja karyawan</li>
+                    </ul>
+                    
+                    <hr>
+                    
+                    <h6>Workflow</h6>
+                    <ol class="text-muted">
+                        <li><strong>Draft:</strong> Session dibuat, belum dimulai</li>
+                        <li><strong>In Progress:</strong> Session aktif, karyawan bisa mulai opname</li>
+                        <li><strong>Completed:</strong> Semua rak selesai diopname</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pilih Rak -->
+<div class="modal fade" id="selectRaksModal" tabindex="-1" aria-labelledby="selectRaksModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="selectRaksModalLabel">
+          <i class="bi bi-list-check me-2"></i>
+          Pilih Rak untuk Opname
+        </h5>
+        <button type="button" class="btn-close-custom" data-bs-dismiss="modal" aria-label="Close">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="rakGridForm">
+          <div class="row">
+            {% for rak in all_raks %}
+              {% if forloop.counter0|divisibleby:5 and not forloop.first %}
+                </div><div class="row">
+              {% endif %}
+              <div class="col-2 mb-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" value="{{ rak.id }}" id="modal_rak_{{ rak.id }}">
+                  <label class="form-check-label" for="modal_rak_{{ rak.id }}">
+                    <strong>{{ rak.kode_rak }}</strong>
+                    {% if rak.lokasi %}<br><small class="text-muted">{{ rak.lokasi }}</small>{% endif %}
+                  </label>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </form>
+        <div class="d-flex justify-content-between mt-3">
+          <div>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="selectAllInModal">
+              <i class="bi bi-check-all"></i> Pilih Semua
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="clearAllInModal">
+              <i class="bi bi-x-circle"></i> Hapus Semua
+            </button>
+          </div>
+          <div>
+            <span class="badge bg-info me-2" id="selectedCountBadge">0 rak dipilih</span>
+            <button type="button" class="btn btn-primary" id="applyRakSelection">
+              <i class="bi bi-check-circle"></i> Terapkan Pilihan
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var selectedRaks = new Set();
+
+    // Initialize functions
+    function updateSelectedDisplay() {
+        var count = selectedRaks.size;
+        var selectedCountElement = document.getElementById('selected_count');
+        var selectedDisplayElement = document.getElementById('selected_raks_display');
+        var inputsContainer = document.getElementById('selected_raks_inputs');
+        
+        if (selectedCountElement) {
+            selectedCountElement.textContent = count;
+        }
+        
+        if (selectedDisplayElement) {
+            if (count > 0) {
+                selectedDisplayElement.style.display = 'block';
+            } else {
+                selectedDisplayElement.style.display = 'none';
+            }
+        }
+        
+        // Update hidden inputs
+        if (inputsContainer) {
+            inputsContainer.innerHTML = '';
+            selectedRaks.forEach(function(rakId) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'target_raks';
+                input.value = rakId;
+                inputsContainer.appendChild(input);
+            });
+        }
+        
+        console.log('Selected raks:', Array.from(selectedRaks));
+    }
+
+    // Modal event listeners
+    var selectAllBtn = document.getElementById('selectAllInModal');
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', function() {
+            var checkboxes = document.querySelectorAll('#rakGridForm input[type=checkbox]');
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = true;
+            });
+            updateModalSelectedCount();
+            console.log('Select all clicked');
+        });
+    }
+
+    var clearAllBtn = document.getElementById('clearAllInModal');
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', function() {
+            var checkboxes = document.querySelectorAll('#rakGridForm input[type=checkbox]');
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = false;
+            });
+            updateModalSelectedCount();
+            console.log('Clear all clicked');
+        });
+    }
+
+    function updateModalSelectedCount() {
+        var checkedBoxes = document.querySelectorAll('#rakGridForm input[type=checkbox]:checked');
+        var badge = document.getElementById('selectedCountBadge');
+        if (badge) {
+            badge.textContent = checkedBoxes.length + ' rak dipilih';
+        }
+    }
+
+    var applyBtn = document.getElementById('applyRakSelection');
+    if (applyBtn) {
+        applyBtn.addEventListener('click', function() {
+            selectedRaks.clear();
+            var checkedBoxes = document.querySelectorAll('#rakGridForm input[type=checkbox]:checked');
+            console.log('Checked boxes count:', checkedBoxes.length);
+            
+            checkedBoxes.forEach(function(checkbox) {
+                var rakId = parseInt(checkbox.value);
+                selectedRaks.add(rakId);
+                console.log('Added rak ID:', rakId);
+            });
+            
+            updateSelectedDisplay();
+            
+            // Close modal using Bootstrap
+            var modal = bootstrap.Modal.getInstance(document.getElementById('selectRaksModal'));
+            if (modal) {
+                modal.hide();
+            }
+        });
+    }
+
+    // Handle checkbox changes in modal
+    var rakGridForm = document.getElementById('rakGridForm');
+    if (rakGridForm) {
+        rakGridForm.addEventListener('change', function(e) {
+            if (e.target.type === 'checkbox') {
+                console.log('Checkbox changed:', e.target.value, e.target.checked);
+                updateModalSelectedCount();
+            }
+        });
+    }
+
+    // Sync modal state when opened
+    var selectRaksModal = document.getElementById('selectRaksModal');
+    if (selectRaksModal) {
+        selectRaksModal.addEventListener('show.bs.modal', function() {
+            var checkboxes = document.querySelectorAll('#rakGridForm input[type=checkbox]');
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = selectedRaks.has(parseInt(checkbox.value));
+            });
+            updateModalSelectedCount();
+        });
+    }
+
+    // Form submission debug
+    var form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            console.log('Form submitting...');
+            console.log('Selected raks before submit:', Array.from(selectedRaks));
+            
+            // Ensure hidden inputs are created
+            updateSelectedDisplay();
+            
+            var hiddenInputs = document.querySelectorAll('input[name="target_raks"]');
+            console.log('Hidden inputs count:', hiddenInputs.length);
+            hiddenInputs.forEach(function(input) {
+                console.log('Hidden input:', input.name, input.value);
+            });
+        });
+    }
+
+    // Initialize display
+    updateSelectedDisplay();
+});
+</script>
+{% endblock %}

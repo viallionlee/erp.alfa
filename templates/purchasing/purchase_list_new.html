@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+{% block title %}Daftar Purchase{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="bi bi-cart-check"></i> Daftar Purchase</h2>
+    <div class="d-flex gap-2">
+        <a href="{% url 'purchasing:purchase_create' %}" class="btn btn-success"><i class="bi bi-plus-circle"></i> Buat Purchase</a>
+        <a href="{% url 'purchasing:po_list' %}" class="btn btn-primary"><i class="bi bi-file-earmark-text"></i> Purchase Order List</a>
+        <a href="{% url 'purchasing:purchase_report' %}" class="btn btn-info"><i class="bi bi-file-earmark-bar-graph"></i> Report</a>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total Purchase</h5>
+                <h2 class="mb-0" id="total-purchases">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-secondary">
+            <div class="card-body">
+                <h5 class="card-title">Draft</h5>
+                <h2 class="mb-0" id="draft-purchases">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">Pending</h5>
+                <h2 class="mb-0" id="pending-purchases">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Received</h5>
+                <h2 class="mb-0" id="received-purchases">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Verified</h5>
+                <h2 class="mb-0" id="verified-purchases">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <h5 class="card-title">Cancelled</h5>
+                <h2 class="mb-0" id="cancelled-purchases">0</h2>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Total Amount</h5>
+                <h2 class="mb-0" id="total-amount">Rp 0</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Box -->
+<div class="card shadow-sm mb-3 border-0">
+    <div class="card-body">
+        <div class="row g-2">
+            <div class="col-md-2">
+                <input type="date" id="filter-date-from" class="form-control form-control-sm" placeholder="Dari Tanggal">
+            </div>
+            <div class="col-md-2">
+                <input type="date" id="filter-date-to" class="form-control form-control-sm" placeholder="Sampai Tanggal">
+            </div>
+            <div class="col-md-2">
+                <select id="filter-status" class="form-select form-select-sm">
+                    <option value="">Semua Status</option>
+                    <option value="draft">Draft</option>
+                    <option value="pending">Pending</option>
+                    <option value="received">Received</option>
+                    <option value="verified">Verified</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="text" id="filter-supplier" class="form-control form-control-sm" placeholder="Cari Supplier">
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-sm btn-primary" id="btn-filter">
+                    <i class="bi bi-search"></i> Filter
+                </button>
+                <button class="btn btn-sm btn-secondary" id="btn-reset">
+                    <i class="bi bi-x-circle"></i> Reset
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-lg mb-4 border-0">
+    <div class="card-body">
+        <div class="table-responsive">
+        <table id="purchase-table" class="table table-hover table-bordered align-middle w-100">
+            <thead class="table-primary">
+                <tr>
+                    <th>ID</th>
+                    <th>Nomor Purchase</th>
+                    <th>Tanggal</th>
+                    <th>Supplier</th>
+                    <th>PO Reference</th>
+                    <th>Status</th>
+                    <th>Total Amount</th>
+                    <th>Created By</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                <span id="total-count">Total: 0 records</span>
+            </div>
+            <nav>
+                <ul class="pagination mb-0" id="pagination"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<style>
+    .aksi-btn-group { 
+        display: flex; 
+        gap: 0.25rem; 
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .aksi-btn-group .btn {
+        white-space: nowrap;
+    }
+    #purchase-table th, #purchase-table td {
+        font-size: 0.95rem;
+        vertical-align: middle;
+    }
+    .dropdown-toggle::after {
+        display: none;
+    }
+    .dropdown-menu {
+        min-width: 150px;
+    }
+</style>
+
+<script>
+let currentPage = 1;
+let totalPages = 1;
+let totalCount = 0;
+
+$(document).ready(function() {
+    loadData();
+    
+    // Filter button
+    $('#btn-filter').on('click', function() {
+        currentPage = 1;
+        loadData();
+    });
+    
+    // Reset button
+    $('#btn-reset').on('click', function() {
+        $('#filter-date-from').val('');
+        $('#filter-date-to').val('');
+        $('#filter-status').val('');
+        $('#filter-supplier').val('');
+        currentPage = 1;
+        loadData();
+    });
+});
+
+function loadData() {
+    const status = $('#filter-status').val();
+    const supplier = $('#filter-supplier').val();
+    const dateFrom = $('#filter-date-from').val();
+    const dateTo = $('#filter-date-to').val();
+    
+    let url = '{% url "purchasing:purchase_list_api" %}?page=' + currentPage + '&page_size=25';
+    
+    if (status) url += '&status=' + status;
+    if (supplier) url += '&supplier=' + supplier;
+    if (dateFrom) url += '&date_from=' + dateFrom;
+    if (dateTo) url += '&date_to=' + dateTo;
+    
+    $.ajax({
+        url: url,
+        type: 'GET',
+        success: function(response) {
+            if (response.success) {
+                renderTable(response.data);
+                renderPagination(response.pagination);
+                updateStatistics(response.stats);
+                totalCount = response.pagination.total_count;
+                $('#total-count').text('Total: ' + totalCount + ' records');
+            }
+        },
+        error: function(xhr) {
+            console.error('Error loading data:', xhr);
+            alert('Error loading data');
+        }
+    });
+}
+
+function renderTable(data) {
+    let html = '';
+    
+    data.forEach(function(purchase) {
+        // Status badge
+        let badgeClass = 'secondary';
+        if (purchase.status_value === 'draft') badgeClass = 'warning';
+        if (purchase.status_value === 'received') badgeClass = 'success';
+        if (purchase.status_value === 'verified') badgeClass = 'info';
+        if (purchase.status_value === 'cancelled') badgeClass = 'danger';
+        
+        // Action buttons
+        let actions = '';
+        if (purchase.status_value === 'draft' || purchase.status_value === 'pending') {
+            actions += '<a href="/purchasing/purchase/' + purchase.id + '/edit/" class="btn btn-sm btn-primary"><i class="bi bi-pencil"></i></a> ';
+        }
+        actions += '<a href="/purchasing/purchase/' + purchase.id + '/" class="btn btn-sm btn-info"><i class="bi bi-eye"></i></a> ';
+        actions += '<a href="/purchasing/purchase/' + purchase.id + '/print/" class="btn btn-sm btn-success" target="_blank"><i class="bi bi-printer"></i></a> ';
+        
+        if (purchase.status_value === 'pending') {
+            actions += '<a href="/purchasing/purchase/' + purchase.id + '/" class="btn btn-sm btn-warning"><i class="bi bi-check-circle"></i></a> ';
+        }
+        
+        if (purchase.status_value === 'received') {
+            actions += '<a href="/purchasing/purchase/' + purchase.id + '/verify/" class="btn btn-sm btn-info"><i class="bi bi-shield-check"></i></a> ';
+        }
+        
+        html += '<tr>';
+        html += '<td>' + purchase.id + '</td>';
+        html += '<td>' + purchase.nomor_purchase + '</td>';
+        html += '<td>' + purchase.tanggal_purchase + '</td>';
+        html += '<td>' + purchase.supplier + '</td>';
+        html += '<td>' + purchase.nomor_po + '</td>';
+        html += '<td><span class="badge bg-' + badgeClass + '">' + purchase.status + '</span></td>';
+        html += '<td>Rp ' + purchase.total_amount_formatted + '</td>';
+        html += '<td>' + purchase.created_by + '</td>';
+        html += '<td><div class="aksi-btn-group">' + actions + '</div></td>';
+        html += '</tr>';
+    });
+    
+    $('#purchase-table tbody').html(html);
+}
+
+function renderPagination(pagination) {
+    totalPages = pagination.total_pages;
+    currentPage = pagination.page;
+    
+    let html = '';
+    
+    // Previous button
+    html += '<li class="page-item ' + (currentPage === 1 ? 'disabled' : '') + '">';
+    html += '<a class="page-link" href="#" onclick="changePage(' + (currentPage - 1) + '); return false;">Previous</a>';
+    html += '</li>';
+    
+    // Page numbers
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        html += '<li class="page-item ' + (i === currentPage ? 'active' : '') + '">';
+        html += '<a class="page-link" href="#" onclick="changePage(' + i + '); return false;">' + i + '</a>';
+        html += '</li>';
+    }
+    
+    // Next button
+    html += '<li class="page-item ' + (currentPage === totalPages ? 'disabled' : '') + '">';
+    html += '<a class="page-link" href="#" onclick="changePage(' + (currentPage + 1) + '); return false;">Next</a>';
+    html += '</li>';
+    
+    $('#pagination').html(html);
+}
+
+function updateStatistics(stats) {
+    $('#total-purchases').text(stats.total_purchases);
+    $('#draft-purchases').text(stats.draft_purchases);
+    $('#pending-purchases').text(stats.pending_purchases);
+    $('#received-purchases').text(stats.received_purchases);
+    $('#verified-purchases').text(stats.verified_purchases);
+    $('#cancelled-purchases').text(stats.cancelled_purchases);
+    $('#total-amount').text('Rp ' + stats.total_amount.toLocaleString('id-ID'));
+}
+
+function changePage(page) {
+    currentPage = page;
+    loadData();
+    $('html, body').animate({ scrollTop: 0 }, 300);
+}
+</script>
+{% endblock %}
+
+
+
+
+
+

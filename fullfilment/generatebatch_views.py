@@ -1,25 +1,49 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.db.models import Q
+from django.db.models import Q, Sum, Count, Max
+from django.contrib.auth.decorators import login_required, permission_required
 from .filters import GenerateBatchOrderFilter
 
 # Migrated from oms/views.py
+@login_required
+@permission_required('fullfilment.view_generatebatch', raise_exception=True)
 def generatebatch(request):
     from orders.models import Order
     from django_tables2 import RequestConfig
     from .tables import GenerateBatchOrderTable
     orders = Order.objects.filter(status__iexact='Lunas').filter(Q(nama_batch__isnull=True) | Q(nama_batch='')).select_related('product')
+    
+    # --- TAMBAHAN KECIL DI SINI ---
+    # Urutkan queryset SEBELUM dikirim ke filter agar dropdown terurut
+    orders = orders.order_by('-id')
+    # --- AKHIR TAMBAHAN ---
+
     total_order_valid = orders.values('id_pesanan').distinct().count()
+    
+    # Buat instance filter seperti biasa
     f = GenerateBatchOrderFilter(request.GET, queryset=orders)
+    
+    # --- PERBAIKAN SORTING DROPDOWN DIMULAI DI SINI ---
+    # 2. Ambil daftar id_pesanan unik, diurutkan berdasarkan ID internal terbaru
+    sorted_id_pesanan_qs = orders.values('id_pesanan').annotate(latest_id=Max('id')).order_by('-latest_id')
+    # 3. Buat pilihan (choices) untuk dropdown
+    sorted_choices = [(item['id_pesanan'], item['id_pesanan']) for item in sorted_id_pesanan_qs]
+    # 4. Ganti pilihan default pada filter dengan yang sudah kita urutkan
+    f.filters['id_pesanan'].field.choices = [('', '---------')] + sorted_choices
+    # --- AKHIR PERBAIKAN ---
+
     filtered_order_count = f.qs.values('id_pesanan').distinct().count()
-    table = GenerateBatchOrderTable(f.qs)
+    table = GenerateBatchOrderTable(f.qs.order_by('-id')) # 5. Pastikan tabel juga terurut
     RequestConfig(request, paginate={'per_page': 50}).configure(table)
-    # SKU Not Found (tanpa batch, sama seperti index orders)
-    order_skus = set(orders.exclude(status_bundle='Y').values_list('sku', flat=True))
+    # SKU Not Found (case-insensitive)
+    order_skus = set(sku.upper() for sku in orders.exclude(status_bundle='Y').values_list('sku', flat=True) if sku)
     from products.models import Product
-    master_skus = set(Product.objects.values_list('sku', flat=True))
+    master_skus = set(sku.upper() for sku in Product.objects.values_list('sku', flat=True) if sku)
     sku_not_found_list = sorted(order_skus - master_skus)
     sku_not_found_count = len(sku_not_found_list)
+    sku_no_name_filtered_data = sorted(set([
+        o.sku for o in f.qs if (not hasattr(o, 'product') or not o.product or not getattr(o.product, 'nama_produk', None)) and o.sku and getattr(o, 'status_bundle', '').upper() != 'Y'
+    ]))
     return render(request, 'fullfilment/generatebatch.html', {
         'table': table,
         'filter': f,
@@ -27,9 +51,12 @@ def generatebatch(request):
         'total_order_filter': filtered_order_count,
         'sku_not_found_count': sku_not_found_count,
         'sku_not_found_list': sku_not_found_list,
+        'sku_no_name_filtered_data': sku_no_name_filtered_data,
     })
 
 
+@login_required
+@permission_required('fullfilment.change_generatebatch', raise_exception=True)
 def generatebatch_data(request):
     from orders.models import Order
     try:
@@ -92,6 +119,8 @@ from django.views.decorators.http import require_POST, require_GET
 
 @csrf_exempt
 @require_GET
+@login_required
+@permission_required('fullfilment.change_generatebatch', raise_exception=True)
 def generatebatch_check_stock(request):
     from collections import defaultdict
     from orders.models import OrderCukup, OrderTidakCukup, Order
@@ -163,58 +192,131 @@ def generatebatch_check_stock(request):
 
 @csrf_exempt
 @require_POST
+@login_required
+@permission_required('fullfilment.change_generatebatch', raise_exception=True)
 def generatebatch_update_batchlist(request):
     import logging
     logger = logging.getLogger(__name__)
     try:
         import json
         import urllib.parse
+        from collections import defaultdict
+        from django.db import transaction
+        
         data = json.loads(request.body)
         ambil = data.get('ambil')  # 'cukup', 'tidak cukup', atau 'semua'
         mode = data.get('mode')    # 'create' atau 'update'
         nama_batch = data.get('nama_batch', '').strip()
         filters = data.get('filters', '')  # Ambil filter dari body
-        from fullfilment.models import BatchList
+        
+        from fullfilment.models import BatchList, BatchItem
+        from orders.models import OrderCukup, OrderTidakCukup, Order
+        from inventory.models import Stock
+        from products.models import Product
+        
         # Validasi
         if not ambil or not mode or not nama_batch:
             return JsonResponse({'success': False, 'message': 'Parameter tidak lengkap.'}, status=400)
-        # Cek duplikat nama_batch jika create
-        if mode == 'create':
-            if BatchList.objects.filter(nama_batch__iexact=nama_batch).exists():
-                return JsonResponse({'success': False, 'message': 'Nama batchlist sudah ada.'}, status=400)
-            batchlist = BatchList.objects.create(nama_batch=nama_batch, status_batch='pending')
-        else:
-            # Cari batchlist yang status_batch masih 'pending' (bukan NULL)
-            batchlist = BatchList.objects.filter(nama_batch=nama_batch, status_batch='pending').first()
-            if not batchlist:
-                return JsonResponse({'success': False, 'message': 'Batchlist tidak ditemukan atau sudah selesai.'}, status=400)
-        # Ambil id_pesanan dari tabel OrderCukup/OrderTidakCukup sesuai pilihan user
-        from orders.models import OrderCukup, OrderTidakCukup
-        if ambil == 'cukup':
-            id_pesanan_pilih = set(OrderCukup.objects.values_list('id_pesanan', flat=True))
-        elif ambil == 'tidak cukup':
-            id_pesanan_pilih = set(OrderTidakCukup.objects.values_list('id_pesanan', flat=True))
-        elif ambil == 'semua':
-            id_pesanan_cukup = set(OrderCukup.objects.values_list('id_pesanan', flat=True))
-            id_pesanan_tidakcukup = set(OrderTidakCukup.objects.values_list('id_pesanan', flat=True))
-            id_pesanan_pilih = id_pesanan_cukup.union(id_pesanan_tidakcukup)
-        else:
-            return JsonResponse({'success': False, 'message': 'Pilihan ambil tidak valid.'}, status=400)
-        id_pesanan_pilih = set(str(x).strip() for x in id_pesanan_pilih)
-        logger.warning(f"DEBUG: id_pesanan_pilih = {id_pesanan_pilih}")
-        updated = 0
-        if id_pesanan_pilih:
-            from django.db import connection
-            placeholders = ','.join(['%s'] * len(id_pesanan_pilih))
-            sql = f"UPDATE orders_order SET nama_batch = %s WHERE id_pesanan IN ({placeholders})"
-            params = [nama_batch] + list(id_pesanan_pilih)
-            logger.warning(f"DEBUG: SQL = {sql}")
-            logger.warning(f"DEBUG: params = {params}")
-            with connection.cursor() as cursor:
-                cursor.execute(sql, params)
-                updated = cursor.rowcount
-        logger.info(f"Rows updated (raw SQL): {updated}")
-        return JsonResponse({'success': True, 'updated': updated, 'nama_batch': nama_batch})
+        
+        with transaction.atomic():
+            # Cek duplikat nama_batch jika create
+            if mode == 'create':
+                if BatchList.objects.filter(nama_batch__iexact=nama_batch).exists():
+                    return JsonResponse({'success': False, 'message': 'Nama batchlist sudah ada.'}, status=400)
+                batchlist = BatchList.objects.create(nama_batch=nama_batch, status_batch='open')
+            else:
+                # Mencari batch dengan status 'open' untuk di-update
+                batchlist = BatchList.objects.filter(nama_batch=nama_batch, status_batch='open').first()
+                if not batchlist:
+                    return JsonResponse({'success': False, 'message': 'Batchlist tidak ditemukan atau sudah selesai.'}, status=400)
+            
+            # Ambil id_pesanan dari tabel OrderCukup/OrderTidakCukup sesuai pilihan user
+            if ambil == 'cukup':
+                id_pesanan_pilih = set(OrderCukup.objects.values_list('id_pesanan', flat=True))
+            elif ambil == 'tidak cukup':
+                id_pesanan_pilih = set(OrderTidakCukup.objects.values_list('id_pesanan', flat=True))
+            elif ambil == 'semua':
+                id_pesanan_cukup = set(OrderCukup.objects.values_list('id_pesanan', flat=True))
+                id_pesanan_tidakcukup = set(OrderTidakCukup.objects.values_list('id_pesanan', flat=True))
+                id_pesanan_pilih = id_pesanan_cukup.union(id_pesanan_tidakcukup)
+            else:
+                return JsonResponse({'success': False, 'message': 'Pilihan ambil tidak valid.'}, status=400)
+            
+            id_pesanan_pilih = set(str(x).strip() for x in id_pesanan_pilih)
+            logger.warning(f"DEBUG: id_pesanan_pilih = {id_pesanan_pilih}")
+            
+            updated = 0
+            if id_pesanan_pilih:
+                # Update nama_batch pada orders
+                from django.db import connection
+                placeholders = ','.join(['%s'] * len(id_pesanan_pilih))
+                sql = f"UPDATE orders_order SET nama_batch = %s WHERE id_pesanan IN ({placeholders})"
+                params = [nama_batch] + list(id_pesanan_pilih)
+                logger.warning(f"DEBUG: SQL = {sql}")
+                logger.warning(f"DEBUG: params = {params}")
+                with connection.cursor() as cursor:
+                    cursor.execute(sql, params)
+                    updated = cursor.rowcount
+                
+                orders_to_batch = Order.objects.filter(id_pesanan__in=id_pesanan_pilih)
+
+                # --- Update quantity_locked (LOGIKA LAMA YANG PENTING) ---
+                product_jumlah_map = defaultdict(int)
+                for order in orders_to_batch:
+                    if order.product_id:
+                        product_jumlah_map[order.product_id] += order.jumlah
+                
+                for product_id, total_jumlah in product_jumlah_map.items():
+                    stock, created = Stock.objects.get_or_create(product_id=product_id)
+                    stock.quantity_locked += total_jumlah
+                    stock.save(update_fields=['quantity_locked'])
+                
+                logger.info(f"Updated quantity_locked for {len(product_jumlah_map)} products")
+
+                # --- LOGIKA BARU & EFISIEN: Buat/Update BatchItem dengan One, Duo, Tri ---
+                
+                # 1. Hitung total jumlah per produk dalam satu query
+                total_quantities = orders_to_batch.values('product_id').annotate(total_jumlah=Sum('jumlah'))
+                
+                # 2. Hitung one, duo, tri per produk dalam satu query
+                order_type_counts = orders_to_batch.values('product_id', 'order_type').annotate(unique_orders=Count('id_pesanan', distinct=True))
+
+                # 3. Proses hasil di Python untuk menghindari query dalam loop
+                product_data = defaultdict(lambda: {'total_jumlah': 0, 'one_count': 0, 'duo_count': 0, 'tri_count': 0})
+
+                for item in total_quantities:
+                    if item['product_id']:
+                        product_data[item['product_id']]['total_jumlah'] = item['total_jumlah']
+
+                for item in order_type_counts:
+                    if item['product_id']:
+                        if item['order_type'] == '1':
+                            product_data[item['product_id']]['one_count'] = item['unique_orders']
+                        elif item['order_type'] == '2':
+                            product_data[item['product_id']]['duo_count'] = item['unique_orders']
+                        elif item['order_type'] == '4':
+                            product_data[item['product_id']]['tri_count'] = item['unique_orders']
+
+                # 4. Loop data yang sudah diolah untuk membuat/update BatchItem
+                for product_id, data in product_data.items():
+                    product = Product.objects.get(id=product_id)
+                    BatchItem.objects.update_or_create(
+                        batchlist=batchlist,
+                        product=product,
+                        defaults={
+                            'jumlah': data['total_jumlah'],
+                            'status_ambil': 'pending',
+                            'one_count': data['one_count'],
+                            'duo_count': data['duo_count'],
+                            'tri_count': data['tri_count'],
+                        }
+                    )
+                
+                logger.info(f"Updated/Created {len(product_data)} BatchItems for batch '{nama_batch}'")
+            
+            logger.info(f"Rows updated (raw SQL): {updated}")
+            return JsonResponse({'success': True, 'updated': updated, 'nama_batch': nama_batch})
+            
     except Exception as e:
         logger.exception('Error in generatebatch_update_batchlist')
         # Write error to server.log
@@ -229,6 +331,8 @@ def generatebatch_update_batchlist(request):
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
 @csrf_exempt
+@login_required
+@permission_required('fullfilment.change_generatebatch', raise_exception=True)
 def filter_selected(request):
     if request.method == 'POST':
         selected_ids = request.POST.getlist('selected_ids')
@@ -239,9 +343,9 @@ def filter_selected(request):
         table = GenerateBatchOrderTable(f.qs)
         RequestConfig(request, paginate={'per_page': 50}).configure(table)
         # SKU Not Found
-        order_skus = set(orders.exclude(status_bundle='Y').values_list('sku', flat=True))
+        order_skus = set(sku.upper() for sku in orders.exclude(status_bundle='Y').values_list('sku', flat=True) if sku)
         from products.models import Product
-        master_skus = set(Product.objects.values_list('sku', flat=True))
+        master_skus = set(sku.upper() for sku in Product.objects.values_list('sku', flat=True) if sku)
         sku_not_found_list = sorted(order_skus - master_skus)
         sku_not_found_count = len(sku_not_found_list)
         return render(request, 'fullfilment/generatebatch.html', {

@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.db import transaction
+from products.models import Product
 
 # Create your models here.
 
@@ -17,7 +18,7 @@ class OrderImportHistory(models.Model):
 
 
 class Order(models.Model):
-    product = models.ForeignKey('products.Product', on_delete=models.SET_NULL, null=True, blank=True)
+    product = models.ForeignKey('products.Product', on_delete=models.PROTECT, null=True, blank=True)
     tanggal_pembuatan = models.CharField(max_length=100, blank=True, null=True)
     status = models.CharField(max_length=50, blank=True, null=True)
     jenis_pesanan = models.CharField(max_length=50, blank=True, null=True)
@@ -69,6 +70,14 @@ class OrderPackingHistory(models.Model):
 
     def __str__(self):
         return f"{self.order.id_pesanan} - {self.waktu_pack}"
+
+class OrderShippingHistory(models.Model):
+    order = models.ForeignKey('orders.Order', on_delete=models.SET_NULL, null=True, blank=True)
+    waktu_ship = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.order.id_pesanan} - {self.waktu_ship}"
 
 class OrderHandoverHistory(models.Model):
     order = models.ForeignKey('orders.Order', on_delete=models.CASCADE)
@@ -125,3 +134,12 @@ class OrdersList(models.Model):
             from .models import Order
             Order.objects.filter(id_pesanan=obj.id_pesanan).delete()
             obj.delete()
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(OrdersList, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey('products.Product', on_delete=models.PROTECT)
+    quantity = models.IntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.order.id_pesanan} - {self.product.sku}"

@@ -1,0 +1,557 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Daftar Rak{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css"/>
+    <!-- SweetAlert2 CSS for toast messages -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.2/dist/sweetalert2.min.css">
+    <style>
+        /* Gaya tambahan jika diperlukan */
+        .swal2-toast {
+            font-size: 0.9em;
+            width: auto;
+            max-width: 350px;
+        }
+        
+        /* Custom styling untuk error popup */
+        .swal-error-popup {
+            border-radius: 12px !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important;
+        }
+        
+        .swal-error-title {
+            color: #dc3545 !important;
+            font-weight: 600 !important;
+        }
+        
+        .swal-error-content {
+            text-align: left !important;
+            line-height: 1.6 !important;
+        }
+        
+        .swal-error-content p {
+            margin-bottom: 0.75rem !important;
+        }
+        
+        .swal-error-content .text-muted {
+            color: #6c757d !important;
+            font-size: 0.95rem !important;
+        }
+        
+        .swal-error-content small {
+            font-size: 0.85rem !important;
+            display: block !important;
+            margin-top: 0.5rem !important;
+        }
+        
+        .swal-error-content hr {
+            border-color: #dee2e6 !important;
+            margin: 1rem 0 !important;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="bi bi-boxes"></i> Daftar Semua Rak
+    </h2>
+    <div class="d-flex gap-2">
+        <a href="{% url 'inventory:rak_stock' %}" class="btn btn-success">
+            <i class="bi bi-box-seam"></i> STOK RAK
+        </a>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRakModal">
+            <i class="bi bi-plus-circle"></i> Tambah Rak Baru
+        </button>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table id="rakTable" class="table table-striped table-hover" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Kode Rak</th>
+                        <th>Nama Rak</th>
+                        <th>Barcode Rak</th>
+                        <th>Lokasi</th>
+                        <th>Dimensi (P x L x T)</th>
+                        <th>Kapasitas</th>
+                        <th>Total Stok</th>
+                        <th>Dibuat</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data akan dimuat oleh DataTables dari AJAX -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Rak Baru -->
+<div class="modal fade" id="addRakModal" tabindex="-1" aria-labelledby="addRakModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addRakModalLabel">Tambah Rak Baru</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addRakForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="kode_rak" class="form-label">Kode Rak <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="add_kode_rak" name="kode_rak" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="nama_rak" class="form-label">Nama Rak <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="add_nama_rak" name="nama_rak" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="barcode_rak" class="form-label">Barcode Rak</label>
+                        <input type="text" class="form-control" id="add_barcode_rak" name="barcode_rak">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="lebar_cm" class="form-label">Lebar (cm) <small class="text-muted">(Depan)</small></label>
+                            <input type="number" step="0.01" class="form-control" id="add_lebar_cm" name="lebar_cm">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="panjang_cm" class="form-label">Panjang (cm) <small class="text-muted">(Dalam)</small></label>
+                            <input type="number" step="0.01" class="form-control" id="add_panjang_cm" name="panjang_cm">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="tinggi_cm" class="form-label">Tinggi (cm) <small class="text-muted">(Height)</small></label>
+                            <input type="number" step="0.01" class="form-control" id="add_tinggi_cm" name="tinggi_cm">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="kapasitas_kg" class="form-label">Kapasitas (kg)</label>
+                        <input type="number" step="0.001" class="form-control" id="add_kapasitas_kg" name="kapasitas_kg">
+                    </div>
+                    <div class="mb-3">
+                        <label for="lokasi" class="form-label">Lokasi</label>
+                        <select class="form-select" id="add_lokasi" name="lokasi">
+                            <option value="">Pilih Lokasi</option>
+                            <option value="DEKAT">DEKAT</option>
+                            <option value="SEDANG">SEDANG</option>
+                            <option value="JAUH">JAUH</option>
+                            <option value="BEDA_GUDANG">BEDA GUDANG</option>
+                        </select>
+                        <small class="form-text text-muted">Prioritas slotting: DEKAT (tinggi) → BEDA GUDANG (rendah)</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="keterangan" class="form-label">Keterangan</label>
+                        <textarea class="form-control" id="add_keterangan" name="keterangan" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Rak</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Rak -->
+<div class="modal fade" id="editRakModal" tabindex="-1" aria-labelledby="editRakModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editRakModalLabel">Edit Rak</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editRakForm">
+                {% csrf_token %}
+                <input type="hidden" id="edit_rak_id" name="rak_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_kode_rak" class="form-label">Kode Rak <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="edit_kode_rak" name="kode_rak" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_nama_rak" class="form-label">Nama Rak <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="edit_nama_rak" name="nama_rak" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_barcode_rak" class="form-label">Barcode Rak</label>
+                        <input type="text" class="form-control" id="edit_barcode_rak" name="barcode_rak">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="edit_lebar_cm" class="form-label">Lebar (cm) <small class="text-muted">(Depan)</small></label>
+                            <input type="number" step="0.01" class="form-control" id="edit_lebar_cm" name="lebar_cm">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="edit_panjang_cm" class="form-label">Panjang (cm) <small class="text-muted">(Dalam)</small></label>
+                            <input type="number" step="0.01" class="form-control" id="edit_panjang_cm" name="panjang_cm">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="edit_tinggi_cm" class="form-label">Tinggi (cm) <small class="text-muted">(Height)</small></label>
+                            <input type="number" step="0.01" class="form-control" id="edit_tinggi_cm" name="tinggi_cm">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_kapasitas_kg" class="form-label">Kapasitas (kg)</label>
+                        <input type="number" step="0.001" class="form-control" id="edit_kapasitas_kg" name="kapasitas_kg">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_lokasi" class="form-label">Lokasi</label>
+                        <select class="form-select" id="edit_lokasi" name="lokasi">
+                            <option value="">Pilih Lokasi</option>
+                            <option value="DEKAT">DEKAT</option>
+                            <option value="SEDANG">SEDANG</option>
+                            <option value="JAUH">JAUH</option>
+                            <option value="BEDA_GUDANG">BEDA GUDANG</option>
+                        </select>
+                        <small class="form-text text-muted">Prioritas slotting: DEKAT (tinggi) → BEDA GUDANG (rendah)</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_keterangan" class="form-label">Keterangan</label>
+                        <textarea class="form-control" id="edit_keterangan" name="keterangan" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-warning">Perbarui Rak</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+    <script type="text/javascript" src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
+    <script type="text/javascript" src=""></script>
+    <script>
+        var rakTable; // Definisikan di luar agar bisa diakses global
+
+        $(document).ready(function() {
+            // Inisialisasi DataTables
+            rakTable = $('#rakTable').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{% url 'inventory:rak_data' %}",
+                    "type": "GET",
+                    "dataSrc": "data"
+                },
+                "columns": [
+                    { "data": "id" },
+                    { "data": "kode_rak" },
+                    { "data": "nama_rak" },
+                    { "data": "barcode_rak" },
+                    { "data": "lokasi" },
+                    { "data": "dimensi" },
+                    { "data": "kapasitas" },
+                    { "data": "total_stok" },
+                    { "data": "created_at" },
+                    { "data": "actions", "orderable": false, "searchable": false }
+                ],
+                "language": {
+                    "url": "https://cdn.datatables.net/plug-ins/2.0.8/i18n/id.json"
+                }
+            });
+
+            // Handle form submission untuk Tambah Rak
+            $('#addRakForm').on('submit', function(e) {
+                e.preventDefault();
+                $.ajax({
+                    url: "{% url 'inventory:rak_add' %}",
+                    type: "POST",
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: response.message,
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                            $('#addRakModal').modal('hide');
+                            $('#addRakForm')[0].reset(); // Reset form
+                            rakTable.ajax.reload(null, false); // Reload DataTables tanpa reset pagination
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal!',
+                                text: response.error,
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        var errorMsg = "Terjadi kesalahan. Silakan coba lagi.";
+                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errorMsg = xhr.responseJSON.error;
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: errorMsg,
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    }
+                });
+            });
+
+            // Handle event saat modal edit dibuka
+            $('#editRakModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget); // Tombol yang memicu modal
+                var rakId = button.data('id'); // Ambil ID rak dari data-id atribut
+                var modal = $(this);
+                
+                // Reset form sebelum memuat data baru
+                $('#editRakForm')[0].reset();
+
+                // Fetch data rak via AJAX
+                $.ajax({
+                    url: `/inventory/rak/${rakId}/edit/`, // Fixed URL
+                    type: "GET",
+                    success: function(response) {
+                        if (response.success) {
+                            var rakData = response.data; // Changed from response.rak to response.data
+                            modal.find('#edit_rak_id').val(rakData.id);
+                            modal.find('#edit_kode_rak').val(rakData.kode_rak);
+                            modal.find('#edit_nama_rak').val(rakData.nama_rak);
+                            modal.find('#edit_barcode_rak').val(rakData.barcode_rak);
+                            modal.find('#edit_panjang_cm').val(rakData.panjang_cm);
+                            modal.find('#edit_lebar_cm').val(rakData.lebar_cm);
+                            modal.find('#edit_tinggi_cm').val(rakData.tinggi_cm);
+                            modal.find('#edit_kapasitas_kg').val(rakData.kapasitas_kg);
+                            // Set lokasi dropdown
+                            modal.find('#edit_lokasi').val(rakData.lokasi || '');
+                            modal.find('#edit_keterangan').val(rakData.keterangan);
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal!',
+                                text: 'Tidak dapat memuat data rak: ' + response.error,
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                            modal.modal('hide');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        var errorMsg = "Terjadi kesalahan saat memuat data rak.";
+                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errorMsg = xhr.responseJSON.error;
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: errorMsg,
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                        modal.modal('hide');
+                    }
+                });
+            });
+
+            // Handle form submission untuk Edit Rak
+            $('#editRakForm').on('submit', function(e) {
+                e.preventDefault();
+                var rakId = $('#edit_rak_id').val();
+                $.ajax({
+                    url: `/inventory/rak/${rakId}/edit/`, // Fixed URL
+                    type: "POST",
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: response.message,
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                            $('#editRakModal').modal('hide');
+                            rakTable.ajax.reload(null, false); // Reload DataTables tanpa reset pagination
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal!',
+                                text: response.error,
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        var errorMsg = "Terjadi kesalahan. Silakan coba lagi.";
+                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errorMsg = xhr.responseJSON.error;
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: errorMsg,
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    }
+                });
+            });
+
+            // Delegasi event click untuk tombol delete
+            $('#rakTable').on('click', '.btn-outline-danger', function(e) {
+                e.preventDefault();
+                var rakId = $(this).data('id');
+                var rakKode = $(this).data('kode'); // Ambil kode_rak untuk konfirmasi
+
+                Swal.fire({
+                    title: 'Yakin ingin menghapus rak ini?',
+                    text: `Rak dengan kode "${rakKode}" akan dihapus permanen.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, Hapus!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Kirim permintaan DELETE via AJAX
+                        $.ajax({
+                            url: `{% url 'inventory:rak_delete' 0 %}`.replace('0', rakId),
+                            type: "POST", // Menggunakan POST untuk delete
+                            dataType: 'json', // Pastikan response di-parse sebagai JSON
+                            data: {
+                                csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val() || document.querySelector('[name=csrfmiddlewaretoken]').value
+                            },
+                            success: function(response) {
+                                console.log('Delete response:', response);
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Berhasil!',
+                                        text: response.message,
+                                        toast: true,
+                                        position: 'top-end',
+                                        showConfirmButton: false,
+                                        timer: 3000,
+                                        timerProgressBar: true
+                                    });
+                                    rakTable.ajax.reload(null, false); // Reload DataTables
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Tidak Dapat Menghapus Rak!',
+                                        html: `<div class="text-left">
+                                                <p class="mb-2"><strong>Alasan:</strong></p>
+                                                <p class="text-muted">${response.error}</p>
+                                                <hr class="my-3">
+                                                <small class="text-info">
+                                                    <i class="bi bi-info-circle"></i> 
+                                                    Rak yang sudah memiliki riwayat transaksi atau stok tidak dapat dihapus untuk menjaga integritas data.
+                                                </small>
+                                               </div>`,
+                                        confirmButtonColor: '#0d6efd',
+                                        confirmButtonText: 'Mengerti',
+                                        width: '500px',
+                                        customClass: {
+                                            popup: 'swal-error-popup',
+                                            title: 'swal-error-title',
+                                            htmlContainer: 'swal-error-content'
+                                        }
+                                    });
+                                }
+                            },
+                            error: function(xhr, status, error) {
+                                console.log('Delete error:', xhr, status, error);
+                                console.log('Response JSON:', xhr.responseJSON);
+                                
+                                // Cek apakah ini error validasi dengan responseJSON
+                                if (xhr.responseJSON && xhr.responseJSON.error && !xhr.responseJSON.success) {
+                                    // Ini error validasi dari backend (400 status)
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Tidak Dapat Menghapus Rak!',
+                                        html: `<div class="text-left">
+                                                <p class="mb-2"><strong>Alasan:</strong></p>
+                                                <p class="text-muted">${xhr.responseJSON.error}</p>
+                                                <hr class="my-3">
+                                                <small class="text-info">
+                                                    <i class="bi bi-info-circle"></i> 
+                                                    Rak yang sudah memiliki riwayat transaksi atau stok tidak dapat dihapus untuk menjaga integritas data.
+                                                </small>
+                                               </div>`,
+                                        confirmButtonColor: '#0d6efd',
+                                        confirmButtonText: 'Mengerti',
+                                        width: '500px',
+                                        customClass: {
+                                            popup: 'swal-error-popup',
+                                            title: 'swal-error-title',
+                                            htmlContainer: 'swal-error-content'
+                                        }
+                                    });
+                                } else {
+                                    // Error server yang sebenarnya
+                                    var errorMsg = "Terjadi kesalahan saat menghapus rak.";
+                                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                                        errorMsg = xhr.responseJSON.error;
+                                    }
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Terjadi Kesalahan Server!',
+                                        html: `<div class="text-left">
+                                                <p class="mb-2"><strong>Detail Error:</strong></p>
+                                                <p class="text-muted">${errorMsg}</p>
+                                                <hr class="my-3">
+                                                <small class="text-warning">
+                                                    <i class="bi bi-exclamation-triangle"></i> 
+                                                    Silakan coba lagi atau hubungi administrator jika masalah berlanjut.
+                                                </small>
+                                               </div>`,
+                                        confirmButtonColor: '#dc3545',
+                                        confirmButtonText: 'Tutup',
+                                        width: '450px'
+                                    });
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %} 

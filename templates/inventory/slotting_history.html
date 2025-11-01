@@ -1,0 +1,424 @@
+{% extends 'base.html' %}
+{% block title %}History Slotting Putaway{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modern Card Design */
+    .modern-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+    
+    .modern-card:hover {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    }
+    
+    .modern-card .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #ffffff;
+        border-radius: 12px 12px 0 0;
+        border: none;
+        padding: 1.25rem 1.5rem;
+    }
+    
+    .modern-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    /* Modern Table Design */
+    .modern-table {
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e9ecef;
+    }
+    
+    .modern-table thead th {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: none;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #495057;
+        padding: 1rem 0.75rem;
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    .modern-table tbody td {
+        padding: 1rem 0.75rem;
+        border-bottom: 1px solid #f8f9fa;
+        vertical-align: middle;
+    }
+    
+    .modern-table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        transition: all 0.2s ease;
+    }
+    
+    /* Modern Filter Design */
+    .filter-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid #e9ecef;
+    }
+    
+    .filter-section h5 {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    /* Modern Button Design */
+    .btn-modern {
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .btn-modern-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #ffffff;
+    }
+    
+    .btn-modern-primary:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-modern-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: #ffffff;
+    }
+    
+    .btn-modern-secondary:hover {
+        background: linear-gradient(135deg, #5a6268 0%, #343a40 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+    }
+    
+    .btn-modern-outline {
+        background: transparent;
+        border: 2px solid #6c757d;
+        color: #6c757d;
+    }
+    
+    .btn-modern-outline:hover {
+        background: #6c757d;
+        color: #ffffff;
+        transform: translateY(-2px);
+    }
+    
+    /* Header Design */
+    .page-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid #e9ecef;
+    }
+    
+    .page-header h4 {
+        color: #495057;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .page-header p {
+        color: #6c757d;
+        margin-bottom: 0;
+    }
+    
+    /* Badge Design */
+    .badge-modern {
+        border-radius: 6px;
+        padding: 0.5rem 0.75rem;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+    
+    .badge-auto {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: #ffffff;
+    }
+    
+    .badge-manual {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        color: #ffffff;
+    }
+    
+    /* Status Indicators */
+    .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 0.5rem;
+    }
+    
+    .status-success {
+        background: #28a745;
+    }
+    
+    .status-warning {
+        background: #ffc107;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .filter-section {
+            padding: 1rem;
+        }
+        
+        .page-header {
+            padding: 1.5rem;
+        }
+        
+        .modern-card .card-header {
+            padding: 1rem;
+        }
+        
+        .modern-card .card-body {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Modern Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-1">
+                    <i class="bi bi-clock-history text-primary"></i>
+                    History Slotting Putaway
+                </h4>
+                <p class="text-muted mb-0">Riwayat lengkap proses slotting dan putaway produk</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'inventory:putaway' %}" class="btn btn-modern btn-modern-outline">
+                    <i class="bi bi-arrow-left"></i> Kembali ke Putaway
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modern Filter Section -->
+    <div class="filter-section">
+        <h5 class="mb-3">
+            <i class="bi bi-funnel-fill text-primary"></i> Filter & Pencarian
+        </h5>
+        <div class="row g-3">
+            <div class="col-lg-3 col-md-6">
+                <label for="dateFrom" class="form-label">
+                    <i class="bi bi-calendar3"></i> Tanggal Dari
+                </label>
+                <input type="date" class="form-control" id="dateFrom">
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <label for="dateTo" class="form-label">
+                    <i class="bi bi-calendar3"></i> Tanggal Sampai
+                </label>
+                <input type="date" class="form-control" id="dateTo">
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <label for="searchInput" class="form-label">
+                    <i class="bi bi-search"></i> Cari Produk/Rak
+                </label>
+                <input type="text" class="form-control" id="searchInput" placeholder="Masukkan SKU, nama produk, atau kode rak...">
+            </div>
+            <div class="col-lg-2 col-md-6">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-modern btn-modern-primary flex-fill" onclick="applyFilter()">
+                        <i class="bi bi-search"></i> Filter
+                    </button>
+                    <button type="button" class="btn btn-modern btn-modern-secondary" onclick="clearFilter()" title="Clear Filter">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modern Data Table -->
+    <div class="modern-card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-table"></i> Data History Slotting
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="slottingHistoryTable" class="table modern-table">
+                    <thead>
+                        <tr>
+                            <th>Tanggal & Waktu</th>
+                            <th>Produk</th>
+                            <th>Quantity</th>
+                            <th>Rak Tujuan</th>
+                            <th>Putaway By</th>
+                            <th>Tipe</th>
+                            <th>Catatan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be loaded via DataTables -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let slottingTable;
+
+$(document).ready(function() {
+    // Initialize DataTable with modern styling
+    slottingTable = $('#slottingHistoryTable').DataTable({
+        processing: true,
+        serverSide: false,
+        ajax: {
+            url: '{% url "inventory:slotting_history_data" %}',
+            type: 'GET',
+            data: function(d) {
+                d.date_from = $('#dateFrom').val();
+                d.date_to = $('#dateTo').val();
+                d.search = $('#searchInput').val();
+            }
+        },
+        columns: [
+            { 
+                data: 'putaway_time',
+                render: function(data) {
+                    if (data) {
+                        return `<div>
+                            <div class="fw-bold">${new Date(data).toLocaleDateString('id-ID')}</div>
+                            <small class="text-muted">${new Date(data).toLocaleTimeString('id-ID')}</small>
+                        </div>`;
+                    }
+                    return '<span class="text-muted">-</span>';
+                }
+            },
+            { 
+                data: null,
+                render: function(data) {
+                    return `<div>
+                        <div class="fw-bold text-primary">${data.product_sku || '-'}</div>
+                        <small class="text-muted">${data.product_name || '-'}</small>
+                    </div>`;
+                }
+            },
+            { 
+                data: 'quantity',
+                render: function(data) {
+                    return `<span class="badge badge-modern bg-primary">${data || 0} pcs</span>`;
+                }
+            },
+            { 
+                data: 'rak_kode',
+                render: function(data) {
+                    return `<span class="fw-bold text-success">${data || '-'}</span>`;
+                }
+            },
+            { 
+                data: 'putaway_by',
+                render: function(data) {
+                    return data || '<span class="text-muted">-</span>';
+                }
+            },
+            { 
+                data: 'is_auto',
+                render: function(data) {
+                    if (data) {
+                        return '<span class="badge badge-modern badge-auto"><i class="bi bi-robot"></i> Auto</span>';
+                    } else {
+                        return '<span class="badge badge-modern badge-manual"><i class="bi bi-person"></i> Manual</span>';
+                    }
+                }
+            },
+            { 
+                data: 'notes',
+                render: function(data) {
+                    if (data && data.trim()) {
+                        return `<div class="text-truncate" title="${data}">${data}</div>`;
+                    }
+                    return '<span class="text-muted">-</span>';
+                }
+            }
+        ],
+        order: [[0, 'desc']],
+        pageLength: 25,
+        language: {
+            url: '/static/datatables/Indonesian.json'
+        },
+        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+             '<"row"<"col-sm-12"tr>>' +
+             '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+        responsive: true,
+        drawCallback: function() {
+            // Add modern styling to DataTable elements
+            $('.dataTables_wrapper .dataTables_length select').addClass('form-select');
+            $('.dataTables_wrapper .dataTables_filter input').addClass('form-control');
+            $('.dataTables_wrapper .dataTables_paginate .paginate_button').addClass('btn btn-modern btn-modern-outline btn-sm');
+            $('.dataTables_wrapper .dataTables_paginate .paginate_button.current').removeClass('btn-modern-outline').addClass('btn-modern-primary');
+        }
+    });
+});
+
+function applyFilter() {
+    slottingTable.ajax.reload();
+}
+
+function clearFilter() {
+    $('#dateFrom').val('');
+    $('#dateTo').val('');
+    $('#searchInput').val('');
+    slottingTable.ajax.reload();
+}
+
+// Auto apply filter when pressing Enter in search input
+$('#searchInput').on('keypress', function(e) {
+    if (e.which === 13) {
+        applyFilter();
+    }
+});
+
+// Set default date range (last 30 days)
+$(document).ready(function() {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+    
+    $('#dateFrom').val(thirtyDaysAgo.toISOString().split('T')[0]);
+    $('#dateTo').val(today.toISOString().split('T')[0]);
+});
+</script>
+{% endblock %}

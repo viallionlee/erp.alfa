@@ -1,0 +1,149 @@
+{% extends 'base_mobile.html' %}
+{% block content %}
+<div class="container-fluid px-2 py-2" style="max-width:480px; margin:auto;">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h3 class="fw-bold mb-2 text-center flex-grow-1" style="font-size:1.1rem; letter-spacing:0.5px;">
+          BATCHPICKING API: <span class="text-primary">{{ nama_picklist }}</span>
+        </h3>
+    </div>
+    
+    <div class="mb-4">
+        <label for="barcodeInput" class="form-label fw-semibold text-dark mb-2"><i class="bi bi-upc-scan me-2"></i>Scan Barcode</label>
+        <div class="input-group input-group-modern mb-2 flex-nowrap">
+            <span class="input-group-text"><i class="bi bi-barcode-scanners text-muted"></i></span>
+            <input type="text" id="barcodeInput" class="form-control" style="font-size:1em; min-width:0;" placeholder="Scan barcode..." autofocus autocomplete="off">
+            <button type="button" class="btn btn-modern-primary touch-friendly" id="barcodeSubmitBtn"><i class="bi bi-arrow-right-circle"></i></button>
+        </div>
+        <div id="barcodeFeedback"></div>
+    </div>
+
+    <!-- Sticky Bottom Bar (Disederhanakan untuk contoh ini) -->
+    <div id="stickyReloadBar" style="position:fixed; left:0; right:0; bottom:0; width:100vw; z-index:1000; background:rgba(255,255,255,0.95); border-top:1px solid #eee; padding:10px 0; display:flex; justify-content:center;">
+        <p class="text-muted mb-0">Infinite Scroll Version</p>
+    </div>
+
+    <!-- Item List Container -->
+    <div class="mb-1" id="itemsListContainer">
+        <div class="card shadow-sm" style="border-radius:12px;">
+            <div class="card-body p-2">
+                <!-- DAFTAR ITEM INI AWALNYA KOSONG, AKAN DIISI OLEH JAVASCRIPT -->
+                <div class="list-group list" id="itemListActual"></div>
+                
+                <!-- Loader untuk infinite scroll (Struktur diperbaiki) -->
+                <div id="loader" class="text-center py-3">
+                    <div class="spinner-border text-primary" role="status" style="display: none;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="all-loaded-message" style="display: none;"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- 1. SETUP GLOBAL VARIABLES & ELEMENTS ---
+    const itemListActual = document.getElementById('itemListActual');
+    const loader = document.getElementById('loader');
+    const spinner = loader.querySelector('.spinner-border');
+    const allLoadedMessage = loader.querySelector('.all-loaded-message');
+    const namaPicklist = "{{ nama_picklist }}";
+    const csrfToken = "{{ csrf_token }}";
+
+    let currentPage = 1;
+    let isLoading = false;
+    let allDataLoaded = false;
+
+    // --- 2. CORE FUNCTIONS ---
+
+    // Fungsi untuk membuat elemen item HTML dari data JSON
+    function createItemElement(itemData) {
+        const itemElement = document.createElement('div');
+        itemElement.className = 'list-group-item d-flex justify-content-between align-items-center px-2 py-2';
+        itemElement.style.cssText = `font-size:0.98em; border-radius:10px; margin-bottom:6px; box-shadow:0 1px 4px rgba(0,0,0,0.04); border:1px solid #f0f0f0;`;
+        itemElement.dataset.productId = itemData.id;
+        itemElement.dataset.sku = itemData.sku;
+
+        const background = itemData.status_ambil === 'completed' ? '#bfdbfe' : '#c6f6d5';
+        itemElement.style.background = background;
+
+        itemElement.innerHTML = `
+            <div class="d-flex align-items-start gap-2">
+                ${itemData.photo_url ? `<img src="${itemData.photo_url}" alt="Foto Produk" class="rounded" style="height:80px; width:auto; max-width:100%; object-fit:contain; background:#fafafa;">` : `<div class="rounded d-flex align-items-center justify-content-center" style="width:80px; height:80px; background:#f0f0f0; font-size:1.5em; color:#bbb;">📦</div>`}
+                <div>
+                    <div class="fw-bold" style="font-size:0.98em;">sku : ${itemData.sku}</div>
+                    <div style="font-size:0.9em;" class="text-secondary"><i class="bi bi-upc-scan"></i> ${itemData.barcode}</div>
+                    <div style="font-size:0.95em;">${itemData.nama_produk} <span class="text-muted">${itemData.variant_produk || ''}</span></div>
+                    <div style="font-size:0.9em;" class="text-secondary brand">${itemData.brand}</div>
+                </div>
+            </div>
+            <div class="d-flex flex-column justify-content-between align-items-end" style="align-self: stretch;">
+                <div>
+                    <span class="badge ${itemData.status_ambil === 'completed' ? 'bg-success' : 'bg-primary'}" style="font-size:0.95em;">${itemData.jumlah_ambil}/${itemData.jumlah}</span><br>
+                    <span class="badge bg-light text-dark border mt-1" style="font-size:0.92em;">${itemData.rak}</span>
+                </div>
+                <div class="fw-bold" style="font-size: 0.9em; color: #d32f2f;">Sat : ${itemData.one_count || 0}</div>
+            </div>
+        `;
+        return itemElement;
+    }
+
+    // Fungsi untuk mengambil data dari API dan menampilkannya
+    async function fetchAndRenderItems() {
+        if (isLoading || allDataLoaded) return;
+        
+        isLoading = true;
+        spinner.style.display = 'block';
+
+        try {
+            const response = await fetch(`/fullfilment/api/mobile/batchpicking-api-v4/${namaPicklist}/?page=${currentPage}`);
+            const data = await response.json();
+
+            if (data.items && data.items.length > 0) {
+                data.items.forEach(item => {
+                    const itemElement = createItemElement(item);
+                    itemListActual.appendChild(itemElement);
+                });
+                currentPage++;
+            }
+
+            if (!data.has_next) {
+                allDataLoaded = true;
+                spinner.style.display = 'none';
+                allLoadedMessage.textContent = 'Semua item telah dimuat.';
+                allLoadedMessage.style.display = 'block';
+            }
+
+        } catch (error) {
+            console.error('Gagal memuat item:', error);
+            spinner.style.display = 'none';
+            allLoadedMessage.textContent = 'Gagal memuat data.';
+            allLoadedMessage.classList.add('text-danger');
+            allLoadedMessage.style.display = 'block';
+        } finally {
+            isLoading = false;
+            if (!allDataLoaded) {
+                spinner.style.display = 'none';
+            }
+        }
+    }
+
+    // --- 3. EVENT LISTENERS ---
+
+    // Menggunakan IntersectionObserver untuk mendeteksi kapan loader terlihat
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            fetchAndRenderItems();
+        }
+    }, {
+        rootMargin: '0px 0px 200px 0px' // Trigger saat 200px sebelum loader masuk viewport
+    });
+
+    observer.observe(loader);
+});
+</script>
+{% endblock %} 
